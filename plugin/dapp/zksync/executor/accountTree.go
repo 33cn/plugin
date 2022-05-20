@@ -28,7 +28,58 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	confManager := types.ConfSub(cfg, zt.Zksync)
 	ethAddr := confManager.GStr("ethFeeAddr")
 	chain33Addr := confManager.GStr("zkChain33FeeAddr")
+	if len(ethAddr) <= 0 || len(chain33Addr) <= 0 {
+		panic(fmt.Sprintf("zksync not cfg init fee addr, ethAddr=%s,33Addr=%s", ethAddr, chain33Addr))
+	}
 	return zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
+}
+
+func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
+	//default system FeeAccount
+	feeAccount := &zt.Leaf{
+		EthAddress:  ethFeeAddr,
+		AccountId:   zt.SystemFeeAccountId,
+		Chain33Addr: chain33FeeAddr,
+		TokenHash:   "0",
+	}
+	//default NFT system account
+	NFTAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.SystemNFTAccountId,
+		Chain33Addr: "0",
+		TokenHash:   "0",
+	}
+	return []*zt.Leaf{feeAccount, NFTAccount}
+}
+
+//获取系统初始root，如果未设置fee账户，缺省采用配置文件，
+func getInitTreeRoot(cfg *types.Chain33Config, ethAddr, chain33Addr string) string {
+	var feeEth, fee33 string
+	if len(ethAddr) > 0 && len(chain33Addr) > 0 {
+		feeEth, fee33 = zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
+	} else {
+		feeEth, fee33 = getCfgFeeAddr(cfg)
+	}
+
+	leafs := getInitAccountLeaf(feeEth, fee33)
+	merkleTree := getNewTree()
+
+	for _, l := range leafs {
+		merkleTree.Push(getLeafHash(l))
+	}
+	tree := &zt.AccountTree{
+		SubTrees: make([]*zt.SubTree, 0),
+	}
+
+	//叶子会按2^n合并，如果是三个leaf，就会产生2个subTree,这里当前初始只有2个leaf
+	for _, subtree := range merkleTree.GetAllSubTrees() {
+		tree.SubTrees = append(tree.SubTrees, &zt.SubTree{
+			RootHash: subtree.GetSum(),
+			Height:   int32(subtree.GetHeight()),
+		})
+	}
+
+	return zt.Byte2Str(tree.SubTrees[len(tree.SubTrees)-1].RootHash)
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
@@ -37,13 +88,8 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 		panic(fmt.Sprintf("zksync default fee addr(ethFeeAddr,zkChain33FeeAddr) is nil"))
 	}
 	var kvs []*types.KeyValue
-	//default FeeAccount
-	leafFeeAccount := &zt.Leaf{
-		EthAddress:  ethFeeAddr,
-		AccountId:   zt.SystemFeeAccountId,
-		Chain33Addr: chain33FeeAddr,
-		TokenHash:   "0",
-	}
+	initLeafAccounts := getInitAccountLeaf(ethFeeAddr, chain33FeeAddr)
+	leafFeeAccount := initLeafAccounts[0]
 	kv := &types.KeyValue{
 		Key:   GetAccountIdPrimaryKey(leafFeeAccount.AccountId),
 		Value: types.Encode(leafFeeAccount),
@@ -57,12 +103,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	kvs = append(kvs, kv)
 
 	//NFT account
-	leafNFTAccount := &zt.Leaf{
-		EthAddress:  "0",
-		AccountId:   zt.SystemNFTAccountId,
-		Chain33Addr: "0",
-		TokenHash:   "0",
-	}
+	leafNFTAccount := initLeafAccounts[1]
 	kv = &types.KeyValue{
 		Key:   GetAccountIdPrimaryKey(leafNFTAccount.AccountId),
 		Value: types.Encode(leafNFTAccount),
