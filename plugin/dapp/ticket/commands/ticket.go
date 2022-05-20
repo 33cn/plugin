@@ -235,8 +235,6 @@ func listTicket(cmd *cobra.Command, args []string) {
 		return
 	}
 	fmt.Println(string(data))
-	// ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetTicketList", nil, &res)
-	// ctx.Run()
 }
 
 // CloseTicketCmd close all accessible tickets
@@ -359,25 +357,26 @@ func CreateCloseTicketCmd() *cobra.Command {
 
 func addCreateCloseTicket(cmd *cobra.Command) {
 	cmd.Flags().StringP("miner_addr", "m", "", "miner address")
-	cmd.Flags().StringP("return_addr", "r", "", "return address (optional)")
-	cmd.Flags().Int32P("status", "s", 1, "ticket status (default 1:opened tickets)")
 	cmd.MarkFlagRequired("miner_addr")
+	cmd.Flags().StringP("return_addr", "r", "", "return address (optional)")
+	cmd.Flags().Int32P("status", "s", 1, "ticket status (default 1:opened tickets 2: mined tickets)")
+	cmd.Flags().Int64P("withdraw_time", "w", 172800, "ticketWithdrawTime")
+	cmd.Flags().Int64P("miner_wait_time", "i", 7200, "ticketMinerWaitTime")
+
 }
 
 func createCloseTicket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	returnAddr, _ := cmd.Flags().GetString("return_addr")
 	minerAddr, _ := cmd.Flags().GetString("miner_addr")
+	withdrawTime, _ := cmd.Flags().GetInt64("withdraw_time")
+	minerWaitTime, _ := cmd.Flags().GetInt64("miner_wait_time")
 	status, _ := cmd.Flags().GetInt32("status")
-	if returnAddr == "" && minerAddr == "" {
-		fmt.Fprintln(os.Stderr, types.ErrInvalidParam)
-		return
-	}
 
 	now := time.Now().Unix()
 
 	if status != ty.TicketOpened && status != ty.TicketMined {
-		fmt.Fprintln(os.Stderr, ty.ErrTicketClosed)
+		fmt.Fprintln(os.Stderr, errors.New("status must be set 1 (TicketOpened) or 2 (TicketMined)"))
 		return
 	}
 
@@ -405,12 +404,15 @@ func createCloseTicket(cmd *cobra.Command, args []string) {
 		if len(signList) == 200 {
 			break
 		}
+		if returnAddr != "" && returnAddr != v.ReturnAddress {
+			continue
+		}
 		if v.Status == ty.TicketOpened {
-			if v.CreateTime+int64(3600*48) < now {
+			if v.CreateTime+withdrawTime < now {
 				signList = append(signList, v.TicketId)
 			}
 		} else if v.Status == ty.TicketMined {
-			if v.CreateTime+int64(3600*48) < now && v.MinerTime+int64(7200) < now {
+			if v.CreateTime+withdrawTime < now && v.MinerTime+minerWaitTime < now {
 				signList = append(signList, v.TicketId)
 			}
 		}
@@ -419,7 +421,7 @@ func createCloseTicket(cmd *cobra.Command, args []string) {
 		fmt.Println("no tickerIds to close")
 		return
 	}
-	tx := CreateTicketCloseTx(signList)
+	tx := createTicketCloseTx(signList)
 	fee, err := tx.GetRealFee(100000)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -429,7 +431,7 @@ func createCloseTicket(cmd *cobra.Command, args []string) {
 	fmt.Println(hex.EncodeToString(types.Encode(tx)))
 }
 
-func CreateTicketCloseTx(ids []string) *types.Transaction {
+func createTicketCloseTx(ids []string) *types.Transaction {
 	var transaction types.Transaction
 	nonce := rand.Int63()
 	tclose := &ty.TicketClose{TicketId: ids}
