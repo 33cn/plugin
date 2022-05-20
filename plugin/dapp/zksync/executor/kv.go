@@ -51,12 +51,12 @@ func getVerifier() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
 }
 
-func getLastCommitProofKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"commitProof"))
+func getLastProofKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
 }
 
-func getHeightCommitProofKey(blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"proofHeight", blockHeight))
+func getLastProofSubIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProofSubId"))
 }
 
 func getValidatorsKey() []byte {

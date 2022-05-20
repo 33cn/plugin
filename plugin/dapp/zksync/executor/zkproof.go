@@ -43,8 +43,8 @@ func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 }
 
 func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
-	key := getLastCommitProofKey()
-	heightKey := getHeightCommitProofKey(new.BlockStart)
+	key := getLastProofKey()
+	subIdKey := getLastProofSubIdKey()
 	log := &zt.ReceiptCommitProof{
 		Prev:    old,
 		Current: new,
@@ -53,7 +53,7 @@ func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
 			{Key: key, Value: types.Encode(new)},
-			{Key: heightKey, Value: types.Encode(new)},
+			{Key: subIdKey, Value: types.Encode(&zt.LastOnChainProof{ProofId: new.ProofId, ProofSubId: new.ProofSubId})},
 		},
 		Logs: []*types.ReceiptLog{
 			{Ty: zt.TyCommitProofLog, Log: types.Encode(log)},
@@ -132,8 +132,8 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
-func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
-	key := getLastCommitProofKey()
+func getLastCommitProofData(db dbm.KV, cfg *types.Chain33Config) (*zt.CommitProofState, error) {
+	key := getLastProofKey()
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -144,7 +144,7 @@ func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 				IndexStart:  0,
 				IndexEnd:    0,
 				OldTreeRoot: "0",
-				NewTreeRoot: "18617692155653794411600229951838919630651308402001068372178576330275141191583",
+				NewTreeRoot: getInitTreeRoot(cfg, "", ""),
 			}, nil
 		} else {
 			return nil, errors.Wrapf(err, "get db")
@@ -159,11 +159,29 @@ func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 	return &data, nil
 }
 
+func getLastOnChainProofData(db dbm.KV) (*zt.LastOnChainProof, error) {
+	key := getLastProofSubIdKey()
+	v, err := db.Get(key)
+	if err != nil {
+		if isNotFound(err) {
+			return &zt.LastOnChainProof{ProofSubId: 0}, nil
+		}
+		return nil, err
+	}
+	var data zt.LastOnChainProof
+	err = types.Decode(v, &data)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db")
+	}
+	return &data, nil
+}
+
 type commitProofCircuit struct {
-	//SeqNum, blockStart,blockEnd, oldTreeRoot, newRootHash, deposit, partialExit... pubData[...]
-	PriorityPubDataCommitment frontend.Variable `gnark:",public"`
 	//SeqNum, blockStart,blockEnd, oldTreeRoot, newRootHash, full pubData[...]
 	PubDataCommitment frontend.Variable `gnark:",public"`
+
+	//SeqNum, blockStart,blockEnd, oldTreeRoot, newRootHash, deposit, partialExit... pubData[...]
+	OnChainPubDataCommitment frontend.Variable `gnark:",public"`
 }
 
 func (circuit *commitProofCircuit) Define(curveID ecc.ID, api frontend.API) error {
@@ -191,29 +209,34 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 
-	lastProof, err := getLastCommitProofData(a.statedb)
-	if err != nil && !isNotFound(errors.Cause(err)) {
+	lastProof, err := getLastCommitProofData(a.statedb, cfg)
+	if err != nil {
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
 
 	//proofId需要连续,高度需要衔接
-	//if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId || lastProof.BlockEnd != payload.BlockStart) {
-	//	return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id end=%d, new id start=%d",
-	//		lastProof.ProofId, payload.ProofId)
-	//}
-	if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId) {
+	if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId || lastProof.BlockEnd != payload.BlockStart) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id end=%d, new id start=%d",
 			lastProof.ProofId, payload.ProofId)
 	}
 
-	lastTreeRoot := "0"
-	if lastProof != nil {
-		lastTreeRoot = lastProof.NewTreeRoot
-	}
 	//tree root 需要衔接
-	if lastTreeRoot != payload.OldTreeRoot {
+	if lastProof.NewTreeRoot != payload.OldTreeRoot {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
-			lastTreeRoot, payload.OldTreeRoot)
+			lastProof.NewTreeRoot, payload.OldTreeRoot)
+	}
+
+	//如果包含OnChainPubData, ProofSubId需要连续
+	if len(payload.OnChainPubDatas) > 0 {
+		lastOnChainProof, err := getLastOnChainProofData(a.statedb)
+		if err != nil {
+			return nil, errors.Wrap(err, "getProofSubId")
+		}
+		if lastOnChainProof.ProofSubId+1 != payload.ProofSubId {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "lastSubId not match, lastSubId+1=%d, commit=%d", lastOnChainProof.ProofSubId+1, payload.ProofSubId)
+		}
+	} else if payload.GetProofSubId() != 0 { //非onChain proof subId需要填0
+		return nil, errors.Wrapf(types.ErrInvalidParam, "not onChain proof subId should be 0")
 	}
 
 	//get verify key
@@ -228,23 +251,24 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 
 	//更新数据库, public and proof上链， pubdata 不上链，存localdb
 	newProof := &zt.CommitProofState{
-		BlockStart:  payload.BlockStart,
-		BlockEnd:    payload.BlockEnd,
-		IndexStart:  payload.IndexStart,
-		IndexEnd:    payload.IndexEnd,
-		OpIndex:     payload.OpIndex,
-		ProofId:     payload.ProofId,
-		OldTreeRoot: payload.OldTreeRoot,
-		NewTreeRoot: payload.NewTreeRoot,
-		PublicInput: payload.PublicInput,
-		Proof:       payload.Proof,
+		BlockStart:        payload.BlockStart,
+		BlockEnd:          payload.BlockEnd,
+		IndexStart:        payload.IndexStart,
+		IndexEnd:          payload.IndexEnd,
+		OpIndex:           payload.OpIndex,
+		ProofId:           payload.ProofId,
+		OldTreeRoot:       payload.OldTreeRoot,
+		NewTreeRoot:       payload.NewTreeRoot,
+		PublicInput:       payload.PublicInput,
+		Proof:             payload.Proof,
+		ProofSubId:        payload.ProofSubId,
+		CommitBlockHeight: a.height,
 	}
 	return makeCommitProofReceipt(lastProof, newProof), nil
 
 }
 
 func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
-
 	//decode public inputs
 	pBuff, err := getByteBuff(proof.PublicInput)
 	if err != nil {

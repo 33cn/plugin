@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -237,6 +238,29 @@ func TestBigInt(t *testing.T) {
 	t.Log("0 stringVal", "0")
 	t.Log("0 byteVal", []byte("0"))
 	t.Log("is equal", stringVal == "0")
+}
+
+func TestInitTreeRoot(t *testing.T) {
+	eth := zt.HexAddr2Decimal("832367164346888E248bd58b9A5f480299F1e88d")
+	chain33 := zt.HexAddr2Decimal("2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a")
+	leafs := getInitAccountLeaf(eth, chain33)
+	merkleTree := getNewTree()
+	for _, l := range leafs {
+		merkleTree.Push(getLeafHash(l))
+	}
+	tree := &zt.AccountTree{
+		Index:           2,
+		TotalIndex:      2,
+		MaxCurrentIndex: 1024,
+		SubTrees:        make([]*zt.SubTree, 0),
+	}
+	for _, subtree := range merkleTree.GetAllSubTrees() {
+		tree.SubTrees = append(tree.SubTrees, &zt.SubTree{
+			RootHash: subtree.GetSum(),
+			Height:   int32(subtree.GetHeight()),
+		})
+	}
+	fmt.Println("len", len(tree.SubTrees), "dec", zt.Byte2Str(tree.SubTrees[len(tree.SubTrees)-1].RootHash))
 }
 
 var cfgstring = `

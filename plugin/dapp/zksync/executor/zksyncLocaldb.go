@@ -96,7 +96,7 @@ func (z *zksync) execCommitProofLocal(payload *zt.ZkCommitProof, tx *types.Trans
 	proofTable := NewCommitProofTable(z.GetLocalDB())
 
 	set := &types.LocalDBSet{}
-
+	payload.CommitBlockHeight = z.GetHeight()
 	err := proofTable.Replace(payload)
 	if err != nil {
 		return nil, err
