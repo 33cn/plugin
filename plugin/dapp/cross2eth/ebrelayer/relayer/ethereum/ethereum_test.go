@@ -468,7 +468,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		ethBridgeClaimChan:      ethBridgeClaimchan,
 		chain33MsgChan:          chain33Msgchan,
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
-		remindUrl:               cfg.RemindUrl,
+		// remindUrl:               cfg.RemindUrl,
 	}
 
 	relayer.eventLogIndex = relayer.getLastBridgeBankProcessedHeight()
