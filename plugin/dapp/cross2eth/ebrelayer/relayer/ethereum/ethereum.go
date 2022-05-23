@@ -358,6 +358,10 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			time.Sleep(time.Second * time.Duration(sleepTime))
 		}
 
+		if err == nil {
+			break
+		}
+
 		sleepTime++
 		if sleepTime > 100 {
 			panic("SetupEthClients too many error " + err.Error())
@@ -403,7 +407,6 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			ethRelayer.subscribeEvent()
-			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 			break
@@ -417,7 +420,6 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			relayerLog.Error("proc", "Need to subscribeEvent again due to bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
-			ethRelayer.filterLogEvents()
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
@@ -1430,15 +1432,38 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 
 	// We will check logs for new events
 	logs := make(chan types.Log, 10)
-	// Filter by contract and event, write results to logs
-	sub, err := ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
-	if err != nil {
-		errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s, bridgeBankAddr:%s", err.Error(), ethRelayer.bridgeBankAddr)
-		panic(errinfo)
+
+	var sub ethereum.Subscription
+	var err error
+	sleepTime := 1
+	for true {
+		// Filter by contract and event, write results to logs
+		sub, err = ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
+		if err != nil {
+			ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
+			if err != nil {
+				// 节点都不可用 发送邮件
+				ethRelayer.remindSetupEthClientError()
+				time.Sleep(time.Second * time.Duration(sleepTime))
+			}
+		}
+		time.Sleep(time.Second * time.Duration(sleepTime))
+		if err == nil {
+			break
+		}
+
+		sleepTime++
+		if sleepTime > 100 {
+			errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s, bridgeBankAddr:%s", err.Error(), ethRelayer.bridgeBankAddr)
+			panic(errinfo)
+		}
 	}
+
 	relayerLog.Info("subscribeEvent", "Subscribed to contract at address:", targetAddress.Hex())
 	ethRelayer.bridgeBankLog = logs
 	ethRelayer.bridgeBankSub = sub
+
+	ethRelayer.filterLogEvents()
 }
 
 //IsValidatorActive ...
