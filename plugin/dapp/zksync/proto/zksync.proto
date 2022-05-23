@@ -219,8 +219,8 @@ message ZkCommitProof {
 
 
   uint64 proofId = 12;
-  //包含onChainPubdata的proof按ProofSubId排序
-  uint64 proofSubId = 13;
+  //包含onChainPubdata的proof排序
+  uint64 onChainProofId = 13;
   //commit时候的blockHeight,localdb会填充
   int64  commitBlockHeight = 14;
 }
@@ -239,14 +239,14 @@ message CommitProofState {
   string proof       = 9;
 
   uint64 proofId = 10;
-  uint64 proofSubId = 11;
+  uint64 onChainProofId = 11;
   //commit时候的blockHeight
   int64  commitBlockHeight = 12;
 }
 
 message LastOnChainProof {
   uint64 proofId = 1;
-  uint64 proofSubId = 2;
+  uint64 onChainProofId = 2;
 }
 
 message ReceiptCommitProof {
@@ -331,8 +331,8 @@ message ZkQueryProofResp {
 //query committed proof info
 message ZkFetchProofList {
   uint64 proofId = 1;
-  uint64 proofSubId = 2;
-  bool reqOnChainProof = 3; //此时currentProofId为上一个subId
+  uint64 onChainProofId = 2;
+  bool reqOnChainProof = 3; //
   bool reqLatestProof = 4; //请求截止高度之前的最新的proof，适用于获取最新proof场景
   uint64 endHeight = 5; //截止高度
 }

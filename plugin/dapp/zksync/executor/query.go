@@ -275,9 +275,9 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 	table := NewCommitProofTable(z.GetLocalDB())
 
 	if in.GetReqOnChainProof() {
-		rows, err := table.ListIndex("subId", []byte(fmt.Sprintf("%d", in.ProofSubId+1)), nil, 1, zt.ListASC)
+		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%d", in.OnChainProofId+1)), nil, 1, zt.ListASC)
 		if err != nil {
-			zklog.Error("Query_GetProofList.getOnChainSubId", "subId", in.ProofSubId, "err", err.Error())
+			zklog.Error("Query_GetProofList.getOnChainSubId", "id", in.OnChainProofId, "err", err.Error())
 			return nil, err
 		}
 		return rows[0].Data.(*zt.ZkCommitProof), nil
