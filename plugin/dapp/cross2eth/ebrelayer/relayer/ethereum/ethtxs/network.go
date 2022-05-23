@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -30,7 +31,7 @@ func SelectAndRoundEthURL(ethURL *[]string) (string, error) {
 }
 
 func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
@@ -54,34 +55,36 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 	return nil, errors.New("FailedToSetupEthClient")
 }
 
-func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, *big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	var Clients []ethinterface.EthClientSpec
+	var clientChainID *big.Int
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
 			txslog.Error("SetupEthClients", "SelectAndRoundEthURL err", err.Error())
-			return nil, err
+			return nil, nil, err
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
 			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
-		_, err = client.NetworkID(timeout)
+		chainID, err := client.NetworkID(timeout)
 		if err != nil {
 			txslog.Error("SetupEthClients", "Failed to get NetworkID due to:%s", err.Error())
 			continue
 		}
 		txslog.Debug("SetupEthClients", "SelectAndRoundEthURL:", urlSelected)
 		Clients = append(Clients, client)
+		clientChainID = chainID
 	}
 
 	if len(Clients) > 0 {
-		return Clients, nil
+		return Clients, clientChainID, nil
 	}
-	return nil, errors.New("FailedToSetupEthClients")
+	return nil, nil, errors.New("FailedToSetupEthClients")
 }
 
 func SetupRecommendClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {

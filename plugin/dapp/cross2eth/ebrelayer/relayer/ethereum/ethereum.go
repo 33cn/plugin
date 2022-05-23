@@ -23,7 +23,6 @@ import (
 	"time"
 
 	chain33Common "github.com/33cn/chain33/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
 	chain33Types "github.com/33cn/chain33/types"
@@ -39,6 +38,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -181,40 +181,6 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.mulSignAddr = ethRelayer.getMultiSignAddress()
 	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFeeInINt()
 
-	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
-	if err != nil {
-		// 节点都不可用 发送邮件
-		ethRelayer.remindSetupEthClientError()
-		panic(err)
-	}
-	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
-
-	// Start clientSpec with infura ropsten provider
-	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
-	client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
-	if err != nil {
-		// 节点都不可用 发送邮件
-		ethRelayer.remindSetupEthClientError()
-		panic(err)
-	}
-	ethRelayer.clientSpec = client
-
-	ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
-	if err != nil {
-		// 节点都不可用 发送邮件
-		ethRelayer.remindSetupEthClientError()
-		panic(err)
-	}
-
-	ctx := context.Background()
-	clientChainID, err := client.NetworkID(ctx)
-	if err != nil {
-		errinfo := fmt.Sprintf("Failed to get NetworkID due to:%s", err.Error())
-		// 节点都不可用 发送邮件
-		ethRelayer.remindSetupEthClientError()
-		panic(errinfo)
-	}
-	ethRelayer.clientChainID = clientChainID
 	ethRelayer.totalTxRelayFromChain33 = ethRelayer.getTotalTxAmount2Eth()
 	if 0 == ethRelayer.totalTxRelayFromChain33 {
 		statics := &ebTypes.Chain33ToEthereumStatics{}
@@ -375,6 +341,35 @@ func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, 
 }
 
 func (ethRelayer *Relayer4Ethereum) proc() {
+	sleepTime := 1
+	for true {
+		var err error
+		ethRelayer.clientSpecs, ethRelayer.clientChainID, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+		if err != nil {
+			// 节点都不可用 发送邮件
+			ethRelayer.remindSetupEthClientError()
+			time.Sleep(time.Second * time.Duration(sleepTime))
+		}
+
+		ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
+		if err != nil {
+			// 节点都不可用 发送邮件
+			ethRelayer.remindSetupEthClientError()
+			time.Sleep(time.Second * time.Duration(sleepTime))
+		}
+
+		sleepTime++
+		if sleepTime > 100 {
+			panic("SetupEthClients too many error " + err.Error())
+		}
+	}
+
+	// Start clientSpec with infura ropsten provider
+	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:",
+		ethRelayer.providerHttp[0], "clientChainID", ethRelayer.clientChainID, "processWithDraw", ethRelayer.processWithDraw)
+	ethRelayer.clientSpec = ethRelayer.clientSpecs[0]
+	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
+
 	//等待用户导入
 	relayerLog.Info("Please unlock or import private key for Ethereum relayer")
 	if err := ethRelayer.RestoreTokenAddress(); nil != err {
@@ -1800,7 +1795,7 @@ func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
 func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 	// 重新获取 client
 	var err error
-	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+	ethRelayer.clientSpecs, _, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
 	if err != nil {
 		relayerLog.Error("regainClient", "SetupEthClient err", err)
 	}
