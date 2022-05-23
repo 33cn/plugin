@@ -322,7 +322,7 @@ func forceExitCmd() *cobra.Command {
 }
 
 func forceExitFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "i", 1, "target tokenId")
+	cmd.Flags().Uint64P("tokenId", "t", 1, "target tokenId")
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().Uint64P("accountId", "a", 0, "target accountId")
 	cmd.MarkFlagRequired("accountId")
@@ -516,7 +516,7 @@ func setOperator(cmd *cobra.Command, args []string) {
 func commitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "commit",
-		Short: "commit proof",
+		Short: "commit proof test",
 		Run:   commitProof,
 	}
 	addCommitProofCmdFlags(cmd)
@@ -578,7 +578,7 @@ func commitProof(cmd *cobra.Command, args []string) {
 
 func getChain33AddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "l2Addr",
+		Use:   "l2addr",
 		Short: "get chain33 l2 address by privateKey",
 		Run:   getChain33Addr,
 	}
@@ -588,10 +588,14 @@ func getChain33AddrCmd() *cobra.Command {
 
 func getChain33AddrFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("private", "k", "", "private key")
+	_ = cmd.MarkFlagRequired("private")
+
+	cmd.Flags().BoolP("pubkey", "p", false, "print pubkey")
 }
 
 func getChain33Addr(cmd *cobra.Command, args []string) {
 	privateKeyString, _ := cmd.Flags().GetString("private")
+	pubkey, _ := cmd.Flags().GetBool("pubkey")
 	privateKeyBytes, err := common.FromHex(privateKeyString)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "hex.DecodeString"))
@@ -607,9 +611,12 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
-	fmt.Println("addr:", hex.EncodeToString(hash.Sum(nil)))
-	fmt.Println("pubKey.X:", privateKey.PublicKey.A.X.String())
-	fmt.Println("pubKey.Y:", privateKey.PublicKey.A.Y.String())
+	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
+	if pubkey {
+		fmt.Println("pubKey.X:", privateKey.PublicKey.A.X.String())
+		fmt.Println("pubKey.Y:", privateKey.PublicKey.A.Y.String())
+	}
+
 }
 
 func queryCmd() *cobra.Command {
@@ -852,19 +859,20 @@ func queryProofCmd() *cobra.Command {
 	}
 	cmd.AddCommand(getTxProofCmd())
 	cmd.AddCommand(getTxProofByHeightCmd())
+	cmd.AddCommand(getProofByHeightsCmd())
 	cmd.AddCommand(getLastCommitProofCmd())
 	cmd.AddCommand(getZkCommitProofCmd())
 	cmd.AddCommand(getFirstRootHashCmd())
 	cmd.AddCommand(getZkCommitProofListCmd())
 
-	cmd.AddCommand(commitProofCmd())
+	//cmd.AddCommand(commitProofCmd())
 
 	return cmd
 }
 
 func getTxProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proof",
+		Use:   "tx",
 		Short: "get tx proof",
 		Run:   getTxProof,
 	}
@@ -902,8 +910,8 @@ func getTxProof(cmd *cobra.Command, args []string) {
 
 func getTxProofByHeightCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proofs",
-		Short: "get block proofs",
+		Use:   "block",
+		Short: "get block proofs by height",
 		Run:   getTxProofByHeight,
 	}
 	getTxProofByHeightFlag(cmd)
@@ -934,9 +942,63 @@ func getTxProofByHeight(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func getProofByHeightsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "blocks",
+		Short: "get proofs by height range",
+		Run:   getProofByHeights,
+	}
+	getProofByHeightsFlag(cmd)
+	return cmd
+}
+
+func getProofByHeightsFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("start", "s", 0, "start height")
+	cmd.MarkFlagRequired("start")
+
+	cmd.Flags().Uint64P("end", "e", 0, "end height")
+	cmd.MarkFlagRequired("end")
+
+	cmd.Flags().Uint64P("index", "i", 0, "start index of block")
+	cmd.MarkFlagRequired("start")
+
+	cmd.Flags().Uint32P("op", "o", 0, "op index of block")
+	cmd.MarkFlagRequired("op")
+
+	cmd.Flags().BoolP("detail", "d", false, "if need detail")
+	cmd.MarkFlagRequired("detail")
+}
+
+func getProofByHeights(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	start, _ := cmd.Flags().GetUint64("start")
+	end, _ := cmd.Flags().GetUint64("end")
+	index, _ := cmd.Flags().GetUint64("index")
+	op, _ := cmd.Flags().GetUint32("op")
+	detail, _ := cmd.Flags().GetBool("detail")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryProofReq{
+		StartBlockHeight: start,
+		EndBlockHeight:   end,
+		StartIndex:       index,
+		OpIndex:          op,
+		NeedDetail:       detail,
+	}
+
+	params.FuncName = "GetTxProofByHeights"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkQueryProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func getLastCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proofstate",
+		Use:   "last",
 		Short: "get last committed proof",
 		Run:   getLastCommitProof,
 	}
@@ -1079,10 +1141,10 @@ func getZkCommitProofListCmd() *cobra.Command {
 func getZkCommitProofListFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
 	cmd.MarkFlagRequired("proofId")
-	cmd.Flags().Uint64P("proofSubId", "s", 0, "commit proof sub id")
+	cmd.Flags().Uint64P("onChainProofId", "s", 0, "commit on chain proof id")
 
-	cmd.Flags().BoolP("onChain", "o", true, "req onChain proof by sub id")
-	cmd.Flags().BoolP("latestProof", "l", false, "req latest proof")
+	cmd.Flags().BoolP("onChain", "o", true, "if req onChain proof by sub id")
+	cmd.Flags().BoolP("latestProof", "l", false, "if req latest proof")
 	cmd.Flags().Uint64P("endHeight", "e", 0, "latest proof pre endHeight")
 
 }
@@ -1090,7 +1152,7 @@ func getZkCommitProofListFlag(cmd *cobra.Command) {
 func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	proofId, _ := cmd.Flags().GetUint64("proofId")
-	proofSubId, _ := cmd.Flags().GetUint64("proofSubId")
+	onChainProofId, _ := cmd.Flags().GetUint64("onChainProofId")
 	onChain, _ := cmd.Flags().GetBool("onChain")
 	latestProof, _ := cmd.Flags().GetBool("latestProof")
 	end, _ := cmd.Flags().GetUint64("endHeight")
@@ -1100,7 +1162,7 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	params.Execer = zt.Zksync
 	req := &zt.ZkFetchProofList{
 		ProofId:         proofId,
-		ProofSubId:      proofSubId,
+		OnChainProofId:  onChainProofId,
 		ReqOnChainProof: onChain,
 		ReqLatestProof:  latestProof,
 		EndHeight:       end,

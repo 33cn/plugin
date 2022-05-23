@@ -55,8 +55,8 @@ func getLastProofKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
 }
 
-func getLastProofSubIdKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProofSubId"))
+func getLastOnChainProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastOnChainProofId"))
 }
 
 func getValidatorsKey() []byte {

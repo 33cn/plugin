@@ -125,7 +125,7 @@ var opt_commit_proof = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "proof",
 	Primary: "proofId",
-	Index:   []string{"endHeight", "root", "commitHeight", "subId"},
+	Index:   []string{"endHeight", "root", "commitHeight", "onChainId"},
 }
 
 // NewCommitProofTable ...
@@ -178,8 +178,8 @@ func (r *CommitProofRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
 	} else if key == "commitHeight" {
 		return []byte(fmt.Sprintf("%016d", r.GetCommitBlockHeight())), nil
-	} else if key == "subId" {
-		return []byte(fmt.Sprintf("%016d", r.GetProofSubId())), nil
+	} else if key == "onChainId" {
+		return []byte(fmt.Sprintf("%016d", r.GetOnChainProofId())), nil
 	}
 	return nil, types.ErrNotFound
 }
