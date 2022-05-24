@@ -106,6 +106,7 @@ const (
 	DefaultBlockPeriod = 5000
 	BinanceChain       = "Binance"
 	waitTime           = time.Second * 30
+	sleepTile          = time.Second * 10
 	//EthereumChain      = "Ethereum"
 	//USDT               = "USDT"
 )
@@ -342,7 +343,6 @@ func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, 
 
 func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
 	var err error
-	sleepTime := 1
 	bSendEmail := false
 	for true {
 		ethRelayer.clientSpecs, ethRelayer.clientChainID, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
@@ -352,24 +352,20 @@ func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
 				ethRelayer.remindSetupEthClientError()
 				bSendEmail = true
 			}
-			relayerLog.Error("Failed SetupEthClients" + err.Error())
+			relayerLog.Error("Failed getClientSpecs SetupEthClients" + err.Error())
 		}
 
 		if err == nil {
-			relayerLog.Info("Relayer4Ethereum getclientSpecs", "http provider:", ethRelayer.providerHttp, "clientChainID", ethRelayer.clientChainID)
+			relayerLog.Info("Relayer4Ethereum getClientSpecs", "http provider:", ethRelayer.providerHttp, "clientChainID", ethRelayer.clientChainID)
 			break
 		}
 
-		time.Sleep(time.Second * time.Duration(sleepTime))
-		if sleepTime < 10 {
-			sleepTime++
-		}
+		time.Sleep(sleepTile)
 	}
 }
 
 func (ethRelayer *Relayer4Ethereum) getClientWss() {
 	var err error
-	sleepTime := 1
 	bSendEmail := false
 	for true {
 		ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
@@ -379,18 +375,15 @@ func (ethRelayer *Relayer4Ethereum) getClientWss() {
 				ethRelayer.remindSetupEthClientError()
 				bSendEmail = true
 			}
-			relayerLog.Error("Failed SetupEthClients" + err.Error())
+			relayerLog.Error("Failed getClientWss SetupEthClients" + err.Error())
 		}
 
 		if err == nil {
-			relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider)
+			relayerLog.Info("Relayer4Ethereum getClientWss", "Started Ethereum websocket with ws provider:", ethRelayer.provider)
 			break
 		}
 
-		time.Sleep(time.Second * time.Duration(sleepTime))
-		if sleepTime < 10 {
-			sleepTime++
-		}
+		time.Sleep(sleepTile)
 	}
 }
 
@@ -1464,26 +1457,24 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	// We will check logs for new events
 	logs := make(chan types.Log, 10)
 
-	var sub ethereum.Subscription
-	var err error
 	for true {
 		// Filter by contract and event, write results to logs
-		sub, err = ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
+		sub, err := ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
 		if err != nil {
-			relayerLog.Error("subscribeEvent", "Failed to SubscribeFilterLogs due to:", err.Error(), "bridgeBankAddr:", targetAddress)
+			relayerLog.Error("subscribeEvent", "Failed to SubscribeFilterLogs due to:", err.Error(), "bridgeBankAddr:", targetAddress.String())
 			ethRelayer.getClientWss()
 		}
 
 		if err == nil {
+			relayerLog.Info("subscribeEvent", "Subscribed to contract at address:", targetAddress.Hex())
+			ethRelayer.bridgeBankSub = sub
 			break
 		}
 
-		time.Sleep(time.Second * 2)
+		time.Sleep(sleepTile)
 	}
 
-	relayerLog.Info("subscribeEvent", "Subscribed to contract at address:", targetAddress.Hex())
 	ethRelayer.bridgeBankLog = logs
-	ethRelayer.bridgeBankSub = sub
 }
 
 //IsValidatorActive ...
