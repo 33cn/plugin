@@ -13,7 +13,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -77,22 +76,21 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (txhas
 
 	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "nonce", auth.Nonce, "claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash), "claimID", claimID.String())
 
-	tx := &types.Transaction{}
 	for true {
-		tx, err = oracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
+		tx, err := oracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 		if nil != err {
 			txslog.Error("RelayProphecyClaimToEthereum", "NewOracleClaim failed due to:", err.Error())
 			if err.Error() != core.ErrInsufficientFunds.Error() {
 				return "", ErrNodeNetwork
 			}
 		} else {
+			txhash = tx.Hash().Hex()
 			break
 		}
 
 		time.Sleep(time.Second * 10)
 	}
 
-	txhash = tx.Hash().Hex()
 	txslog.Info("RelayProphecyClaimToEthereum", "NewOracleClaim tx hash:", txhash)
 	return txhash, nil
 }
