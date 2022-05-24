@@ -340,37 +340,66 @@ func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, 
 	return ethRelayer.getTransactionReceipt(txhash)
 }
 
-func (ethRelayer *Relayer4Ethereum) proc() {
+func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
+	var err error
 	sleepTime := 1
+	bSendEmail := false
 	for true {
-		var err error
 		ethRelayer.clientSpecs, ethRelayer.clientChainID, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
 		if err != nil {
-			// 节点都不可用 发送邮件
-			ethRelayer.remindSetupEthClientError()
-			time.Sleep(time.Second * time.Duration(sleepTime))
-		}
-
-		ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
-		if err != nil {
-			// 节点都不可用 发送邮件
-			ethRelayer.remindSetupEthClientError()
-			time.Sleep(time.Second * time.Duration(sleepTime))
+			if !bSendEmail {
+				// 节点都不可用 发送邮件
+				ethRelayer.remindSetupEthClientError()
+				bSendEmail = true
+			}
+			relayerLog.Error("Failed SetupEthClients" + err.Error())
 		}
 
 		if err == nil {
+			relayerLog.Info("Relayer4Ethereum getclientSpecs", "http provider:", ethRelayer.providerHttp, "clientChainID", ethRelayer.clientChainID)
 			break
 		}
 
-		sleepTime++
-		if sleepTime > 100 {
-			panic("SetupEthClients too many error " + err.Error())
+		time.Sleep(time.Second * time.Duration(sleepTime))
+		if sleepTime < 10 {
+			sleepTime++
 		}
 	}
+}
+
+func (ethRelayer *Relayer4Ethereum) getClientWss() {
+	var err error
+	sleepTime := 1
+	bSendEmail := false
+	for true {
+		ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
+		if err != nil {
+			if !bSendEmail {
+				// 节点都不可用 发送邮件
+				ethRelayer.remindSetupEthClientError()
+				bSendEmail = true
+			}
+			relayerLog.Error("Failed SetupEthClients" + err.Error())
+		}
+
+		if err == nil {
+			relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider)
+			break
+		}
+
+		time.Sleep(time.Second * time.Duration(sleepTime))
+		if sleepTime < 10 {
+			sleepTime++
+		}
+	}
+}
+
+func (ethRelayer *Relayer4Ethereum) proc() {
+	ethRelayer.getClientSpecs()
+	ethRelayer.getClientWss()
 
 	// Start clientSpec with infura ropsten provider
-	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:",
-		ethRelayer.providerHttp[0], "clientChainID", ethRelayer.clientChainID, "processWithDraw", ethRelayer.processWithDraw)
+	relayerLog.Info("Relayer4Ethereum proc", "processWithDraw", ethRelayer.processWithDraw)
 	ethRelayer.clientSpec = ethRelayer.clientSpecs[0]
 	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
 
@@ -407,6 +436,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			ethRelayer.subscribeEvent()
+			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 			break
@@ -420,6 +450,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			relayerLog.Error("proc", "Need to subscribeEvent again due to bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
+			ethRelayer.filterLogEvents()
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
@@ -1435,35 +1466,24 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 
 	var sub ethereum.Subscription
 	var err error
-	sleepTime := 1
 	for true {
 		// Filter by contract and event, write results to logs
 		sub, err = ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
 		if err != nil {
-			ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
-			if err != nil {
-				// 节点都不可用 发送邮件
-				ethRelayer.remindSetupEthClientError()
-				time.Sleep(time.Second * time.Duration(sleepTime))
-			}
+			relayerLog.Error("subscribeEvent", "Failed to SubscribeFilterLogs due to:", err.Error(), "bridgeBankAddr:", targetAddress)
+			ethRelayer.getClientWss()
 		}
-		time.Sleep(time.Second * time.Duration(sleepTime))
+
 		if err == nil {
 			break
 		}
 
-		sleepTime++
-		if sleepTime > 100 {
-			errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s, bridgeBankAddr:%s", err.Error(), ethRelayer.bridgeBankAddr)
-			panic(errinfo)
-		}
+		time.Sleep(time.Second * 2)
 	}
 
 	relayerLog.Info("subscribeEvent", "Subscribed to contract at address:", targetAddress.Hex())
 	ethRelayer.bridgeBankLog = logs
 	ethRelayer.bridgeBankSub = sub
-
-	ethRelayer.filterLogEvents()
 }
 
 //IsValidatorActive ...
