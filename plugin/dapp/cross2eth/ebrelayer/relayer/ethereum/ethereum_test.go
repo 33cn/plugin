@@ -534,6 +534,7 @@ func proc(ethRelayer *Relayer4Ethereum) {
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			ethRelayer.subscribeEvent()
+			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 			break
@@ -547,6 +548,7 @@ func proc(ethRelayer *Relayer4Ethereum) {
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			relayerLog.Error("proc", "Need to subscribeEvent again due to bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
+			ethRelayer.filterLogEvents()
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
