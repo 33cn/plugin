@@ -106,7 +106,7 @@ const (
 	DefaultBlockPeriod = 5000
 	BinanceChain       = "Binance"
 	waitTime           = time.Second * 30
-	sleepTile          = time.Second * 10
+	sleepTime          = time.Second * 10
 	//EthereumChain      = "Ethereum"
 	//USDT               = "USDT"
 )
@@ -360,7 +360,7 @@ func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
 			break
 		}
 
-		time.Sleep(sleepTile)
+		time.Sleep(sleepTime)
 	}
 }
 
@@ -383,7 +383,7 @@ func (ethRelayer *Relayer4Ethereum) getClientWss() {
 			break
 		}
 
-		time.Sleep(sleepTile)
+		time.Sleep(sleepTime)
 	}
 }
 
@@ -1471,7 +1471,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 			break
 		}
 
-		time.Sleep(sleepTile)
+		time.Sleep(sleepTime)
 	}
 
 	ethRelayer.bridgeBankLog = logs
