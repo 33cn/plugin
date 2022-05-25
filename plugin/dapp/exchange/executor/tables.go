@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -111,7 +112,7 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 	} else if key == "market_order" {
 		return []byte(fmt.Sprintf("%s:%s:%d:%016d", r.GetLimitOrder().LeftAsset.GetSymbol(), r.GetLimitOrder().RightAsset.GetSymbol(), r.GetLimitOrder().Op, r.GetLimitOrder().Price)), nil
 	} else if key == "addr_status" {
-		return []byte(fmt.Sprintf("%s:%d", r.Addr, r.Status)), nil
+		return []byte(fmt.Sprintf("%s:%d", address.FormatAddrKey(r.Addr), r.Status)), nil
 	}
 	return nil, types.ErrNotFound
 }
@@ -147,7 +148,7 @@ func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	} else if key == "name" {
 		return []byte(fmt.Sprintf("%s:%s", m.GetLimitOrder().LeftAsset.GetSymbol(), m.GetLimitOrder().RightAsset.GetSymbol())), nil
 	} else if key == "addr_status" {
-		return []byte(fmt.Sprintf("%s:%d", m.Addr, m.Status)), nil
+		return []byte(fmt.Sprintf("%s:%d", address.FormatAddrKey(m.Addr), m.Status)), nil
 	}
 	return nil, types.ErrNotFound
 }

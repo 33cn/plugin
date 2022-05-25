@@ -169,7 +169,9 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 	if driver.GetName() == eth.Name {
 		return common.LeftPadBytes(crypto.Keccak256(pubKey[1:])[12:], 32), nil
 	}
-	addrBytes, _ := driver.FromString(driver.PubKeyToAddr(pubKey))
+	// compress pub key(chain33中需使用压缩格式)
+	compressedPub, _ := crypto.CompressPubKey(pubKey)
+	addrBytes, _ := driver.FromString(driver.PubKeyToAddr(compressedPub))
 	return common.LeftPadBytes(addrBytes, 32), nil
 }
 

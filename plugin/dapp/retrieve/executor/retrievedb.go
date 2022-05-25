@@ -85,9 +85,9 @@ func (r *DB) Save(db dbm.KV) {
 }
 
 // Key for retrieve
-func Key(address string) (key []byte) {
+func Key(addr string) (key []byte) {
 	key = append(key, []byte("mavl-retrieve-")...)
-	key = append(key, address...)
+	key = append(key, address.FormatAddrKey(addr)...)
 	return key
 }
 

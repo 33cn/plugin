@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 )
 
 //数据库存储格式key
@@ -26,13 +27,13 @@ const (
 
 //statedb中账户和交易的存储格式
 func calcMultiSigAccountKey(multiSigAccAddr string) (key []byte) {
-	return []byte(fmt.Sprintf(MultiSigPrefix+"%s", multiSigAccAddr))
+	return []byte(fmt.Sprintf(MultiSigPrefix+"%s", address.FormatAddrKey(multiSigAccAddr)))
 }
 
 //存储格式："mavl-multisig-tx-accaddr-000000000000"
 func calcMultiSigAccTxKey(multiSigAccAddr string, txid uint64) (key []byte) {
 	txstr := fmt.Sprintf("%018d", txid)
-	return []byte(fmt.Sprintf(MultiSigTxPrefix+"%s-%s", multiSigAccAddr, txstr))
+	return []byte(fmt.Sprintf(MultiSigTxPrefix+"%s-%s", address.FormatAddrKey(multiSigAccAddr), txstr))
 }
 
 //localdb中账户相关的存储格式
@@ -50,12 +51,12 @@ func calcMultiSigAllAcc(accindex int64) (key []byte) {
 
 //记录指定账号地址的信息value：MultiSig。key:Ms:acc
 func calcMultiSigAcc(addr string) (key []byte) {
-	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s", MultiSigAcc, addr))
+	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s", MultiSigAcc, address.FormatAddrKey(addr)))
 }
 
 //记录某个地址创建的所有多重签名账户。key:Ms:create:createAddr，value：[]string。
 func calcMultiSigAccCreateAddr(createAddr string) (key []byte) {
-	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s:-%s", MultiSigAccCreate, createAddr))
+	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s:-%s", MultiSigAccCreate, address.FormatAddrKey(createAddr)))
 }
 
 //localdb中账户相关的存储格式
@@ -64,7 +65,7 @@ func calcMultiSigAccCreateAddr(createAddr string) (key []byte) {
 func calcMultiSigAccTx(addr string, txid uint64) (key []byte) {
 	accstr := fmt.Sprintf("%018d", txid)
 
-	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s-%s", MultiSigTx, addr, accstr))
+	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s-%s", MultiSigTx, address.FormatAddrKey(addr), accstr))
 }
 
 //可以通过前缀查找获取指定账户上收到的所有资产数量
@@ -75,10 +76,10 @@ func calcMultiSigAccTx(addr string, txid uint64) (key []byte) {
 //	string symbol 		= 3;
 //	int64  amount 		= 4;
 func calcAddrRecvAmountKey(addr, execname, symbol string) []byte {
-	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s-%s-%s", MultiSigRecvAssets, addr, execname, symbol))
+	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s-%s-%s", MultiSigRecvAssets, address.FormatAddrKey(addr), execname, symbol))
 }
 
 // 前缀查找某个账户下的所有资产信息
 func calcAddrRecvAmountPrefix(addr string) []byte {
-	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s-", MultiSigRecvAssets, addr))
+	return []byte(fmt.Sprintf(MultiSigLocalPrefix+"%s-%s-", MultiSigRecvAssets, address.FormatAddrKey(addr)))
 }

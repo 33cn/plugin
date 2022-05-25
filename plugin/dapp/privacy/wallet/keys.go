@@ -4,7 +4,10 @@
 
 package wallet
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/33cn/chain33/common/address"
+)
 
 const (
 	// PrivacyDBVersion 隐私交易运行过程中，需要使用到钱包数据库存储的数据库版本信息的KEY值
@@ -87,50 +90,50 @@ func calcKey4UTXOsSpentInTx(key string) []byte {
 
 // calcPrivacyAddrKey 获取隐私账户私钥对保存在钱包中的索引串
 func calcPrivacyAddrKey(addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s", Privacy4Addr, addr))
+	return []byte(fmt.Sprintf("%s-%s", Privacy4Addr, address.FormatAddrKey(addr)))
 }
 
 //calcAddrKey 通过addr地址查询Account账户信息
 func calcAddrKey(addr string) []byte {
-	return []byte(fmt.Sprintf("Addr:%s", addr))
+	return []byte(fmt.Sprintf("Addr:%s", address.FormatAddrKey(addr)))
 }
 
 // calcPrivacyUTXOPrefix4Addr 获取指定地址下可用UTXO信息索引的KEY值前缀
 func calcPrivacyUTXOPrefix4Addr(assetExec, token, addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s-", AvailUTXOs, assetExec, token, addr))
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-", AvailUTXOs, assetExec, token, address.FormatAddrKey(addr)))
 }
 
 // calcFTXOsKeyPrefix 获取指定地址下由于交易未被确认而让交易使用到的UTXO处于冻结状态信息的KEY值前缀
 func calcFTXOsKeyPrefix(assetExec, token, addr string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s-", FrozenUTXOs, assetExec, token, addr))
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-", FrozenUTXOs, assetExec, token, address.FormatAddrKey(addr)))
 }
 
 // calcSendPrivacyTxKey 计算以指定地址作为发送地址的交易信息索引
 // addr为发送地址
 func calcSendPrivacyTxKey(assetExec, assetSymbol, addr, txHeightIndex string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", SendPrivacyTx, assetExec, assetSymbol, addr, txHeightIndex))
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", SendPrivacyTx, assetExec, assetSymbol, address.FormatAddrKey(addr), txHeightIndex))
 }
 
 // calcRecvPrivacyTxKey 计算以指定地址作为接收地址的交易信息索引
 // addr为接收地址
 // key为通过calcTxKey(heightstr)计算出来的值
 func calcRecvPrivacyTxKey(assetExec, tokenname, addr, key string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RecvPrivacyTx, assetExec, tokenname, addr, key))
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RecvPrivacyTx, assetExec, tokenname, address.FormatAddrKey(addr), key))
 }
 
 // calcUTXOKey4TokenAddr 计算当前地址可用UTXO的Key健值
 func calcUTXOKey4TokenAddr(assetExec, token, addr, txhash string, index int) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s-%s-%d", AvailUTXOs, assetExec, token, addr, txhash, index))
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-%s-%d", AvailUTXOs, assetExec, token, address.FormatAddrKey(addr), txhash, index))
 }
 
 // calcKey4FTXOsInTx 交易构建以后,将可用UTXO冻结的健值
 func calcKey4FTXOsInTx(assetExec, token, addr, txhash string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", FrozenUTXOs, assetExec, token, addr, txhash))
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", FrozenUTXOs, assetExec, token, address.FormatAddrKey(addr), txhash))
 }
 
 // calcRescanUtxosFlagKey 新账户导入时扫描区块上该地址相关的UTXO信息
 func calcRescanUtxosFlagKey(addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s", ReScanUtxosFlag, addr))
+	return []byte(fmt.Sprintf("%s-%s", ReScanUtxosFlag, address.FormatAddrKey(addr)))
 }
 
 func calcScanPrivacyInputUTXOKey(txhash string, index int) []byte {
@@ -143,16 +146,16 @@ func calcKey4STXOsInTx(txhash string) []byte {
 
 // calcSTXOTokenAddrTxKey 计算当前地址已花费的UTXO
 func calcSTXOTokenAddrTxKey(assetExec, token, addr, txhash string) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s-%s", PrivacySTXO, assetExec, token, addr, txhash))
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-%s", PrivacySTXO, assetExec, token, address.FormatAddrKey(addr), txhash))
 }
 
 func calcSTXOPrefix4Addr(assetExec, token, addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s-", PrivacySTXO, assetExec, token, addr))
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-", PrivacySTXO, assetExec, token, address.FormatAddrKey(addr)))
 }
 
 // calcRevertSendTxKey 交易因为区块回退而将已经花费的UTXO移动到冻结UTXO队列的健值
 func calcRevertSendTxKey(assetExec, tokenname, addr, txhash string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RevertSendtx, assetExec, tokenname, addr, txhash))
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RevertSendtx, assetExec, tokenname, address.FormatAddrKey(addr), txhash))
 }
 
 //通过height*100000+index 查询Tx交易信息

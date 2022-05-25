@@ -26,7 +26,8 @@ func TestEcrecoverSignTypedMessage(t *testing.T) {
 		log15.Info("ecrecover", "failed due to", err.Error())
 		panic("ecrecover")
 	}
-
+	pubKey, err = crypto.CompressPubKey(pubKey)
+	assert.Nil(t, err)
 	//fmt.Println("ecrecover", "pubkey", common.Bytes2Hex(pubKey))
 	//fmt.Println("recoverd address", address.PubKeyToAddress(pubKey).String())
 	addr := common.PubKey2Address(pubKey)
