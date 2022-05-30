@@ -104,7 +104,6 @@ var (
 
 const (
 	DefaultBlockPeriod = 5000
-	BinanceChain       = "Binance"
 	waitTime           = time.Second * 30
 	sleepTime          = time.Second * 10
 	//EthereumChain      = "Ethereum"
@@ -517,7 +516,7 @@ func (ethRelayer *Relayer4Ethereum) SendRemind(url, postData string) {
 
 func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol, chain33TxHash string) {
 	ethName := "以太坊"
-	if ethRelayer.GetName() == BinanceChain {
+	if ethRelayer.GetName() == ethtxs.BinanceChain {
 		ethName = "BSC"
 	}
 	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
@@ -870,14 +869,16 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 
 	ethRelayer.getAvailableClient()
 	burnOrLockParameter := &ethtxs.BurnOrLockParameter{
-		OracleInstance: ethRelayer.x2EthContracts.Oracle,
-		Client:         ethRelayer.clientSpec,
-		Sender:         ethRelayer.ethSender,
-		TokenOnEth:     tokenAddr,
-		Claim:          prophecyClaim,
-		PrivateKey:     ethRelayer.privateKey4Ethereum,
-		Addr2TxNonce:   ethRelayer.Addr2TxNonce,
-		ChainId:        ethRelayer.clientChainID,
+		OracleInstance:          ethRelayer.x2EthContracts.Oracle,
+		Clients:                 ethRelayer.clientSpecs,
+		ClientBSCRecommendSpecs: ethRelayer.clientBSCRecommendSpecs,
+		Sender:                  ethRelayer.ethSender,
+		TokenOnEth:              tokenAddr,
+		Claim:                   prophecyClaim,
+		PrivateKey:              ethRelayer.privateKey4Ethereum,
+		Addr2TxNonce:            ethRelayer.Addr2TxNonce,
+		ChainId:                 ethRelayer.clientChainID,
+		ChainName:               ethRelayer.name,
 	}
 
 	var ethTxhash string
@@ -1788,7 +1789,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 	}
 
 	// 交易同时发送到 BSC 官方节点
-	if ethRelayer.name == BinanceChain {
+	if ethRelayer.name == ethtxs.BinanceChain {
 		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
 			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 			err = ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
@@ -1812,7 +1813,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 
 func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
 	ethName := "以太坊"
-	if ethRelayer.name == BinanceChain {
+	if ethRelayer.name == ethtxs.BinanceChain {
 		ethName = "BSC"
 	}
 

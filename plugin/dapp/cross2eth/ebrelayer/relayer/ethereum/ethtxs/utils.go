@@ -154,7 +154,7 @@ func PrepareAuth(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey
 	return auth, nil
 }
 
-func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address, addr2TxNonce map[common.Address]*NonceMutex) (*bind.TransactOpts, error) {
+func PrepareAuthNewKeyedTransactOpts(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey) (*bind.TransactOpts, error) {
 	if nil == privateKey || nil == client {
 		txslog.Error("PrepareAuth", "nil input parameter", "client", client, "privateKey", privateKey)
 		return nil, errors.New("nil input parameter")
@@ -186,6 +186,16 @@ func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ec
 	auth.Value = big.NewInt(0) // in wei
 	auth.GasLimit = GasLimit4Deploy
 	auth.GasPrice = gasPrice
+
+	return auth, nil
+}
+
+func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address, addr2TxNonce map[common.Address]*NonceMutex) (*bind.TransactOpts, error) {
+	auth, err := PrepareAuthNewKeyedTransactOpts(client, privateKey)
+	if err != nil {
+		txslog.Error("PrepareAuth NewKeyedTransactorWithChainID", "err", err)
+		return nil, err
+	}
 
 	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce, false); err != nil {
 		return nil, err
