@@ -75,9 +75,11 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 	}
 
 	Addr2TxNonce := make(map[common.Address]*NonceMutex)
+	var clients []ethinterface.EthClientSpec
+	clients = append(clients, sim)
 	burnOrLockParameter := &BurnOrLockParameter{
 		OracleInstance: x2EthContracts.Oracle,
-		Client:         sim,
+		Clients:        clients,
 		Sender:         para.InitValidators[0],
 		TokenOnEth:     common.HexToAddress("0x0000000000000000000000000000000000000000"),
 		Claim:          prophecyClaim,
