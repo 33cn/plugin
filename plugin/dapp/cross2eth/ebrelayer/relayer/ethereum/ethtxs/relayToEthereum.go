@@ -113,8 +113,9 @@ func NewOracleClaimSend(client ethinterface.EthClientSpec, nonce *big.Int, burnO
 	tokenOnEth := burnOrLockParameter.TokenOnEth
 	claim := burnOrLockParameter.Claim
 	privateKey := burnOrLockParameter.PrivateKey
+	chainId := burnOrLockParameter.ChainId
 
-	transactOpts, err := PrepareAuthNewKeyedTransactOpts(client, privateKey)
+	transactOpts, err := PrepareAuthNewKeyedTransactOpts(client, privateKey, chainId)
 	if nil != err {
 		txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 		return
