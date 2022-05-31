@@ -337,17 +337,52 @@ message ZkFetchProofList {
   uint64 endHeight = 5; //截止高度
 }
 
+//NFT content hash切分成两部分
+message ZkContentHash {
+  string part1 = 1;
+  string part2 = 2;
+}
+
+message ZkOpNFTData {
+  uint64 tokenId = 1;
+  uint64 creatorId = 2;  //for withdraw NFT
+  uint64 creatorSerialId = 3; //for withdraw NFT
+  uint64 ercProtocol = 4;
+  string mintAmount = 5;
+  string amount = 6;
+  ZkContentHash content = 7;
+}
+
+//swapData: from maker pov
+message ZkOpSwapData {
+  uint64 tokenId = 1;
+  string amount  = 2;
+  string fee     = 3;
+}
+
+message ZkOpFeeData {
+  uint64 tokenId = 1;
+  string fee     = 2;
+}
+
+message ZkSetPubKeyData {
+   uint64 ty = 1; //set type, self or proxy
+   ZkPubKey pubKey = 7; //eddsa公钥，用于验证身份
+}
+
 message ZkOperation {
+  int32 ty = 1;
+  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
+  uint64 tokenId = 3;
+  string amount = 4;
+  ZkOpFeeData feeData    = 5;
+  string ethAddress = 6; //账户对应的以太坊地址
+  ZkSetPubKeyData setPubKey = 7; //eddsa公钥，用于验证身份
+  string chain33Addr = 8; //chain33地址
+  uint64 toAccountId = 9;
+  ZkOpNFTData NFTData = 10;
+  ZkOpSwapData swapData = 11;
 
-  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
-  uint64 tokenId = 2;
-  string amount = 3;
-  string ethAddress = 5; //账户对应的以太坊地址
-  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
-  string chain33Addr = 7; //chain33地址
-  uint64 toAccountId = 4;
-
-  int32 ty = 8;
 }
 
 message EthPriorityQueueID {

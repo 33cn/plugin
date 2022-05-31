@@ -516,7 +516,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 				TokenId: tokenId,
 				Balance: amount,
 			}
-			//如果NFTAccountId第一次初始化token，需要设置特殊balance作为新NFT token ID
+			//如果NFTAccountId第一次初始化token，因为缺省初始balance为（SystemNFTTokenId+1),这里add时候默认为+2
 			if accountId == zt.SystemNFTAccountId && tokenId == zt.SystemNFTTokenId {
 				token.Balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 2).String()
 			}
@@ -659,6 +659,26 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	return h.Sum(nil)
 }
 
+func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
+	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
+	h.Write(accountIdBytes[:])
+	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
+	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+
+	getLeafPubKeyHash(h, leaf.GetPubKey())
+	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
+	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
+	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
+
+	tokenTree := getNewTree()
+	for _, token := range leaf.Tokens {
+		tokenTree.Push(getTokenBalanceHash(token))
+	}
+	h.Write(tokenTree.Root())
+	return h.Sum(nil)
+}
+
 func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
 	if pubKey != nil {
 		h.Write(zt.Str2Byte(pubKey.GetX()))
@@ -687,35 +707,6 @@ func getTokenBalanceHash(token *zt.TokenBalance) []byte {
 	tokenIdBytes := new(fr.Element).SetUint64(token.GetTokenId()).Bytes()
 	h.Write(tokenIdBytes[:])
 	h.Write(zt.Str2Byte(token.Balance))
-	return h.Sum(nil)
-}
-
-func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
-
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
-	h.Write(accountIdBytes[:])
-	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
-	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
-	if leaf.GetPubKey() != nil {
-		h.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
-		h.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
-	} else {
-		h.Write(zt.Str2Byte("0")) //X
-		h.Write(zt.Str2Byte("0")) //Y
-	}
-	getLeafPubKeyHash(h, leaf.GetPubKey())
-	if leaf.GetProxyPubKeys() != nil {
-		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
-		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
-		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
-	}
-
-	tokenTree := getNewTree()
-	for _, token := range leaf.Tokens {
-		tokenTree.Push(getTokenBalanceHash(token))
-	}
-	h.Write(tokenTree.Root())
 	return h.Sum(nil)
 }
 
