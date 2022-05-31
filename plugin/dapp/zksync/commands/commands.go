@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 
@@ -864,6 +865,7 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getZkCommitProofCmd())
 	cmd.AddCommand(getFirstRootHashCmd())
 	cmd.AddCommand(getZkCommitProofListCmd())
+	cmd.AddCommand(getEscapeProofCmd())
 
 	//cmd.AddCommand(commitProofCmd())
 
@@ -1172,6 +1174,44 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.ZkCommitProof
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getEscapeProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "escape",
+		Short: "get account's escape proof",
+		Run:   getEscape,
+	}
+	getEscapeFlag(cmd)
+	return cmd
+}
+
+func getEscapeFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("account", "a", 0, "account id")
+	cmd.MarkFlagRequired("account")
+	cmd.Flags().StringP("rootHash", "r", "", "target tree root hash")
+	cmd.MarkFlagRequired("rootHash")
+
+}
+
+func getEscape(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	account, _ := cmd.Flags().GetUint64("account")
+	rootHash, _ := cmd.Flags().GetString("rootHash")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqMultiStrings{}
+	req.Datas = append(req.Datas, new(big.Int).SetUint64(account).String())
+	req.Datas = append(req.Datas, rootHash)
+
+	params.FuncName = "GetEscapeProof"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.MerkleTreeProof
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
