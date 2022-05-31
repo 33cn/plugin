@@ -2,6 +2,7 @@ package ethtxs
 
 import (
 	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core"
 	"math/big"
 	"time"
@@ -39,6 +40,7 @@ type BurnOrLockParameter struct {
 	Addr2TxNonce            map[common.Address]*NonceMutex
 	ChainId                 *big.Int
 	ChainName               string
+	Registry                common.Address
 }
 
 // RelayOracleClaimToEthereum : relays the provided burn or lock to Chain33Bridge contract on the Ethereum network
@@ -89,13 +91,13 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (txhas
 			txhash = tx.Hash().Hex()
 
 			for i := 1; i < len(burnOrLockParameter.Clients); i++ {
-				NewOracleClaimSend(burnOrLockParameter.Clients[i], auth.Nonce, burnOrLockParameter, claimID, signature)
+				NewOracleClaimSend(burnOrLockParameter.Clients[i], auth, burnOrLockParameter, claimID, signature)
 			}
 
 			// 交易同时发送到 BSC 官方节点
 			if burnOrLockParameter.ChainName == BinanceChain {
 				for i := 0; i < len(burnOrLockParameter.ClientBSCRecommendSpecs); i++ {
-					NewOracleClaimSend(burnOrLockParameter.ClientBSCRecommendSpecs[i], auth.Nonce, burnOrLockParameter, claimID, signature)
+					NewOracleClaimSend(burnOrLockParameter.ClientBSCRecommendSpecs[i], auth, burnOrLockParameter, claimID, signature)
 				}
 			}
 
@@ -108,21 +110,23 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (txhas
 	return txhash, nil
 }
 
-func NewOracleClaimSend(client ethinterface.EthClientSpec, nonce *big.Int, burnOrLockParameter *BurnOrLockParameter, claimID [32]byte, signature []byte) {
-	oracleInstance := burnOrLockParameter.OracleInstance
+func NewOracleClaimSend(client ethinterface.EthClientSpec, transactOpts *bind.TransactOpts, burnOrLockParameter *BurnOrLockParameter, claimID [32]byte, signature []byte) {
+	registry := burnOrLockParameter.Registry
 	tokenOnEth := burnOrLockParameter.TokenOnEth
 	claim := burnOrLockParameter.Claim
-	privateKey := burnOrLockParameter.PrivateKey
-	chainId := burnOrLockParameter.ChainId
 
-	transactOpts, err := PrepareAuthNewKeyedTransactOpts(client, privateKey, chainId)
+	oracleAddr, err := GetAddressFromBridgeRegistry(client, registry, registry, Oracle)
 	if nil != err {
-		txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
+		txslog.Error("failed to get addr for oracleBridgeAddr from registry")
 		return
 	}
 
-	transactOpts.Nonce = nonce
-	transactOpts.GasLimit = GasLimit4RelayTx
+	oracleInstance, err := generated.NewOracle(*oracleAddr, client)
+	if nil != err {
+		txslog.Error("failed to NewOracle")
+		return
+	}
+
 	tx, err := oracleInstance.NewOracleClaim(transactOpts, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 	if nil != err {
 		if err.Error() != core.ErrAlreadyKnown.Error() && err.Error() == core.ErrNonceTooLow.Error() && err.Error() == core.ErrNonceTooHigh.Error() {

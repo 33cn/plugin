@@ -879,6 +879,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		Addr2TxNonce:            ethRelayer.Addr2TxNonce,
 		ChainId:                 ethRelayer.clientChainID,
 		ChainName:               ethRelayer.name,
+		Registry:                ethRelayer.bridgeRegistryAddr,
 	}
 
 	var ethTxhash string
