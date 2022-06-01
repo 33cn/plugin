@@ -85,6 +85,12 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 		for i := 0; i < len(burnOrLockParameter.Clients); i++ {
 			tx, err := NewOracleClaimSend(burnOrLockParameter.Clients[i], auth, burnOrLockParameter, claimID, signature)
 			if err != nil {
+				// 如果第一次发生交易, 不是金额不够的错误,, 直接 return 报错退出
+				if i == 0 && err.Error() != core.ErrInsufficientFunds.Error() {
+					txslog.Error("RelayProphecyClaimToEthereum", "NewOracleClaim failed due to:", err.Error())
+					return "", ErrNodeNetwork
+				}
+
 				if err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 					txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 				}
@@ -141,7 +147,7 @@ func NewOracleClaimSend(client ethinterface.EthClientSpec, transactOpts *bind.Tr
 
 	tx, err := oracleInstance.NewOracleClaim(transactOpts, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 	if nil != err {
-		return "", errors.New("failed to NewOracleClaim " + err.Error())
+		return "", err
 	}
 	txslog.Info("RelayProphecyClaimToEthereum", "tx", tx.Hash().Hex(), "claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash))
 	return tx.Hash().Hex(), nil
