@@ -869,7 +869,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 
 	ethRelayer.getAvailableClient()
 	burnOrLockParameter := &ethtxs.BurnOrLockParameter{
-		OracleInstance:          ethRelayer.x2EthContracts.Oracle,
 		Clients:                 ethRelayer.clientSpecs,
 		ClientBSCRecommendSpecs: ethRelayer.clientBSCRecommendSpecs,
 		Sender:                  ethRelayer.ethSender,
