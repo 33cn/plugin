@@ -387,7 +387,7 @@ func (ethRelayer *Relayer4Ethereum) getClientWss() {
 	}
 }
 
-// 获取最高高度的节点
+// 获取同步节点
 func (ethRelayer *Relayer4Ethereum) getClientSpec() {
 	ethRelayer.clientSpec = ethRelayer.clientSpecs[0].Client
 	ethRelayer.clientUrlSelected = ethRelayer.clientSpecs[0].ClientUrl
