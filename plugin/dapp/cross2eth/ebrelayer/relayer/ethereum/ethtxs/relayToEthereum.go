@@ -117,13 +117,13 @@ func NewOracleClaimSend(client ethinterface.EthClientSpec, transactOpts *bind.Tr
 
 	oracleAddr, err := GetAddressFromBridgeRegistry(client, registry, registry, Oracle)
 	if nil != err {
-		txslog.Error("failed to get addr for oracleBridgeAddr from registry")
+		txslog.Error("RelayProphecyClaimToEthereum", "failed to get addr for oracleBridgeAddr from registry", err.Error())
 		return
 	}
 
 	oracleInstance, err := generated.NewOracle(*oracleAddr, client)
 	if nil != err {
-		txslog.Error("failed to NewOracle")
+		txslog.Error("RelayProphecyClaimToEthereum", "failed to NewOracle", err.Error())
 		return
 	}
 
