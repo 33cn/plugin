@@ -63,7 +63,8 @@ type Relayer4Ethereum struct {
 	fetchHeightPeriodMs     int32
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
-	clientSpecs             []ethinterface.EthClientSpec
+	clientUrlSelected       string
+	clientSpecs             []*ethtxs.EthClientWithUrl
 	clientBSCRecommendSpecs []ethinterface.EthClientSpec
 	clientWss               ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
@@ -367,7 +368,7 @@ func (ethRelayer *Relayer4Ethereum) getClientWss() {
 	var err error
 	bSendEmail := false
 	for true {
-		ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
+		ethRelayer.clientWss, _, err = ethtxs.SetupEthClient(&ethRelayer.provider)
 		if err != nil {
 			if !bSendEmail {
 				// 节点都不可用 发送邮件
@@ -386,13 +387,18 @@ func (ethRelayer *Relayer4Ethereum) getClientWss() {
 	}
 }
 
-func (ethRelayer *Relayer4Ethereum) proc() {
-	ethRelayer.getClientSpecs()
-	ethRelayer.getClientWss()
+// 获取最高高度的节点
+func (ethRelayer *Relayer4Ethereum) getClientSpec() {
+	ethRelayer.clientSpec = ethRelayer.clientSpecs[0].Client
+	ethRelayer.clientUrlSelected = ethRelayer.clientSpecs[0].ClientUrl
+	ethRelayer.getAvailableClient()
+}
 
-	// Start clientSpec with infura ropsten provider
-	relayerLog.Info("Relayer4Ethereum proc", "processWithDraw", ethRelayer.processWithDraw)
-	ethRelayer.clientSpec = ethRelayer.clientSpecs[0]
+func (ethRelayer *Relayer4Ethereum) proc() {
+	relayerLog.Info("Relayer4Ethereum proc", "processWithDraw", ethRelayer.processWithDraw, "delayedSend", ethRelayer.delayedSend)
+	ethRelayer.getClientSpecs()
+	ethRelayer.getClientSpec()
+	ethRelayer.getClientWss()
 	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
 
 	//等待用户导入
@@ -867,25 +873,11 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		}
 	}
 
-	ethRelayer.getAvailableClient()
-	burnOrLockParameter := &ethtxs.BurnOrLockParameter{
-		Clients:                 ethRelayer.clientSpecs,
-		ClientBSCRecommendSpecs: ethRelayer.clientBSCRecommendSpecs,
-		Sender:                  ethRelayer.ethSender,
-		TokenOnEth:              tokenAddr,
-		Claim:                   prophecyClaim,
-		PrivateKey:              ethRelayer.privateKey4Ethereum,
-		Addr2TxNonce:            ethRelayer.Addr2TxNonce,
-		ChainId:                 ethRelayer.clientChainID,
-		ChainName:               ethRelayer.name,
-		Registry:                ethRelayer.bridgeRegistryAddr,
-	}
-
 	var ethTxhash string
 	var err error
 	isClaimIDProcessed := false
 	if ethRelayer.delayedSend {
-		claimID := crypto.Keccak256Hash(burnOrLockParameter.Claim.Chain33TxHash, burnOrLockParameter.Claim.Chain33Sender, burnOrLockParameter.Claim.EthereumReceiver.Bytes(), []byte(burnOrLockParameter.Claim.Symbol), burnOrLockParameter.Claim.Amount.Bytes())
+		claimID := crypto.Keccak256Hash(prophecyClaim.Chain33TxHash, prophecyClaim.Chain33Sender, prophecyClaim.EthereumReceiver.Bytes(), []byte(prophecyClaim.Symbol), prophecyClaim.Amount.Bytes())
 		prophecyProcessed, err := ethRelayer.getClaimIDExecuteAlready(claimID.String())
 		if nil != err {
 			relayerLog.Info("handleLogLockBurn", "Failed to getClaimIDExecuteAlready due to", err.Error(), "claimID", claimID.String())
@@ -899,6 +891,22 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	}
 
 	if !isClaimIDProcessed {
+		ethRelayer.getAvailableClient()
+		burnOrLockParameter := &ethtxs.BurnOrLockParameter{
+			ClientSpec:              ethRelayer.clientSpec,
+			ClientUrlSelected:       ethRelayer.clientUrlSelected,
+			Clients:                 ethRelayer.clientSpecs,
+			ClientBSCRecommendSpecs: ethRelayer.clientBSCRecommendSpecs,
+			Sender:                  ethRelayer.ethSender,
+			TokenOnEth:              tokenAddr,
+			Claim:                   prophecyClaim,
+			PrivateKey:              ethRelayer.privateKey4Ethereum,
+			Addr2TxNonce:            ethRelayer.Addr2TxNonce,
+			ChainId:                 ethRelayer.clientChainID,
+			ChainName:               ethRelayer.name,
+			Registry:                ethRelayer.bridgeRegistryAddr,
+		}
+
 		// Relay the Chain33Msg to the Ethereum network
 		ethTxhash, err = ethtxs.RelayOracleClaimToEthereum(burnOrLockParameter)
 		if err != nil {
@@ -970,9 +978,10 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 	defer cancel()
 
 	if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout); nil != syncProc || nil != err {
-		relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
+		relayerLog.Error("getAvailableClient", "Eth node not syncing for address", ethRelayer.clientUrlSelected)
 		for {
-			ethRelayer.clientSpec, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
+			var urlSelected string
+			ethRelayer.clientSpec, urlSelected, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 			if err != nil {
 				relayerLog.Error("getAvailableClient", "Failed to SetupEthClient due to", err.Error())
 				time.Sleep(5 * time.Second)
@@ -982,11 +991,14 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 			timeout2, cancel2 := context.WithTimeout(context.Background(), waitTime)
 			if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout2); nil != syncProc || nil != err {
 				cancel2()
-				relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
+				relayerLog.Error("getAvailableClient", "Eth node not syncing for address", urlSelected)
 				time.Sleep(5 * time.Second)
 				continue
 			}
 			cancel2()
+
+			ethRelayer.clientUrlSelected = urlSelected
+			relayerLog.Info("getAvailableClient", "Eth node is syncing for address", urlSelected)
 			break
 		}
 	}
@@ -1777,7 +1789,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 	var err error
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 		timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-		err = ethRelayer.clientSpecs[i].SendTransaction(timeout, signedTx)
+		err = ethRelayer.clientSpecs[i].Client.SendTransaction(timeout, signedTx)
 		cancel()
 		if err == nil {
 			bSuccess = true
@@ -1849,7 +1861,7 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 	for {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-			logs, err := ethRelayer.clientSpecs[i].FilterLogs(timeout, query)
+			logs, err := ethRelayer.clientSpecs[i].Client.FilterLogs(timeout, query)
 			cancel()
 			if err == nil {
 				return logs, nil
@@ -1868,7 +1880,7 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*types.Receipt, error) {
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 		timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-		receipt, err := ethRelayer.clientSpecs[i].TransactionReceipt(timeout, txHash)
+		receipt, err := ethRelayer.clientSpecs[i].Client.TransactionReceipt(timeout, txHash)
 		cancel()
 		if err == nil {
 			return receipt, nil
@@ -1890,7 +1902,7 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (uint64, error) {
 	for {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-			head, err := ethRelayer.clientSpecs[i].HeaderByNumber(timeout, nil)
+			head, err := ethRelayer.clientSpecs[i].Client.HeaderByNumber(timeout, nil)
 			cancel()
 			if err == nil {
 				return head.Number.Uint64(), nil
@@ -1911,7 +1923,7 @@ func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int,
 	for j := 0; j < 2; j++ {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-			balance, err := ethRelayer.clientSpecs[i].BalanceAt(timeout, addr, nil)
+			balance, err := ethRelayer.clientSpecs[i].Client.BalanceAt(timeout, addr, nil)
 			cancel()
 			if err == nil {
 				return balance, nil
@@ -1934,7 +1946,7 @@ func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]by
 	for j := 0; j < 2; j++ {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-			result, err := ethRelayer.clientSpecs[i].CallContract(timeout, call, nil)
+			result, err := ethRelayer.clientSpecs[i].Client.CallContract(timeout, call, nil)
 			cancel()
 			if err == nil {
 				return result, nil

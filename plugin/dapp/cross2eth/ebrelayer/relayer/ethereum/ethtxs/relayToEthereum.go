@@ -30,8 +30,15 @@ const (
 	GasLimit4Deploy  = uint64(0) //此处需要设置为0,让交易自行估计,否则将会导致部署失败,TODO:其他解决途径后续调研解决
 )
 
+type EthClientWithUrl struct {
+	Client    ethinterface.EthClientSpec
+	ClientUrl string
+}
+
 type BurnOrLockParameter struct {
-	Clients                 []ethinterface.EthClientSpec
+	ClientSpec              ethinterface.EthClientSpec
+	ClientUrlSelected       string
+	Clients                 []*EthClientWithUrl
 	ClientBSCRecommendSpecs []ethinterface.EthClientSpec
 	Sender                  common.Address
 	TokenOnEth              common.Address
@@ -45,7 +52,8 @@ type BurnOrLockParameter struct {
 
 // RelayOracleClaimToEthereum : relays the provided burn or lock to Chain33Bridge contract on the Ethereum network
 func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (string, error) {
-	client := burnOrLockParameter.Clients[0]
+	clientUrlSelected := burnOrLockParameter.ClientUrlSelected
+	client := burnOrLockParameter.ClientSpec
 	sender := burnOrLockParameter.Sender
 	tokenOnEth := burnOrLockParameter.TokenOnEth
 	claim := burnOrLockParameter.Claim
@@ -80,46 +88,38 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "nonce", auth.Nonce, "claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash), "claimID", claimID.String())
 
 	var txhash string
-	bSendSucceed := false
 	for true {
-		for i := 0; i < len(burnOrLockParameter.Clients); i++ {
-			tx, err := NewOracleClaimSend(burnOrLockParameter.Clients[i], auth, burnOrLockParameter, claimID, signature)
-			if err != nil {
-				// 如果第一次发生交易, 不是金额不够的错误,, 直接 return 报错退出
-				if i == 0 && err.Error() != core.ErrInsufficientFunds.Error() {
-					txslog.Error("RelayProphecyClaimToEthereum", "NewOracleClaim failed due to:", err.Error())
-					return "", ErrNodeNetwork
-				}
+		tx, err := NewOracleClaimSend(client, auth, burnOrLockParameter, claimID, signature)
+		// 如果不是金额不够的错误, 直接 return 报错退出
+		if nil != err {
+			txslog.Error("RelayProphecyClaimToEthereum", "NewOracleClaim failed due to:", err.Error())
+			if err.Error() != core.ErrInsufficientFunds.Error() {
+				return "", ErrNodeNetwork
+			}
+		} else {
+			txhash = tx
 
-				if err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
+			// 往其他节点也发送交易
+			for i := 0; i < len(burnOrLockParameter.Clients); i++ {
+				if burnOrLockParameter.Clients[i].ClientUrl == clientUrlSelected {
+					// 前面已经发生了, 不继续发生
+					continue
+				}
+				_, err := NewOracleClaimSend(burnOrLockParameter.Clients[i].Client, auth, burnOrLockParameter, claimID, signature)
+				if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 					txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 				}
-			} else {
-				if !bSendSucceed {
-					bSendSucceed = true
-					txhash = tx
-				}
 			}
-		}
 
-		// 交易同时发送到 BSC 官方节点
-		if burnOrLockParameter.ChainName == BinanceChain {
-			for i := 0; i < len(burnOrLockParameter.ClientBSCRecommendSpecs); i++ {
-				tx, err := NewOracleClaimSend(burnOrLockParameter.ClientBSCRecommendSpecs[i], auth, burnOrLockParameter, claimID, signature)
-				if err != nil {
-					if err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
+			// 交易同时发送到 BSC 官方节点
+			if burnOrLockParameter.ChainName == BinanceChain {
+				for i := 0; i < len(burnOrLockParameter.ClientBSCRecommendSpecs); i++ {
+					_, err := NewOracleClaimSend(burnOrLockParameter.ClientBSCRecommendSpecs[i], auth, burnOrLockParameter, claimID, signature)
+					if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 						txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 					}
-				} else {
-					if !bSendSucceed {
-						bSendSucceed = true
-						txhash = tx
-					}
 				}
 			}
-		}
-
-		if bSendSucceed {
 			break
 		}
 
