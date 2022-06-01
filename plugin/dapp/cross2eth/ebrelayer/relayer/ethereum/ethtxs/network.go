@@ -30,14 +30,14 @@ func SelectAndRoundEthURL(ethURL *[]string) (string, error) {
 	return result, nil
 }
 
-func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
+func SetupEthClient(ethURL *[]string) (*ethclient.Client, string, error) {
 	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
 			txslog.Error("SetupEthClient", "SelectAndRoundEthURL err", err.Error())
-			return nil, err
+			return nil, "", err
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
@@ -50,15 +50,15 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 			continue
 		}
 		txslog.Debug("SetupEthClient", "SelectAndRoundEthURL:", urlSelected)
-		return client, nil
+		return client, urlSelected, nil
 	}
-	return nil, errors.New("FailedToSetupEthClient")
+	return nil, "", errors.New("FailedToSetupEthClient")
 }
 
-func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, *big.Int, error) {
+func SetupEthClients(ethURL *[]string) ([]*EthClientWithUrl, *big.Int, error) {
 	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	var Clients []ethinterface.EthClientSpec
+	var Clients []*EthClientWithUrl
 	var clientChainID *big.Int
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
@@ -77,7 +77,8 @@ func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, *big.Int, 
 			continue
 		}
 		txslog.Debug("SetupEthClients", "SelectAndRoundEthURL:", urlSelected)
-		Clients = append(Clients, client)
+
+		Clients = append(Clients, &EthClientWithUrl{Client: client, ClientUrl: urlSelected})
 		clientChainID = chainID
 	}
 
