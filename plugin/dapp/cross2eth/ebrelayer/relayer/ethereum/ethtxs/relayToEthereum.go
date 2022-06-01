@@ -102,7 +102,7 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 			// 往其他节点也发送交易
 			for i := 0; i < len(burnOrLockParameter.Clients); i++ {
 				if burnOrLockParameter.Clients[i].ClientUrl == clientUrlSelected {
-					// 前面已经发生了, 不继续发生
+					// 前面已经发送了, 不继续发送
 					continue
 				}
 				_, err := NewOracleClaimSend(burnOrLockParameter.Clients[i].Client, auth, burnOrLockParameter, claimID, signature)
