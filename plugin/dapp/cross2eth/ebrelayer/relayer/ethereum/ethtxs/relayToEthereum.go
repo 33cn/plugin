@@ -2,7 +2,6 @@ package ethtxs
 
 import (
 	"crypto/ecdsa"
-	"errors"
 	"math/big"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
@@ -31,15 +29,15 @@ const (
 )
 
 type EthClientWithUrl struct {
-	Client    ethinterface.EthClientSpec
-	ClientUrl string
+	ClientUrl      string
+	Client         ethinterface.EthClientSpec
+	OracleInstance *generated.Oracle
 }
 
 type BurnOrLockParameter struct {
-	ClientSpec              ethinterface.EthClientSpec
-	ClientUrlSelected       string
+	ClientSpec              *EthClientWithUrl
 	Clients                 []*EthClientWithUrl
-	ClientBSCRecommendSpecs []ethinterface.EthClientSpec
+	ClientBSCRecommendSpecs []*EthClientWithUrl
 	Sender                  common.Address
 	TokenOnEth              common.Address
 	Claim                   ProphecyClaim
@@ -47,13 +45,11 @@ type BurnOrLockParameter struct {
 	Addr2TxNonce            map[common.Address]*NonceMutex
 	ChainId                 *big.Int
 	ChainName               string
-	Registry                common.Address
 }
 
 // RelayOracleClaimToEthereum : relays the provided burn or lock to Chain33Bridge contract on the Ethereum network
 func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (string, error) {
-	clientUrlSelected := burnOrLockParameter.ClientUrlSelected
-	client := burnOrLockParameter.ClientSpec
+	ethClientWithUrl := burnOrLockParameter.ClientSpec
 	sender := burnOrLockParameter.Sender
 	tokenOnEth := burnOrLockParameter.TokenOnEth
 	claim := burnOrLockParameter.Claim
@@ -64,7 +60,7 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "chain33Sender", hexutil.Encode(claim.Chain33Sender), "ethereumReceiver", claim.EthereumReceiver.String(),
 		"TokenAddress", claim.TokenContractAddress.String(), "symbol", claim.Symbol, "Amount", claim.Amount.String(), "claimType", claim.ClaimType, "tokenOnEth", tokenOnEth.String())
 
-	auth, err := PrepareAuth4MultiEthereumOpt(client, privateKey, sender, addr2TxNonce, chainId)
+	auth, err := PrepareAuth4MultiEthereumOpt(ethClientWithUrl.Client, privateKey, sender, addr2TxNonce, chainId)
 	if nil != err {
 		txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 		return "", ErrNodeNetwork
@@ -89,7 +85,7 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 
 	var txhash string
 	for true {
-		tx, err := NewOracleClaimSend(client, auth, burnOrLockParameter, claimID, signature)
+		tx, err := ethClientWithUrl.OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 		// 如果不是金额不够的错误, 直接 return 报错退出
 		if nil != err {
 			txslog.Error("RelayProphecyClaimToEthereum", "NewOracleClaim failed due to:", err.Error())
@@ -97,26 +93,30 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 				return "", ErrNodeNetwork
 			}
 		} else {
-			txhash = tx
+			txhash = tx.Hash().Hex()
 
 			// 往其他节点也发送交易
 			for i := 0; i < len(burnOrLockParameter.Clients); i++ {
-				if burnOrLockParameter.Clients[i].ClientUrl == clientUrlSelected {
+				if burnOrLockParameter.Clients[i].ClientUrl == ethClientWithUrl.ClientUrl {
 					// 前面已经发送了, 不继续发送
 					continue
 				}
-				_, err := NewOracleClaimSend(burnOrLockParameter.Clients[i].Client, auth, burnOrLockParameter, claimID, signature)
-				if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
-					txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
+				if burnOrLockParameter.Clients[i].OracleInstance != nil {
+					_, err = burnOrLockParameter.Clients[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
+					if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
+						txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
+					}
 				}
 			}
 
 			// 交易同时发送到 BSC 官方节点
 			if burnOrLockParameter.ChainName == BinanceChain {
 				for i := 0; i < len(burnOrLockParameter.ClientBSCRecommendSpecs); i++ {
-					_, err := NewOracleClaimSend(burnOrLockParameter.ClientBSCRecommendSpecs[i], auth, burnOrLockParameter, claimID, signature)
-					if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
-						txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
+					if burnOrLockParameter.ClientBSCRecommendSpecs[i].OracleInstance != nil {
+						_, err = burnOrLockParameter.ClientBSCRecommendSpecs[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
+						if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
+							txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
+						}
 					}
 				}
 			}
@@ -128,27 +128,4 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 
 	txslog.Info("RelayProphecyClaimToEthereum", "NewOracleClaim tx hash:", txhash)
 	return txhash, nil
-}
-
-func NewOracleClaimSend(client ethinterface.EthClientSpec, transactOpts *bind.TransactOpts, burnOrLockParameter *BurnOrLockParameter, claimID [32]byte, signature []byte) (string, error) {
-	registry := burnOrLockParameter.Registry
-	tokenOnEth := burnOrLockParameter.TokenOnEth
-	claim := burnOrLockParameter.Claim
-
-	oracleAddr, err := GetAddressFromBridgeRegistry(client, registry, registry, Oracle)
-	if nil != err {
-		return "", errors.New("failed to get addr for bridgeBank from registry " + err.Error())
-	}
-
-	oracleInstance, err := generated.NewOracle(*oracleAddr, client)
-	if nil != err {
-		return "", errors.New("failed to NewOracle " + err.Error())
-	}
-
-	tx, err := oracleInstance.NewOracleClaim(transactOpts, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
-	if nil != err {
-		return "", err
-	}
-	txslog.Info("RelayProphecyClaimToEthereum", "tx", tx.Hash().Hex(), "claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash))
-	return tx.Hash().Hex(), nil
 }
