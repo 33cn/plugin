@@ -14,6 +14,7 @@ import (
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
+	cross2ethErrors "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -58,6 +59,11 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, string, error) {
 }
 
 func GetOracleInstance(client ethinterface.EthClientSpec, registry common.Address) (*generated.Oracle, error) {
+	nilAddr := common.Address{}
+	if nilAddr == registry {
+		return nil, cross2ethErrors.ErrContractNotRegistered
+	}
+
 	oracleAddr, err := GetAddressFromBridgeRegistry(client, registry, registry, Oracle)
 	if nil != err {
 		return nil, errors.New("failed to get addr for bridgeBank from registry " + err.Error())

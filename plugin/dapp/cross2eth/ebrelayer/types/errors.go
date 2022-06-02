@@ -13,4 +13,5 @@ var (
 	ErrNoValidatorConfigured     = errors.New("ErrNoValidatorConfigured")
 	ErrMulSignNotDeployed        = errors.New("Contract multi-sign haven't been deployed yet")
 	ErrGetTransactionHash        = errors.New("Failed to get tx hash from mulsign")
+	ErrContractNotRegistered     = errors.New("contract not registered")
 )

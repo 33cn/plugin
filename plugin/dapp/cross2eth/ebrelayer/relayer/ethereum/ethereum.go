@@ -31,6 +31,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
+	cross2ethErrors "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/bitly/go-simplejson"
@@ -1000,7 +1001,10 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 			// 获取新的同步节点后, OracleInstance也重新获取
 			oracleInstance, err := ethtxs.GetOracleInstance(ethRelayer.clientSpec, ethRelayer.bridgeRegistryAddr)
 			if nil != err {
-				panic("failed to GetOracleInstance" + err.Error())
+				if err.Error() != cross2ethErrors.ErrContractNotRegistered.Error() {
+					panic("failed to GetOracleInstance" + err.Error())
+				}
+				relayerLog.Error("getAvailableClient", "GetOracleInstance err", err.Error())
 			}
 			ethRelayer.oracleInstance = oracleInstance
 			ethRelayer.clientUrlSelected = urlSelected
