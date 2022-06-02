@@ -4,23 +4,65 @@ services:
   chain33:
     build:
       context: .
+    container_name: build_chain33_1
 
   chain32:
     build:
       context: .
+    container_name: build_chain32_1
 
   chain31:
     build:
       context: .
+    container_name: build_chain31_1
 
   chain30:
     build:
       context: .
+    container_name: build_chain30_1
 
   chain29:
     build:
       context: .
+    container_name: build_chain29_1
 
   chain28:
     build:
       context: .
+    container_name: build_chain28_1
+
+
+# upgrade docker-compose
+# docker-compose version
+#Docker Compose version v2.6.0
+
+# upgrade docker
+# docker version
+#Client: Docker Engine - Community
+#  Version:           20.10.16
+#  API version:       1.41
+#  Go version:        go1.17.10
+#  Git commit:        aa7e414
+#  Built:             Thu May 12 09:17:28 2022
+#  OS/Arch:           linux/amd64
+#  Context:           default
+#  Experimental:      true
+#
+#Server: Docker Engine - Community
+#  Engine:
+#    Version:          20.10.16
+#    API version:      1.41 (minimum version 1.12)
+#    Go version:       go1.17.10
+#    Git commit:       f756502
+#    Built:            Thu May 12 09:15:33 2022
+#    OS/Arch:          linux/amd64
+#    Experimental:     false
+#  containerd:
+#    Version:          1.6.4
+#    GitCommit:        212e8b6fa2f44b9c21b2798135fc6fb7c53efc16
+#  runc:
+#    Version:          1.1.1
+#    GitCommit:        v1.1.1-0-g52de29d
+#  docker-init:
+#    Version:          0.19.0
+#    GitCommit:        de40ad0

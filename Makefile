@@ -109,8 +109,7 @@ dep:
 	@go get -u mvdan.cc/sh/cmd/shfmt
 	@go get -u mvdan.cc/sh/cmd/gosh
 	@git checkout go.mod go.sum
-	@apt install clang-format
-	@apt install shellcheck
+	@apt install -y clang-format, shellcheck, jq, parallel
 
 linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
@@ -162,7 +161,7 @@ docker-compose: ## build docker-compose for chain33 run
 	@cd build && if ! [ -d ci ]; then \
 	 make -C ../ ; \
 	 fi; \
-	 cp chain33* Dockerfile  docker-compose.yml *.sh ci/ && cd ci/ && ./docker-compose-pre.sh run $(proj) $(dapp) $(extra) && cd ../..
+	 cp chain33* Dockerfile  docker-compose.yml *.sh ci/ && chmod -R 777 ci && cd ci/ && ./docker-compose-pre.sh run $(proj) $(dapp) $(extra) && cd ../..
 
 docker-compose-down: ## build docker-compose for chain33 run
 	@cd build && if [ -d ci ]; then \
