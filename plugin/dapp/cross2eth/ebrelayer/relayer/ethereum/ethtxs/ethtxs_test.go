@@ -75,15 +75,17 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 	}
 
 	Addr2TxNonce := make(map[common.Address]*NonceMutex)
+	oracleInstance, err := GetOracleInstance(sim, x2EthDeployInfo.BridgeRegistry.Address)
+	require.Nil(t, err)
+
 	burnOrLockParameter := &BurnOrLockParameter{
-		ClientSpec:   sim,
+		ClientSpec:   &EthClientWithUrl{Client: sim, OracleInstance: oracleInstance},
 		Sender:       para.InitValidators[0],
 		TokenOnEth:   common.HexToAddress("0x0000000000000000000000000000000000000000"),
 		Claim:        prophecyClaim,
 		PrivateKey:   privateKey,
 		Addr2TxNonce: Addr2TxNonce,
 		ChainId:      big.NewInt(1337),
-		Registry:     x2EthDeployInfo.BridgeRegistry.Address,
 	}
 
 	_, err = RelayOracleClaimToEthereum(burnOrLockParameter)

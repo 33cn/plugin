@@ -64,8 +64,9 @@ type Relayer4Ethereum struct {
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
 	clientUrlSelected       string
+	oracleInstance          *generated.Oracle
 	clientSpecs             []*ethtxs.EthClientWithUrl
-	clientBSCRecommendSpecs []ethinterface.EthClientSpec
+	clientBSCRecommendSpecs []*ethtxs.EthClientWithUrl
 	clientWss               ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
 	bridgeBankSub           ethereum.Subscription
@@ -345,7 +346,7 @@ func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
 	var err error
 	bSendEmail := false
 	for true {
-		ethRelayer.clientSpecs, ethRelayer.clientChainID, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+		ethRelayer.clientSpecs, ethRelayer.clientChainID, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp, ethRelayer.bridgeRegistryAddr)
 		if err != nil {
 			if !bSendEmail {
 				// 节点都不可用 发送邮件
@@ -399,7 +400,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 	ethRelayer.getClientSpecs()
 	ethRelayer.getClientSpec()
 	ethRelayer.getClientWss()
-	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
+	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp, ethRelayer.bridgeRegistryAddr)
 
 	//等待用户导入
 	relayerLog.Info("Please unlock or import private key for Ethereum relayer")
@@ -417,6 +418,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		if nil != err {
 			panic("Failed to recover corresponding solidity contract handler due to:" + err.Error())
 		}
+		ethRelayer.oracleInstance = ethRelayer.x2EthContracts.Oracle
 		ethRelayer.rwLock.Unlock()
 		relayerLog.Info("^-^ ^-^ Succeed to recover corresponding solidity contract handler")
 
@@ -893,8 +895,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	if !isClaimIDProcessed {
 		ethRelayer.getAvailableClient()
 		burnOrLockParameter := &ethtxs.BurnOrLockParameter{
-			ClientSpec:              ethRelayer.clientSpec,
-			ClientUrlSelected:       ethRelayer.clientUrlSelected,
+			ClientSpec:              &ethtxs.EthClientWithUrl{ClientUrl: ethRelayer.clientUrlSelected, Client: ethRelayer.clientSpec, OracleInstance: ethRelayer.oracleInstance},
 			Clients:                 ethRelayer.clientSpecs,
 			ClientBSCRecommendSpecs: ethRelayer.clientBSCRecommendSpecs,
 			Sender:                  ethRelayer.ethSender,
@@ -904,7 +905,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 			Addr2TxNonce:            ethRelayer.Addr2TxNonce,
 			ChainId:                 ethRelayer.clientChainID,
 			ChainName:               ethRelayer.name,
-			Registry:                ethRelayer.bridgeRegistryAddr,
 		}
 
 		// Relay the Chain33Msg to the Ethereum network
@@ -997,6 +997,12 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 			}
 			cancel2()
 
+			// 获取新的同步节点后, OracleInstance也重新获取
+			oracleInstance, err := ethtxs.GetOracleInstance(ethRelayer.clientSpec, ethRelayer.bridgeRegistryAddr)
+			if nil != err {
+				panic("failed to GetOracleInstance" + err.Error())
+			}
+			ethRelayer.oracleInstance = oracleInstance
 			ethRelayer.clientUrlSelected = urlSelected
 			relayerLog.Info("getAvailableClient", "Eth node is syncing for address", urlSelected)
 			break
@@ -1804,7 +1810,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 	if ethRelayer.name == ethtxs.BinanceChain {
 		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
 			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-			err = ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
+			err = ethRelayer.clientBSCRecommendSpecs[i].Client.SendTransaction(timeout, signedTx)
 			cancel()
 			if err == nil {
 				bSuccess = true
@@ -1844,7 +1850,7 @@ func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
 func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 	// 重新获取 client
 	var err error
-	ethRelayer.clientSpecs, _, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+	ethRelayer.clientSpecs, _, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp, ethRelayer.bridgeRegistryAddr)
 	if err != nil {
 		relayerLog.Error("regainClient", "SetupEthClient err", err)
 	}
