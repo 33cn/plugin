@@ -160,6 +160,7 @@ function restart_ebrelayerA() {
 
     result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
+    sleep 20
 }
 
 function restart_ebrelayer_bcd() {
@@ -172,6 +173,7 @@ function restart_ebrelayer_bcd() {
 
     result=$(docker exec "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebcli_A" unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
+    sleep 20
 }
 
 # chain33 lock BTY, eth burn BTY
