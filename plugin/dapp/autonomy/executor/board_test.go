@@ -17,7 +17,73 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+var autoC = `
+[mver.autonomy]
+#最小委员会数量
+minBoards=20
+#最大委员会数量
+maxBoards=40
+#公示一周时间，以区块高度计算
+publicPeriod=120960
+#单张票价
+ticketPrice=3000
+#重大项目公示金额阈值
+largeProjectAmount=1000000
+#创建者消耗金额bty
+proposalAmount=500
+#董事会成员赞成率，以%计，可修改
+boardApproveRatio=51
+#全体持票人参与率，以%计
+pubAttendRatio=75
+#全体持票人赞成率，以%计
+pubApproveRatio=66
+#全体持票人否决率，以%计
+pubOpposeRatio=33
+#提案开始结束最小周期高度
+startEndBlockPeriod=720
+#提案高度 结束高度最大周期 100W
+propEndBlockPeriod=1000000
+#最小董事会赞成率
+minBoardApproveRatio=50
+#最大董事会赞成率
+maxBoardApproveRatio=66
+#最小全体持票人否决率
+minPubOpposeRatio=33
+#最大全体持票人否决率
+maxPubOpposeRatio=50
+#可以调整，但是可能需要进行范围的限制：参与率最低设置为 50%， 最高设置为 80%，赞成率，最低 50.1%，最高80%
+#不能设置太低和太高，太低就容易作弊，太高则有可能很难达到
+#最小全体持票人参与率
+minPubAttendRatio=50
+#最大全体持票人参与率
+maxPubAttendRatio=80
+#最小全体持票人赞成率
+minPubApproveRatio=50
+#最大全体持票人赞成率
+maxPubApproveRatio=80
+#最小公示周期
+minPublicPeriod=120960
+#最大公示周期
+maxPublicPeriod=241920
+#最小重大项目阈值(coin)
+minLargeProjectAmount=1000000
+#最大重大项目阈值(coin)
+maxLargeProjectAmount=3000000
+#最小提案金(coin)
+minProposalAmount=20
+#最大提案金(coin)
+maxProposalAmount=2000	
+#每个时期董事会审批最大额度300万
+maxBoardPeriodAmount =3000000
+#时期为一个月
+boardPeriod=518400
+#4w高度，大概2天 (未生效)
+itemWaitBlockNumber=40000
+`
+
+var chainTestCfg = types.NewChain33Config(types.MergeCfg(autoC, types.GetDefaultCfgstring()))
+
+var autoCfg = GetAutonomyParam(chainTestCfg, 0)
 
 func newTestAutonomy() *Autonomy {
 	au := &Autonomy{

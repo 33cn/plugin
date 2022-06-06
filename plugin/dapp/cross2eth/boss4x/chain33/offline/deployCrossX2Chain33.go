@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4chain33/generated"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
@@ -73,12 +72,9 @@ func createContractsWithFile(cmd *cobra.Command, _ []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
-	valsetParameter := fromAddr.String() + ",[" + validators + "],[" + initPowers + "]"
+	valsetParameter := from.String() + ",[" + validators + "],[" + initPowers + "]"
 	multisignAddrs := strings.Join(deployCfg.MultisignAddrs, ",")
 	txCreateInfo := getTxInfo(cmd)
 
@@ -119,10 +115,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
 	txCreateInfo := getTxInfo(cmd)
 

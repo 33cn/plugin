@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/plugin/plugin/dapp/bridgevmxgo/contracts/generated"
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
@@ -68,10 +67,7 @@ func CreateERC20(cmd *cobra.Command, _ []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
 	createPara := fmt.Sprintf("%s,%s,%s,%s", symbol, symbol, fmt.Sprintf("%d", amountInt64), owner)
 	content, txHash, err := utils.CreateContractAndSign(getTxInfo(cmd), erc20.ERC20Bin, erc20.ERC20ABI, createPara, "ERC20:"+symbol)

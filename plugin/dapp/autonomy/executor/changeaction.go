@@ -15,20 +15,21 @@ import (
 )
 
 func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	//如果全小于等于0,则说明该提案规则参数不正确
 	if prob == nil || len(prob.Changes) == 0 {
 		alog.Error("propChange ", "ProposalChange ChangeCfg invaild or have no modify param", prob)
 		return nil, types.ErrInvalidParam
 	}
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
-		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
+		prob.StartBlockHeight+autoCfg.StartEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propChange height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, auty.ErrSetBlockHeight
 	}
 
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+		if prob.EndBlockHeight > a.height+autoCfg.PropEndBlockPeriod {
 			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
 			return nil, auty.ErrSetBlockHeight
 		}
@@ -433,6 +434,7 @@ func (a *action) replaceBoard(act *auty.ActiveBoard, change []*auty.Change) (*au
 }
 
 func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (*auty.ActiveBoard, error) {
+	cfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	mpBd := make(map[string]struct{})
 	mpRbd := make(map[string]struct{})
 	for _, b := range act.Boards {
@@ -458,7 +460,7 @@ func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (
 			mpBd[ch.Addr] = struct{}{}
 		}
 	}
-	if len(mpBd) > maxBoards || len(mpBd) < minBoards {
+	if int64(len(mpBd)) > cfg.MaxBoards || int64(len(mpBd)) < cfg.MinBoards {
 		return nil, auty.ErrBoardNumber
 	}
 	newBoard := &auty.ActiveBoard{

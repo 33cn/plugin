@@ -51,6 +51,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.To", msg.To().String(),
+		"data size:", len(msg.Data()))
 	var (
 		ret             []byte
 		vmerr           error
@@ -184,7 +186,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
-
+	log.Info("innerExec", "receipt", receipt)
 	return receipt, nil
 }
 
@@ -244,7 +246,7 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 	if gasPrice == 0 {
 		gasPrice = uint32(1)
 	}
-
+	log.Info("GetMessageeeeeee", "code size", len(action.Code), "data size:", len(action.Para))
 	// 合约的GasLimit即为调用者为本次合约调用准备支付的手续费
 	msg = common.NewMessage(from, to, tx.Nonce, action.Amount, gasLimit, gasPrice, action.Code, action.Para, action.GetAlias())
 	return msg, err

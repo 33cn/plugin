@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/plugin/plugin/dapp/dex/contracts/pancake-swap-periphery/src/pancakeFactory"
 	"github.com/33cn/plugin/plugin/dapp/dex/contracts/pancake-swap-periphery/src/pancakeRouter"
@@ -61,10 +60,7 @@ func createERC20Contract(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
 	info := &utils.TxCreateInfo{
 		PrivateKey: privateKeyStr,
@@ -74,7 +70,7 @@ func createERC20Contract(cmd *cobra.Command, args []string) {
 		ParaName:   paraName,
 		ChainID:    chainID,
 	}
-	createPara := name + "," + symbol + "," + supply + "," + fromAddr.String()
+	createPara := name + "," + symbol + "," + supply + "," + from.String()
 	content, txHash, err := utils.CreateContractAndSign(info, erc20.ERC20Bin, erc20.ERC20ABI, createPara, "erc20")
 	if nil != err {
 		fmt.Println("Failed to create erc20 due to cause:", err.Error())
@@ -104,10 +100,7 @@ func createRouterContract(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 	i := 1
 	fmt.Printf("%d: Going to create factory\n", i)
 	i += 1

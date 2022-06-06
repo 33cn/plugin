@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/plugin/plugin/dapp/bridgevmxgo/contracts/generated"
 	gnosis "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/gnosis/generated"
@@ -50,10 +49,7 @@ func createBridgevmxgo(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
 	i := 1
 	fmt.Printf("%d: Going to create Valset\n", i)

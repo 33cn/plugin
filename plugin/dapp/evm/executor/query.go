@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync/atomic"
 
+	log "github.com/33cn/chain33/common/log/log15"
+
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 
 	"github.com/33cn/chain33/common"
@@ -87,7 +89,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	if receipt.Ty != types.ExecOk {
 		return nil, errors.New("contract call error")
 	}
-
+	log.Info("Query_EstimateGas", "logs:", receipt.GetLogs())
 	callData := getCallReceipt(receipt.GetLogs())
 	if callData == nil {
 		return nil, errors.New("nil receipt")
@@ -215,4 +217,25 @@ func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (t
 		ret.UnpackData = append(ret.UnpackData, fmt.Sprintf("%v", v.Value))
 	}
 	return &ret, nil
+}
+
+func (evm *EVMExecutor) Query_GetCode(in *evmtypes.CheckEVMAddrReq) (types.Message, error) {
+	evm.CheckInit()
+	addrStr := in.Addr
+	if len(addrStr) == 0 {
+		return nil, model.ErrAddrNotExists
+	}
+
+	addr := evmCommon.StringToAddress(in.GetAddr())
+	log.Info("Query_GetCode", "addr", in.GetAddr(), "addrstring", addr.String())
+	codeData := evm.mStateDB.GetCode(addr.String())
+	abiData := evm.mStateDB.GetAbi(addr.String())
+	account := evm.GetMStateDB().GetAccount(addr.String())
+	var ret evmtypes.EVMContractData
+	ret.Code = codeData
+	ret.Abi = abiData
+	ret.Creator = account.GetCreator()
+	ret.Alias = account.GetAliasName()
+	return &ret, nil
+
 }

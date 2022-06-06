@@ -5,8 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/33cn/chain33/common/address"
-
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
@@ -31,8 +29,8 @@ func TestEcrecoverSignTypedMessage(t *testing.T) {
 
 	//fmt.Println("ecrecover", "pubkey", common.Bytes2Hex(pubKey))
 	//fmt.Println("recoverd address", address.PubKeyToAddress(pubKey).String())
-	addr := address.BytesToBtcAddress(address.NormalVer, pubKey)
-	hash160Str := common.Bytes2Hex(common.LeftPadBytes(addr.Hash160[:], 32))
+	addr := common.PubKey2Address(pubKey)
+	hash160Str := common.Bytes2Hex(common.LeftPadBytes(addr.Bytes(), 32))
 	assert.Equal(t, hash160Str, "0x000000000000000000000000245afbf176934ccdd7ca291a8dddaa13c8184822")
 	assert.Equal(t, addr.String(), "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
 	//fmt.Println("TestEcrecoverSignTypedMessage", "hash160Str", hash160Str)

@@ -66,5 +66,5 @@ func Keccak256Hash(data ...[]byte) (h common.Hash) {
 // CreateAddress2 creates an ethereum address given the address bytes, initial
 // contract code hash and a salt.
 func CreateAddress2(b common.Address, salt [32]byte, inithash []byte) common.Address {
-	return common.BytesToAddress(Keccak256([]byte{0xff}, b.Bytes(), salt[:], inithash))
+	return common.BytesToAddress(Keccak256([]byte{0xff}, b.Bytes(), salt[:], inithash)[12:])
 }
