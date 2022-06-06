@@ -63,7 +63,8 @@ func GetAddressFromBridgeRegistry(client ethinterface.EthClientSpec, sender, reg
 	case Oracle:
 		oracleAddress, err := registryInstance.Oracle(&auth)
 		if err != nil {
-			log.Fatal(err)
+			txslog.Error("GetAddressFromBridgeRegistry", "Failed to get oracle contract:", err)
+			return nil, err
 		}
 		return &oracleAddress, nil
 	case BridgeBank:
