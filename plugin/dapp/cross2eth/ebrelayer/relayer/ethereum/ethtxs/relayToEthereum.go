@@ -102,12 +102,9 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 					continue
 				}
 				if burnOrLockParameter.Clients[i].OracleInstance != nil {
-					tx, err = burnOrLockParameter.Clients[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
+					_, err = burnOrLockParameter.Clients[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 					if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 						txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
-					}
-					if tx != nil {
-						txslog.Debug("RelayProphecyClaimToEthereum", "more send claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash), "tx", tx.Hash().Hex())
 					}
 				}
 			}
@@ -119,9 +116,6 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 						_, err = burnOrLockParameter.ClientBSCRecommendSpecs[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 						if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 							txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
-						}
-						if tx != nil {
-							txslog.Debug("RelayProphecyClaimToEthereum", "Binance more send claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash), "tx", tx.Hash().Hex())
 						}
 					}
 				}
