@@ -106,8 +106,8 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 					if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 						txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 					}
-					if err == nil {
-						txslog.Debug("RelayProphecyClaimToEthereum", "more send", burnOrLockParameter.Clients[i].ClientUrl, "tx", tx.Hash().Hex())
+					if tx != nil {
+						txslog.Debug("RelayProphecyClaimToEthereum", "more send claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash), "tx", tx.Hash().Hex())
 					}
 				}
 			}
@@ -120,8 +120,8 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 						if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 							txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 						}
-						if err == nil {
-							txslog.Debug("RelayProphecyClaimToEthereum", "more send", burnOrLockParameter.ClientBSCRecommendSpecs[i].ClientUrl, "tx", tx.Hash().Hex())
+						if tx != nil {
+							txslog.Debug("RelayProphecyClaimToEthereum", "Binance more send claim.chain33TxHash", chain33Common.ToHex(claim.Chain33TxHash), "tx", tx.Hash().Hex())
 						}
 					}
 				}
