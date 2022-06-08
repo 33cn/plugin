@@ -654,8 +654,7 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
 
-	token := zt.Str2Byte(leaf.GetTokenHash())
-	h.Write(token)
+	h.Write(zt.Str2Byte(leaf.GetTokenHash()))
 	return h.Sum(nil)
 }
 
@@ -671,12 +670,20 @@ func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
 
+	h.Write(zt.Str2Byte(getHistoryTokenHash(leaf.AccountId, leaf.Tokens)))
+	return h.Sum(nil)
+}
+
+func getHistoryTokenHash(accountId uint64, tokens []*zt.TokenBalance) string {
+	if (accountId == zt.SystemFeeAccountId || accountId == zt.SystemNFTAccountId) && len(tokens) <= 0 {
+		return "0"
+	}
+
 	tokenTree := getNewTree()
-	for _, token := range leaf.Tokens {
+	for _, token := range tokens {
 		tokenTree.Push(getTokenBalanceHash(token))
 	}
-	h.Write(tokenTree.Root())
-	return h.Sum(nil)
+	return zt.Byte2Str(tokenTree.Root())
 }
 
 func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {

@@ -382,18 +382,41 @@ func makeSetVerifierReceipt(old, new *zt.ZkVerifier) *types.Receipt {
 
 }
 
+func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
+	leaves := getInitAccountLeaf(ethFeeAddr, chain33FeeAddr)
+	var historyLeaf []*zt.HistoryLeaf
+	for _, l := range leaves {
+		history := &zt.HistoryLeaf{
+			EthAddress:  l.EthAddress,
+			AccountId:   l.AccountId,
+			Chain33Addr: l.Chain33Addr,
+			TokenHash:   l.TokenHash,
+		}
+		historyLeaf = append(historyLeaf, history)
+	}
+	return historyLeaf
+}
+
 //根据rootHash获取account在该root下的证明
-func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.MerkleTreeProof, error) {
+func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetTokenId uint64, targetRootHash, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.ZkEscapeProof, error) {
 	proofTable := NewCommitProofTable(localdb)
 	accountMap := make(map[uint64]*zt.HistoryLeaf)
 	maxAccountId := uint64(0)
-	rows, err := proofTable.ListIndex("root", getRootCommitProofKey(rootHash), nil, 1, zt.ListASC)
+	rows, err := proofTable.ListIndex("root", getRootCommitProofKey(targetRootHash), nil, 1, zt.ListASC)
 	if err != nil {
 		return nil, errors.Wrapf(err, "proofTable.ListIndex")
 	}
 	proof := rows[0].Data.(*zt.ZkCommitProof)
 	if proof == nil {
 		return nil, errors.New("proof not exist")
+	}
+
+	initLeaves := getInitHistoryLeaf(cfgEthFeeAddr, cfgChain33FeeAddr)
+	for _, l := range initLeaves {
+		accountMap[l.AccountId] = l
+		if maxAccountId < l.AccountId {
+			maxAccountId = l.AccountId
+		}
 	}
 
 	for i := uint64(1); i <= proof.ProofId; i++ {
@@ -630,7 +653,9 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 				accountMap[operation.AccountId] = fromLeaf
 
 			case zt.TySwapAction:
-				//taker pov
+				//token: left asset, right asset 顺序
+				//电路顺序为：sell-leftAsset, buy+leftAsset, sell-rightAsset-fee, buy+rightAsset-2ndFee
+				//这里考虑leaf获取方便，顺序调整为 sell-leftAsset buy+rightAsset-2ndfee, sell-rightAsset-fee,buy+leftAsset
 				takerLeaf, ok := accountMap[operation.AccountId]
 				if !ok {
 					return nil, errors.New("account not exist")
@@ -643,15 +668,15 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 					}
 				}
 				if tokenBalance == nil {
-					return nil, errors.New("token not exist")
-				} else {
-					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-					change, _ := new(big.Int).SetString(operation.Amount, 10)
-					if change.Cmp(balance) > 0 {
-						return nil, errors.New("balance not enough")
-					}
-					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+					return nil, errors.New("taker token not exist")
 				}
+				balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+				change, _ := new(big.Int).SetString(operation.Amount, 10)
+				if change.Cmp(balance) > 0 {
+					return nil, errors.New("balance not enough")
+				}
+				tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+
 				//buy token
 				tokenBalance = nil
 				for _, token := range takerLeaf.Tokens {
@@ -659,32 +684,33 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 						tokenBalance = token
 					}
 				}
+				//taker 2nd fee
+				change, _ = new(big.Int).SetString(operation.SwapData.Amount, 10)
+				fee, _ := new(big.Int).SetString(operation.SwapData.Fee, 10)
+				if fee.Cmp(change) > 0 {
+					return nil, errors.New("change not enough to fee to taker")
+				}
+				//sub fee
+				change = new(big.Int).Sub(change, fee)
 				if tokenBalance == nil {
 					newToken := &zt.TokenBalance{
 						TokenId: operation.SwapData.TokenId,
-						Balance: operation.SwapData.Amount,
+						Balance: change.String(),
 					}
 					takerLeaf.Tokens = append(takerLeaf.Tokens, newToken)
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-					change, _ := new(big.Int).SetString(operation.SwapData.Amount, 10)
-					fee, _ := new(big.Int).SetString(operation.FeeData.Fee, 10)
-					if fee.Cmp(change) > 0 {
-						return nil, errors.New("change not enough to fee to taker")
-					}
-					//sub fee
-					change = new(big.Int).Sub(change, fee)
 					tokenBalance.Balance = new(big.Int).Add(balance, change).String()
 				}
 				accountMap[operation.AccountId] = takerLeaf
 
-				//maker pov
+				//toAccount leaf
 				makerLeaf, ok := accountMap[operation.ToAccountId]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("maker account=%d not exist", operation.ToAccountId))
 				}
 
-				//找到sell token
+				//找到right asset
 				tokenBalance = nil
 				for _, token := range makerLeaf.Tokens {
 					if token.TokenId == operation.SwapData.TokenId {
@@ -693,14 +719,20 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 				}
 				if tokenBalance == nil {
 					return nil, errors.New(fmt.Sprintf("maker sell token=%d not exist", operation.SwapData.TokenId))
-				} else {
-					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-					change, _ := new(big.Int).SetString(operation.SwapData.Amount, 10)
-					if change.Cmp(balance) > 0 {
-						return nil, errors.New("maker token balance not enough")
-					}
-					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
 				}
+				balance, _ = new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+				change, _ = new(big.Int).SetString(operation.SwapData.Amount, 10)
+				if change.Cmp(balance) > 0 {
+					return nil, errors.New("maker token balance not enough")
+				}
+				newBalance := new(big.Int).Sub(balance, change)
+				//1st fee
+				fee, _ = new(big.Int).SetString(operation.FeeData.Fee, 10)
+				if fee.Cmp(newBalance) > 0 {
+					return nil, errors.New("change not enough to fee to taker")
+				}
+				tokenBalance.Balance = new(big.Int).Sub(newBalance, fee).String()
+
 				//buy token
 				tokenBalance = nil
 				for _, token := range makerLeaf.Tokens {
@@ -717,11 +749,6 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
 					change, _ := new(big.Int).SetString(operation.Amount, 10)
-					fee, _ := new(big.Int).SetString(operation.SwapData.Fee, 10)
-					if fee.Cmp(change) > 0 {
-						return nil, errors.New("change not enough to fee to taker")
-					}
-					change = new(big.Int).Sub(change, fee)
 					tokenBalance.Balance = new(big.Int).Add(balance, change).String()
 				}
 				accountMap[operation.ToAccountId] = makerLeaf
@@ -777,13 +804,10 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 			case zt.TyFeeAction:
 				fromLeaf, ok := accountMap[operation.AccountId]
 				if !ok {
-					fromLeaf = &zt.HistoryLeaf{
-						AccountId:   zt.SystemFeeAccountId,
-						EthAddress:  cfgEthFeeAddr,
-						Chain33Addr: cfgChain33FeeAddr,
-						TokenHash:   "0",
-						Tokens:      []*zt.TokenBalance{},
-					}
+					return nil, errors.New(fmt.Sprintf("fee accountId=%d not exist", operation.AccountId))
+				}
+				if operation.AccountId != zt.SystemFeeAccountId {
+					return nil, errors.New(fmt.Sprintf("fee accountId=%d not systmeId=%d", operation.AccountId, zt.SystemFeeAccountId))
 				}
 				var tokenBalance *zt.TokenBalance
 				//找到token
@@ -854,18 +878,7 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 				newNFTTokenId := uint64(0)
 				systemNFTLeaf, ok := accountMap[zt.SystemNFTAccountId]
 				if !ok {
-					systemNFTLeaf = &zt.HistoryLeaf{
-						AccountId:   zt.SystemNFTAccountId,
-						EthAddress:  "0",
-						Chain33Addr: "0",
-						TokenHash:   "0",
-						Tokens: []*zt.TokenBalance{
-							{
-								TokenId: zt.SystemNFTTokenId,
-								Balance: new(big.Int).Add(big.NewInt(zt.SystemNFTTokenId), big.NewInt(1)).String(),
-							},
-						},
-					}
+					return nil, errors.New("SystemNFTAccountId not found")
 				}
 				tokenBalance = nil
 				for _, token := range systemNFTLeaf.Tokens {
@@ -874,7 +887,12 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 					}
 				}
 				if tokenBalance == nil {
-					return nil, errors.New("systemNFTAccount has no system NFT tokenId")
+					newNFTTokenId = new(big.Int).Add(big.NewInt(zt.SystemNFTTokenId), big.NewInt(1)).Uint64()
+					newToken := &zt.TokenBalance{
+						TokenId: zt.SystemNFTTokenId,
+						Balance: new(big.Int).Add(big.NewInt(zt.SystemNFTTokenId), big.NewInt(2)).String(),
+					}
+					systemNFTLeaf.Tokens = append(systemNFTLeaf.Tokens, newToken)
 				} else {
 					//before balance as the new token Id
 					b, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
@@ -1035,19 +1053,67 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 		}
 	}
 
+	var escapeProof zt.ZkEscapeProof
+	escapeProof.AccountProof = new(zt.ZkAccountTreeProof)
+	escapeProof.TokenProof = new(zt.ZkTokenTreeProof)
+	escapeProof.AccountProof.Account = accountMap[targetAccountId]
+
+	if _, ok := accountMap[targetAccountId]; !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "targetAccountId=%d not exist", targetAccountId)
+	}
+
+	var tokenFound bool
+	var tokenIndex int
+	for i, t := range accountMap[targetAccountId].Tokens {
+		if t.TokenId == targetTokenId {
+			tokenIndex = i
+			tokenFound = true
+			break
+		}
+	}
+	if !tokenFound {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "accountId=%d has no asset tokenId=%d", targetAccountId, targetTokenId)
+	}
+	var leafHashes [][]byte
+	for i := uint64(zt.SystemFeeAccountId); i <= maxAccountId; i++ {
+		leafHashes = append(leafHashes, getHistoryLeafHash(accountMap[i]))
+	}
+
 	tree := getNewTree()
-	err = tree.SetIndex(accountId - 1)
+	err = tree.SetIndex(targetAccountId - 1)
+	accountMerkleProof, err := getMerkleTreeProof(targetAccountId-1, leafHashes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "account.getMerkleTreeProof")
+	}
+	if accountMerkleProof.RootHash != targetRootHash {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", accountMerkleProof.RootHash, targetRootHash)
+	}
+	escapeProof.AccountProof.Proof = accountMerkleProof
+
+	//token proof
+	var tokenHashes [][]byte
+	for _, token := range accountMap[targetAccountId].Tokens {
+		tokenHashes = append(tokenHashes, getTokenBalanceHash(token))
+	}
+	merkleProof, err := getMerkleTreeProof(uint64(tokenIndex), tokenHashes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "token.getMerkleProof")
+	}
+	escapeProof.TokenProof.Token = accountMap[targetAccountId].Tokens[tokenIndex]
+	escapeProof.TokenProof.Proof = merkleProof
+	return &escapeProof, nil
+}
+
+func getMerkleTreeProof(index uint64, hashes [][]byte) (*zt.MerkleTreeProof, error) {
+	tree := getNewTree()
+	err := tree.SetIndex(index)
 	if err != nil {
 		return nil, errors.Wrapf(err, "tree.SetIndex")
 	}
-	for i := uint64(zt.SystemFeeAccountId); i <= maxAccountId; i++ {
-		tree.Push(getHistoryLeafHash(accountMap[i]))
+	for _, h := range hashes {
+		tree.Push(h)
 	}
-
-	merkleRoot, proofSet, proofIndex, numLeaves := tree.Prove()
-	if zt.Byte2Str(merkleRoot) != rootHash {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", zt.Byte2Str(merkleRoot), rootHash)
-	}
+	rootHash, proofSet, proofIndex, numLeaves := tree.Prove()
 	helpers := make([]string, 0)
 	proofStringSet := make([]string, 0)
 	for _, v := range merkletree.GenerateProofHelper(proofSet, proofIndex, numLeaves) {
@@ -1056,12 +1122,7 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash, cfgEth
 	for _, v := range proofSet {
 		proofStringSet = append(proofStringSet, zt.Byte2Str(v))
 	}
-	merkleProof := &zt.MerkleTreeProof{
-		RootHash: zt.Byte2Str(merkleRoot),
-		ProofSet: proofStringSet,
-		Helpers:  helpers,
-	}
-	return merkleProof, nil
+	return &zt.MerkleTreeProof{RootHash: zt.Byte2Str(rootHash), ProofSet: proofStringSet, Helpers: helpers}, nil
 }
 
 func transferPubDatasToOption(pubDatas []string) []*zt.ZkOperation {
@@ -1073,7 +1134,7 @@ func transferPubDatasToOption(pubDatas []string) []*zt.ZkOperation {
 		chunkNum := getChunkNum(operationTy)
 		if operationTy != zt.TyNoopAction {
 			operation := getOperationByChunk(pubDatas[start:start+chunkNum], operationTy)
-			fmt.Print(operation, "\n")
+			fmt.Println("transferPubDatasToOption.op=", operation)
 			operations = append(operations, operation)
 		}
 		start = start + chunkNum
@@ -1512,7 +1573,7 @@ func getDepositOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyWithdrawAction}
+	operation := &zt.ZkOperation{Ty: zt.TyWithdrawAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1532,7 +1593,7 @@ func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TySwapAction}
+	operation := &zt.ZkOperation{Ty: zt.TySwapAction, FeeData: new(zt.ZkOpFeeData), SwapData: new(zt.ZkOpSwapData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1541,21 +1602,27 @@ func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.ToAccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
+	//1st token, left asset
 	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
+	//2nd token, right asset
 	operation.SwapData.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
-	operation.Amount = zt.Byte2Str(chunk[start:end])
+	//1st amount, left asset amount
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
 	start = end
 	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
-	operation.SwapData.Amount = zt.Byte2Str(chunk[start:end])
+	//2nd amount right asset amount
+	operation.SwapData.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
+	//1st fee, maker's fee
 	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
+	//2nd fee, taker's fee
 	operation.SwapData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
 	return operation
 }
@@ -1589,7 +1656,7 @@ func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyTransferAction}
+	operation := &zt.ZkOperation{Ty: zt.TyTransferAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1609,7 +1676,7 @@ func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyTransferToNewAction}
+	operation := &zt.ZkOperation{Ty: zt.TyTransferToNewAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1635,7 +1702,7 @@ func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TySetPubKeyAction}
+	operation := &zt.ZkOperation{Ty: zt.TySetPubKeyAction, SetPubKey: new(zt.ZkSetPubKeyData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1654,7 +1721,7 @@ func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyForceExitAction}
+	operation := &zt.ZkOperation{Ty: zt.TyForceExitAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1674,7 +1741,7 @@ func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyFullExitAction}
+	operation := &zt.ZkOperation{Ty: zt.TyFullExitAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1694,7 +1761,7 @@ func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getFeeOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyFeeAction}
+	operation := &zt.ZkOperation{Ty: zt.TyFeeAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1708,7 +1775,7 @@ func getFeeOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyMintNFTAction}
+	operation := &zt.ZkOperation{Ty: zt.TyMintNFTAction, FeeData: new(zt.ZkOpFeeData), NFTData: new(zt.ZkOpNFTData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1739,7 +1806,7 @@ func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyWithdrawNFTAction}
+	operation := &zt.ZkOperation{Ty: zt.TyWithdrawNFTAction, FeeData: new(zt.ZkOpFeeData), NFTData: new(zt.ZkOpNFTData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	//fromId
@@ -1785,7 +1852,7 @@ func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyMintNFTAction}
+	operation := &zt.ZkOperation{Ty: zt.TyMintNFTAction, FeeData: new(zt.ZkOpFeeData), NFTData: new(zt.ZkOpNFTData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])

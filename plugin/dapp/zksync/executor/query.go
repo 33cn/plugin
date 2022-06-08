@@ -6,7 +6,6 @@ import (
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 // Query_GetAccountTree 获取当前的树
@@ -153,20 +152,16 @@ func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, e
 	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
 }
 
-func (z *zksync) Query_GetEscapeProof(in *types.ReqMultiStrings) (types.Message, error) {
+func (z *zksync) Query_GetEscapeProof(in *zt.ZkReqEscapeProof) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	if len(in.Datas) != 2 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "req should contail 2 string")
+	if len(in.RootHash) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
 	}
 
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(z.GetAPI().GetConfig())
-	accountId, ok := new(big.Int).SetString(in.Datas[0], 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "account Id=%s", in.Datas[0])
-	}
-	return getAccountProofInHistory(z.GetLocalDB(), accountId.Uint64(), in.Datas[1], ethFeeAddr, chain33FeeAddr)
+	return getAccountProofInHistory(z.GetLocalDB(), in.GetAccountId(), in.GetTokenId(), in.GetRootHash(), ethFeeAddr, chain33FeeAddr)
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
