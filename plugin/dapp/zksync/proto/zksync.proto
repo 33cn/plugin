@@ -81,6 +81,26 @@ message MerkleTreeProof {
   repeated string helpers = 3;
 }
 
+message ZkReqEscapeProof{
+  uint64 accountId = 1;
+  uint64 tokenId   = 2;
+  string rootHash  = 3;
+}
+
+message ZkAccountTreeProof {
+  HistoryLeaf account = 1;
+  MerkleTreeProof proof = 2;
+}
+message ZkTokenTreeProof {
+  TokenBalance token = 1;
+  MerkleTreeProof proof = 2;
+}
+
+message ZkEscapeProof {
+  ZkAccountTreeProof accountProof = 1;
+  ZkTokenTreeProof   tokenProof   = 2;
+}
+
 message ZkDeposit {
   uint64 tokenId = 1;
   string amount = 2;
