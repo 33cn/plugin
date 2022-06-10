@@ -22,7 +22,6 @@ func (z *zksync) execAutoLocalZksync(tx *types.Transaction, receiptData *types.R
 
 func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	infoTable := NewZksyncInfoTable(z.GetLocalDB())
-	proofTable := NewCommitProofTable(z.GetLocalDB())
 
 	dbSet := &types.LocalDBSet{}
 	for _, log := range receiptData.Logs {
@@ -53,24 +52,10 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 				return nil, err
 			}
 			dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
-		case zt.TyCommitProofLog:
-			var proof zt.ReceiptCommitProof
-			err := types.Decode(log.GetLog(), &proof)
-			if err != nil {
-				return nil, err
-			}
-			err = proofTable.Replace(proof.Current)
-			if err != nil {
-				return nil, err
-			}
+
 		}
 	}
 	kvs, err := infoTable.Save()
-	if err != nil {
-		return nil, err
-	}
-	dbSet.KV = append(dbSet.KV, kvs...)
-	kvs, err = proofTable.Save()
 	if err != nil {
 		return nil, err
 	}
