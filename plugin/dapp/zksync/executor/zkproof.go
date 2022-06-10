@@ -43,22 +43,26 @@ func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 
 func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
 	key := getLastProofKey()
-	onChainIdKey := getLastOnChainProofIdKey()
+
 	log := &zt.ReceiptCommitProof{
 		Prev:    old,
 		Current: new,
 	}
-	return &types.Receipt{
+	r := &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
 			{Key: key, Value: types.Encode(new)},
-			{Key: onChainIdKey, Value: types.Encode(&zt.LastOnChainProof{ProofId: new.ProofId, OnChainProofId: new.OnChainProofId})},
 		},
 		Logs: []*types.ReceiptLog{
 			{Ty: zt.TyCommitProofLog, Log: types.Encode(log)},
 		},
 	}
-
+	//只在onChainProof 有效时候保存
+	if new.OnChainProofId > 0 {
+		onChainIdKey := getLastOnChainProofIdKey()
+		r.KV = append(r.KV, &types.KeyValue{Key: onChainIdKey, Value: types.Encode(&zt.LastOnChainProof{ProofId: new.ProofId, OnChainProofId: new.OnChainProofId})})
+	}
+	return r
 }
 
 func isNotFound(err error) bool {

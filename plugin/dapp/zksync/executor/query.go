@@ -287,7 +287,8 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 	table := NewCommitProofTable(z.GetLocalDB())
 
 	if in.GetReqOnChainProof() {
-		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%d", in.OnChainProofId+1)), nil, 1, zt.ListASC)
+		//升序
+		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%016d", in.OnChainProofId)), nil, 1, zt.ListASC)
 		if err != nil {
 			zklog.Error("Query_GetProofList.getOnChainSubId", "id", in.OnChainProofId, "err", err.Error())
 			return nil, err
@@ -312,9 +313,8 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 			return rows[0].Data.(*zt.ZkCommitProof), nil
 		}
 	}
-
-	// 按序获取下一个proofId
-	rows, err := table.GetData(getProofIdCommitProofKey(in.ProofId + 1))
+	// 按序获取proofId
+	rows, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
 	if err != nil {
 		zklog.Error("Query_GetProofList.getProofId", "currentProofId", in.ProofId, "err", err.Error())
 		return nil, err

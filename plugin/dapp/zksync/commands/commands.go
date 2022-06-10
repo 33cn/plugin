@@ -865,6 +865,7 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getFirstRootHashCmd())
 	cmd.AddCommand(getZkCommitProofListCmd())
 	cmd.AddCommand(getEscapeProofCmd())
+	cmd.AddCommand(getLastOnChainCommitProofCmd())
 
 	//cmd.AddCommand(commitProofCmd())
 
@@ -882,26 +883,22 @@ func getTxProofCmd() *cobra.Command {
 }
 
 func getTxProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "g", 0, "zksync proof height")
-	cmd.MarkFlagRequired("height")
-	cmd.Flags().Uint32P("index", "i", 0, "tx index")
-	cmd.MarkFlagRequired("index")
+	cmd.Flags().StringP("hash", "s", "", "zksync tx hash")
+	cmd.MarkFlagRequired("hash")
 }
 
 func getTxProof(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	height, _ := cmd.Flags().GetUint64("height")
-	index, _ := cmd.Flags().GetUint32("index")
+	hash, _ := cmd.Flags().GetString("hash")
 
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
-		BlockHeight: height,
-		TxIndex:     index,
+		TxHash: hash,
 	}
 
-	params.FuncName = "GetTxProof"
+	params.FuncName = "GetProofByTxHash"
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.OperationInfo
@@ -1018,6 +1015,31 @@ func getLastCommitProof(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&types.ReqNil{})
 
 	var resp zt.CommitProofState
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getLastOnChainCommitProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "onchain",
+		Short: "get last on chain committed proof",
+		Run:   getLastOnChainCommitProof,
+	}
+
+	return cmd
+}
+
+func getLastOnChainCommitProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+
+	params.FuncName = "GetLastOnChainProof"
+	params.Payload = types.MustPBToJSON(&types.ReqNil{})
+
+	var resp zt.LastOnChainProof
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -1141,12 +1163,11 @@ func getZkCommitProofListCmd() *cobra.Command {
 
 func getZkCommitProofListFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
-	cmd.MarkFlagRequired("proofId")
 	cmd.Flags().Uint64P("onChainProofId", "s", 0, "commit on chain proof id")
 
-	cmd.Flags().BoolP("onChain", "o", true, "if req onChain proof by sub id")
+	cmd.Flags().BoolP("onChain", "o", false, "if req onChain proof by sub id")
 	cmd.Flags().BoolP("latestProof", "l", false, "if req latest proof")
-	cmd.Flags().Uint64P("endHeight", "e", 0, "latest proof pre endHeight")
+	cmd.Flags().Uint64P("endHeight", "e", 0, "latest proof before endHeight")
 
 }
 
