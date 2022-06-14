@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package types;
+option go_package = "../types";
+
+message ZkDepositReceiptLog {
+    uint64 accountId      = 1; //accountId其实就是叶子的totalIndex
+    string ethAddress     = 2; //账户对应的以太坊地址
+    string chain33Addr    = 3; //chain33地址
+    uint64 tokenId        = 4; //叶子下拥有的tokenId
+    string balanceBefore  = 5;
+    string balanceAfter   = 6;
+}

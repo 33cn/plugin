@@ -150,6 +150,7 @@ const (
 )
 
 const (
+	InvalidAccountId   = 0
 	//SystemFeeAccountId 此账户作为缺省收费账户
 	SystemFeeAccountId = 1
 	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录

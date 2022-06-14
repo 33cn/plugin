@@ -60,7 +60,6 @@ func (a *Action) GetIndex() int64 {
 func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
 	var err error
 
 	err = checkParam(payload.Amount)
@@ -96,20 +95,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
 	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
-	info, err := generateTreeUpdateInfo(a.statedb, a.localDB, ethFeeAddr, chain33FeeAddr)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
-	}
-
-	leaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetChain33Addr(), payload.GetEthAddress(), info)
+	leaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetChain33Addr(), payload.GetEthAddress())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress")
-	}
-
-	tree, err := getAccountTree(a.statedb, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getAccountTree")
 	}
 
 	operationInfo := &zt.OperationInfo{
@@ -121,97 +109,70 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		SigData:     payload.Signature,
 	}
 
+	depositReceiptLog := &zt.ZkDepositReceiptLog{}
+	depositReceiptLog.EthAddress    = payload.EthAddress
+	depositReceiptLog.Chain33Addr   = payload.Chain33Addr
+	depositReceiptLog.TokenId       = payload.GetTokenId()
+
 	//leaf不存在就添加
 	if leaf == nil {
-		zklog.Info("zksync deposit add leaf")
-		operationInfo.AccountID = tree.GetTotalIndex() + 1
-		//添加之前先计算证明
-		receipt, err := calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
+		zklog.Info("zksync deposit add new leaf")
 
-		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, "0")
+		var accountID uint64
+		lastAccountID, _ := getLatestAccountID(a.statedb)
+		if zt.InvalidAccountId != lastAccountID {
+			ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
+			kvs4InitAccount, err := NewInitAccount(ethFeeAddr, chain33FeeAddr)
+			if nil != err {
+				return nil, err
+			}
+			kvs = append(kvs, kvs4InitAccount...)
 
-		kvs, localKvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.AddNewLeaf")
-		}
-		receipt, err = calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-
-		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
-		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-		kv := &types.KeyValue{
-			Key:   getHeightKey(a.height),
-			Value: rootHash,
-		}
-		kvs = append(kvs, kv)
-
-		branch := &zt.OperationPairBranch{
-			Before: before,
-			After:  after,
-		}
-		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-		zklog := &zt.ZkReceiptLog{
-			OperationInfo: operationInfo,
-			LocalKvs:      localKvs,
-		}
-		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(zklog)}
-		logs = append(logs, receiptLog)
-	} else {
-		operationInfo.AccountID = leaf.GetAccountId()
-
-		receipt, err := calProof(a.statedb, info, leaf.AccountId, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-
-		var balance string
-		if receipt.Token == nil {
-			balance = "0"
+			//对于首次进行存款的用户，其账户ID从SystemNFTAccountId后开始进行连续分配
+			accountID = zt.SystemNFTAccountId + 1
 		} else {
-			balance = receipt.Token.Balance
+			accountID = uint64(lastAccountID) + 1
 		}
-		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, balance)
 
-		kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.UpdateLeaf")
+		balancekv, balancehistory, err := updateTokenBalance(accountID, operationInfo.TokenID, operationInfo.Amount, zt.Add, a.statedb)
+		if nil != err {
+			return nil, err
 		}
-		receipt, err = calProof(a.statedb, info, leaf.AccountId, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
-		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-		kv := &types.KeyValue{
-			Key:   getHeightKey(a.height),
-			Value: rootHash,
-		}
-		kvs = append(kvs, kv)
+		kvs = append(kvs, balancekv)
 
-		branch := &zt.OperationPairBranch{
-			Before: before,
-			After:  after,
+		addLeafKvs, err := AddNewLeafOpt(a.statedb, payload.GetEthAddress(), payload.GetTokenId(), accountID, payload.GetAmount(), payload.GetChain33Addr())
+		if nil != err {
+			return nil, err
 		}
-		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-		zklog := &zt.ZkReceiptLog{
-			OperationInfo: operationInfo,
-			LocalKvs:      localKvs,
+		kvs = append(kvs, addLeafKvs...)
+
+		depositReceiptLog.AccountId     = accountID
+		depositReceiptLog.BalanceBefore = balancehistory.before
+		depositReceiptLog.BalanceAfter  = balancehistory.after
+
+	} else {
+		balancekv, balancehistory, err := updateTokenBalance(leaf.AccountId, operationInfo.TokenID, operationInfo.Amount, zt.Add, a.statedb)
+		if nil != err {
+			return nil, err
 		}
-		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(zklog)}
-		logs = append(logs, receiptLog)
-	}
-	//存入1号账户的kv
-	for _, kv := range info.kvs {
-		if string(kv.GetKey()) != string(GetAccountTreeKey()) {
-			kvs = append(kvs, kv)
+		kvs = append(kvs, balancekv)
+
+		updateLeafKvs, err := updateLeafOpt(a.statedb, leaf.AccountId, payload.GetTokenId(), zt.Add)
+		if nil != err {
+			return nil, err
 		}
+		kvs = append(kvs, updateLeafKvs...)
+		depositReceiptLog.AccountId     = leaf.AccountId
+		depositReceiptLog.BalanceBefore = balancehistory.before
+		depositReceiptLog.BalanceAfter  = balancehistory.after
 	}
 
+	//创建deposit日志信息
+	log := &types.ReceiptLog{
+		Ty: zt.TyDepositLog,
+		Log: types.Encode(depositReceiptLog),
+	}
+	logs = append(logs, log)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
 	r := makeSetEthPriorityIdReceipt(0, lastPriorityId.Int64(), payload.EthPriorityQueueId)
@@ -1364,6 +1325,23 @@ func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueI
 	}
 
 	return &id, nil
+}
+
+func getLatestAccountID(db dbm.KV) (int64, error) {
+	key := calcLatestAccountIDKey()
+	v, err := db.Get(key)
+
+	if err != nil {
+		return zt.InvalidAccountId, err
+	}
+	var id types.Int64
+	err = types.Decode(v, &id)
+	if err != nil {
+		zklog.Error("getLastEthPriorityQueueID.decode", "err", err)
+		return zt.InvalidAccountId, err
+	}
+
+	return id.Data, nil
 }
 
 func makeSetEthPriorityIdReceipt(chainId uint32, prev, current int64) *types.Receipt {

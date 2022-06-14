@@ -82,3 +82,7 @@ func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
 func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d.%16d", actionTy, tokenId))
 }
+
+func calcLatestAccountIDKey() []byte {
+	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"accountID"))
+}
