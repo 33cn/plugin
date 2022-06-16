@@ -120,11 +120,13 @@ jobs:
           go-version: 1.16
 
       - name: Build
-        run: make
+        run: make build
         env:
           GOARCH: 386
 
       - name: Run unit tests
-        run: go test `go list ./... | grep -v "dapp/mix"` -covermode=atomic
+        run: |
+          go env
+          CGO_ENABLED=1 go test `go list ./... | grep -v "dapp/mix"` -covermode=atomic
         env:
           GOARCH: 386
