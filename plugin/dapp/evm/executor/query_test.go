@@ -123,3 +123,7 @@ func Test_UnpackInputLockOfBridgevmxgo(t *testing.T) {
 	}
 	assert.Equal(t, correct, 3)
 }
+
+func TestEVMExecutor_Query_GetCode(t *testing.T) {
+
+}

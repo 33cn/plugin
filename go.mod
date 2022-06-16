@@ -4,6 +4,7 @@ go 1.16
 
 //replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20220606070506-484cb3c79d3a
 replace github.com/33cn/chain33 => ../chain33
+
 require (
 	github.com/33cn/chain33 v1.67.3
 	github.com/BurntSushi/toml v0.3.1
