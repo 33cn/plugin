@@ -94,7 +94,7 @@ func Exit(s string) {
 }
 
 // RandIntn ...
-func RandIntn(n int) int {
+func RandIntn(n int64) int64 {
 	if n <= 0 {
 		panic("invalid argument to Intn")
 	}
@@ -102,12 +102,12 @@ func RandIntn(n int) int {
 		//randMux.Lock()
 		i32 := randgen.Int31n(int32(n))
 		//randMux.Unlock()
-		return int(i32)
+		return int64(i32)
 	}
 	//randMux.Lock()
-	i64 := randgen.Int63n(int64(n))
+	i64 := randgen.Int63n(n)
 	//randMux.Unlock()
-	return int(i64)
+	return i64
 }
 
 // RandUint32 ...

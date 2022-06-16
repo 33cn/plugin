@@ -48,18 +48,18 @@ type commitMsgClient struct {
 	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
 	resetCh              chan interface{}
 	sendMsgCh            chan *types.Transaction
-	minerSwitch          int32
 	currentTx            unsafe.Pointer
 	chainHeight          int64
 	sendingHeight        int64
 	consensHeight        int64
 	consensDoneHeight    int64
+	txFeeRate            int64
+	minerSwitch          int32
 	selfConsensError     int32 //自共识比主链共识更高的异常场景，需要等待自共识<=主链共识再发送
 	authAccount          string
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
-	txFeeRate            int64
 	selfConsEnableList   []*paraSelfConsEnable //适配在自共识合约配置前有自共识的平行链项目，fork之后，采用合约配置
 	privateKey           crypto.PrivKey
 	quit                 chan struct{}
