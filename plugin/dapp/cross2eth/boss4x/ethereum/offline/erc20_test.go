@@ -52,7 +52,7 @@ func Test_packData(t *testing.T) {
 		return
 
 	}
-	var owner = "0xd741c9f9e0A1F5bb1ed898115A683253F14c1F8b"
+	var owner = "0xd83b69C56834E85e023B1738E69BFA2F0dd52905"
 	var (
 		symbol   = "ZHF"
 		unit     = big.NewInt(1e8)
