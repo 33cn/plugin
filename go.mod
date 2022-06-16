@@ -5,7 +5,7 @@ go 1.16
 //replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20220606070506-484cb3c79d3a
 replace github.com/33cn/chain33 => ../chain33
 require (
-	github.com/33cn/chain33 v1.67.3-0.20220513094523-7bd89216191e
+	github.com/33cn/chain33 v1.67.3
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
@@ -45,7 +45,7 @@ require (
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	google.golang.org/grpc v1.40.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible

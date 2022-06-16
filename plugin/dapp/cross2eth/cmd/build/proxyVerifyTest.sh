@@ -31,6 +31,7 @@ function start_docker_ebrelayerProxy() {
     sleep 1
 
     init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
+    sleep 20
 }
 
 function setWithdraw_ethereum() {

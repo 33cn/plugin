@@ -3,6 +3,13 @@ TestNet=false
 CoinSymbol="para"
 EnableParaFork=true
 
+[address]
+#旧的版本或bty缺省是btc格式地址，可以支持eth格式地址，如果对地址格式没要求，采用缺省配置即可
+defaultDriver="btc"
+[address.enableHeight]
+btc=0
+eth=-1
+
 [crypto]
 
 [log]
@@ -259,6 +266,9 @@ ForkCacheDriver=0
 ForkTicketFundAddrV1=-1 #fork6.3
 #主链和平行链都使用同一个fork高度
 ForkRootHash=7200000
+#地址key格式化, 主要针对eth地址
+ForkFormatAddressKey=0
+
 [fork.sub.coins]
 Enable=0
 

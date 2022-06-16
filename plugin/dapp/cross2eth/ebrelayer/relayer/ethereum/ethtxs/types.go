@@ -27,16 +27,17 @@ type ProphecyClaim struct {
 	TokenContractAddress common.Address
 	Symbol               string
 	Amount               *big.Int
-	chain33TxHash        []byte
+	Chain33TxHash        []byte
 }
 
 type WithdrawStatus int32
 
 const (
-	WDError   = WithdrawStatus(1)
-	WDPending = WithdrawStatus(2)
-	WDFailed  = WithdrawStatus(3)
-	WDSuccess = WithdrawStatus(4)
+	WDError      = WithdrawStatus(1)
+	WDPending    = WithdrawStatus(2)
+	WDFailed     = WithdrawStatus(3)
+	WDSuccess    = WithdrawStatus(4)
+	BinanceChain = "Binance"
 )
 
 // 此处的名字命令不能随意改动，需要与合约event中的命名完全一致

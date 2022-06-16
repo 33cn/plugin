@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -77,11 +78,11 @@ func (r *MixRow) Get(key string) ([]byte, error) {
 	case "authSpendHash":
 		return []byte(r.Info.AuthorizeSpendHash), nil
 	case "account":
-		return []byte(r.Info.Account), nil
+		return address.FormatAddrKey(r.Info.Account), nil
 	case "status":
 		return []byte(fmt.Sprintf("%2d", r.Info.Status)), nil
 	case "owner_status":
-		return []byte(fmt.Sprintf("%s_%2d", r.Info.Account, r.Info.Status)), nil
+		return []byte(fmt.Sprintf("%s_%2d", address.FormatAddrKey(r.Info.Account), r.Info.Status)), nil
 	default:
 		return nil, types.ErrNotFound
 	}

@@ -8,10 +8,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
+	cross2ethErrors "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -29,14 +33,14 @@ func SelectAndRoundEthURL(ethURL *[]string) (string, error) {
 	return result, nil
 }
 
-func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+func SetupEthClient(ethURL *[]string) (*ethclient.Client, string, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
 			txslog.Error("SetupEthClient", "SelectAndRoundEthURL err", err.Error())
-			return nil, err
+			return nil, "", err
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
@@ -49,43 +53,68 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 			continue
 		}
 		txslog.Debug("SetupEthClient", "SelectAndRoundEthURL:", urlSelected)
-		return client, nil
+		return client, urlSelected, nil
 	}
-	return nil, errors.New("FailedToSetupEthClient")
+	return nil, "", errors.New("FailedToSetupEthClient")
 }
 
-func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+func GetOracleInstance(client ethinterface.EthClientSpec, registry common.Address) (*generated.Oracle, error) {
+	nilAddr := common.Address{}
+	if nilAddr == registry {
+		return nil, cross2ethErrors.ErrContractNotRegistered
+	}
+
+	oracleAddr, err := GetAddressFromBridgeRegistry(client, registry, registry, Oracle)
+	if nil != err {
+		return nil, errors.New("failed to get addr for bridgeBank from registry " + err.Error())
+	}
+	oracleInstance, err := generated.NewOracle(*oracleAddr, client)
+	if nil != err {
+		return nil, errors.New("failed to NewOracle " + err.Error())
+	}
+	return oracleInstance, nil
+}
+
+func SetupEthClients(ethURL *[]string, registry common.Address) ([]*EthClientWithUrl, *big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	var Clients []ethinterface.EthClientSpec
+	var Clients []*EthClientWithUrl
+	var clientChainID *big.Int
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
 			txslog.Error("SetupEthClients", "SelectAndRoundEthURL err", err.Error())
-			return nil, err
+			return nil, nil, err
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
 			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
-		_, err = client.NetworkID(timeout)
+		chainID, err := client.NetworkID(timeout)
 		if err != nil {
-			txslog.Error("SetupEthClients", "Failed to get NetworkID due to:%s", err.Error())
+			txslog.Error("SetupEthClients", "Failed to get NetworkID due to", err.Error())
 			continue
 		}
 		txslog.Debug("SetupEthClients", "SelectAndRoundEthURL:", urlSelected)
-		Clients = append(Clients, client)
+
+		oracleInstance, err := GetOracleInstance(client, registry)
+		if nil != err {
+			txslog.Error("SetupEthClient", "GetOracleInstance err", err.Error())
+		}
+
+		Clients = append(Clients, &EthClientWithUrl{Client: client, ClientUrl: urlSelected, OracleInstance: oracleInstance})
+		clientChainID = chainID
 	}
 
 	if len(Clients) > 0 {
-		return Clients, nil
+		return Clients, clientChainID, nil
 	}
-	return nil, errors.New("FailedToSetupEthClients")
+	return nil, nil, errors.New("FailedToSetupEthClients")
 }
 
-func SetupRecommendClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
-	var Clients []ethinterface.EthClientSpec
+func SetupRecommendClients(ethURL *[]string, registry common.Address) ([]*EthClientWithUrl, error) {
+	var Clients []*EthClientWithUrl
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
@@ -94,11 +123,16 @@ func SetupRecommendClients(ethURL *[]string) ([]ethinterface.EthClientSpec, erro
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
-			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
+			txslog.Error("SetupRecommendClients", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
 		txslog.Debug("SetupRecommendClients", "SelectAndRoundEthURL:", urlSelected)
-		Clients = append(Clients, client)
+
+		oracleInstance, err := GetOracleInstance(client, registry)
+		if nil != err {
+			txslog.Error("SetupRecommendClients", "GetOracleInstance err", err.Error())
+		}
+		Clients = append(Clients, &EthClientWithUrl{Client: client, ClientUrl: urlSelected, OracleInstance: oracleInstance})
 	}
 
 	if len(Clients) > 0 {

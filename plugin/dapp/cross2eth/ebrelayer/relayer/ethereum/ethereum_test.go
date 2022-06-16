@@ -468,7 +468,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		ethBridgeClaimChan:      ethBridgeClaimchan,
 		chain33MsgChan:          chain33Msgchan,
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
-		remindUrl:               cfg.RemindUrl,
+		//remindUrl:               cfg.RemindUrl,
 	}
 
 	relayer.eventLogIndex = relayer.getLastBridgeBankProcessedHeight()
@@ -495,8 +495,68 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	if err != nil {
 		panic(err)
 	}
-	go relayer.proc()
+	//go relayer.proc()
+	go proc(relayer)
 	return relayer
+}
+
+func proc(ethRelayer *Relayer4Ethereum) {
+	//等待用户导入
+	relayerLog.Info("Please unlock or import private key for Ethereum relayer")
+	if err := ethRelayer.RestoreTokenAddress(); nil != err {
+		relayerLog.Info("Failed to RestoreTokenAddress")
+		return
+	}
+
+	nilAddr := common.Address{}
+	if nilAddr != ethRelayer.bridgeRegistryAddr {
+		relayerLog.Info("proc", "Going to recover corresponding solidity contract handler with bridgeRegistryAddr", ethRelayer.bridgeRegistryAddr.String())
+		var err error
+		ethRelayer.rwLock.Lock()
+		ethRelayer.x2EthContracts, ethRelayer.x2EthDeployInfo, err = ethtxs.RecoverContractHandler(ethRelayer.clientSpec, ethRelayer.bridgeRegistryAddr, ethRelayer.bridgeRegistryAddr)
+		if nil != err {
+			panic("Failed to recover corresponding solidity contract handler due to:" + err.Error())
+		}
+		ethRelayer.rwLock.Unlock()
+		relayerLog.Info("^-^ ^-^ Succeed to recover corresponding solidity contract handler")
+
+		ethRelayer.unlockchan <- start
+	}
+
+	var timer *time.Ticker
+	for range ethRelayer.unlockchan {
+		relayerLog.Info("Received ethRelayer.unlockchan")
+		ethRelayer.rwLock.RLock()
+		privateKey4Ethereum := ethRelayer.privateKey4Ethereum
+		ethRelayer.rwLock.RUnlock()
+		if nil != privateKey4Ethereum && nilAddr != ethRelayer.bridgeRegistryAddr {
+			relayerLog.Info("Ethereum relayer starts to run...")
+			ethRelayer.prePareSubscribeEvent()
+			//向bridgeBank订阅事件
+			ethRelayer.subscribeEvent()
+			ethRelayer.filterLogEvents()
+			relayerLog.Info("Ethereum relayer starts to process online log event...")
+			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+			break
+		}
+	}
+
+	for {
+		select {
+		case <-timer.C:
+			ethRelayer.procNewHeight()
+		case err := <-ethRelayer.bridgeBankSub.Err():
+			relayerLog.Error("proc", "Need to subscribeEvent again due to bridgeBankSub err", err.Error())
+			ethRelayer.subscribeEvent()
+			ethRelayer.filterLogEvents()
+		case vLog := <-ethRelayer.bridgeBankLog:
+			ethRelayer.storeBridgeBankLogs(vLog, true)
+		case chain33Msg := <-ethRelayer.chain33MsgChan:
+			ethRelayer.handleChain33Msg(chain33Msg)
+		case txRelayAck := <-ethRelayer.txRelayAckRecvChan:
+			ethRelayer.procTxRelayAck(txRelayAck)
+		}
+	}
 }
 
 func initCfg(path string) *relayerTypes.RelayerConfig {
@@ -505,4 +565,14 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 		os.Exit(-1)
 	}
 	return &cfg
+}
+
+func Test_UnpackLogProphecyProcessed(t *testing.T) {
+	eventData := []byte{121, 110, 255, 239, 36, 105, 91, 194, 159, 116, 120, 172, 247, 183, 65, 84, 137, 248, 222, 154, 153, 21, 31, 44, 217, 190, 53, 63, 120, 15, 86, 234, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 225, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217, 218, 176, 33, 231, 78, 207, 71, 87, 136, 237, 123, 97, 53, 96, 86, 178, 9, 88, 48}
+
+	log, err := events.UnpackLogProphecyProcessed(ethtxs.LoadABI(ethtxs.OracleABI), events.LogProphecyProcessed.String(), eventData)
+	require.Nil(t, err)
+
+	claimID := hexutil.Encode(log.ClaimID[:])
+	require.NotEmpty(t, claimID)
 }

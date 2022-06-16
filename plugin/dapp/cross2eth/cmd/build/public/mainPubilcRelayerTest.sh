@@ -137,6 +137,9 @@ function updata_toml_start_bcd() {
         pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
         sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "${file}"
         sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "${file}"
+        if [[ "${name}" == "d" ]] ; then
+            sed -i 's/^DelayedSendTime=.*/DelayedSendTime=180000/' "${file}"
+        fi
 
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
@@ -157,6 +160,7 @@ function restart_ebrelayerA() {
 
     result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
+    sleep 20
 }
 
 function restart_ebrelayer_bcd() {
@@ -169,6 +173,7 @@ function restart_ebrelayer_bcd() {
 
     result=$(docker exec "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebcli_A" unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
+    sleep 20
 }
 
 # chain33 lock BTY, eth burn BTY

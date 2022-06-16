@@ -73,6 +73,14 @@ type LogNewBridgeToken struct {
 	Symbol string
 }
 
+// NewProphecyProcessed struct which represents a LogProphecyProcessed
+type NewProphecyProcessed struct {
+	ClaimID             [32]byte
+	WeightedSignedPower *big.Int
+	WeightedTotalPower  *big.Int
+	Submitter           common.Address
+}
+
 // UnpackLogLock : Handles new LogLock events
 func UnpackLogLock(contractAbi abi.ABI, eventName string, eventData []byte) (lockEvent *LockEvent, err error) {
 	event := &LockEvent{}
@@ -106,5 +114,16 @@ func UnpackLogBurn(contractAbi abi.ABI, eventName string, eventData []byte) (bur
 	eventsLog.Info("UnpackLogBurn", "token addr", event.Token.Hex(), "symbol", event.Symbol,
 		"Amount", event.Amount.String(), "OwnerFrom", event.OwnerFrom.String(),
 		"Chain33Receiver", string(event.Chain33Receiver), "nonce", event.Nonce.String())
+	return event, nil
+}
+
+func UnpackLogProphecyProcessed(contractAbi abi.ABI, eventName string, eventData []byte) (ProphecyProcessedEvent *NewProphecyProcessed, err error) {
+	event := &NewProphecyProcessed{}
+	// Parse the event's attributes as Ethereum network variables
+	err = contractAbi.UnpackIntoInterface(event, eventName, eventData)
+	if err != nil {
+		eventsLog.Error("UnpackLogProphecyProcessed", "Failed to unpack abi due to:", err.Error())
+		return nil, ebrelayerTypes.ErrUnpack
+	}
 	return event, nil
 }

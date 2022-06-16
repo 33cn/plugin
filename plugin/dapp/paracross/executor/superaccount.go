@@ -1030,7 +1030,7 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 
 	id, err := getNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "getNodegGroupId=%s", config.Id)
 	}
 
 	if config.Title != id.Title {

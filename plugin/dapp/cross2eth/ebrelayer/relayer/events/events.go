@@ -23,11 +23,13 @@ const (
 	LogLockFromETH
 	// LogBurnFromETH : Ethereum event 'LogChain33TokenBurn'
 	LogBurnFromETH
+	// LogProphecyProcessed : Ethereum event LogProphecyProcessed
+	LogProphecyProcessed
 )
 
 // 此处的名字命令不能随意改动，需要与合约event中的命名完全一致
 func (d Event) String() string {
-	return [...]string{"unknown-LOG", "LogLock", "LogChain33TokenBurn"}[d]
+	return [...]string{"unknown-LOG", "LogLock", "LogChain33TokenBurn", "LogProphecyProcessed"}[d]
 }
 
 func (d ClaimType) String() string {

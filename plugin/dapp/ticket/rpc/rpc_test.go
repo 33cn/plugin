@@ -272,6 +272,8 @@ ForkEnableParaRegExec=0
 ForkCacheDriver=0
 ForkTicketFundAddrV1=-1
 ForkRootHash=1
+#地址key格式化, 主要针对eth地址
+ForkFormatAddressKey=0
 [fork.sub.coins]
 Enable=0
 

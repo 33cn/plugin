@@ -8,9 +8,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"math/big"
-
+	"github.com/33cn/chain33/system/address/eth"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
+	"math/big"
 
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -167,15 +167,13 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 	// the first byte of pubkey is bitcoin heritage
 	driver := common.GetEvmAddressDriver()
 	// 以太坊保持兼容, 直接用原生代码更高效
-	addrBytes, _ := driver.FromString(driver.PubKeyToAddr(pubKey))
-	log15.Info("addrBytes:", "addrBytes", driver.PubKeyToAddr(pubKey))
 
-	/* if driver.GetName() == eth.Name {
-		log15.Info("addrBytes2:", "addrBytes", common.Bytes2Hex(common.LeftPadBytes(crypto.Keccak256(pubKey[1:])[12:], 32)))
+	if driver.GetName() == eth.Name {
 		return common.LeftPadBytes(crypto.Keccak256(pubKey[1:])[12:], 32), nil
-	}*/
-	addrBytes, _ = driver.FromString(driver.PubKeyToAddr(pubKey))
-	log15.Info("addrBytes3:", "addrBytes", common.Bytes2Hex(addrBytes))
+	}
+	// compress pub key(chain33中需使用压缩格式)
+	compressedPub, _ := crypto.CompressPubKey(pubKey)
+	addrBytes, _ := driver.FromString(driver.PubKeyToAddr(compressedPub))
 	return common.LeftPadBytes(addrBytes, 32), nil
 }
 
