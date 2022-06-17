@@ -776,7 +776,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 
-	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
+	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByEthAddress")
 	}
@@ -1245,7 +1245,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
-	feeKVsFrom, l2feeLogFrom, err := applyL2AccountUpdate(creatorLeaf.GetAccountId(),feeTokenId, feeAmount, zt.Sub, a.statedb, creatorLeaf)
+	feeKVsFrom, l2feeLogFrom, err := applyL2AccountUpdate(creatorLeaf.GetAccountId(), feeTokenId, feeAmount, zt.Sub, a.statedb, creatorLeaf)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
@@ -1429,7 +1429,6 @@ func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, protocol, a
 func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
 
 	if !checkIsNFTToken(payload.NFTTokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should big than system NFT base ID=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
@@ -1438,10 +1437,6 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount=%d", payload.Amount)
 	}
 
-	info, err := getTreeUpdateInfo(a.statedb)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
-	}
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyWithdrawNFTAction]
@@ -1478,7 +1473,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
 
 	//1. calc fee
-	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.FromAccountId, info)
+	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.FromAccountId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
@@ -1489,7 +1484,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
-	feeToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, feeTokenId, info)
+	feeToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
@@ -1498,77 +1493,29 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
-	newBranch, fromKvs, fromLocal, err := a.updateLeafRst(info, operationInfo, fromLeaf, feeTokenId, feeAmount, zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.fee")
+	feeKVsFrom, l2feeLogFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), feeTokenId, feeAmount, zt.Sub, a.statedb, fromLeaf)
+	if nil != err {
+		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
+	kvs = append(kvs, feeKVsFrom...)
+	l2feeLogFrom.Ty = zt.TyFeeLog
+	logs = append(logs, l2feeLogFrom)
 
 	//2. from NFT id -amount
-	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
+	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
 	}
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, amountStr, zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
+	withdrawKVsFrom, l2WithdrawLogFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.NFTTokenId, amountStr, zt.Sub, a.statedb, fromLeaf)
+	if nil != err {
+		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
-
-	//3.  校验SystemNFTAccountId's TokenId's balance same
-	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.SystemNFTAccountId, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.NFTAccountId")
-	}
-	if fromLeaf == nil {
-		return nil, errors.New("account not exist")
-	}
-	//amount=0, just get proof
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, "0", zt.Add)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
-
-	tokenBalance, err := getNewNFTTokenBalance(nftStatus.CreatorId,
-		big.NewInt(0).SetUint64(nftStatus.CreatorSerialId).String(),
-		nftStatus.ErcProtocol, nftStatus.MintAmount,
-		contentHashPart1.String(), contentHashPart2.String())
-	if err != nil {
-		return nil, errors.Wrapf(err, "getNewNFTTokenBalance tokenId=%d", nftStatus.Id)
-	}
-	if newBranch.After.TokenWitness.Balance != tokenBalance {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "tokenId=%d,NFTAccount.balance=%s,calcBalance=%s", nftStatus.Id, newBranch.After.TokenWitness.Balance, tokenBalance)
-	}
-
-	//3.  校验NFT creator's eth addr same
-	fromLeaf, err = GetLeafByAccountId(a.statedb, nftStatus.GetCreatorId(), info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.NFTAccountId")
-	}
-	if fromLeaf == nil {
-		return nil, errors.New("account not exist")
-	}
-	//amount=0, just get proof
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.SystemNFTTokenId, "0", zt.Add)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
-	if fromLeaf.EthAddress != nftStatus.CreatorEthAddr {
-		return nil, errors.Wrapf(types.ErrNotAllow, "creator eth Addr=%s, nft=%s", fromLeaf.EthAddress, nftStatus.CreatorEthAddr)
-	}
+	kvs = append(kvs, withdrawKVsFrom...)
+	l2WithdrawLogFrom.Ty = zt.TyWithdrawNFTLog
+	logs = append(logs, l2WithdrawLogFrom)
 
 	//accumulate NFT id burned amount
 	nftStatus.BurnedAmount += payload.Amount
@@ -1578,17 +1525,9 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	}
 	kvs = append(kvs, kv)
 
-	//end
-	zklog := &zt.ZkReceiptLog{
-		OperationInfo: operationInfo,
-		LocalKvs:      localKvs,
-	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawNFTLog, Log: types.Encode(zklog)}
-	logs = append(logs, receiptLog)
-
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeAmount, info, feeTokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId, payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -1632,7 +1571,6 @@ func getNFTIdByHash(db dbm.KV, hash string) (*types.Int64, error) {
 func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
 
 	if !checkIsNFTToken(payload.NFTTokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should big than system NFT base ID=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
@@ -1641,10 +1579,6 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount=%d", payload.Amount)
 	}
 
-	info, err := getTreeUpdateInfo(a.statedb)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
-	}
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyTransferNFTAction]
@@ -1674,7 +1608,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
 
 	//1. calc fee
-	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.FromAccountId, info)
+	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.FromAccountId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
@@ -1685,7 +1619,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
-	feeToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, feeTokenId, info)
+	feeToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
@@ -1694,58 +1628,44 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
-	newBranch, fromKvs, fromLocal, err := a.updateLeafRst(info, operationInfo, fromLeaf, feeTokenId, feeAmount, zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.fee")
+	feeKVsFrom, l2feeLogFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), feeTokenId, feeAmount, zt.Sub, a.statedb, fromLeaf)
+	if nil != err {
+		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
+	kvs = append(kvs, feeKVsFrom...)
+	l2feeLogFrom.Ty = zt.TyFeeLog
+	logs = append(logs, l2feeLogFrom)
 
 	//2. from NFT id balance-amount
-	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
+	transferKVsFrom, l2TransferLogFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.NFTTokenId, amountStr, zt.Sub, a.statedb, fromLeaf)
+	if nil != err {
+		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
+	}
+	kvs = append(kvs, transferKVsFrom...)
+	l2TransferLogFrom.Ty = zt.TyTransferNFTLog
+	logs = append(logs, l2TransferLogFrom)
+
+
+	//3. recipient NFT id balance+amount
+	toLeaf, err := GetLeafByAccountId(a.statedb, payload.GetRecipientId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
 	}
-	if fromLeaf == nil {
+	if toLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, amountStr, zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
+	toKVsFrom, l2ToLogFrom, err := applyL2AccountUpdate(toLeaf.GetAccountId(), payload.NFTTokenId, amountStr, zt.Add, a.statedb, fromLeaf)
+	if nil != err {
+		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
+	kvs = append(kvs, toKVsFrom...)
+	l2ToLogFrom.Ty = zt.TyTransferNFTLog
+	logs = append(logs, l2ToLogFrom)
 
-	//2. recipient NFT id balance+amount
-	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetRecipientId(), info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
-	}
-	if fromLeaf == nil {
-		return nil, errors.New("account not exist")
-	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, amountStr, zt.Add)
-	if err != nil {
-		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
-	}
-
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
-
-	//end
-	zklog := &zt.ZkReceiptLog{
-		OperationInfo: operationInfo,
-		LocalKvs:      localKvs,
-	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferNFTLog, Log: types.Encode(zklog)}
-	logs = append(logs, receiptLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeAmount, info, feeTokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId, payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
