@@ -125,4 +125,4 @@ jobs:
         run: make build
 
       - name: Run unit tests
-        run: go test -p=8 `go list ./... | grep -v "dapp/mix"` -covermode=atomic
+        run: go test ./... -covermode=atomic
