@@ -75,6 +75,7 @@ const (
 	TyMintNFTLog        = 112 //铸造NFT
 	TyWithdrawNFTLog    = 113 //L2提款NFT到L1
 	TyTransferNFTLog    = 114 //L2提款NFT到L1
+	TyMintNFT2SystemLog = 115 //向系统账户铸造NFT,且其token ID为全局nft token id，因为其余额设置为token hash,所以使用不同的log标志
 
 	TySetVerifyKeyLog       = 202 //设置电路验证key
 	TyCommitProofLog        = 203 //提交zk proof

@@ -385,6 +385,10 @@ func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain3
 	}
 	kvs = append(kvs, addLeafKvs...)
 
+	//设置新账户的ID.
+	newAccountKV := calcNewAccountKV(int64(accountID))
+	kvs = append(kvs, newAccountKV)
+
 	l2Log := &zt.AccountTokenBalanceReceiptLog{}
 	l2Log.EthAddress = ethAddress
 	l2Log.Chain33Addr = chain33Addr
