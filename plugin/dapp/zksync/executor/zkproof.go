@@ -42,8 +42,7 @@ func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 }
 
 func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
-	key := getLastProofKey()
-
+	key := getLastProofIdKey()
 	log := &zt.ReceiptCommitProof{
 		Prev:    old,
 		Current: new,
@@ -62,6 +61,29 @@ func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
 		onChainIdKey := getLastOnChainProofIdKey()
 		r.KV = append(r.KV, &types.KeyValue{Key: onChainIdKey, Value: types.Encode(&zt.LastOnChainProof{ProofId: new.ProofId, OnChainProofId: new.OnChainProofId})})
 	}
+	return r
+}
+
+func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64) *types.Receipt {
+	key := getProofIdKey(proof.ProofId)
+	log := &zt.ReceiptCommitProofRecord{
+		Proof: proof,
+	}
+	r := &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(proof)},
+		},
+		Logs: []*types.ReceiptLog{
+			{Ty: zt.TyCommitProofRecordLog, Log: types.Encode(log)},
+		},
+	}
+
+	//如果此proofId 比maxRecordId更大，记录下来
+	if proof.ProofId > maxRecordId {
+		r.KV = append(r.KV, &types.KeyValue{Key: getMaxRecordProofIdKey(), Value: types.Encode(&types.Int64{Data: int64(proof.ProofId)})})
+	}
+
 	return r
 }
 
@@ -136,7 +158,7 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 }
 
 func getLastCommitProofData(db dbm.KV, cfg *types.Chain33Config) (*zt.CommitProofState, error) {
-	key := getLastProofKey()
+	key := getLastProofIdKey()
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -179,6 +201,23 @@ func getLastOnChainProofData(db dbm.KV) (*zt.LastOnChainProof, error) {
 	return &data, nil
 }
 
+func getMaxRecordProofIdData(db dbm.KV) (*types.Int64, error) {
+	key := getMaxRecordProofIdKey()
+	v, err := db.Get(key)
+	if err != nil {
+		if isNotFound(err) {
+			return &types.Int64{Data: 0}, nil
+		}
+		return nil, err
+	}
+	var data types.Int64
+	err = types.Decode(v, &data)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db")
+	}
+	return &data, nil
+}
+
 type commitProofCircuit struct {
 	//SeqNum, blockStart,blockEnd, oldTreeRoot, newRootHash, full pubData[...]
 	PubDataCommitment frontend.Variable `gnark:",public"`
@@ -212,41 +251,17 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 
-	lastProof, err := getLastCommitProofData(a.statedb, cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "get last commit Proof")
+	//基本检查
+	/* len(onChainPubdata)     OnChainProofId
+	   =0                      =0
+	   >0                      >0
+	*/
+	if (len(payload.OnChainPubDatas) == 0 && payload.GetOnChainProofId() != 0) ||
+		(len(payload.OnChainPubDatas) > 0 && payload.GetOnChainProofId() <= 0) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "OnChainData, proofId=%d,onChainProofId=%d,lenOnChain=%d", payload.ProofId, payload.OnChainProofId, len(payload.OnChainPubDatas))
 	}
 
-	//proofId需要连续,高度需要衔接
-	if lastProof.ProofId+1 != payload.ProofId || (lastProof.ProofId > 0 && lastProof.BlockEnd != payload.BlockStart) {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id+1=%d, newId=%d, lastBlockEnd=%d,newStart=%d",
-			lastProof.ProofId+1, payload.ProofId, lastProof.BlockEnd, payload.BlockStart)
-	}
-
-	//if lastProof.ProofId+1 != payload.ProofId {
-	//	return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id+1=%d, newId=%d, lastBlockEnd=%d,newStart=%d",
-	//		lastProof.ProofId+1, payload.ProofId,lastProof.BlockEnd,payload.BlockStart)
-	//}
-
-	//tree root 需要衔接
-	if lastProof.NewTreeRoot != payload.OldTreeRoot {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
-			lastProof.NewTreeRoot, payload.OldTreeRoot)
-	}
-
-	//如果包含OnChainPubData, ProofSubId需要连续
-	if len(payload.OnChainPubDatas) > 0 {
-		lastOnChainProof, err := getLastOnChainProofData(a.statedb)
-		if err != nil {
-			return nil, errors.Wrap(err, "getProofSubId")
-		}
-		if lastOnChainProof.OnChainProofId+1 != payload.OnChainProofId {
-			return nil, errors.Wrapf(types.ErrInvalidParam, "lastSubId not match, lastSubId+1=%d, commit=%d", lastOnChainProof.GetOnChainProofId()+1, payload.OnChainProofId)
-		}
-	} else if payload.GetOnChainProofId() != 0 { //非onChain proof subId需要填0
-		return nil, errors.Wrapf(types.ErrInvalidParam, "not onChain proof subId should be 0")
-	}
-
+	//1. 先验证proof是否ok
 	//get verify key
 	verifyKey, err := getVerifyKeyData(a.statedb)
 	if err != nil {
@@ -257,7 +272,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrapf(err, "verify proof")
 	}
 
-	//更新数据库, public and proof上链， pubdata 不上链，存localdb
+	//更新数据库, public and proof, pubdata 不上链，存localdb
 	newProof := &zt.CommitProofState{
 		BlockStart:        payload.BlockStart,
 		BlockEnd:          payload.BlockEnd,
@@ -267,13 +282,92 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		ProofId:           payload.ProofId,
 		OldTreeRoot:       payload.OldTreeRoot,
 		NewTreeRoot:       payload.NewTreeRoot,
-		PublicInput:       payload.PublicInput,
-		Proof:             payload.Proof,
 		OnChainProofId:    payload.OnChainProofId,
 		CommitBlockHeight: a.height,
 	}
-	return makeCommitProofReceipt(lastProof, newProof), nil
 
+	//2. 验证proof是否连续，不连续则暂时保存(考虑交易顺序被打散的场景)
+	lastProof, err := getLastCommitProofData(a.statedb, cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "get last commit Proof")
+	}
+	if payload.ProofId < lastProof.ProofId+1 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d <= lastProofId=%d", payload.ProofId, lastProof.ProofId)
+	}
+	//get未处理的证明的最大id
+	maxRecordId, err := getMaxRecordProofIdData(a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getMaxRecordProofId for id=%d", payload.ProofId)
+	}
+	//不连续，先保存数据库,连续时候再验证
+	if payload.ProofId > lastProof.ProofId+1 {
+		return makeCommitProofRecordReceipt(newProof, uint64(maxRecordId.Data)), nil
+	}
+	lastOnChainProof, err := getLastOnChainProofData(a.statedb)
+	if err != nil {
+		return nil, errors.Wrap(err, "getLastOnChainProof")
+	}
+	lastOnChainProofId, err := checkNewProof(lastProof, newProof, lastOnChainProof.OnChainProofId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkNewProof id=%d", newProof.ProofId)
+	}
+	receipt := makeCommitProofReceipt(lastProof, newProof)
+
+	//循环检查可能未处理的recordProof
+	lastProof = newProof
+	for i := lastProof.ProofId + 1; i < uint64(maxRecordId.Data); i++ {
+		recordProof, _ := getRecordProof(a.statedb, i)
+		if recordProof == nil {
+			break
+		}
+		lastOnChainProofId, err = checkNewProof(lastProof, recordProof, lastOnChainProofId)
+		if err != nil {
+			zklog.Error("commitProof.checkRecordProof", "lastProofId", lastProof.ProofId, "recordProofId", recordProof.ProofId, "err", err)
+			//record检查出错，不作为本交易的错误，待下次更新错误的proofId
+			break
+		}
+		mergeReceipt(receipt, makeCommitProofReceipt(lastProof, newProof))
+		lastProof = recordProof
+	}
+	return receipt, nil
+}
+
+func getRecordProof(db dbm.KV, id uint64) (*zt.CommitProofState, error) {
+	key := getProofIdKey(id)
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, err
+	}
+	var data zt.CommitProofState
+	err = types.Decode(v, &data)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db")
+	}
+	return &data, nil
+}
+
+func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId uint64) (uint64, error) {
+	//proofId需要连续,区块高度需要衔接
+	if lastProof.ProofId+1 != newProof.ProofId || lastProof.BlockEnd != newProof.BlockStart {
+		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastProofId=%d,newProofId=%d, lastBlockEnd=%d,newBlockStart=%d",
+			lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
+	}
+
+	//tree root 需要衔接
+	if lastProof.NewTreeRoot != newProof.OldTreeRoot {
+		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
+			lastProof.NewTreeRoot, newProof.OldTreeRoot)
+	}
+
+	//如果包含OnChainPubData, OnChainProofId需要连续
+	if newProof.OnChainProofId > 0 {
+		if lastOnChainProofId+1 != newProof.OnChainProofId {
+			return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastOnChainId not match, lastOnChainId=%d, commit=%d", lastOnChainProofId, newProof.OnChainProofId)
+		}
+		//更新新的onChainProofId
+		return newProof.OnChainProofId, nil
+	}
+	return lastOnChainProofId, nil
 }
 
 func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {

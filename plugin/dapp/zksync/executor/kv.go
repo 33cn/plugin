@@ -51,8 +51,16 @@ func getVerifier() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
 }
 
-func getLastProofKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
+func getProofIdKey(id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"ProofId", id))
+}
+
+func getLastProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProofId"))
+}
+
+func getMaxRecordProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"maxRecordProofId"))
 }
 
 func getLastOnChainProofIdKey() []byte {
