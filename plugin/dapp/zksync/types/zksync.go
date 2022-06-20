@@ -81,6 +81,7 @@ const (
 	TySetVerifierLog        = 204 //设置验证者
 	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
 	TySetFeeLog             = 206
+	TyCommitProofRecordLog  = 207 //提交zk proof
 )
 
 const (
@@ -213,6 +214,7 @@ var (
 		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
 		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TyCommitProofRecordLog:  {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecord"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
 		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},

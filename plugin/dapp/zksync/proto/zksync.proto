@@ -254,9 +254,6 @@ message CommitProofState {
   uint32 opIndex  = 5;
   string oldTreeRoot = 6;
   string newTreeRoot = 7;
-  //proof serialized public input
-  string publicInput = 8;
-  string proof       = 9;
 
   uint64 proofId = 10;
   uint64 onChainProofId = 11;
@@ -272,6 +269,10 @@ message LastOnChainProof {
 message ReceiptCommitProof {
   CommitProofState prev = 1;
   CommitProofState current = 2;
+}
+
+message ReceiptCommitProofRecord {
+  CommitProofState proof = 1;
 }
 
 //电路验证者名单
