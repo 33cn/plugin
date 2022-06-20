@@ -339,23 +339,23 @@ func updateLeafOpt(statedb dbm.KV, leaf *zt.Leaf, tokenId uint64, option int32) 
 	return kvs, nil
 }
 
-func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32, statedb dbm.KV, leaf *zt.Leaf) ([]*types.KeyValue, *types.ReceiptLog, error) {
+func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32, statedb dbm.KV, leaf *zt.Leaf, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
 	var kvs []*types.KeyValue
 	var log *types.ReceiptLog
 	balancekv, balancehistory, err := updateTokenBalance(accountID, tokenID, amount, option, statedb)
 	if nil != err {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	kvs = append(kvs, balancekv)
 
 	updateLeafKvs, err := updateLeafOpt(statedb, leaf, tokenID, zt.Add)
 	if nil != err {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	kvs = append(kvs, updateLeafKvs...)
 
-	l2Log := &zt.AccountTokenBalanceReceiptLog{}
+	l2Log := &zt.AccountTokenBalanceReceipt{}
 	l2Log.EthAddress = leaf.EthAddress
 	l2Log.Chain33Addr = leaf.Chain33Addr
 	l2Log.TokenId = tokenID
@@ -363,25 +363,27 @@ func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32
 	l2Log.BalanceBefore = balancehistory.before
 	l2Log.BalanceAfter = balancehistory.after
 
-	log = &types.ReceiptLog{
-		Log: types.Encode(l2Log),
+	if makeEncode {
+		log = &types.ReceiptLog{
+			Log: types.Encode(l2Log),
+		}
 	}
 
-	return kvs, log, nil
+	return kvs, log, l2Log, nil
 }
 
-func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain33Addr string, statedb dbm.KV) ([]*types.KeyValue, *types.ReceiptLog, error) {
+func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain33Addr string, statedb dbm.KV, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
 	var kvs []*types.KeyValue
 	var log *types.ReceiptLog
 	balancekv, balancehistory, err := deposit2NewAccount(accountID, tokenID, amount)
 	if nil != err {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	kvs = append(kvs, balancekv)
 
 	addLeafKvs, err := AddNewLeafOpt(statedb, ethAddress, tokenID, accountID, amount, chain33Addr)
 	if nil != err {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	kvs = append(kvs, addLeafKvs...)
 
@@ -389,7 +391,7 @@ func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain3
 	newAccountKV := calcNewAccountKV(int64(accountID))
 	kvs = append(kvs, newAccountKV)
 
-	l2Log := &zt.AccountTokenBalanceReceiptLog{}
+	l2Log := &zt.AccountTokenBalanceReceipt{}
 	l2Log.EthAddress = ethAddress
 	l2Log.Chain33Addr = chain33Addr
 	l2Log.TokenId = tokenID
@@ -397,11 +399,14 @@ func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain3
 	l2Log.BalanceBefore = balancehistory.before
 	l2Log.BalanceAfter = balancehistory.after
 
-	log = &types.ReceiptLog{
-		Log: types.Encode(l2Log),
+	//为了避免不必要的计算，在transfer等场景中，该操作在函数外部进行
+	if makeEncode {
+		log = &types.ReceiptLog{
+			Log: types.Encode(l2Log),
+		}
 	}
 
-	return kvs, log, nil
+	return kvs, log, l2Log, nil
 }
 
 func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress string, tokenId uint64, amount string, chain33Addr string) ([]*types.KeyValue, []*types.KeyValue, error) {
@@ -635,10 +640,10 @@ func GetLeafByChain33AndEthAddress(db dbm.KV, chain33Addr, ethAddress string) (*
 	return &leaf, nil
 }
 
-func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64, info *TreeUpdateInfo) ([]*zt.Leaf, error) {
+func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64) ([]*zt.Leaf, error) {
 	leaves := make([]*zt.Leaf, 0)
 	for i := startIndex; i <= endIndex; i++ {
-		leaf, err := GetLeafByAccountId(db, i, info)
+		leaf, err := GetLeafByAccountId(db, i)
 		if err != nil {
 			return nil, err
 		}
