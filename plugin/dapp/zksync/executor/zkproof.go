@@ -348,7 +348,7 @@ func getRecordProof(db dbm.KV, id uint64) (*zt.CommitProofState, error) {
 
 func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId uint64) (uint64, error) {
 	//proofId需要连续,区块高度需要衔接
-	if lastProof.ProofId+1 != newProof.ProofId || lastProof.BlockEnd != newProof.BlockStart {
+	if lastProof.ProofId+1 != newProof.ProofId || (lastProof.ProofId > 0 && lastProof.BlockEnd != newProof.BlockStart) {
 		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastProofId=%d,newProofId=%d, lastBlockEnd=%d,newBlockStart=%d",
 			lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
 	}
