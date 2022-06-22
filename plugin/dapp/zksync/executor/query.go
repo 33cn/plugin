@@ -135,13 +135,19 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 }
 
 // Query_GetLastCommitProof 获取最新proof信息
-func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, error) {
-	return getLastCommitProofData(z.GetStateDB(), z.GetAPI().GetConfig())
+func (z *zksync) Query_GetLastCommitProof(in *types.ReqString) (types.Message, error) {
+	if len(in.GetData()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain title null")
+	}
+	return getLastCommitProofData(z.GetStateDB(), z.GetAPI().GetConfig(), in.GetData())
 }
 
 //Query_GetLastOnChainProof 获取最新的包含OnChainPubData的Proof
-func (z *zksync) Query_GetLastOnChainProof(in *types.ReqNil) (types.Message, error) {
-	return getLastOnChainProofData(z.GetStateDB())
+func (z *zksync) Query_GetLastOnChainProof(in *types.ReqString) (types.Message, error) {
+	if len(in.GetData()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "req string null")
+	}
+	return getLastOnChainProofData(z.GetStateDB(), in.GetData())
 }
 
 // Query_GetLastPriorityQueueId 获取最后的eth priority queue id
@@ -152,16 +158,15 @@ func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, e
 	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
 }
 
-func (z *zksync) Query_GetEscapeProof(in *zt.ZkReqEscapeProof) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
-	}
-	if len(in.RootHash) <= 0 {
+func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Message, error) {
+	if len(in.GetRootHash()) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
 	}
-
+	if len(in.GetChainTitle()) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title is nil")
+	}
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(z.GetAPI().GetConfig())
-	return getAccountProofInHistory(z.GetLocalDB(), in.GetAccountId(), in.GetTokenId(), in.GetRootHash(), ethFeeAddr, chain33FeeAddr)
+	return getAccountProofInHistory(z.GetLocalDB(), in, ethFeeAddr, chain33FeeAddr)
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
@@ -262,14 +267,14 @@ func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error
 	return res, nil
 }
 
-// Query_GetCommitProodByProofId 根据proofId获取commitProof信息
-func (z *zksync) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
+// Query_GetCommitProofById 根据proofId获取commitProof信息
+func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, error) {
+	if len(in.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
 
 	table := NewCommitProofTable(z.GetLocalDB())
-	row, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
+	row, err := table.GetData(getProofIdCommitProofKey(in.ChainTitle, in.ProofId))
 	if err != nil {
 		return nil, err
 	}
@@ -278,17 +283,35 @@ func (z *zksync) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message
 	return data, nil
 }
 
+// Query_GetProofChainTitleList 获取所有chainTitle信息
+func (z *zksync) Query_GetProofChainTitleList(in *types.ReqNil) (types.Message, error) {
+
+	table := NewCommitProofTable(z.GetLocalDB())
+	//只查找有proofId=1的记录，再统计
+	rows, err := table.ListIndex("proofId", []byte(fmt.Sprintf("%016d", 1)), nil, 0, zt.ListASC)
+	if err != nil {
+		zklog.Error("Query_GetProofChainTitleList", "err", err.Error())
+		return nil, err
+	}
+	var chains types.ReqMultiStrings
+	for _, r := range rows {
+		chains.Datas = append(chains.Datas, r.Data.(*zt.ZkCommitProof).GetChainTitle())
+	}
+	return &chains, nil
+
+}
+
 // Query_GetProofList 根据proofId fetch 后续证明
 func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
+	if len(in.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
 
 	table := NewCommitProofTable(z.GetLocalDB())
 
 	if in.GetReqOnChainProof() {
 		//升序
-		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%016d", in.OnChainProofId)), nil, 1, zt.ListASC)
+		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%s-%016d", in.GetChainTitle(), in.OnChainProofId)), nil, 1, zt.ListASC)
 		if err != nil {
 			zklog.Error("Query_GetProofList.getOnChainSubId", "id", in.OnChainProofId, "err", err.Error())
 			return nil, err
@@ -299,7 +322,7 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 	//按截止高度获取最新proof
 	if in.GetReqLatestProof() {
 		//降序获取到第一个小于等于endHeight的commitHeight proof
-		rows, err := table.ListIndex("commitHeight", []byte(fmt.Sprintf("%016d", in.GetEndHeight())), nil, 1, zt.ListDESC)
+		rows, err := table.ListIndex("commitHeight", []byte(fmt.Sprintf("%s-%016d", in.GetChainTitle(), in.GetEndHeight())), nil, 1, zt.ListDESC)
 		if err != nil {
 			zklog.Error("Query_GetProofList.listCommitHeight", "endHeight", in.GetEndHeight())
 			return nil, err
@@ -314,7 +337,7 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 		}
 	}
 	// 按序获取proofId
-	rows, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
+	rows, err := table.GetData(getProofIdCommitProofKey(in.GetChainTitle(), in.ProofId))
 	if err != nil {
 		zklog.Error("Query_GetProofList.getProofId", "currentProofId", in.ProofId, "err", err.Error())
 		return nil, err

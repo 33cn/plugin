@@ -63,6 +63,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 	var err error
 
+	if len(payload.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+	}
 	err = checkParam(payload.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
@@ -75,7 +78,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, payload.ChainTitle, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -1205,10 +1208,12 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 
 	fee := zt.FeeMap[zt.TyFullExitAction]
-
+	if len(payload.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+	}
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, payload.GetChainTitle(), a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -1473,7 +1478,10 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+	if len(payload.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+	}
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, payload.GetChainTitle(), a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 

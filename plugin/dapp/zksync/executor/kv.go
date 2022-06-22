@@ -43,40 +43,36 @@ func getHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
 }
 
-func getVerifyKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"verifyKey"))
+func getVerifyKey(chainTitle string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-verifyKey"))
 }
 
-func getVerifier() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
+func getVerifier(chainTitle string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-"+zt.ZkVerifierKey))
 }
 
-func getProofIdKey(id uint64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"ProofId", id))
+func getProofIdKey(chainTitle string, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+chainTitle+"-ProofId", id))
 }
 
-func getLastProofIdKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProofId"))
+func getLastProofIdKey(chainTitle string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-lastProofId"))
 }
 
-func getMaxRecordProofIdKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"maxRecordProofId"))
+func getMaxRecordProofIdKey(chainTitle string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-maxRecordProofId"))
 }
 
-func getLastOnChainProofIdKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastOnChainProofId"))
-}
-
-func getValidatorsKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"validators"))
+func getLastOnChainProofIdKey(chainTitle string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-lastOnChainProofId"))
 }
 
 func getEthPriorityQueueKey(chainID uint32) []byte {
 	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
 }
 
-func getProofIdCommitProofKey(proofId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d", proofId))
+func getProofIdCommitProofKey(chainTitle string, proofId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitle))
 }
 
 func getRootCommitProofKey(root string) []byte {

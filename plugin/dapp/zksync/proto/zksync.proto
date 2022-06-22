@@ -81,10 +81,11 @@ message MerkleTreeProof {
   repeated string helpers = 3;
 }
 
-message ZkReqEscapeProof{
+message ZkReqExistenceProof{
   uint64 accountId = 1;
   uint64 tokenId   = 2;
   string rootHash  = 3;
+  string chainTitle = 4;
 }
 
 message ZkAccountTreeProof {
@@ -96,7 +97,8 @@ message ZkTokenTreeProof {
   MerkleTreeProof proof = 2;
 }
 
-message ZkEscapeProof {
+//存在性证明
+message ZkExistenceProof {
   ZkAccountTreeProof accountProof = 1;
   ZkTokenTreeProof   tokenProof   = 2;
 }
@@ -108,6 +110,7 @@ message ZkDeposit {
   string chain33Addr = 4;
   int64 ethPriorityQueueId = 5; //需要在合约保证id连续
   ZkSignature signature = 6;
+  string chainTitle = 7;
 
 }
 
@@ -167,6 +170,7 @@ message ZkFullExit {
   uint64 accountId = 2;
   int64 ethPriorityQueueId = 3;
   ZkSignature signature = 4;
+  string chainTitle = 8;
 }
 
 message ZkSwap {
@@ -213,7 +217,8 @@ message ZkNFTTokenStatus {
 
 //电路验证key
 message ZkVerifyKey {
-  string key = 1;
+  string chainTitle = 1;
+  string key = 2;
 }
 
 message ReceiptSetVerifyKey {
@@ -237,12 +242,13 @@ message ZkCommitProof {
   repeated string pubDatas = 10;
   repeated string onChainPubDatas = 11;
 
-
   uint64 proofId = 12;
   //包含onChainPubdata的proof排序
   uint64 onChainProofId = 13;
   //commit时候的blockHeight,localdb会填充
   int64  commitBlockHeight = 14;
+  //proof属于的链名字
+  string chainTitle        = 15;
 }
 
 //commit proof stat, pubdata保存到localdb
@@ -259,11 +265,13 @@ message CommitProofState {
   uint64 onChainProofId = 11;
   //commit时候的blockHeight
   int64  commitBlockHeight = 12;
+  string chainTitle  = 13;
 }
 
 message LastOnChainProof {
-  uint64 proofId = 1;
-  uint64 onChainProofId = 2;
+  string chainTitle  = 1;
+  uint64 proofId = 2;
+  uint64 onChainProofId = 3;
 }
 
 message ReceiptCommitProof {
@@ -277,7 +285,8 @@ message ReceiptCommitProofRecord {
 
 //电路验证者名单
 message ZkVerifier {
-  repeated string verifiers = 1;
+  string chainTitle = 1;
+  repeated string verifiers = 2;
 }
 
 message ReceiptSetVerifier {
@@ -291,6 +300,7 @@ message ZkSetFee {
   uint64 tokenId = 1;
   string amount = 2;
   int32 actionTy = 3;
+  string chainTitle = 4;
 }
 
 message ReceiptSetFee {
@@ -324,6 +334,7 @@ message ZkQueryReq {
   uint64 tokenId = 8;
   string txHash = 9;
   uint64 proofId = 10;
+  string chainTitle = 11;
 }
 
 message ZkQueryResp {
@@ -356,6 +367,7 @@ message ZkFetchProofList {
   bool reqOnChainProof = 3; //
   bool reqLatestProof = 4; //请求截止高度之前的最新的proof，适用于获取最新proof场景
   uint64 endHeight = 5; //截止高度
+  string chainTitle = 6;
 }
 
 //NFT content hash切分成两部分

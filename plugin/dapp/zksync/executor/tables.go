@@ -171,15 +171,15 @@ func (r *CommitProofRow) isProofNeedOnChain() int {
 //Get 按照indexName 查询 indexValue
 func (r *CommitProofRow) Get(key string) ([]byte, error) {
 	if key == "proofId" {
-		return []byte(fmt.Sprintf("%016d", r.GetProofId())), nil
+		return []byte(fmt.Sprintf("%016d-%s", r.GetProofId(), r.GetChainTitle())), nil
 	} else if key == "root" {
-		return []byte(fmt.Sprintf("%s", r.GetNewTreeRoot())), nil
+		return []byte(fmt.Sprintf("%s-%s", r.GetChainTitle(), r.GetNewTreeRoot())), nil
 	} else if key == "endHeight" {
-		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
+		return []byte(fmt.Sprintf("%s-%016d", r.GetChainTitle(), r.GetBlockEnd())), nil
 	} else if key == "commitHeight" {
-		return []byte(fmt.Sprintf("%016d", r.GetCommitBlockHeight())), nil
+		return []byte(fmt.Sprintf("%s-%016d", r.GetChainTitle(), r.GetCommitBlockHeight())), nil
 	} else if key == "onChainId" {
-		return []byte(fmt.Sprintf("%016d", r.GetOnChainProofId())), nil
+		return []byte(fmt.Sprintf("%s-%016d", r.GetChainTitle(), r.GetOnChainProofId())), nil
 	}
 	return nil, types.ErrNotFound
 }
