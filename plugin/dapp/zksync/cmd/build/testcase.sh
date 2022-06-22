@@ -66,7 +66,7 @@ function zksync_deposit() {
     echo "=========== # zksync deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
     chain33Addr=$(${CLI} zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
-    hash=$(${CLI} send zksync deposit -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i 0 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${CLI} send zksync deposit -n para -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i 0 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_3}"
@@ -131,7 +131,7 @@ function zksync_contractToTree() {
 
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR deposit amount 1000000000
     chain33Addr=$(${CLI} zksync l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
-    rawData=$(${CLI} zksync deposit -t "${TOKENID_1}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i 1)
+    rawData=$(${CLI} zksync deposit -n para -t "${TOKENID_1}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i 1)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -211,7 +211,7 @@ function zksync_fullExit() {
     query_account "${CLI}" 4
 
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k fullExit
-    rawData=$(${CLI} zksync fullexit -t "${TOKENID_0}" -a 4 -i 2)
+    rawData=$(${CLI} zksync fullexit -n para -t "${TOKENID_0}" -a 4 -i 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -225,7 +225,7 @@ function zksync_fullExit() {
 function zksync_setVerifyKey() {
     echo "=========== # zksync setVerifyKey test ============="
     #set verify key
-    rawData=$(${CLI} zksync vkey -v 9bacd15739de2797c5712ba1bb4b04770c792bc4f0b07ba413a3be104c730d0999f4db226287bede62c82c2013cb4998a812081a6953dfb0ce5d61702e89a75cca66711a9deb2bea5d86a1f5ca9ec3aa59fe6d4754ce9335f4719dd3d3549acc2773cf1a9af35365661ffd9230c6f9686463c0d9012db3e261f539a68b3dba4edbdcc88d1567c5ace42099bcb784bf4d95ce329b819ab9abf5ae868cf43f3ad6026f98d38ea6f20a4dffab047049537100448622c1a37b324285a5d2fe5e9b60eb41673c17eb70f8a2d83a9057ebc7864afcc3a059f2f86630c62536d1c98587cf206c7a2ebd29849ac4932243f5cbb3c218d7c4f515dcfe165a2298a55bce26029e64c87c78557f5c22a74577043a695e4576055c7ca65c96b9b7265740c6ab000000039310846b7cd5a7bd2da482f3ec8d72ed029102686ef2dc6781c5979e7b4338c9ad5cb48c1ef34c50b016772988e95d6508aad5c4f2e9b5d3e53acd854d4fc242df0aba967c2dc815e1af26e27a9a64913b1192e9dd17fcf4817c08a807ca7907)
+    rawData=$(${CLI} zksync vkey -n para -v 9bacd15739de2797c5712ba1bb4b04770c792bc4f0b07ba413a3be104c730d0999f4db226287bede62c82c2013cb4998a812081a6953dfb0ce5d61702e89a75cca66711a9deb2bea5d86a1f5ca9ec3aa59fe6d4754ce9335f4719dd3d3549acc2773cf1a9af35365661ffd9230c6f9686463c0d9012db3e261f539a68b3dba4edbdcc88d1567c5ace42099bcb784bf4d95ce329b819ab9abf5ae868cf43f3ad6026f98d38ea6f20a4dffab047049537100448622c1a37b324285a5d2fe5e9b60eb41673c17eb70f8a2d83a9057ebc7864afcc3a059f2f86630c62536d1c98587cf206c7a2ebd29849ac4932243f5cbb3c218d7c4f515dcfe165a2298a55bce26029e64c87c78557f5c22a74577043a695e4576055c7ca65c96b9b7265740c6ab000000039310846b7cd5a7bd2da482f3ec8d72ed029102686ef2dc6781c5979e7b4338c9ad5cb48c1ef34c50b016772988e95d6508aad5c4f2e9b5d3e53acd854d4fc242df0aba967c2dc815e1af26e27a9a64913b1192e9dd17fcf4817c08a807ca7907)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -276,7 +276,7 @@ function create_tx() {
         echo "${privateKey}"
         chain33Addr=$(${CLI} zksync l2addr -k "$privateKey")
 
-        rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
+        rawData=$(${CLI} zksync deposit -n para -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
         echo "${rawData}"
 
         signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)

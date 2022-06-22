@@ -24,7 +24,7 @@ import (
 )
 
 func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
-	key := getVerifyKey()
+	key := getVerifyKey(new.GetChainTitle())
 	log := &zt.ReceiptSetVerifyKey{
 		Prev:    old,
 		Current: new,
@@ -42,7 +42,7 @@ func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 }
 
 func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
-	key := getLastProofIdKey()
+	key := getLastProofIdKey(new.GetChainTitle())
 	log := &zt.ReceiptCommitProof{
 		Prev:    old,
 		Current: new,
@@ -58,14 +58,14 @@ func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
 	}
 	//只在onChainProof 有效时候保存
 	if new.OnChainProofId > 0 {
-		onChainIdKey := getLastOnChainProofIdKey()
-		r.KV = append(r.KV, &types.KeyValue{Key: onChainIdKey, Value: types.Encode(&zt.LastOnChainProof{ProofId: new.ProofId, OnChainProofId: new.OnChainProofId})})
+		onChainIdKey := getLastOnChainProofIdKey(new.GetChainTitle())
+		r.KV = append(r.KV, &types.KeyValue{Key: onChainIdKey, Value: types.Encode(&zt.LastOnChainProof{ChainTitle: new.GetChainTitle(), ProofId: new.ProofId, OnChainProofId: new.OnChainProofId})})
 	}
 	return r
 }
 
 func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64) *types.Receipt {
-	key := getProofIdKey(proof.ProofId)
+	key := getProofIdKey(proof.ChainTitle, proof.ProofId)
 	log := &zt.ReceiptCommitProofRecord{
 		Proof: proof,
 	}
@@ -81,7 +81,7 @@ func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64
 
 	//如果此proofId 比maxRecordId更大，记录下来
 	if proof.ProofId > maxRecordId {
-		r.KV = append(r.KV, &types.KeyValue{Key: getMaxRecordProofIdKey(), Value: types.Encode(&types.Int64{Data: int64(proof.ProofId)})})
+		r.KV = append(r.KV, &types.KeyValue{Key: getMaxRecordProofIdKey(proof.GetChainTitle()), Value: types.Encode(&types.Int64{Data: int64(proof.ProofId)})})
 	}
 
 	return r
@@ -105,8 +105,8 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
-func isVerifier(statedb dbm.KV, addr string) bool {
-	verifier, err := getVerifierData(statedb)
+func isVerifier(statedb dbm.KV, chainTitle, addr string) bool {
+	verifier, err := getVerifierData(statedb, chainTitle)
 	if err != nil {
 		if isNotFound(errors.Cause(err)) {
 			return false
@@ -122,8 +122,8 @@ func isVerifier(statedb dbm.KV, addr string) bool {
 	return false
 }
 
-func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
-	key := getVerifyKey()
+func getVerifyKeyData(db dbm.KV, chainTitle string) (*zt.ZkVerifyKey, error) {
+	key := getVerifyKey(chainTitle)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -140,25 +140,28 @@ func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
 //合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
+	if len(payload.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+	}
 	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
-	oldKey, err := getVerifyKeyData(a.statedb)
+	oldKey, err := getVerifyKeyData(a.statedb, payload.GetChainTitle())
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.ZkVerifyKey{Key: payload.Key}
+		key := &zt.ZkVerifyKey{ChainTitle: payload.ChainTitle, Key: payload.Key}
 
 		return makeSetVerifyKeyReceipt(nil, key), nil
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.ZkVerifyKey{Key: payload.Key}
+	newKey := &zt.ZkVerifyKey{ChainTitle: payload.ChainTitle, Key: payload.Key}
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
-func getLastCommitProofData(db dbm.KV, cfg *types.Chain33Config) (*zt.CommitProofState, error) {
-	key := getLastProofIdKey()
+func getLastCommitProofData(db dbm.KV, cfg *types.Chain33Config, title string) (*zt.CommitProofState, error) {
+	key := getLastProofIdKey(title)
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -184,8 +187,8 @@ func getLastCommitProofData(db dbm.KV, cfg *types.Chain33Config) (*zt.CommitProo
 	return &data, nil
 }
 
-func getLastOnChainProofData(db dbm.KV) (*zt.LastOnChainProof, error) {
-	key := getLastOnChainProofIdKey()
+func getLastOnChainProofData(db dbm.KV, chainTitle string) (*zt.LastOnChainProof, error) {
+	key := getLastOnChainProofIdKey(chainTitle)
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -201,8 +204,8 @@ func getLastOnChainProofData(db dbm.KV) (*zt.LastOnChainProof, error) {
 	return &data, nil
 }
 
-func getMaxRecordProofIdData(db dbm.KV) (*types.Int64, error) {
-	key := getMaxRecordProofIdKey()
+func getMaxRecordProofIdData(db dbm.KV, chainTitle string) (*types.Int64, error) {
+	key := getMaxRecordProofIdKey(chainTitle)
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -247,7 +250,10 @@ func getByteBuff(input string) (*bytes.Buffer, error) {
 //
 func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+	if len(payload.GetChainTitle()) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitle is null")
+	}
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr, payload.ChainTitle) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 
@@ -263,7 +269,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 
 	//1. 先验证proof是否ok
 	//get verify key
-	verifyKey, err := getVerifyKeyData(a.statedb)
+	verifyKey, err := getVerifyKeyData(a.statedb, payload.ChainTitle)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get verify key")
 	}
@@ -284,10 +290,11 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		NewTreeRoot:       payload.NewTreeRoot,
 		OnChainProofId:    payload.OnChainProofId,
 		CommitBlockHeight: a.height,
+		ChainTitle:        payload.ChainTitle,
 	}
 
 	//2. 验证proof是否连续，不连续则暂时保存(考虑交易顺序被打散的场景)
-	lastProof, err := getLastCommitProofData(a.statedb, cfg)
+	lastProof, err := getLastCommitProofData(a.statedb, cfg, payload.GetChainTitle())
 	if err != nil {
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
@@ -295,7 +302,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d <= lastProofId=%d", payload.ProofId, lastProof.ProofId)
 	}
 	//get未处理的证明的最大id
-	maxRecordId, err := getMaxRecordProofIdData(a.statedb)
+	maxRecordId, err := getMaxRecordProofIdData(a.statedb, payload.GetChainTitle())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getMaxRecordProofId for id=%d", payload.ProofId)
 	}
@@ -303,7 +310,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if payload.ProofId > lastProof.ProofId+1 {
 		return makeCommitProofRecordReceipt(newProof, uint64(maxRecordId.Data)), nil
 	}
-	lastOnChainProof, err := getLastOnChainProofData(a.statedb)
+	lastOnChainProof, err := getLastOnChainProofData(a.statedb, payload.GetChainTitle())
 	if err != nil {
 		return nil, errors.Wrap(err, "getLastOnChainProof")
 	}
@@ -316,7 +323,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	//循环检查可能未处理的recordProof
 	lastProof = newProof
 	for i := lastProof.ProofId + 1; i < uint64(maxRecordId.Data); i++ {
-		recordProof, _ := getRecordProof(a.statedb, i)
+		recordProof, _ := getRecordProof(a.statedb, payload.GetChainTitle(), i)
 		if recordProof == nil {
 			break
 		}
@@ -332,8 +339,8 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	return receipt, nil
 }
 
-func getRecordProof(db dbm.KV, id uint64) (*zt.CommitProofState, error) {
-	key := getProofIdKey(id)
+func getRecordProof(db dbm.KV, title string, id uint64) (*zt.CommitProofState, error) {
+	key := getProofIdKey(title, id)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, err
@@ -434,21 +441,24 @@ func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
 	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
+	if len(payload.ChainTitle) == 0 || len(payload.Verifiers) == 0 {
+		return nil, errors.Wrap(types.ErrInvalidParam, "chainTitle or verifier nil")
+	}
 
-	oldKey, err := getVerifierData(a.statedb)
+	oldKey, err := getVerifierData(a.statedb, payload.ChainTitle)
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.ZkVerifier{Verifiers: payload.Verifiers}
+		key := &zt.ZkVerifier{ChainTitle: payload.ChainTitle, Verifiers: payload.Verifiers}
 		return makeSetVerifierReceipt(nil, key), nil
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.ZkVerifier{Verifiers: payload.Verifiers}
+	newKey := &zt.ZkVerifier{ChainTitle: payload.ChainTitle, Verifiers: payload.Verifiers}
 	return makeSetVerifierReceipt(oldKey, newKey), nil
 }
 
-func getVerifierData(db dbm.KV) (*zt.ZkVerifier, error) {
-	key := getVerifier()
+func getVerifierData(db dbm.KV, chainTitle string) (*zt.ZkVerifier, error) {
+	key := getVerifier(chainTitle)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -463,7 +473,7 @@ func getVerifierData(db dbm.KV) (*zt.ZkVerifier, error) {
 }
 
 func makeSetVerifierReceipt(old, new *zt.ZkVerifier) *types.Receipt {
-	key := getVerifier()
+	key := getVerifier(new.ChainTitle)
 	log := &zt.ReceiptSetVerifier{
 		Prev:    old,
 		Current: new,
@@ -496,8 +506,11 @@ func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
 }
 
 //根据rootHash获取account在该root下的证明
-func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetTokenId uint64, targetRootHash, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.ZkEscapeProof, error) {
+func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.ZkExistenceProof, error) {
 	proofTable := NewCommitProofTable(localdb)
+	targetAccountId := req.AccountId
+	targetTokenId := req.TokenId
+	targetRootHash := req.RootHash
 	accountMap := make(map[uint64]*zt.HistoryLeaf)
 	maxAccountId := uint64(0)
 	rows, err := proofTable.ListIndex("root", getRootCommitProofKey(targetRootHash), nil, 1, zt.ListASC)
@@ -518,7 +531,7 @@ func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetToke
 	}
 
 	for i := uint64(1); i <= proof.ProofId; i++ {
-		row, err := proofTable.GetData(getProofIdCommitProofKey(i))
+		row, err := proofTable.GetData(getProofIdCommitProofKey(req.ChainTitle, i))
 		if err != nil {
 			return nil, err
 		}
@@ -1151,10 +1164,10 @@ func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetToke
 		}
 	}
 
-	var escapeProof zt.ZkEscapeProof
-	escapeProof.AccountProof = new(zt.ZkAccountTreeProof)
-	escapeProof.TokenProof = new(zt.ZkTokenTreeProof)
-	escapeProof.AccountProof.Account = accountMap[targetAccountId]
+	var existProof zt.ZkExistenceProof
+	existProof.AccountProof = new(zt.ZkAccountTreeProof)
+	existProof.TokenProof = new(zt.ZkTokenTreeProof)
+	existProof.AccountProof.Account = accountMap[targetAccountId]
 
 	if _, ok := accountMap[targetAccountId]; !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "targetAccountId=%d not exist", targetAccountId)
@@ -1186,7 +1199,7 @@ func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetToke
 	if accountMerkleProof.RootHash != targetRootHash {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", accountMerkleProof.RootHash, targetRootHash)
 	}
-	escapeProof.AccountProof.Proof = accountMerkleProof
+	existProof.AccountProof.Proof = accountMerkleProof
 
 	//token proof
 	var tokenHashes [][]byte
@@ -1197,9 +1210,9 @@ func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetToke
 	if err != nil {
 		return nil, errors.Wrapf(err, "token.getMerkleProof")
 	}
-	escapeProof.TokenProof.Token = accountMap[targetAccountId].Tokens[tokenIndex]
-	escapeProof.TokenProof.Proof = merkleProof
-	return &escapeProof, nil
+	existProof.TokenProof.Token = accountMap[targetAccountId].Tokens[tokenIndex]
+	existProof.TokenProof.Proof = merkleProof
+	return &existProof, nil
 }
 
 func getMerkleTreeProof(index uint64, hashes [][]byte) (*zt.MerkleTreeProof, error) {
@@ -1323,14 +1336,14 @@ func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
 }
 
 //根据proofId重建merkleTree
-func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValue, error) {
+func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64, chainTitle string) ([]*types.KeyValue, error) {
 	var localKvs []*types.KeyValue
 	proofTable := NewCommitProofTable(localdb)
 	historyTable := NewHistoryAccountTreeTable(localdb)
 	//todo 多少ID归档一次实现可配置化
 	historyId := (endProofId/10 - 1) * 10
 	for i := historyId + 1; i <= endProofId; i++ {
-		row, err := proofTable.GetData(getProofIdCommitProofKey(i))
+		row, err := proofTable.GetData(getProofIdCommitProofKey(chainTitle, i))
 		if err != nil {
 			return localKvs, err
 		}
