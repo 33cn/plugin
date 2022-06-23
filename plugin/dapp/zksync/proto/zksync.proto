@@ -356,6 +356,15 @@ message ZkQueryProofReq {
   uint32 opIndex = 5;
 }
 
+message ZkQueryTxOperationReq {
+  uint64 startBlockHeight = 1; //起始高度
+  uint64 startIndex = 2; //块中交易的序号
+  uint32 opIndex = 3; //交易操作快照片序号：目前是0，1。
+  uint32 count = 4;//获取交易操作数量：默认值是：100000 = types.MaxTxsPerBlock
+  uint32 blockOffset = 5;//高度偏移：以块高度为偏移单位，计算错误时，最多是固定块的交易证明错误。块中的交易不变，proof数量不变，即proofID也不变。
+  uint32 maturity = 6;//成熟度：最新高度-成熟度 = endBlockHeigh
+}
+
 message ZkQueryProofResp {
   repeated OperationInfo operationInfos = 1;
 }

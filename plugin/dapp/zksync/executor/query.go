@@ -184,6 +184,79 @@ func (z *zksync) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error
 	return &types.ReplyString{Data: root}, nil
 }
 
+// Query_GetTxOperationByOffSetOrCount 根据起始高度批量获取交易证明
+// 1、指定count，实现快速与精确偏移，获取交易快照操作。
+// 2、指定blockOffSet，高度差偏移，实现高度交易操作打包，获取交易快照操作。
+func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	startHeight := in.GetStartBlockHeight()
+	endBlockHeight := z.GetHeight() - int64(in.Maturity)
+
+	if startHeight > uint64(endBlockHeight) {
+		return new(zt.ZkQueryProofResp), nil
+	}
+
+	startIndexTx := in.GetStartIndex()
+	startOpIndex := in.OpIndex
+
+	res := new(zt.ZkQueryProofResp)
+	ops := make([]*zt.OperationInfo, 0)
+	table := NewZksyncInfoTable(z.GetLocalDB())
+
+	if in.Count > 0 {
+		totalCount := int(in.Count)
+	END:
+		for i := startHeight; totalCount > 0; i++ {
+			if totalCount <= 0 || i > uint64(endBlockHeight) {
+				break END
+			}
+			var primaryKey []byte
+			if i == startHeight && startIndexTx != 0 {
+				primaryKey = []byte(fmt.Sprintf("%016d.%016d.%016d", i, startIndexTx, startOpIndex))
+			} else {
+				primaryKey = nil
+			}
+
+			rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, int32(totalCount), zt.ListASC)
+			if err != nil {
+				if isNotFound(err) {
+					continue
+				} else {
+					return nil, err
+				}
+			}
+			for _, row := range rows {
+				data := row.Data.(*zt.OperationInfo)
+				info := new(zt.OperationInfo)
+				info.BlockHeight = i
+				info.TxType = data.TxType
+				ops = append(ops, info)
+				totalCount--
+			}
+		}
+		res.OperationInfos = ops
+		return res, nil
+	}
+
+	if endBlockHeight > int64(startHeight)+int64(in.BlockOffset) {
+		endBlockHeight = int64(startHeight) + int64(in.BlockOffset)
+	} else {
+		if int64(startHeight) > endBlockHeight {
+			endBlockHeight = int64(startHeight)
+		}
+	}
+
+	return z.Query_GetTxProofByHeights(&zt.ZkQueryProofReq{
+		NeedDetail:       false,
+		StartBlockHeight: startHeight,
+		EndBlockHeight:   uint64(endBlockHeight),
+		StartIndex:       startHeight,
+		OpIndex:          startOpIndex,
+	})
+}
+
 // Query_GetTxProofByHeights 根据多个高度批量获取交易证明
 func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
 	if in == nil {
