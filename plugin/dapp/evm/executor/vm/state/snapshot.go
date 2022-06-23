@@ -224,6 +224,11 @@ func (ch nonceChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 	//if acc != nil {
 	//	return acc.GetStateKV()
 	//}
+
+	acc := mdb.Evmaccounts[ch.account]
+	if acc != nil {
+		return acc.GetStateKV()
+	}
 	return nil
 }
 

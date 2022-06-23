@@ -44,6 +44,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
+
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
@@ -51,7 +52,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
-	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.To", msg.To().String(),
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 		"data size:", len(msg.Data()))
 	var (
 		ret             []byte
@@ -71,6 +72,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 			log.Error("innerExec", "Not enough balance to be transferred from", caller.String(), "amout", msg.Value())
 			return nil, types.ErrNoBalance
 		}
+
 		env.StateDB.Snapshot()
 		env.Transfer(env.StateDB, caller, receiver, msg.Value())
 		curVer := evm.mStateDB.GetLastSnapshot()
@@ -78,8 +80,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
-		// 使用随机生成的地址作为合约地址（这个可以保证每次创建的合约地址不会重复，不存在冲突的情况）
-		contractAddr = evm.createContractAddress(msg.From(), txHash)
+		contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
 		contractAddrStr = contractAddr.String()
 		if !env.StateDB.Empty(contractAddrStr) {
 			return receipt, model.ErrContractAddressCollision
@@ -87,6 +88,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		// 只有新创建的合约才能生成合约名称
 		execName = fmt.Sprintf("%s%s", cfg.ExecName(evmtypes.EvmPrefix), common.BytesToHash(txHash).Hex())
 	} else {
+
 		contractAddr = *msg.To()
 		contractAddrStr = contractAddr.String()
 		if !env.StateDB.Exist(contractAddrStr) {
@@ -97,9 +99,10 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	}
 
 	// 状态机中设置当前交易状态
-	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
+	evm.mStateDB.Prepare(common.BytesToHash(txHash), index, msg.Nonce())
 
 	if isCreate {
+
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
@@ -147,6 +150,16 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	if curVer == nil {
 		return receipt, nil
 	}
+	//把nonce 更新到db
+	log.Info("befer innerExeccccccccc", "msg.From", msg.From().String(), "nonce", uint64(msg.Nonce()), "db.nonce", evm.mStateDB.GetNonce(strings.ToLower(msg.From().String())))
+	if evm.mStateDB.GetNonce(msg.From().String()) == uint64(msg.Nonce()) {
+		evm.mStateDB.SetNonce(msg.From().String(), uint64(msg.Nonce()+1))
+		eacc := evm.mStateDB.GetEvmAccount(msg.From().String())
+		evm.GetStateDB().Set(eacc.GetStateKey(), types.Encode(&eacc.State))
+		log.Info("in innerExeccccccccc", "nonce add eacc.State", eacc.State.GetNonce())
+	}
+	log.Info("after innerExeccccccccc", "msg.From", msg.From().String(), "nonce", evm.mStateDB.GetNonce(msg.From().String()))
+
 	// 从状态机中获取数据变更和变更日志
 	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}

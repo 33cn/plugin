@@ -186,6 +186,11 @@ func (evm *EVMExecutor) createContractAddress(b common.Address, txHash []byte) c
 	return common.NewContractAddress(b, txHash)
 }
 
+// createContractAddress creates an ethereum address given the bytes and the nonce
+func (evm *EVMExecutor) createEvmContractAddress(b common.Address, nonce uint64) common.Address {
+	return common.NewEvmContractAddress(b, nonce)
+}
+
 // CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	return nil

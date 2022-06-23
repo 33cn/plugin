@@ -183,8 +183,7 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 
 func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Message, error) {
 	evm.CheckInit()
-	nonce := evm.mStateDB.GetNonce(in.Address)
-
+	nonce := evm.mStateDB.GetNonce(strings.ToLower(in.Address))
 	return &evmtypes.EvmGetNonceRespose{Nonce: int64(nonce)}, nil
 }
 

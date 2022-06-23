@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/33cn/chain33/system/address/btc"
 
 	"encoding/hex"
@@ -144,6 +147,14 @@ func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
 func NewContractAddress(b Address, txHash []byte) Address {
 	execPub := address.ExecPubKey(ToHash(append(txHash, b.Bytes()...)).Str())
 	return PubKey2Address(execPub)
+}
+
+func NewEvmContractAddress(b Address, nonce uint64) Address {
+
+	ethAddr := ethcrypto.CreateAddress(common.BytesToAddress(b.Bytes()), nonce)
+	var a Address
+	a.SetBytes(ethAddr.Bytes())
+	return a
 }
 
 // PubKey2Address pub key to address

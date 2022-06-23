@@ -40,7 +40,8 @@ type MemoryStateDB struct {
 
 	// 缓存账户对象
 	accounts map[string]*ContractAccount
-
+	//EVM账户
+	Evmaccounts map[string]*EvmAccount
 	// 合约执行过程中退回的资金
 	refund uint64
 
@@ -59,7 +60,8 @@ type MemoryStateDB struct {
 	// 当前临时交易哈希和交易序号
 	txHash  common.Hash
 	txIndex int
-
+	//交易执行的数量
+	nonce uint64
 	// 当前区块高度
 	blockHeight int64
 
@@ -80,6 +82,7 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 		evmPlatformAddr: common.GetEvmAddressDriver().PubKeyToAddr(
 			address.ExecPubKey(api.GetConfig().ExecName("evm"))),
 		accounts:    make(map[string]*ContractAccount),
+		Evmaccounts: make(map[string]*EvmAccount),
 		logs:        make(map[common.Hash][]*model.ContractLog),
 		logSize:     0,
 		preimages:   make(map[common.Hash][]byte),
@@ -95,9 +98,10 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 
 // Prepare 每一个交易执行之前调用此方法，设置此交易的上下文信息
 // 目前的上下文中包含交易哈希以及交易在区块中的序号
-func (mdb *MemoryStateDB) Prepare(txHash common.Hash, txIndex int) {
+func (mdb *MemoryStateDB) Prepare(txHash common.Hash, txIndex int, nonce int64) {
 	mdb.txHash = txHash
 	mdb.txIndex = txIndex
+	mdb.nonce = uint64(nonce)
 	log15.Info("MemoryStateDB::Prepare", "txHash", txHash.Hex(), "txIndex", txIndex, "logSize", mdb.logSize)
 }
 
@@ -142,7 +146,8 @@ func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 // GetNonce 目前chain33中没有保留账户的nonce信息，这里临时添加到合约账户中；
 // 所以，目前只有合约对象有nonce值
 func (mdb *MemoryStateDB) GetNonce(addr string) uint64 {
-	acc := mdb.GetAccount(addr)
+	//增加合约账户信息
+	acc := mdb.GetEvmAccount(addr)
 	if acc != nil {
 		return acc.GetNonce()
 	}
@@ -151,10 +156,15 @@ func (mdb *MemoryStateDB) GetNonce(addr string) uint64 {
 
 // SetNonce 设置nonce值
 func (mdb *MemoryStateDB) SetNonce(addr string, nonce uint64) {
-	acc := mdb.GetAccount(addr)
+	//acc:=mdb.CoinsAccount.LoadExecAccount(addr,mdb.api.GetConfig().ExecName("evm"))
+
+	acc := mdb.GetEvmAccount(addr)
 	if acc != nil {
+		log15.Debug("MemoryStateDB::debugCall::SetNonce", "addr", acc.Addr)
 		acc.SetNonce(nonce)
+		return
 	}
+
 }
 
 // GetCodeHash 获取代码哈希
@@ -243,6 +253,19 @@ func (mdb *MemoryStateDB) GetAccount(addr string) *ContractAccount {
 	return contract
 }
 
+// GetEvmAccount 从缓存中获取或加载合约账户
+func (mdb *MemoryStateDB) GetEvmAccount(addr string) *EvmAccount {
+	if acc, ok := mdb.Evmaccounts[addr]; ok {
+		return acc
+	}
+	// 需要加载合约对象，根据是否存在合约代码来判断是否有合约对象
+	acc := NewEvmAccount(addr, mdb)
+	acc.LoadContract(mdb.StateDB)
+	mdb.Evmaccounts[addr] = acc
+	return acc
+
+}
+
 // GetState SLOAD 指令加载合约状态数据
 func (mdb *MemoryStateDB) GetState(addr string, key common.Hash) common.Hash {
 	// 先从合约缓存中获取
@@ -256,6 +279,29 @@ func (mdb *MemoryStateDB) GetState(addr string, key common.Hash) common.Hash {
 // SetState SSTORE 指令修改合约状态数据
 func (mdb *MemoryStateDB) SetState(addr string, key common.Hash, value common.Hash) {
 	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		acc.SetState(key, value)
+		// 新的分叉中状态数据变更不需要单独进行标识
+		cfg := mdb.api.GetConfig()
+		if !cfg.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
+			mdb.stateDirty[addr] = true
+		}
+	}
+}
+
+// GetEvmAddrState SLOAD 指令加载合约状态数据
+func (mdb *MemoryStateDB) GetEvmAddrState(addr string, key common.Hash) common.Hash {
+	// 先从合约缓存中获取
+	acc := mdb.GetEvmAccount(addr)
+	if acc != nil {
+		return acc.GetState(key)
+	}
+	return common.Hash{}
+}
+
+//SetEvmAddrState
+func (mdb *MemoryStateDB) SetEvmAddrState(addr string, key common.Hash, value common.Hash) {
+	acc := mdb.GetEvmAccount(addr)
 	if acc != nil {
 		acc.SetState(key, value)
 		// 新的分叉中状态数据变更不需要单独进行标识
