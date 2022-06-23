@@ -7,43 +7,11 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
-	"github.com/33cn/chain33/util"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestAccountTree(t *testing.T) {
-	dir, statedb, localdb := util.CreateTestDB()
-	defer util.CloseTestDB(dir, statedb)
-
-	ethAddress1 := zt.HexAddr2Decimal("bbcd68033A72978C1084E2d44D1Fa06DdC4A2d5")
-	chain33Addr1 := zt.HexAddr2Decimal(getChain33Addr("1266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
-	info, err := generateTreeUpdateInfo(statedb, localdb, ethAddress1, chain33Addr1)
-	assert.Equal(t, nil, err)
-	ethAddress := zt.HexAddr2Decimal("abcd68033A72978C1084E2d44D1Fa06DdC4A2d58")
-	chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
-	_, localKvs, err := AddNewLeaf(statedb, localdb, info, ethAddress, 1, "1000", chain33Addr)
-	assert.Equal(t, nil, err)
-	tree, err := getAccountTree(statedb, info)
-	t.Log("treeIndex", tree)
-	assert.Equal(t, nil, err)
-	for _, kv := range localKvs {
-		localdb.Set(kv.GetKey(), kv.GetValue())
-	}
-
-	tree, err = getAccountTree(statedb, info)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(2), tree.GetTotalIndex())
-
-	_, localKvs, err = UpdateLeaf(statedb, localdb, info, 2, 2, "1000", zt.Add)
-	assert.Equal(t, nil, err)
-	for _, kv := range localKvs {
-		localdb.Set(kv.GetKey(), kv.GetValue())
-	}
-
-}
 
 func getChain33Addr(privateKeyString string) string {
 	privateKeyBytes, err := hex.DecodeString(privateKeyString)
