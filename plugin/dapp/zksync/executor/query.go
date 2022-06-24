@@ -158,6 +158,7 @@ func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, e
 	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
 }
 
+//Query_GetExistenceProof 获取指定tree root上某accountId,tokenId对应的存在证明
 func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Message, error) {
 	if len(in.GetRootHash()) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
@@ -167,6 +168,18 @@ func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Mess
 	}
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(z.GetAPI().GetConfig())
 	return getAccountProofInHistory(z.GetLocalDB(), in, ethFeeAddr, chain33FeeAddr)
+}
+
+//Query_GetHistoryAccountProofInfo 获取指定tree root对应的所有账户信息，为批量账户产生证明做准备
+func (z *zksync) Query_GetHistoryAccountProofInfo(in *zt.ZkReqExistenceProof) (types.Message, error) {
+	if len(in.GetRootHash()) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
+	}
+	if len(in.GetChainTitle()) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title is nil")
+	}
+	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(z.GetAPI().GetConfig())
+	return getHistoryAccountByRoot(z.GetLocalDB(), in.GetChainTitle(), in.GetRootHash(), ethFeeAddr, chain33FeeAddr)
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
