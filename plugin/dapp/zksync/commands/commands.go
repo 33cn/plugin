@@ -1292,7 +1292,7 @@ func getExist(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetExistenceProof"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.ZkExistenceProof
+	var resp zt.OperationMetaBranch
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

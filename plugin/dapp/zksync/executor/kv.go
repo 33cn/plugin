@@ -71,12 +71,13 @@ func getEthPriorityQueueKey(chainID uint32) []byte {
 	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
 }
 
+//特意把title放后面，方便按id=1搜索所有的chain
 func getProofIdCommitProofKey(chainTitle string, proofId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitle))
 }
 
-func getRootCommitProofKey(root string) []byte {
-	return []byte(fmt.Sprintf("%s", root))
+func getRootCommitProofKey(chainTitle, root string) []byte {
+	return []byte(fmt.Sprintf("%s-%s", chainTitle, root))
 }
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {

@@ -64,6 +64,13 @@ message HistoryLeaf {
   AccountProxyPubKeys proxyPubKeys = 8; //eddsa代理公钥，用于验证代理者的身份
 }
 
+message HistoryAccountProofInfo {
+  string   rootHash = 1;
+  repeated HistoryLeaf leaves = 2;
+  repeated bytes leafHashes = 3;
+
+}
+
 message RootInfo {
   string rootHash = 1; //归档Merkle Tree的根hash
   int32 height = 2; //归档的高度
@@ -97,11 +104,6 @@ message ZkTokenTreeProof {
   MerkleTreeProof proof = 2;
 }
 
-//存在性证明
-message ZkExistenceProof {
-  ZkAccountTreeProof accountProof = 1;
-  ZkTokenTreeProof   tokenProof   = 2;
-}
 
 message ZkDeposit {
   uint64 tokenId = 1;

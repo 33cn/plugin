@@ -505,15 +505,11 @@ func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
 	return historyLeaf
 }
 
-//根据rootHash获取account在该root下的证明
-func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.ZkExistenceProof, error) {
+func getHistoryAccountByRoot(localdb dbm.KV, chainTitle, targetRootHash string, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.HistoryAccountProofInfo, error) {
 	proofTable := NewCommitProofTable(localdb)
-	targetAccountId := req.AccountId
-	targetTokenId := req.TokenId
-	targetRootHash := req.RootHash
 	accountMap := make(map[uint64]*zt.HistoryLeaf)
 	maxAccountId := uint64(0)
-	rows, err := proofTable.ListIndex("root", getRootCommitProofKey(targetRootHash), nil, 1, zt.ListASC)
+	rows, err := proofTable.ListIndex("root", getRootCommitProofKey(chainTitle, targetRootHash), nil, 1, zt.ListASC)
 	if err != nil {
 		return nil, errors.Wrapf(err, "proofTable.ListIndex")
 	}
@@ -531,7 +527,7 @@ func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEt
 	}
 
 	for i := uint64(1); i <= proof.ProofId; i++ {
-		row, err := proofTable.GetData(getProofIdCommitProofKey(req.ChainTitle, i))
+		row, err := proofTable.GetData(getProofIdCommitProofKey(chainTitle, i))
 		if err != nil {
 			return nil, err
 		}
@@ -1164,18 +1160,37 @@ func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEt
 		}
 	}
 
-	var existProof zt.ZkExistenceProof
-	existProof.AccountProof = new(zt.ZkAccountTreeProof)
-	existProof.TokenProof = new(zt.ZkTokenTreeProof)
-	existProof.AccountProof.Account = accountMap[targetAccountId]
+	historyAccounts := &zt.HistoryAccountProofInfo{RootHash: targetRootHash}
+	for i := uint64(zt.SystemFeeAccountId); i <= maxAccountId; i++ {
+		if _, ok := accountMap[i]; !ok {
+			return nil, errors.Wrapf(err, "accountId=%d not exist", i)
+		}
+		historyAccounts.Leaves = append(historyAccounts.Leaves, accountMap[i])
+		historyAccounts.LeafHashes = append(historyAccounts.LeafHashes, getHistoryLeafHash(accountMap[i]))
+	}
 
-	if _, ok := accountMap[targetAccountId]; !ok {
+	//验证leafHash和rootHash是否匹配
+	accountMerkleProof, err := getMerkleTreeProof(zt.SystemFeeAccountId, historyAccounts.LeafHashes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "account.getMerkleTreeProof")
+	}
+	if accountMerkleProof.RootHash != targetRootHash {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", accountMerkleProof.RootHash, targetRootHash)
+	}
+
+	return historyAccounts, nil
+
+}
+
+func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targetAccountId, targetTokenId uint64) (*zt.OperationMetaBranch, error) {
+	if targetAccountId > uint64(len(historyAccountInfo.Leaves)) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "targetAccountId=%d not exist", targetAccountId)
 	}
+	targetLeaf := historyAccountInfo.Leaves[targetAccountId]
 
 	var tokenFound bool
 	var tokenIndex int
-	for i, t := range accountMap[targetAccountId].Tokens {
+	for i, t := range targetLeaf.Tokens {
 		if t.TokenId == targetTokenId {
 			tokenIndex = i
 			tokenFound = true
@@ -1185,34 +1200,62 @@ func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEt
 	if !tokenFound {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "accountId=%d has no asset tokenId=%d", targetAccountId, targetTokenId)
 	}
-	var leafHashes [][]byte
-	for i := uint64(zt.SystemFeeAccountId); i <= maxAccountId; i++ {
-		leafHashes = append(leafHashes, getHistoryLeafHash(accountMap[i]))
-	}
 
-	tree := getNewTree()
-	err = tree.SetIndex(targetAccountId - 1)
-	accountMerkleProof, err := getMerkleTreeProof(targetAccountId-1, leafHashes)
+	accountMerkleProof, err := getMerkleTreeProof(targetAccountId-1, historyAccountInfo.LeafHashes)
 	if err != nil {
 		return nil, errors.Wrapf(err, "account.getMerkleTreeProof")
 	}
-	if accountMerkleProof.RootHash != targetRootHash {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", accountMerkleProof.RootHash, targetRootHash)
+	if accountMerkleProof.RootHash != historyAccountInfo.RootHash {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", accountMerkleProof.RootHash, historyAccountInfo.RootHash)
 	}
-	existProof.AccountProof.Proof = accountMerkleProof
 
 	//token proof
 	var tokenHashes [][]byte
-	for _, token := range accountMap[targetAccountId].Tokens {
+	for _, token := range targetLeaf.Tokens {
 		tokenHashes = append(tokenHashes, getTokenBalanceHash(token))
 	}
-	merkleProof, err := getMerkleTreeProof(uint64(tokenIndex), tokenHashes)
+	tokenMerkleProof, err := getMerkleTreeProof(uint64(tokenIndex), tokenHashes)
 	if err != nil {
 		return nil, errors.Wrapf(err, "token.getMerkleProof")
 	}
-	existProof.TokenProof.Token = accountMap[targetAccountId].Tokens[tokenIndex]
-	existProof.TokenProof.Proof = merkleProof
-	return &existProof, nil
+
+	accTreePath := &zt.SiblingPath{
+		Path:   accountMerkleProof.ProofSet,
+		Helper: accountMerkleProof.Helpers,
+	}
+	accountW := &zt.AccountWitness{
+		ID:            targetAccountId,
+		EthAddr:       targetLeaf.EthAddress,
+		Chain33Addr:   targetLeaf.Chain33Addr,
+		TokenTreeRoot: targetLeaf.TokenHash,
+		PubKey:        targetLeaf.PubKey,
+		ProxyPubKeys:  targetLeaf.ProxyPubKeys,
+		Sibling:       accTreePath,
+	}
+
+	tokenTreePath := &zt.SiblingPath{
+		Path:   tokenMerkleProof.ProofSet,
+		Helper: tokenMerkleProof.Helpers,
+	}
+	tokenW := &zt.TokenWitness{
+		ID:      targetTokenId,
+		Balance: targetLeaf.Tokens[tokenIndex].Balance,
+		Sibling: tokenTreePath,
+	}
+	var witness zt.OperationMetaBranch
+	witness.AccountWitness = accountW
+	witness.TokenWitness = tokenW
+
+	return &witness, nil
+}
+
+//根据rootHash获取account在该root下的证明
+func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.OperationMetaBranch, error) {
+	historyAccountInfo, err := getHistoryAccountByRoot(localdb, req.ChainTitle, req.RootHash, cfgEthFeeAddr, cfgChain33FeeAddr)
+	if err != nil {
+		return nil, err
+	}
+	return GetHistoryAccountProof(historyAccountInfo, req.AccountId, req.TokenId)
 }
 
 func getMerkleTreeProof(index uint64, hashes [][]byte) (*zt.MerkleTreeProof, error) {
