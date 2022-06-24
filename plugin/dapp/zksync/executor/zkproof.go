@@ -360,6 +360,11 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 			lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
 	}
 
+	//if lastProof.ProofId+1 != newProof.ProofId  {
+	//	return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastProofId=%d,newProofId=%d, lastBlockEnd=%d,newBlockStart=%d",
+	//		lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
+	//}
+
 	//tree root 需要衔接
 	if lastProof.NewTreeRoot != newProof.OldTreeRoot {
 		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
@@ -1186,7 +1191,7 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 	if targetAccountId > uint64(len(historyAccountInfo.Leaves)) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "targetAccountId=%d not exist", targetAccountId)
 	}
-	targetLeaf := historyAccountInfo.Leaves[targetAccountId]
+	targetLeaf := historyAccountInfo.Leaves[targetAccountId-1]
 
 	var tokenFound bool
 	var tokenIndex int
@@ -1227,7 +1232,7 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 		ID:            targetAccountId,
 		EthAddr:       targetLeaf.EthAddress,
 		Chain33Addr:   targetLeaf.Chain33Addr,
-		TokenTreeRoot: targetLeaf.TokenHash,
+		TokenTreeRoot: tokenMerkleProof.RootHash,
 		PubKey:        targetLeaf.PubKey,
 		ProxyPubKeys:  targetLeaf.ProxyPubKeys,
 		Sibling:       accTreePath,
