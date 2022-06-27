@@ -151,58 +151,6 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	return mergeReceipt(receipts, r), nil
 }
 
-func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, opInfo *zt.OperationInfo, ethAddr string, chain33Addr string,
-	pubKey *zt.ZkPubKey, proxyPubKeys *zt.AccountProxyPubKeys, accountId, tokenId uint64, balance string) *zt.OperationMetaBranch {
-	opInfo.Roots = append(opInfo.Roots, receipt.TreeProof.RootHash)
-	treePath := &zt.SiblingPath{
-		Path:   receipt.TreeProof.ProofSet,
-		Helper: receipt.TreeProof.GetHelpers(),
-	}
-	accountW := &zt.AccountWitness{
-		ID:           accountId,
-		EthAddr:      ethAddr,
-		Chain33Addr:  chain33Addr,
-		PubKey:       pubKey,
-		ProxyPubKeys: proxyPubKeys,
-		Sibling:      treePath,
-	}
-	//token不存在生成默认TokenWitness
-	if receipt.GetTokenProof() == nil {
-		accountW.TokenTreeRoot = "0"
-		return &zt.OperationMetaBranch{
-			AccountWitness: accountW,
-			TokenWitness: &zt.TokenWitness{
-				ID:      tokenId,
-				Balance: "0",
-			},
-		}
-	}
-	accountW.TokenTreeRoot = receipt.GetTokenProof().RootHash
-	tokenPath := &zt.SiblingPath{
-		Path:   receipt.TokenProof.ProofSet,
-		Helper: receipt.TokenProof.GetHelpers(),
-	}
-	//如果设置balance为nil，则设为缺省0
-	if len(balance) == 0 {
-		balance = "0"
-
-		if accountId == zt.SystemNFTAccountId && tokenId == zt.SystemNFTTokenId {
-			balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 1).String()
-		}
-	}
-	tokenW := &zt.TokenWitness{
-		ID:      tokenId,
-		Balance: balance,
-		Sibling: tokenPath,
-	}
-
-	branch := &zt.OperationMetaBranch{
-		AccountWitness: accountW,
-		TokenWitness:   tokenW,
-	}
-	return branch
-}
-
 func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
