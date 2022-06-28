@@ -79,6 +79,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
+	//转换10进制
+	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
+	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
+
 	//TODO set chainID
 	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
 	if err != nil {
@@ -112,7 +116,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 		var accountID uint64
 		lastAccountID, _ := getLatestAccountID(a.statedb)
-		if zt.InvalidAccountId != lastAccountID {
+		if zt.InvalidAccountId == lastAccountID {
 			ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
 			kvs4InitAccount, err := NewInitAccount(ethFeeAddr, chain33FeeAddr)
 			if nil != err {
@@ -664,7 +668,6 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId())
 	if err != nil {
@@ -688,23 +691,14 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 		hash.Write(zt.Str2Byte(payload.PubKey.X))
 		hash.Write(zt.Str2Byte(payload.PubKey.Y))
-		if zt.Byte2Str(hash.Sum(nil)) != leaf.Chain33Addr {
+		calcChain33Addr := zt.Byte2Str(hash.Sum(nil))
+		if calcChain33Addr != leaf.Chain33Addr {
+            zklog.Error("SetPubKey", "leaf.Chain33Addr", leaf.Chain33Addr, "calcChain33Addr", calcChain33Addr)
 			return nil, errors.New("not your account")
 		}
 	}
 	if payload.PubKeyTy > zt.SuperProxyPubKey {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong proxy ty=%d", payload.PubKeyTy)
-	}
-
-	operationInfo := &zt.OperationInfo{
-		BlockHeight: uint64(a.height),
-		TxIndex:     uint32(a.index),
-		TxType:      zt.TySetPubKeyAction,
-		TokenID:     leaf.TokenIds[0],
-		Amount:      "0",
-		SigData:     payload.Signature,
-		AccountID:   payload.AccountId,
-		SpecialInfo: new(zt.OperationSpecialInfo),
 	}
 
 	specialData := &zt.OperationSpecialData{
@@ -714,23 +708,23 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	if payload.PubKeyTy == 0 {
 		specialData.PubKey = payload.Signature.PubKey
 	}
-	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, specialData)
 
 	if payload.PubKeyTy == 0 {
-		kvs, localKvs, err = a.SetDefultPubKey(payload)
+		kvs, _, err = a.SetDefultPubKey(payload)
 		if err != nil {
 			return nil, errors.Wrapf(err, "setDefultPubKey")
 		}
 	} else {
-		kvs, localKvs, err = a.SetProxyPubKey(payload, leaf)
+		kvs, _, err = a.SetProxyPubKey(payload, leaf)
 		if err != nil {
 			return nil, errors.Wrapf(err, "setDefultPubKey")
 		}
 	}
 
-	zklog := &zt.ZkReceiptLog{
-		OperationInfo: operationInfo,
-		LocalKvs:      localKvs,
+	zklog := &zt.SetPubKeyReceipt{
+		AccountId: payload.AccountId,
+		PubKey: payload.PubKey,
+		PubKeyTy: payload.PubKeyTy,
 	}
 	receiptLog := &types.ReceiptLog{Ty: zt.TySetPubKeyLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)

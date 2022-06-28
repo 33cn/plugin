@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "witness.proto";
+
 package types;
 option go_package = "../types";
 
@@ -15,4 +17,10 @@ message AccountTokenBalanceReceipt {
 message TransferReceipt {
     AccountTokenBalanceReceipt from = 1;
     AccountTokenBalanceReceipt to   = 2;
+}
+
+message SetPubKeyReceipt {
+    uint64 accountId = 1;
+    ZkPubKey  pubKey = 2;
+    uint64    pubKeyTy = 3;
 }

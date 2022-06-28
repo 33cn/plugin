@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"encoding/hex"
-
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -34,7 +32,7 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyContractToTreeLog,
 			zt.TyTransferLog,
 			zt.TyTransferToNewLog,
-			zt.TySetPubKeyLog,
+			//zt.TySetPubKeyLog,
 			zt.TyForceExitLog,
 			zt.TyFullExitLog,
 			zt.TySwapLog,
@@ -42,17 +40,15 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyTransferNFTLog,
 			zt.TyWithdrawNFTLog,
 			zt.TyFeeLog:
-			var zklog zt.ZkReceiptLog
-			err := types.Decode(log.GetLog(), &zklog)
+			var receipt zt.AccountTokenBalanceReceipt
+			err := types.Decode(log.GetLog(), &receipt)
 			if err != nil {
 				return nil, err
 			}
-			zklog.OperationInfo.TxHash = hex.EncodeToString(tx.Hash())
-			err = infoTable.Replace(zklog.OperationInfo)
+			err = infoTable.Replace(&receipt)
 			if err != nil {
 				return nil, err
 			}
-			dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
 		case zt.TyCommitProofLog:
 			var proof zt.ReceiptCommitProof
 			err := types.Decode(log.GetLog(), &proof)

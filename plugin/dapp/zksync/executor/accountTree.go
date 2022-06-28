@@ -215,13 +215,6 @@ func AddNewLeafOpt(statedb dbm.KV, ethAddress string, tokenId, accountId uint64,
 	}
 	kvs = append(kvs, kv)
 
-	//todo: 考虑在合约内部不计算tokenHash
-	var err error
-	leaf.TokenHash, err = getTokenRootHash(statedb, leaf.AccountId, leaf.TokenIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getTokenRootHash")
-	}
-
 	kv = &types.KeyValue{
 		Key:   GetAccountIdPrimaryKey(leaf.AccountId),
 		Value: types.Encode(leaf),
@@ -246,11 +239,6 @@ func updateLeafOpt(statedb dbm.KV, leaf *zt.Leaf, tokenId uint64, option int32) 
 	}
 	if token == nil && option == zt.Add {
 		leaf.TokenIds = append(leaf.TokenIds, tokenId)
-	}
-
-	leaf.TokenHash, err = getTokenRootHash(statedb, leaf.AccountId, leaf.TokenIds)
-	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getTokenRootHash")
 	}
 
 	kv := &types.KeyValue{
@@ -609,13 +597,12 @@ func getTokenBalanceHash(token *zt.TokenBalance) []byte {
 
 func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
 	leaf, err := GetLeafByAccountId(statedb, accountId)
 	if err != nil {
-		return kvs, localKvs, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+		return kvs, nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
 	if leaf == nil {
-		return kvs, localKvs, errors.New("account not exist")
+		return kvs, nil, errors.New("account not exist")
 	}
 	if nil == leaf.ProxyPubKeys {
 		leaf.ProxyPubKeys = &zt.AccountProxyPubKeys{}
@@ -648,16 +635,5 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, pubKeyTy uint64, pubKey *zt.Zk
 
 	kvs = append(kvs, kv)
 
-	accountTable := NewAccountTreeTable(localdb)
-	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetChain33Addr(), leaf.GetEthAddress()), leaf)
-	if err != nil {
-		return kvs, localKvs, errors.Wrapf(err, "accountTable.Update")
-	}
-
-	//localdb更新叶子，用于查询
-	localKvs, err = accountTable.Save()
-	if err != nil {
-		return kvs, localKvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
-	}
-	return kvs, localKvs, nil
+	return kvs, nil, nil
 }
