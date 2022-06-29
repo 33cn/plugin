@@ -665,6 +665,7 @@ func TestContract2Tree(t *testing.T) {
 	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
 	queueId := uint64(0)
 	tokenId := uint64(1)
+
 	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
@@ -686,19 +687,51 @@ func TestContract2Tree(t *testing.T) {
 	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
-	//测试提币
-	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	//测试将L2账户余额转入到合约
+	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	withdrawFee := 1000000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	balance := fmt.Sprintf("%d", 1000000000000 - 10000000000)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//确认合约余额
+	zkQueryReq := &zksyncTypes.ZkQueryReq{
+		TokenSymbol: strconv.Itoa(int(tokenId)),
+		Chain33WalletAddr:"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
+	}
+	msg, err := zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
+	assert.Nil(t, err)
+	accountInfo, ok := msg.(*types.Account)
+	assert.Equal(t, ok, true)
+	assert.Equal(t, int64(1), accountInfo.Balance)
+	fmt.Println("accountInfo =", accountInfo)
+
+	//测试将合约余额转回到L2账户余额
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	//确认L2账户balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	balance = fmt.Sprintf("%d", 1000000000000)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+
+	//确认L1账户余额
+	msg, err = zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
+	assert.Nil(t, err)
+	accountInfo, ok = msg.(*types.Account)
+	assert.Equal(t, ok, true)
+	assert.Equal(t, int64(0), accountInfo.Balance)
+	fmt.Println("accountInfo =", accountInfo)
 }
 
 func TestForceExit(t *testing.T) {
@@ -1223,16 +1256,16 @@ func tree2contract(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 }
 
 func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
-	withdraw := &zksyncTypes.ZkWithdraw{
+	contract2tree := &zksyncTypes.ZkContractToTree{
 		TokenId:            tokenId,
 		Amount:             amount,
 		AccountId:         accountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
-		Ty: zksyncTypes.TyWithdrawAction,
-		Value: &zksyncTypes.ZksyncAction_Withdraw{
-			Withdraw: withdraw,
+		Ty: zksyncTypes.TyContractToTreeAction,
+		Value: &zksyncTypes.ZksyncAction_ContractToTree{
+			ContractToTree: contract2tree,
 		},
 	}
 
@@ -1241,7 +1274,7 @@ func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 		return nil, nil, err
 	}
 
-	receipt, err := zkspotHandle.Exec_Withdraw(action.GetWithdraw(), tx, index)
+	receipt, err := zkspotHandle.Exec_ContractToTree(action.GetContractToTree(), tx, index)
 	if nil != err {
 		return nil, nil, err
 	}
@@ -1251,7 +1284,7 @@ func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	localDBSet, err := zkspotHandle.ExecLocal_Withdraw(nil, tx, receiptData, index)
+	localDBSet, err := zkspotHandle.ExecLocal_ContractToTree(nil, tx, receiptData, index)
 	if nil != err {
 		return nil, nil, err
 	}

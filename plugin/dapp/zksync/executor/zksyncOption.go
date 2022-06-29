@@ -252,9 +252,11 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
-	//因为合约balance需要/1e10，因此要先去掉精度
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
+	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
+	amount_len := len(payload.Amount)
+	if amount_len < 10 {
+		return nil, errors.New("Too Little value to do operation TreeToContract")
+	}
 
 	err := checkParam(payload.Amount)
 	if err != nil {
