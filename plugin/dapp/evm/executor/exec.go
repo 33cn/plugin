@@ -38,13 +38,13 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		evmDebugInited = true
 	}
 
-	return evm.innerExec(msg, tx.Hash(), index, msg.GasLimit(), false)
+	receipt, err := evm.innerExec(msg, tx, tx.Hash(), index, msg.GasLimit(), false)
+	return receipt, err
 }
 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
-func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
-
+func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, txHash []byte, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
@@ -80,7 +80,13 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
-		contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
+		if !readOnly && tx != nil && types.IsEthSignID(tx.GetSignature().GetTy()) {
+			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
+			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
+		} else {
+			contractAddr = evm.createContractAddress(msg.From(), txHash)
+		}
+
 		contractAddrStr = contractAddr.String()
 		if !env.StateDB.Empty(contractAddrStr) {
 			return receipt, model.ErrContractAddressCollision
@@ -150,16 +156,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	if curVer == nil {
 		return receipt, nil
 	}
-	//把nonce 更新到db
-	log.Info("befer innerExeccccccccc", "msg.From", msg.From().String(), "nonce", uint64(msg.Nonce()), "db.nonce", evm.mStateDB.GetNonce(strings.ToLower(msg.From().String())))
-	if evm.mStateDB.GetNonce(msg.From().String()) == uint64(msg.Nonce()) {
-		evm.mStateDB.SetNonce(msg.From().String(), uint64(msg.Nonce()+1))
-		eacc := evm.mStateDB.GetEvmAccount(msg.From().String())
-		evm.GetStateDB().Set(eacc.GetStateKey(), types.Encode(&eacc.State))
-		log.Info("in innerExeccccccccc", "nonce add eacc.State", eacc.State.GetNonce())
-	}
-	log.Info("after innerExeccccccccc", "msg.From", msg.From().String(), "nonce", evm.mStateDB.GetNonce(msg.From().String()))
-
 	// 从状态机中获取数据变更和变更日志
 	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}

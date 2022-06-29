@@ -5,8 +5,11 @@
 package state
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -40,8 +43,6 @@ type MemoryStateDB struct {
 
 	// 缓存账户对象
 	accounts map[string]*ContractAccount
-	//EVM账户
-	Evmaccounts map[string]*EvmAccount
 	// 合约执行过程中退回的资金
 	refund uint64
 
@@ -82,7 +83,6 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 		evmPlatformAddr: common.GetEvmAddressDriver().PubKeyToAddr(
 			address.ExecPubKey(api.GetConfig().ExecName("evm"))),
 		accounts:    make(map[string]*ContractAccount),
-		Evmaccounts: make(map[string]*EvmAccount),
 		logs:        make(map[common.Hash][]*model.ContractLog),
 		logSize:     0,
 		preimages:   make(map[common.Hash][]byte),
@@ -143,26 +143,23 @@ func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 	return uint64(ac.Balance)
 }
 
-// GetNonce 目前chain33中没有保留账户的nonce信息，这里临时添加到合约账户中；
-// 所以，目前只有合约对象有nonce值
+//GetNonce 返回 addr 的nonce
 func (mdb *MemoryStateDB) GetNonce(addr string) uint64 {
 	//增加合约账户信息
-	acc := mdb.GetEvmAccount(addr)
-	if acc != nil {
-		return acc.GetNonce()
+	statV, _ := mdb.LocalDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
+	if statV != nil {
+		var evmAccountNonce types.EvmAccountNonce
+		types.Decode(statV, &evmAccountNonce)
+		return uint64(evmAccountNonce.GetNonce())
 	}
 	return 0
 }
 
 // SetNonce 设置nonce值
 func (mdb *MemoryStateDB) SetNonce(addr string, nonce uint64) {
-	//acc:=mdb.CoinsAccount.LoadExecAccount(addr,mdb.api.GetConfig().ExecName("evm"))
-
-	acc := mdb.GetEvmAccount(addr)
+	acc := mdb.GetAccount(addr)
 	if acc != nil {
-		log15.Debug("MemoryStateDB::debugCall::SetNonce", "addr", acc.Addr)
 		acc.SetNonce(nonce)
-		return
 	}
 
 }
@@ -253,19 +250,6 @@ func (mdb *MemoryStateDB) GetAccount(addr string) *ContractAccount {
 	return contract
 }
 
-// GetEvmAccount 从缓存中获取或加载合约账户
-func (mdb *MemoryStateDB) GetEvmAccount(addr string) *EvmAccount {
-	if acc, ok := mdb.Evmaccounts[addr]; ok {
-		return acc
-	}
-	// 需要加载合约对象，根据是否存在合约代码来判断是否有合约对象
-	acc := NewEvmAccount(addr, mdb)
-	acc.LoadContract(mdb.StateDB)
-	mdb.Evmaccounts[addr] = acc
-	return acc
-
-}
-
 // GetState SLOAD 指令加载合约状态数据
 func (mdb *MemoryStateDB) GetState(addr string, key common.Hash) common.Hash {
 	// 先从合约缓存中获取
@@ -279,29 +263,6 @@ func (mdb *MemoryStateDB) GetState(addr string, key common.Hash) common.Hash {
 // SetState SSTORE 指令修改合约状态数据
 func (mdb *MemoryStateDB) SetState(addr string, key common.Hash, value common.Hash) {
 	acc := mdb.GetAccount(addr)
-	if acc != nil {
-		acc.SetState(key, value)
-		// 新的分叉中状态数据变更不需要单独进行标识
-		cfg := mdb.api.GetConfig()
-		if !cfg.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
-			mdb.stateDirty[addr] = true
-		}
-	}
-}
-
-// GetEvmAddrState SLOAD 指令加载合约状态数据
-func (mdb *MemoryStateDB) GetEvmAddrState(addr string, key common.Hash) common.Hash {
-	// 先从合约缓存中获取
-	acc := mdb.GetEvmAccount(addr)
-	if acc != nil {
-		return acc.GetState(key)
-	}
-	return common.Hash{}
-}
-
-//SetEvmAddrState
-func (mdb *MemoryStateDB) SetEvmAddrState(addr string, key common.Hash, value common.Hash) {
-	acc := mdb.GetEvmAccount(addr)
 	if acc != nil {
 		acc.SetState(key, value)
 		// 新的分叉中状态数据变更不需要单独进行标识
@@ -463,8 +424,16 @@ func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, 
 
 // CanTransfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) CanTransfer(sender string, amount uint64) bool {
-	senderAcc := mdb.CoinsAccount.LoadExecAccount(sender, mdb.evmPlatformAddr)
-	log15.Info("CanTransfer", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
+	var senderAcc *types.Account
+	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+
+	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
+		senderAcc = mdb.CoinsAccount.LoadAccount(sender)
+	} else {
+		senderAcc = mdb.CoinsAccount.LoadExecAccount(sender, mdb.evmPlatformAddr)
+	}
+	log15.Info("CanTransfer---------------->", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
 		"mdb.CoinsAccount", mdb.CoinsAccount)
 
 	return senderAcc.Balance >= int64(amount)
@@ -502,7 +471,14 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		return true
 	}
 
-	ret, err = mdb.CoinsAccount.ExecTransfer(sender, recipient, mdb.evmPlatformAddr, int64(amount))
+	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
+		ret, err = mdb.CoinsAccount.Transfer(sender, recipient, int64(amount))
+	} else { //paracross
+		ret, err = mdb.CoinsAccount.ExecTransfer(sender, recipient, mdb.evmPlatformAddr, int64(amount))
+	}
+
 	// 这种情况下转账失败并不进行处理，也不会从sender账户扣款，打印日志即可
 	if err != nil {
 		log15.Error("transfer error", "sender", sender, "recipient", recipient, "amount", amount, "err info", err)
@@ -516,7 +492,9 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 			logs:       ret.Logs,
 		})
 	}
-	log15.Info("transfer successful", "balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
+
+	log15.Info("transfer successful", "paracross balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
+		"coins balance", mdb.CoinsAccount.LoadAccount(recipient).GetBalance(),
 		"mdb.CoinsAccount", mdb.CoinsAccount)
 
 	return true

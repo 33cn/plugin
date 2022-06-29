@@ -296,7 +296,6 @@ func (ca *ContractAccount) Empty() bool {
 
 // SetNonce 设置nonce值
 func (ca *ContractAccount) SetNonce(nonce uint64) {
-	fmt.Println("updateStorageHashupdateStorageHashupdateStorageHashupdateStorageHashupdateStorageHash", "SetNonce", nonce)
 	ca.mdb.addChange(nonceChange{
 		baseChange: baseChange{},
 		account:    ca.Addr,

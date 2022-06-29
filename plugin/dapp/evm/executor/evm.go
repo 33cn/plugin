@@ -167,6 +167,7 @@ func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transac
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -194,6 +195,7 @@ func (evm *EVMExecutor) createEvmContractAddress(b common.Address, nonce uint64)
 // CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	return nil
+
 }
 
 // GetActionName 获取运行状态名

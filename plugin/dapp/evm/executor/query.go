@@ -81,7 +81,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	}
 
 	msg.SetGasLimit(evmtypes.MaxGasLimit)
-	receipt, err := evm.innerExec(msg, tx.Hash(), index, evmtypes.MaxGasLimit, true)
+	receipt, err := evm.innerExec(msg, nil, tx.Hash(), index, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "estimateGas")
 	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
 
-	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, true)
+	receipt, err := evm.innerExec(msg, nil, txHash, 1, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		ret.JsonData = fmt.Sprintf("%v", err)
 		return ret, nil
@@ -183,7 +183,7 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 
 func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Message, error) {
 	evm.CheckInit()
-	nonce := evm.mStateDB.GetNonce(strings.ToLower(in.Address))
+	nonce := evm.mStateDB.GetNonce(in.Address)
 	return &evmtypes.EvmGetNonceRespose{Nonce: int64(nonce)}, nil
 }
 
