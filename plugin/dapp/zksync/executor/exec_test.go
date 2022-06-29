@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -320,7 +321,7 @@ ethFeeAddr="832367164346888E248bd58b9A5f480299F1e88d"
 zkChain33FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
 `
 	chain33TestCfg = types.NewChain33Config(strings.Replace(cfgstring4execTest, "Title=\"local\"", "Title=\"chain33\"", 1))
-	zkspotHandle   *zksync
+	zksyncHandle   *zksync
 	dbHanleGlobal  db.DB
 	index          = 0
 	dbDir          = ""
@@ -346,7 +347,7 @@ func initSetup() {
 	driver.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	driver.SetStateDB(kvdb)
 	driver.SetLocalDB(kvdb)
-	zkspotHandle = driver.(*zksync)
+	zksyncHandle = driver.(*zksync)
 	dbHanleGlobal = dbHanle
 	dbDir = dir
 }
@@ -382,13 +383,13 @@ func TestDeposit(t *testing.T) {
 	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
 	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
 	queueId := uint64(0)
-	receipt, localReceipt, err := deposit(zkspotHandle, mpriKey, 1, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, 1, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 	accountID := uint64(3)
 	//确认balance
-	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zkspotHandle.GetStateDB(), accountID, 1)
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
@@ -412,13 +413,13 @@ func TestWithdraw(t *testing.T) {
 	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
 	queueId := uint64(0)
 	tokenId := uint64(1)
-	receipt, localReceipt, err := deposit(zkspotHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 	accountID := uint64(3)
 	//确认balance
-	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zkspotHandle.GetStateDB(), accountID, tokenId)
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
@@ -428,20 +429,542 @@ func TestWithdraw(t *testing.T) {
 	assert.Nil(t, err)
 	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
 	assert.Nil(t, err)
-	err = setPubKey(zkspotHandle, acc1privkey, accountID)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
 	assert.Nil(t, err)
 	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
 	//测试提币
-	receipt, localReceipt, err = withdraw(zkspotHandle, acc1privkey, accountID, tokenId, "200")
+	receipt, localReceipt, err = withdraw(zksyncHandle, acc1privkey, accountID, tokenId, "200")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 	//确认balance
-	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zkspotHandle.GetStateDB(), accountID, tokenId)
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
     withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestTransfer(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+
+	//测试向新账户进行转币操作
+	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
+	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
+	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//继续发送交易
+	fromAccountId := accountID
+	toAccountId := accountID+ 1
+	receipt, localReceipt, err = transfer(zksyncHandle, acc1privkey, fromAccountId, toAccountId, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+
+	//确认发送者的balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	tranferFee := 100000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200*2 - tranferFee*2)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//确认接收者的balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), toAccountId, tokenId)
+	assert.Nil(t, err)
+	toBalance := fmt.Sprintf("%d", 200*2)
+	fmt.Println("Balance is", toBalance)
+	assert.Equal(t, acc4token1Balance.Balance, toBalance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestTransfer2New(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+
+	//测试向新账户进行转币操作
+	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
+	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
+	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认发送者的balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	tranferFee := 100000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - tranferFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//确认接收者的balance
+	toAccountID := accountID + 1
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), toAccountID, tokenId)
+	assert.Nil(t, err)
+	toBalance := fmt.Sprintf("%d", 200)
+	fmt.Println("Balance is", toBalance)
+	assert.Equal(t, acc4token1Balance.Balance, toBalance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestTree2contract(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试将L2账户余额转入到合约
+	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	balance := fmt.Sprintf("%d", 1000000000000 - 10000000000)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//确认合约余额
+	zkQueryReq := &zksyncTypes.ZkQueryReq{
+		TokenSymbol: strconv.Itoa(int(tokenId)),
+		Chain33WalletAddr:"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
+	}
+	msg, err := zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
+	assert.Nil(t, err)
+	accountInfo, ok := msg.(*types.Account)
+	assert.Equal(t, ok, true)
+	assert.Equal(t, int64(1), accountInfo.Balance)
+	fmt.Println("accountInfo =", accountInfo)
+}
+
+func TestContract2Tree(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试提币
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestForceExit(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试提币
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestFullExit(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试提币
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestMintNFT(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试提币
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestWithdrawNFT(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试提币
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+}
+
+func TestTransferNFT(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
+	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
+	queueId := uint64(0)
+	tokenId := uint64(1)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	//测试提币
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	withdrawFee := 1000000
 	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
@@ -532,6 +1055,174 @@ func setPubKey(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountId
 }
 
 func withdraw(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
+	withdraw := &zksyncTypes.ZkWithdraw{
+		TokenId:            tokenId,
+		Amount:             amount,
+		AccountId:         accountID,
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TyWithdrawAction,
+		Value: &zksyncTypes.ZksyncAction_Withdraw{
+			Withdraw: withdraw,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	receipt, err := zkspotHandle.Exec_Withdraw(action.GetWithdraw(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	localDBSet, err := zkspotHandle.ExecLocal_Withdraw(nil, tx, receiptData, index)
+	if nil != err {
+		return nil, nil, err
+	}
+	for _, kv := range localDBSet.KV {
+		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	index++
+
+	return receipt, localDBSet, nil
+}
+
+func transfer(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, toAccountId, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
+	transfer := &zksyncTypes.ZkTransfer{
+		TokenId:            tokenId,
+		Amount:             amount,
+		FromAccountId:      fromAccountId,
+		ToAccountId:        toAccountId,
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TyTransferAction,
+		Value: &zksyncTypes.ZksyncAction_Transfer{
+			Transfer: transfer,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	receipt, err := zkspotHandle.Exec_Transfer(action.GetTransfer(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	localDBSet, err := zkspotHandle.ExecLocal_Transfer(nil, tx, receiptData, index)
+	if nil != err {
+		return nil, nil, err
+	}
+	for _, kv := range localDBSet.KV {
+		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	index++
+
+	return receipt, localDBSet, nil
+}
+
+func transfer2New(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, fromAccountId uint64, amount, toEthAddress, toChain33Address string) (*types.Receipt, *types.LocalDBSet, error) {
+	transfer2New := &zksyncTypes.ZkTransferToNew{
+		TokenId:            tokenId,
+		Amount:             amount,
+		FromAccountId:      fromAccountId,
+		ToEthAddress:       toEthAddress,
+		ToChain33Address:   toChain33Address,
+
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TyTransferToNewAction,
+		Value: &zksyncTypes.ZksyncAction_TransferToNew{
+			TransferToNew: transfer2New,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	receipt, err := zkspotHandle.Exec_TransferToNew(action.GetTransferToNew(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	localDBSet, err := zkspotHandle.ExecLocal_TransferToNew(nil, tx, receiptData, index)
+	if nil != err {
+		return nil, nil, err
+	}
+	for _, kv := range localDBSet.KV {
+		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	index++
+
+	return receipt, localDBSet, nil
+}
+
+func tree2contract(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
+	tree2contract := &zksyncTypes.ZkTreeToContract{
+		TokenId:            tokenId,
+		Amount:             amount,
+		AccountId:         accountID,
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TyTreeToContractAction,
+		Value: &zksyncTypes.ZksyncAction_TreeToContract{
+			TreeToContract: tree2contract,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	receipt, err := zkspotHandle.Exec_TreeToContract(action.GetTreeToContract(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	localDBSet, err := zkspotHandle.ExecLocal_TreeToContract(nil, tx, receiptData, index)
+	if nil != err {
+		return nil, nil, err
+	}
+	for _, kv := range localDBSet.KV {
+		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	index++
+
+	return receipt, localDBSet, nil
+}
+
+func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	withdraw := &zksyncTypes.ZkWithdraw{
 		TokenId:            tokenId,
 		Amount:             amount,

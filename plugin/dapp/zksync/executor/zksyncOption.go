@@ -323,9 +323,11 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	//因为合约balance需要/1e10，因此要先去掉精度
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
+	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
+	amount_len := len(payload.Amount)
+	if amount_len < 10 {
+		return nil, errors.New("Too Little value to do operation TreeToContract")
+	}
 
 	err := checkParam(payload.Amount)
 	if err != nil {
@@ -384,7 +386,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	l2Log := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(l2BalanceLog)}
 
 	//更新合约账户
-	accountKvs, l1Log, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Add)
+	accountKvs, l1Log, err := a.UpdateContractAccount(a.fromaddr, payload.Amount, payload.GetTokenId(), zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
@@ -401,9 +403,10 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue, *types.ReceiptLog, error) {
 	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
 	contractAccount := accountdb.LoadAccount(addr)
-	change, _ := new(big.Int).SetString(amount, 10)
 	//accountdb去除末尾10位小数
-	shortChange := new(big.Int).Div(change, big.NewInt(1e10)).Int64()
+	amount2Contract := amount[ : len(amount) - 10]
+	shortChangeBigInt, _ := new(big.Int).SetString(amount2Contract, 10)
+	shortChange := shortChangeBigInt.Int64()
 	accBefore := &types.Account{
 		Balance:contractAccount.Balance,
 		Addr: addr,

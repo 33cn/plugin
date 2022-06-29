@@ -15,16 +15,6 @@ func (z *zksync) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 	return action.Withdraw(payload)
 }
 
-func (z *zksync) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewAction(z, tx, index)
-	return action.ContractToTree(payload)
-}
-
-func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewAction(z, tx, index)
-	return action.TreeToContract(payload)
-}
-
 func (z *zksync) Exec_Transfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.Transfer(payload)
@@ -73,6 +63,16 @@ func (z *zksync) Exec_SetVerifier(payload *zt.ZkVerifier, tx *types.Transaction,
 func (z *zksync) Exec_SetFee(payload *zt.ZkSetFee, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.setFee(payload)
+}
+
+func (z *zksync) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.ContractToTree(payload)
+}
+
+func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.TreeToContract(payload)
 }
 
 func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
