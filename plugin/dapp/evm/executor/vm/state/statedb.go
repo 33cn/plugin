@@ -61,8 +61,6 @@ type MemoryStateDB struct {
 	// 当前临时交易哈希和交易序号
 	txHash  common.Hash
 	txIndex int
-	//交易执行的数量
-	nonce uint64
 	// 当前区块高度
 	blockHeight int64
 
@@ -98,10 +96,9 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 
 // Prepare 每一个交易执行之前调用此方法，设置此交易的上下文信息
 // 目前的上下文中包含交易哈希以及交易在区块中的序号
-func (mdb *MemoryStateDB) Prepare(txHash common.Hash, txIndex int, nonce int64) {
+func (mdb *MemoryStateDB) Prepare(txHash common.Hash, txIndex int) {
 	mdb.txHash = txHash
 	mdb.txIndex = txIndex
-	mdb.nonce = uint64(nonce)
 	log15.Info("MemoryStateDB::Prepare", "txHash", txHash.Hex(), "txIndex", txIndex, "logSize", mdb.logSize)
 }
 

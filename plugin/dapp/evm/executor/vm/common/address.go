@@ -149,11 +149,13 @@ func NewContractAddress(b Address, txHash []byte) Address {
 	return PubKey2Address(execPub)
 }
 
+//NewEvmContractAddress  通过nonce创建合约地址
 func NewEvmContractAddress(b Address, nonce uint64) Address {
-
-	ethAddr := ethcrypto.CreateAddress(common.BytesToAddress(b.Bytes()), nonce)
+	execAddr := ethcrypto.CreateAddress(common.BytesToAddress(b.Bytes()), nonce)
 	var a Address
-	a.SetBytes(ethAddr.Bytes())
+	a.formatAddr = execAddr.String()
+	raw, _ := evmAddressDriver.FromString(a.formatAddr)
+	a.SetBytes(raw)
 	return a
 }
 

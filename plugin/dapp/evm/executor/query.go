@@ -89,7 +89,6 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	if receipt.Ty != types.ExecOk {
 		return nil, errors.New("contract call error")
 	}
-	log.Info("Query_EstimateGas", "logs:", receipt.GetLogs())
 	callData := getCallReceipt(receipt.GetLogs())
 	if callData == nil {
 		return nil, errors.New("nil receipt")
@@ -226,7 +225,7 @@ func (evm *EVMExecutor) Query_GetCode(in *evmtypes.CheckEVMAddrReq) (types.Messa
 	}
 
 	addr := evmCommon.StringToAddress(in.GetAddr())
-	log.Info("Query_GetCode", "addr", in.GetAddr(), "addrstring", addr.String())
+	log.Debug("Query_GetCode", "addr", in.GetAddr(), "addrstring", addr.String())
 	codeData := evm.mStateDB.GetCode(addr.String())
 	abiData := evm.mStateDB.GetAbi(addr.String())
 	account := evm.GetMStateDB().GetAccount(addr.String())

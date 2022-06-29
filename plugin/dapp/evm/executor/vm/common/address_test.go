@@ -8,6 +8,8 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/33cn/chain33/common"
+
 	"github.com/33cn/chain33/types"
 
 	"github.com/holiman/uint256"
@@ -59,4 +61,10 @@ func TestNewContractAddress(t *testing.T) {
 	addr2 := NewAddress(cfg, hash)
 	assert.Equal(t, hexHash, hex.EncodeToString(hash))
 	assert.Equal(t, "17ZDZhQrFRnwQgBxZdLWvqh8dqfLXBRzyj", addr2.String())
+	ab, _ := common.FromHex("0x1Ee38d535d541c55C9dae27B12edf090C608E6Fb")
+	addr = BytesToAddress(ab)
+	nonce := 2
+	addr3 := NewEvmContractAddress(addr, uint64(nonce))
+	t.Log("addr3", addr3)
+	assert.Equal(t, "0x5cFaB2A1b036463b79fa7e1B95F7a50a9E8F8B56", addr3.String())
 }
