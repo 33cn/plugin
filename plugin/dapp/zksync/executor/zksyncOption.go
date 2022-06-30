@@ -1042,7 +1042,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	}
 
 	//暂定0 后面从数据库读取 TODO
-	feeTokenId := uint64(0)
+	feeTokenId := uint64(1)
 	feeAmount := zt.FeeMap[zt.TyMintNFTAction]
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
@@ -1110,8 +1110,12 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	kvs = append(kvs, kvsCreator...)
 	l2LogCreator.Ty = zt.TyMintNFTLog
 	logs = append(logs, l2LogCreator)
+	for _, kv := range kvsCreator {
+		//因为在接下来的处理中需要用到这些状态信息，所以需要先将其设置到状态中
+		_ = a.statedb.Set(kv.Key, kv.Value)
+	}
 	systemNFToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, zt.SystemNFTTokenId)
-	if err != nil {
+	if err != nil || nil == systemNFToken {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
 	//serialId = createor创建nft的次数　- 1 ,
@@ -1135,6 +1139,10 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	l2LogSystemNFTAcc.Ty = zt.TyMintNFTLog
 	logs = append(logs, l2LogSystemNFTAcc)
 
+	for _, kv := range kvSystemNFTAcc {
+		//因为在接下来的处理中需要用到这些状态信息，所以需要先将其设置到状态中
+		_ = a.statedb.Set(kv.Key, kv.Value)
+	}
 	systemNFToken, err = GetTokenByAccountIdAndTokenId(a.statedb, systemNFTLeaf.GetAccountId(), zt.SystemNFTTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
@@ -1147,12 +1155,11 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	if newNFTTokenId.Uint64() - 1 <= zt.SystemNFTTokenId {
 		return nil, errors.Wrapf(types.ErrNotAllow, "newNFTTokenId=%d should big than default %d", newNFTTokenId.Uint64(), zt.SystemNFTTokenId)
 	}
-	//operationInfo.SpecialInfo.SpecialDatas[0].TokenID = append(operationInfo.SpecialInfo.SpecialDatas[0].TokenID, newNFTTokenId.Uint64())
+
 	serialId, ok := big.NewInt(0).SetString(creatorSerialId, 10)
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "creatorSerialId=%s nok", creatorSerialId)
 	}
-	//operationInfo.SpecialInfo.SpecialDatas[0].TokenID = append(operationInfo.SpecialInfo.SpecialDatas[0].TokenID, serialId.Uint64())
 
 	//4. SystemNFTAccountId set new NFT id to balance by NFT contentHash
     //将系统用户名下account = SystemNFTAccountId　且　tokenID = creatorSerialId指定的token balance 设置为NFT contentHash
@@ -1160,7 +1167,6 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNewNFTToken balance")
 	}
-	//operationInfo.SpecialInfo.SpecialDatas[0].ContentHash = []string{contentPart1.String(), contentPart2.String()}
 	kvSystemNFTAcc, l2LogSystemNFTAcc, _, err = applyL2AccountUpdate(systemNFTLeaf.GetAccountId(), newNFTTokenId.Uint64(), newNFTTokenBalance, zt.Add, a.statedb, systemNFTLeaf, true)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
