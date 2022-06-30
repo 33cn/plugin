@@ -930,8 +930,6 @@ func TestWithdrawNFT(t *testing.T) {
 	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
 	assert.Nil(t, err)
 
-	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
-	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
 	queueId := uint64(0)
 	tokenId := uint64(1)
 	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
@@ -952,22 +950,26 @@ func TestWithdrawNFT(t *testing.T) {
 	assert.Nil(t, err)
 	err = setPubKey(zksyncHandle, acc1privkey, accountID)
 	assert.Nil(t, err)
-	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
-	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
-	//测试提币
-	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	//NFT 铸币
+	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	//确认balance
-	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+
+	//NFT 提币
+	nftTokenId := uint64(258)
+	receipt, localReceipt, err = withdrawNFT(zksyncHandle, acc1privkey, accountID, nftTokenId, 1)
 	assert.Nil(t, err)
-	withdrawFee := 1000000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
-	fmt.Println("Balance is", balance)
-	assert.Equal(t, acc4token1Balance.Balance, balance)
-	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
+	assert.Nil(t, err)
+	balanceStr := "0"
+	assert.Equal(t, tokenBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", accountID, "tokenId", nftTokenId, tokenBalance.Balance)
 }
 
 func TestTransferNFT(t *testing.T) {
@@ -984,8 +986,6 @@ func TestTransferNFT(t *testing.T) {
 	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
 	assert.Nil(t, err)
 
-	//zkspot_deposit 1 1000000000000 ${acc2privkey} ${acc2eth} 87
-	//zkspot_deposit 2 1000000000000 ${acc3privkey} ${acc3eth} 88
 	queueId := uint64(0)
 	tokenId := uint64(1)
 	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
@@ -1006,22 +1006,43 @@ func TestTransferNFT(t *testing.T) {
 	assert.Nil(t, err)
 	err = setPubKey(zksyncHandle, acc1privkey, accountID)
 	assert.Nil(t, err)
-	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
-	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
-	//测试提币
-	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	//测试向新账户进行转币操作
+	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
+	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
+	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	//确认balance
-	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+
+	//NFT 铸币
+	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
 	assert.Nil(t, err)
-	withdrawFee := 1000000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
-	fmt.Println("Balance is", balance)
-	assert.Equal(t, acc4token1Balance.Balance, balance)
-	assert.Equal(t, acc4token1Balance.TokenId, uint64(1))
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	//NFT 转币操作
+	nftTokenId := uint64(258)
+	fromAccountID := accountID
+	toAccountID := accountID + 1
+	receipt, localReceipt, err = transferNFT(zksyncHandle, acc1privkey, fromAccountID, toAccountID, nftTokenId, 1)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
+	assert.Nil(t, err)
+	balanceStr := "0"
+	assert.Equal(t, tokenBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", accountID, "tokenId", nftTokenId, tokenBalance.Balance)
+
+	toBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), toAccountID, nftTokenId)
+	assert.Nil(t, err)
+	balanceStr = "1"
+	assert.Equal(t, toBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", toAccountID, "tokenId", nftTokenId, toBalance.Balance)
 }
 
 func deposit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, queueId uint64, amount, ethAddress, chain33Addr string) (*types.Receipt, *types.LocalDBSet, error) {
@@ -1429,6 +1450,89 @@ func mintNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccount
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_MintNFT(nil, tx, receiptData, index)
+	if nil != err {
+		return nil, nil, err
+	}
+	for _, kv := range localDBSet.KV {
+		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	index++
+
+	return receipt, localDBSet, nil
+}
+
+func withdrawNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, nftTokenId, amount uint64) (*types.Receipt, *types.LocalDBSet, error) {
+	withdrawNFT := &zksyncTypes.ZkWithdrawNFT{
+		FromAccountId:        fromAccountId,
+		NFTTokenId:           nftTokenId,
+		Amount:               amount,
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TyWithdrawNFTAction,
+		Value: &zksyncTypes.ZksyncAction_WithdrawNFT{
+			WithdrawNFT: withdrawNFT,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	receipt, err := zkspotHandle.Exec_WithdrawNFT(action.GetWithdrawNFT(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	localDBSet, err := zkspotHandle.ExecLocal_WithdrawNFT(nil, tx, receiptData, index)
+	if nil != err {
+		return nil, nil, err
+	}
+	for _, kv := range localDBSet.KV {
+		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	index++
+
+	return receipt, localDBSet, nil
+}
+
+func transferNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, recipientAccountId, ntTokenId, amount uint64) (*types.Receipt, *types.LocalDBSet, error) {
+	transferNFT := &zksyncTypes.ZkTransferNFT{
+		FromAccountId:        fromAccountId,
+		RecipientId:          recipientAccountId,
+		NFTTokenId:           ntTokenId,
+		Amount:               amount,
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TyTransferNFTAction,
+		Value: &zksyncTypes.ZksyncAction_TransferNFT{
+			TransferNFT: transferNFT,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	receipt, err := zkspotHandle.Exec_TransferNFT(action.GetTransferNFT(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	localDBSet, err := zkspotHandle.ExecLocal_TransferNFT(nil, tx, receiptData, index)
 	if nil != err {
 		return nil, nil, err
 	}
