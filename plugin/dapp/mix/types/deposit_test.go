@@ -46,7 +46,7 @@ func TestDeposit(t *testing.T) {
 		depositCircuit.ReceiverPubKey.Assign("13496572805321444273664325641440458311310163934354047265362731297880627774936")
 		depositCircuit.ReturnPubKey.Assign("10193030166569398670555398535278072963719579248877156082361830729347727033510")
 		depositCircuit.AuthorizePubKey.Assign("2302306531516619173363925550130201424458047172090558749779153607734711372580")
-		depositCircuit.NoteRandom.Assign(2824204835)
+		depositCircuit.NoteRandom.Assign("2824204835")
 		//assert.ProverSucceeded(r1cs, &depositCircuit)
 
 		var circuit DepositCircuit

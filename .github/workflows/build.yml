@@ -106,3 +106,23 @@ jobs:
         run: |
           make docker-compose
           make docker-compose-down
+
+  test-arch-386:
+    name: Test GOARCH 386
+    runs-on: ubuntu-latest
+    env:
+      GOARCH: 386
+      CGO_ENABLED: 1
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.16
+      - run: sudo apt install gcc-multilib
+
+      - name: Build
+        run: make build
+
+      - name: Run unit tests
+        run: go test ./... -covermode=atomic
