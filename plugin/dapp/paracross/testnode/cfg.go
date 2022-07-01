@@ -147,7 +147,9 @@ enableStat=false
 
 [exec.sub.relay]
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-
+[exec.sub.evm]
+ethMapFromExecutor="coins"
+ethMapFromSymbol="bty"
 [exec.sub.manage]
 superManager=[
     "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",

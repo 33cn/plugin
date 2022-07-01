@@ -6,7 +6,6 @@ package executor
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -53,7 +52,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
-		"data size:", len(msg.Data()))
+		"data size:", len(msg.Data()), "readOnly", readOnly)
 	var (
 		ret             []byte
 		vmerr           error
@@ -67,7 +66,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 	if isTransferOnly {
 		caller := msg.From()
 		receiver := common.BytesToAddress(msg.Para())
-
 		if !evm.mStateDB.CanTransfer(caller.String(), msg.Value()) {
 			log.Error("innerExec", "Not enough balance to be transferred from", caller.String(), "amout", msg.Value())
 			return nil, types.ErrNoBalance
@@ -80,7 +78,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
-		if !readOnly && tx != nil && types.IsEthSignID(tx.GetSignature().GetTy()) {
+		if tx != nil && types.IsEthSignID(tx.GetSignature().GetTy()) {
 			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
 			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
 		} else {
@@ -94,7 +92,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 		// 只有新创建的合约才能生成合约名称
 		execName = fmt.Sprintf("%s%s", cfg.ExecName(evmtypes.EvmPrefix), common.BytesToHash(txHash).Hex())
 	} else {
-
 		contractAddr = *msg.To()
 		contractAddrStr = contractAddr.String()
 		if !env.StateDB.Exist(contractAddrStr) {
@@ -135,7 +132,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 			visiableOut = append(visiableOut, ret[i])
 		}
 		ret = visiableOut
-		vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), string(ret))
 		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
 
 		return receipt, vmerr
@@ -191,7 +188,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 
 	evm.collectEvmTxLog(txHash, contractReceipt, receipt)
 
-	if isCreate {
+	if isCreate && !readOnly {
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}

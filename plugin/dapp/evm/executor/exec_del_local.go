@@ -25,7 +25,7 @@ func (evm *EVMExecutor) ExecDelLocal(tx *types.Transaction, receipt *types.Recei
 				var evmNonce types.EvmAccountNonce
 				types.Decode(nonceV, &evmNonce)
 				if evmNonce.GetNonce() == tx.GetNonce()+1 {
-					evmNonce.Nonce -= 1
+					evmNonce.Nonce--
 					if evmNonce.GetNonce() < 0 {
 						evmNonce.Nonce = 0
 					}

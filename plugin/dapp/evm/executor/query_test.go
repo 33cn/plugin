@@ -1,9 +1,23 @@
 package executor
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
+
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/address/eth"
+
+	apimock "github.com/33cn/chain33/client/mocks"
+	dbm "github.com/33cn/chain33/common/db"
+	dbmock "github.com/33cn/chain33/common/db/mocks"
+	ctypes "github.com/33cn/chain33/types"
+	vcomm "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/33cn/chain33/common"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
@@ -124,6 +138,63 @@ func Test_UnpackInputLockOfBridgevmxgo(t *testing.T) {
 	assert.Equal(t, correct, 3)
 }
 
-func TestEVMExecutor_Query_GetCode(t *testing.T) {
+func initEvmExeccutor(t *testing.T) *EVMExecutor {
+	localDB := new(dbmock.KVDB)
+	api := new(apimock.QueueProtocolAPI)
+	var chain33TestCfg = ctypes.NewChain33Config(testnode.DefaultConfig)
+	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+	driver, err := address.LoadDriver(eth.ID, -1)
+	assert.Equal(t, nil, err)
+	vcomm.InitEvmAddressTypeOnce(driver)
+	var exec = NewEVMExecutor()
+	exec.SetAPI(api)
+	statDB, err := dbm.NewGoMemDB("state", "state", 1024)
+	assert.Equal(t, nil, err)
+	exec.SetLocalDB(localDB)
+	exec.SetStateDB(statDB)
+	exec.SetEnv(0, 0, 0)
+	exec.CheckInit()
+	exec.mStateDB.StateDB = statDB
 
+	return exec
+}
+
+func TestEVMExecutor_Query_GetCode(t *testing.T) {
+	exec := initEvmExeccutor(t)
+	var contractorAddr = strings.ToLower("0xDe79A84DD3A16BB91044167075dE17a1CA4b1d6b")
+	var creator = strings.ToLower("0xd83b69C56834E85e023B1738E69BFA2F0dd52905")
+	exec.mStateDB.CreateAccount(contractorAddr, creator, "evm", "ABC")
+	cacc := exec.mStateDB.GetAccount(contractorAddr)
+	code := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8}
+	exec.mStateDB.SetCode(contractorAddr, code)
+	exec.mStateDB.SetAbi(contractorAddr, "abidata")
+	t.Log("data", cacc.Data.GetCreator(), "abi", exec.mStateDB.GetAbi(contractorAddr))
+	kv := cacc.GetDataKV()
+	exec.GetMStateDB().StateDB.Set(kv[0].GetKey(), kv[0].GetValue())
+	msg, err := exec.Query_GetCode(&types.CheckEVMAddrReq{Addr: contractorAddr})
+	assert.Equal(t, nil, err)
+	ret, ok := msg.(*types.EVMContractData)
+	assert.Equal(t, true, ok)
+	t.Log("ret", ret.Code)
+	ok = bytes.Equal(code, ret.Code)
+	assert.Equal(t, true, ok)
+}
+
+func TestNewEVMExecutor_Query_GetNonce(t *testing.T) {
+	exec := initEvmExeccutor(t)
+	localDB := new(dbmock.KVDB)
+	exec.SetLocalDB(localDB)
+	var creator = "0xd83b69C56834E85e023B1738E69BFA2F0dd52905"
+	var evmAccountNonce ctypes.EvmAccountNonce
+	evmAccountNonce.Nonce = 123
+	evmAccountNonce.Addr = creator
+	localDB.On("Get", mock.Anything).Return(ctypes.Encode(&evmAccountNonce), nil)
+	msg, err := exec.Query_GetNonce(&types.EvmGetNonceReq{
+		Address: creator,
+	})
+	assert.Equal(t, nil, err)
+	resp, ok := msg.(*types.EvmGetNonceRespose)
+	assert.Equal(t, true, ok)
+	t.Log("getnonce", resp.GetNonce())
+	assert.Equal(t, evmAccountNonce.Nonce, resp.GetNonce())
 }

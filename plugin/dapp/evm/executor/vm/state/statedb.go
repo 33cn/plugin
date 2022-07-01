@@ -134,20 +134,30 @@ func (mdb *MemoryStateDB) AddBalance(addr, caddr string, value uint64) {
 	log15.Debug("transfer result", "from", addr, "to", caddr, "amount", value, "result", res)
 }
 
-// GetBalance
+// GetBalance ...
 func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 	ac := mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
 	return uint64(ac.Balance)
 }
 
-//GetNonce 返回 addr 的nonce
-func (mdb *MemoryStateDB) GetNonce(addr string) uint64 {
+//GetAccountNonce 获取普通地址下的nonce,用于兼容eth签名交易
+func (mdb *MemoryStateDB) GetAccountNonce(addr string) uint64 {
 	//增加合约账户信息
-	statV, _ := mdb.LocalDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
-	if statV != nil {
+	nonceV, _ := mdb.LocalDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
+	if nonceV != nil {
 		var evmAccountNonce types.EvmAccountNonce
-		types.Decode(statV, &evmAccountNonce)
+		types.Decode(nonceV, &evmAccountNonce)
 		return uint64(evmAccountNonce.GetNonce())
+	}
+	return 0
+}
+
+// GetNonce 目前chain33中没有保留账户的nonce信息，这里临时添加到合约账户中；
+// 所以，目前只有合约对象有nonce值
+func (mdb *MemoryStateDB) GetNonce(addr string) uint64 {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		return acc.GetNonce()
 	}
 	return 0
 }
@@ -158,7 +168,6 @@ func (mdb *MemoryStateDB) SetNonce(addr string, nonce uint64) {
 	if acc != nil {
 		acc.SetNonce(nonce)
 	}
-
 }
 
 // GetCodeHash 获取代码哈希

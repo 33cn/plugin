@@ -161,6 +161,7 @@ func (ca *ContractAccount) LoadContract(db db.KV) {
 	// 加载状态数据
 	data, err = db.Get(ca.GetStateKey())
 	if err != nil {
+
 		return
 	}
 	ca.resotreState(data)

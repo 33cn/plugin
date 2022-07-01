@@ -81,7 +81,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	}
 
 	msg.SetGasLimit(evmtypes.MaxGasLimit)
-	receipt, err := evm.innerExec(msg, nil, tx.Hash(), index, evmtypes.MaxGasLimit, true)
+	receipt, err := evm.innerExec(msg, &tx, tx.Hash(), index, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		return nil, err
 	}
@@ -180,12 +180,14 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	return ret, nil
 }
 
+//Query_GetNonce 获取普通账户的Nonce
 func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Message, error) {
 	evm.CheckInit()
-	nonce := evm.mStateDB.GetNonce(in.Address)
+	nonce := evm.mStateDB.GetAccountNonce(in.Address)
 	return &evmtypes.EvmGetNonceRespose{Nonce: int64(nonce)}, nil
 }
 
+//Query_GetPackData ...
 func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types.Message, error) {
 	evm.CheckInit()
 	_, packData, err := evmAbi.Pack(in.Parameter, in.Abi, false)
@@ -197,6 +199,7 @@ func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types
 	return &evmtypes.EvmGetPackDataRespose{PackData: packStr}, nil
 }
 
+//Query_GetUnpackData ...
 func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (types.Message, error) {
 	evm.CheckInit()
 	data, err := common.FromHex(in.Data)
@@ -217,6 +220,7 @@ func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (t
 	return &ret, nil
 }
 
+//Query_GetCode 获取合约地址下的code
 func (evm *EVMExecutor) Query_GetCode(in *evmtypes.CheckEVMAddrReq) (types.Message, error) {
 	evm.CheckInit()
 	addrStr := in.Addr
@@ -228,12 +232,14 @@ func (evm *EVMExecutor) Query_GetCode(in *evmtypes.CheckEVMAddrReq) (types.Messa
 	log.Debug("Query_GetCode", "addr", in.GetAddr(), "addrstring", addr.String())
 	codeData := evm.mStateDB.GetCode(addr.String())
 	abiData := evm.mStateDB.GetAbi(addr.String())
-	account := evm.GetMStateDB().GetAccount(addr.String())
+	account := evm.mStateDB.GetAccount(addr.String())
 	var ret evmtypes.EVMContractData
 	ret.Code = codeData
 	ret.Abi = abiData
-	ret.Creator = account.GetCreator()
-	ret.Alias = account.GetAliasName()
+	if account != nil {
+		ret.Creator = account.GetCreator()
+		ret.Alias = account.GetAliasName()
+	}
 	return &ret, nil
 
 }

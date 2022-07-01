@@ -27,7 +27,7 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 			if err == nil {
 				types.Decode(nonceV, &evmNonce)
 				if evmNonce.GetNonce() == tx.GetNonce() {
-					evmNonce.Nonce += 1
+					evmNonce.Nonce++
 				}
 
 			} else {

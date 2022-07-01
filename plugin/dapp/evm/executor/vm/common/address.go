@@ -153,7 +153,7 @@ func NewContractAddress(b Address, txHash []byte) Address {
 func NewEvmContractAddress(b Address, nonce uint64) Address {
 	execAddr := ethcrypto.CreateAddress(common.BytesToAddress(b.Bytes()), nonce)
 	var a Address
-	a.formatAddr = execAddr.String()
+	a.formatAddr = evmAddressDriver.FormatAddr(execAddr.String())
 	raw, _ := evmAddressDriver.FromString(a.formatAddr)
 	a.SetBytes(raw)
 	return a
