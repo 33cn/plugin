@@ -37,7 +37,6 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyFullExitLog,
 			zt.TySwapLog,
 			zt.TyMintNFTLog,
-			zt.TyTransferNFTLog,
 			zt.TyWithdrawNFTLog,
 			zt.TyFeeLog:
 			var receipt zt.AccountTokenBalanceReceipt
@@ -46,6 +45,20 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 				return nil, err
 			}
 			err = infoTable.Replace(&receipt)
+			if err != nil {
+				return nil, err
+			}
+		case zt.TyTransferNFTLog:
+			var receipt zt.TransferReceipt
+			err := types.Decode(log.GetLog(), &receipt)
+			if err != nil {
+				return nil, err
+			}
+			err = infoTable.Replace(receipt.From)
+			if err != nil {
+				return nil, err
+			}
+			err = infoTable.Replace(receipt.To)
 			if err != nil {
 				return nil, err
 			}

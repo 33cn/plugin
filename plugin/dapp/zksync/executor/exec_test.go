@@ -958,16 +958,23 @@ func TestWithdrawNFT(t *testing.T) {
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 
-	//NFT 提币
 	nftTokenId := uint64(258)
+	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
+	assert.Nil(t, err)
+	balanceStr := "1"
+	assert.Equal(t, tokenBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", accountID, "tokenId", nftTokenId, tokenBalance.Balance)
+
+	//NFT 提币
+
 	receipt, localReceipt, err = withdrawNFT(zksyncHandle, acc1privkey, accountID, nftTokenId, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 
-	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
+	tokenBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
 	assert.Nil(t, err)
-	balanceStr := "0"
+	balanceStr = "0"
 	assert.Equal(t, tokenBalance.Balance, balanceStr)
 	fmt.Println("TokenBalance for account ID", accountID, "tokenId", nftTokenId, tokenBalance.Balance)
 }
