@@ -83,6 +83,8 @@ message OperationInfo {
 
   //操作特殊数据,像订单数据
   OperationSpecialInfo specialInfo = 13;
+  //记录deposit或fullExit对应的eth priorityId，方便查询对应区块高度和证明Id
+  int64 ethPriorityId = 14;
 }
 
 message OperationSpecialInfo {
