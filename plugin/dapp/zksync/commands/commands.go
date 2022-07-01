@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 
@@ -881,6 +882,7 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getExistProofCmd())
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
 	cmd.AddCommand(getProofChainTitleListCmd())
+	cmd.AddCommand(getEthPriorityInfoCmd())
 
 	//cmd.AddCommand(commitProofCmd())
 
@@ -1088,6 +1090,40 @@ func getChainTitleList(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func getEthPriorityInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "priority",
+		Short: "get priority id info",
+		Run:   getPriority,
+	}
+	getPriorityFlag(cmd)
+	return cmd
+}
+
+func getPriorityFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("priorityId", "i", 0, "eth priority id, id >= 0")
+	cmd.MarkFlagRequired("priorityId")
+}
+
+func getPriority(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	priorityId, _ := cmd.Flags().GetUint64("priorityId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.EthPriorityQueueID{
+		ID: new(big.Int).SetUint64(priorityId).String(),
+	}
+
+	params.FuncName = "GetPriorityOpInfo"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.OperationInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func getZkCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "id",
@@ -1220,7 +1256,8 @@ func getZkCommitProofListFlag(cmd *cobra.Command) {
 	cmd.Flags().BoolP("onChain", "o", false, "if req onChain proof by sub id")
 	cmd.Flags().BoolP("latestProof", "l", false, "if req latest proof")
 	cmd.Flags().Uint64P("endHeight", "e", 0, "latest proof before endHeight")
-
+	cmd.Flags().StringP("chainTitle", "n", "", "chain title for proof")
+	cmd.MarkFlagRequired("chainTitle")
 }
 
 func getZkCommitProofList(cmd *cobra.Command, args []string) {
@@ -1230,6 +1267,7 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	onChain, _ := cmd.Flags().GetBool("onChain")
 	latestProof, _ := cmd.Flags().GetBool("latestProof")
 	end, _ := cmd.Flags().GetUint64("endHeight")
+	chainTitle, _ := cmd.Flags().GetString("chainTitle")
 
 	var params rpctypes.Query4Jrpc
 
@@ -1240,6 +1278,7 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 		ReqOnChainProof: onChain,
 		ReqLatestProof:  latestProof,
 		EndHeight:       end,
+		ChainTitle:      chainTitle,
 	}
 
 	params.FuncName = "GetProofList"

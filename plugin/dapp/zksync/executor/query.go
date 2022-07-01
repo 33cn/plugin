@@ -333,6 +333,22 @@ func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error)
 	return res, nil
 }
 
+// Query_GetPriorityOpInfo 根据priorityId获取operation信息
+func (z *zksync) Query_GetPriorityOpInfo(in *zt.EthPriorityQueueID) (types.Message, error) {
+	if len(in.GetID()) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	table := NewZksyncInfoTable(z.GetLocalDB())
+	rows, err := table.ListIndex("priorityId", []byte(fmt.Sprintf("%s", in.GetID())), nil, 1, zt.ListASC)
+	if err != nil {
+		return nil, errors.Wrapf(err, "listIndex")
+	}
+	if len(rows) < 1 {
+		return nil, types.ErrNotFound
+	}
+	return rows[0].Data.(*zt.OperationInfo), nil
+}
+
 // Query_GetProofByTxHash 根据txhash获取proof信息
 func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {

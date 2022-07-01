@@ -3,6 +3,7 @@ package executor
 import (
 	"fmt"
 	"github.com/33cn/chain33/common/address"
+	"math/big"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -73,7 +74,7 @@ var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",
 	Primary: "height_index_opIndex",
-	Index:   []string{"height", "txHash"},
+	Index:   []string{"height", "txHash", "priorityId"},
 }
 
 // NewZksyncInfoTable ...
@@ -109,6 +110,13 @@ func (r *ZksyncInfoRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
+func (r *ZksyncInfoRow) getPriorityId() string {
+	if r.TxType == zt.TyDepositAction || r.TxType == zt.TyFullExitAction {
+		return new(big.Int).SetInt64(r.GetEthPriorityId()).String()
+	}
+	return "-1"
+}
+
 //Get 按照indexName 查询 indexValue
 func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
 	if key == "height_index_opIndex" {
@@ -117,6 +125,8 @@ func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%016d", r.GetBlockHeight())), nil
 	} else if key == "txHash" {
 		return []byte(fmt.Sprintf("%s", r.GetTxHash())), nil
+	} else if key == "priorityId" {
+		return []byte(fmt.Sprintf("%s", r.getPriorityId())), nil
 	}
 	return nil, types.ErrNotFound
 }

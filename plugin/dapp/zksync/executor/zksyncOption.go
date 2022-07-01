@@ -116,12 +116,13 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	}
 
 	operationInfo := &zt.OperationInfo{
-		BlockHeight: uint64(a.height),
-		TxIndex:     uint32(a.index),
-		TxType:      zt.TyDepositAction,
-		TokenID:     payload.TokenId,
-		Amount:      payload.Amount,
-		SigData:     payload.Signature,
+		BlockHeight:   uint64(a.height),
+		TxIndex:       uint32(a.index),
+		TxType:        zt.TyDepositAction,
+		TokenID:       payload.TokenId,
+		Amount:        payload.Amount,
+		SigData:       payload.Signature,
+		EthPriorityId: payload.EthPriorityQueueId,
 	}
 
 	//leaf不存在就添加
@@ -1264,14 +1265,15 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	exitAmount := new(big.Int).Sub(amountInt, feeInt).String()
 
 	operationInfo := &zt.OperationInfo{
-		BlockHeight: uint64(a.height),
-		TxIndex:     uint32(a.index),
-		TxType:      zt.TyFullExitAction,
-		TokenID:     payload.TokenId,
-		Amount:      exitAmount,
-		FeeAmount:   fee,
-		SigData:     payload.Signature,
-		AccountID:   payload.AccountId,
+		BlockHeight:   uint64(a.height),
+		TxIndex:       uint32(a.index),
+		TxType:        zt.TyFullExitAction,
+		TokenID:       payload.TokenId,
+		Amount:        exitAmount,
+		FeeAmount:     fee,
+		SigData:       payload.Signature,
+		AccountID:     payload.AccountId,
+		EthPriorityId: payload.EthPriorityQueueId,
 	}
 
 	//更新之前先计算证明
