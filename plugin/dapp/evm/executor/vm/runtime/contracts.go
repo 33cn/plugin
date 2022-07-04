@@ -159,10 +159,10 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	log15.Info("ecrecover::Run", "hash", common.Bytes2Hex(input[:32]))
-	log15.Info("ecrecover::Run", "signature", common.Bytes2Hex(sig))
+	//log15.Info("ecrecover::Run", "hash", common.Bytes2Hex(input[:32]))
+	//log15.Info("ecrecover::Run", "signature", common.Bytes2Hex(sig))
 
-	log15.Info("ecrecover::pubkey", "pubkey", common.Bytes2Hex(pubKey))
+	//log15.Info("ecrecover::pubkey", "pubkey", common.Bytes2Hex(pubKey))
 	//log15.Info("ecrecover::address", "address", address.PubKeyToAddress(pubKey).String())
 	// the first byte of pubkey is bitcoin heritage
 	driver := common.GetEvmAddressDriver()

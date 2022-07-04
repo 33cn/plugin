@@ -37,13 +37,13 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		evmDebugInited = true
 	}
 
-	receipt, err := evm.innerExec(msg, tx, tx.Hash(), index, msg.GasLimit(), false)
+	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
 	return receipt, err
 }
 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
-func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, txHash []byte, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
+func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
@@ -78,7 +78,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, tx *types.Transaction, tx
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
-		if tx != nil && types.IsEthSignID(tx.GetSignature().GetTy()) {
+		if types.IsEthSignID(int32(sigType)) {
 			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
 			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
 		} else {
