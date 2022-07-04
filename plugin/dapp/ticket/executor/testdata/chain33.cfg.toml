@@ -1,6 +1,7 @@
 Title="bityuan"
 TestNet=true
 FixTime=false
+DisableForkCheck=true
 
 [crypto]
 [log]

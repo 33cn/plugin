@@ -161,6 +161,7 @@ func (ca *ContractAccount) LoadContract(db db.KV) {
 	// 加载状态数据
 	data, err = db.Get(ca.GetStateKey())
 	if err != nil {
+
 		return
 	}
 	ca.resotreState(data)
@@ -302,6 +303,7 @@ func (ca *ContractAccount) SetNonce(nonce uint64) {
 		prev:       ca.State.GetNonce(),
 	})
 	ca.State.Nonce = nonce
+
 }
 
 // GetNonce 获取nonce值
