@@ -219,10 +219,9 @@ func TestEVMExecutor_Check(t *testing.T) {
 	tx1 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 100000, Expire: 0, To: toAddr, Nonce: 1, Signature: sig}
 	tx2 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 110002, Expire: 0, To: toAddr, Nonce: 1, Signature: sig}
 	tx3 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 100003, Expire: 0, To: toAddr, Nonce: 3, Signature: sig}
-	tx4 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 1100004, Expire: 0, To: toAddr, Nonce: 3, Signature: sig}
+	tx4 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 110004, Expire: 0, To: toAddr, Nonce: 3, Signature: sig}
 	var details []*ctypes.TransactionDetail
 	details = append(details, &ctypes.TransactionDetail{Tx: tx1, Index: 0}, &ctypes.TransactionDetail{Tx: tx2, Index: 1})
-
 	detailTxs := &ctypes.TransactionDetails{Txs: details}
 	exec := initEvmExeccutor(t, api)
 
@@ -230,10 +229,7 @@ func TestEVMExecutor_Check(t *testing.T) {
 	api.On("RemoveTxsByHashList", mock.Anything).Return(nil)
 	err := exec.CheckTx(tx2, 0)
 	assert.Equal(t, nil, err)
-
-	detailsV2 := make([]*ctypes.TransactionDetail, 0)
-	detailsV2 = append(details, &ctypes.TransactionDetail{Tx: tx3, Index: 2}, &ctypes.TransactionDetail{Tx: tx4, Index: 3})
-	detailTxs.Txs = detailsV2
+	detailTxs.Txs = append(detailTxs.Txs, &ctypes.TransactionDetail{Tx: tx3, Index: 2}, &ctypes.TransactionDetail{Tx: tx4, Index: 3})
 	ferr := fmt.Errorf("requires at least 10 percent increase in handling fee,need more:%d", int64(float64(tx4.Fee)*1.1)-tx3.Fee)
 	err = exec.CheckTx(tx3, 0)
 	assert.Equal(t, ferr.Error(), err.Error())
