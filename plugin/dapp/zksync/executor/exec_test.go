@@ -1073,6 +1073,7 @@ func deposit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, qu
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_Deposit(action.GetDeposit(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1081,6 +1082,7 @@ func deposit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, qu
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec deposit cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_Deposit(nil, tx, receiptData, index)
@@ -1091,6 +1093,7 @@ func deposit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, qu
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("deposit cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1149,11 +1152,13 @@ func withdraw(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 		},
 	}
 
+
 	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
 	if err := types.Decode(tx.Payload, action); nil != err {
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_Withdraw(action.GetWithdraw(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1162,6 +1167,7 @@ func withdraw(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec withdraw cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_Withdraw(nil, tx, receiptData, index)
@@ -1172,6 +1178,7 @@ func withdraw(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("withdraw cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1196,6 +1203,7 @@ func transfer(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccoun
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_Transfer(action.GetTransfer(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1204,6 +1212,7 @@ func transfer(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccoun
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec transfer cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_Transfer(nil, tx, receiptData, index)
@@ -1214,6 +1223,7 @@ func transfer(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccoun
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("transfer cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1240,6 +1250,7 @@ func transfer2New(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenI
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_TransferToNew(action.GetTransferToNew(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1248,6 +1259,7 @@ func transfer2New(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenI
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec transfer2New cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_TransferToNew(nil, tx, receiptData, index)
@@ -1258,6 +1270,7 @@ func transfer2New(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, tokenI
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("transfer2New cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1281,6 +1294,7 @@ func tree2contract(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_TreeToContract(action.GetTreeToContract(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1289,6 +1303,7 @@ func tree2contract(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec tree2contract cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_TreeToContract(nil, tx, receiptData, index)
@@ -1299,6 +1314,7 @@ func tree2contract(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("tree2contract cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1322,6 +1338,7 @@ func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_ContractToTree(action.GetContractToTree(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1330,6 +1347,7 @@ func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec contract2tree cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_ContractToTree(nil, tx, receiptData, index)
@@ -1340,6 +1358,7 @@ func contract2tree(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("contract2tree cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1362,6 +1381,7 @@ func forceExit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_ForceExit(action.GetForceExit(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1370,6 +1390,7 @@ func forceExit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec forceExit cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_ForceExit(nil, tx, receiptData, index)
@@ -1380,6 +1401,7 @@ func forceExit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("forceExit cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1403,6 +1425,7 @@ func fullExit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_FullExit(action.GetFullExit(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1411,6 +1434,7 @@ func fullExit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec fullExit cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_FullExit(nil, tx, receiptData, index)
@@ -1421,6 +1445,7 @@ func fullExit(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("fullExit cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1446,6 +1471,7 @@ func mintNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccount
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_MintNFT(action.GetMintNFT(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1454,6 +1480,7 @@ func mintNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccount
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec mintNFT cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_MintNFT(nil, tx, receiptData, index)
@@ -1464,6 +1491,8 @@ func mintNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccount
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+
+	fmt.Println("mintNFT cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1487,6 +1516,7 @@ func withdrawNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_WithdrawNFT(action.GetWithdrawNFT(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1495,6 +1525,7 @@ func withdrawNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec withdrawNFT cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_WithdrawNFT(nil, tx, receiptData, index)
@@ -1505,6 +1536,7 @@ func withdrawNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("withdrawNFT cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }
@@ -1529,6 +1561,7 @@ func transferNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 		return nil, nil, err
 	}
 
+	t1 := time.Now()
 	receipt, err := zkspotHandle.Exec_TransferNFT(action.GetTransferNFT(), tx, index)
 	if nil != err {
 		return nil, nil, err
@@ -1537,6 +1570,7 @@ func transferNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 	for _, kv := range receipt.KV {
 		_ = zkspotHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
 	}
+	fmt.Println("exec transferNFT cost time = ", time.Since(t1))
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	localDBSet, err := zkspotHandle.ExecLocal_TransferNFT(nil, tx, receiptData, index)
@@ -1547,6 +1581,7 @@ func transferNFT(zkspotHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 		_ = zkspotHandle.GetLocalDB().Set(kv.GetKey(), kv.GetValue())
 	}
 	index++
+	fmt.Println("transferNFT cost time = ", time.Since(t1))
 
 	return receipt, localDBSet, nil
 }

@@ -238,9 +238,9 @@ func transferFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transfer amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "transfer fromAccountId")
+	cmd.Flags().Uint64P("accountId", "f", 0, "transfer fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("toAccountId", "", 0, "transfer toAccountId")
+	cmd.Flags().Uint64P("toAccountId", "o", 0, "transfer toAccountId")
 	cmd.MarkFlagRequired("toAccountId")
 
 }
@@ -281,7 +281,7 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transferToNew amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "transferToNew fromAccountId")
+	cmd.Flags().Uint64P("accountId", "i", 0, "transferToNew fromAccountId")
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().StringP("ethAddress", "e", "", "transferToNew toEthAddress")
 	cmd.MarkFlagRequired("ethAddress")
@@ -1258,7 +1258,6 @@ func mintNFTFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("protocol")
 
 	cmd.Flags().Uint64P("amount", "n", 1, "mint amount, only for ERC1155 case")
-
 }
 
 func setMintNFT(cmd *cobra.Command, args []string) {
