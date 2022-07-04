@@ -8,7 +8,6 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	vcomm "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	"math/big"
 	"strings"
 	"testing"
@@ -139,8 +138,8 @@ func Test_UnpackInputLockOfBridgevmxgo(t *testing.T) {
 
 func TestEVMExecutor_Query_GetCode(t *testing.T) {
 	api := new(apimock.QueueProtocolAPI)
-	var chain33TestCfg = ctypes.NewChain33Config(testnode.DefaultConfig)
-	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	exec := initEvmExeccutor(t, api)
 	var contractorAddr = strings.ToLower("0xDe79A84DD3A16BB91044167075dE17a1CA4b1d6b")
 	var creator = strings.ToLower("0xd83b69C56834E85e023B1738E69BFA2F0dd52905")
@@ -163,8 +162,8 @@ func TestEVMExecutor_Query_GetCode(t *testing.T) {
 
 func TestNewEVMExecutor_Query_GetNonce(t *testing.T) {
 	api := new(apimock.QueueProtocolAPI)
-	var chain33TestCfg = ctypes.NewChain33Config(testnode.DefaultConfig)
-	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	exec := initEvmExeccutor(t, api)
 	localDB := new(dbmock.KVDB)
 	exec.SetLocalDB(localDB)
@@ -184,7 +183,6 @@ func TestNewEVMExecutor_Query_GetNonce(t *testing.T) {
 }
 func initEvmExeccutor(t *testing.T, api *apimock.QueueProtocolAPI) *EVMExecutor {
 	localDB := new(dbmock.KVDB)
-
 	driver, err := address.LoadDriver(2, -1)
 	assert.Equal(t, nil, err)
 
@@ -204,9 +202,9 @@ func initEvmExeccutor(t *testing.T, api *apimock.QueueProtocolAPI) *EVMExecutor 
 
 func TestEVMExecutor_Check(t *testing.T) {
 	api := new(apimock.QueueProtocolAPI)
-	var chain33TestCfg = ctypes.NewChain33Config(testnode.DefaultConfig)
-	chain33TestCfg.SetTitleOnlyForTest("coins")
-	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	pub := vcomm.FromHex("0x04715e4e07d983c2d98eeac7018bce6e68ef9de25835340f6455f1b1c9686132ac54904f5e04b07966a256140a5f487c4aef3ddc461e02d58f90cc8baa49f9c7ca")
 	sig := &ctypes.Signature{
 		Ty:     8452,
