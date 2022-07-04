@@ -81,7 +81,7 @@ func leafSum(mimc *mimc.MiMC, data frontend.Variable) frontend.Variable {
 
 func CommitValueVerify(cs frontend.API, amount, amountRandom,
 	shieldAmountX, shieldAmountY, shieldPointHX, shieldPointHY frontend.Variable) {
-	cs.AssertIsLessOrEqual(amount, 9000000000000000000)
+	cs.AssertIsLessOrEqual(amount, "9000000000000000000")
 
 	curve, _ := twistededwards.NewEdCurve(ecc.BN254)
 	var pointAmount twistededwards.Point

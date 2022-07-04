@@ -154,7 +154,7 @@ func TestBigInt(t *testing.T) {
 	defer util.CloseTestDB(dir, ldb)
 	e := initExec(ldb, kvdb, jscode, t)
 	//test call error(invalid json input)
-	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, int64(math.MaxInt64), int64(math.MinInt64), int64(9007199254740990), int64(-9007199254740990))
 	call, tx := callCodeTx("test", "hello", s)
 	data, err := e.callVM("exec", call, tx, 0, nil)
 	assert.Nil(t, err)
@@ -168,7 +168,7 @@ func BenchmarkBigInt(b *testing.B) {
 	defer util.CloseTestDB(dir, ldb)
 	e := initExec(ldb, kvdb, jscode, b)
 	//test call error(invalid json input)
-	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, int64(math.MaxInt64), int64(math.MinInt64), int64(9007199254740990), int64(-9007199254740990))
 	call, tx := callCodeTx("test", "hello", s)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -178,8 +178,8 @@ func BenchmarkBigInt(b *testing.B) {
 }
 
 func TestRewriteJSON(t *testing.T) {
-	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
-	quota := fmt.Sprintf(`{"balance":"%d","balance1":"%d","balance2":%d,"balance3":%d}`, math.MaxInt64, math.MinInt64, 9007199254740990, -9007199254740990)
+	s := fmt.Sprintf(`{"balance":%d,"balance1":%d,"balance2":%d,"balance3":%d}`, int64(math.MaxInt64), int64(math.MinInt64), int64(9007199254740990), int64(-9007199254740990))
+	quota := fmt.Sprintf(`{"balance":"%d","balance1":"%d","balance2":%d,"balance3":%d}`, int64(math.MaxInt64), int64(math.MinInt64), int64(9007199254740990), int64(-9007199254740990))
 	data, err := rewriteJSON([]byte(s))
 	assert.Nil(t, err)
 	assert.Equal(t, quota, string(data))
