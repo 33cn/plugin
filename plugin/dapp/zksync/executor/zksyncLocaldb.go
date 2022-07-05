@@ -49,7 +49,7 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 				return nil, err
 			}
 		case zt.TyTransferNFTLog:
-			var receipt zt.TransferReceipt
+			var receipt zt.TransferReceipt4L2
 			err := types.Decode(log.GetLog(), &receipt)
 			if err != nil {
 				return nil, err

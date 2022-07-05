@@ -500,7 +500,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
 	kvs = append(kvs, toKVs...)
-	transferLog := &zt.TransferReceipt{
+	transferLog := &zt.TransferReceipt4L2{
 		From:receiptFrom,
 		To: receiptTo,
 	}
@@ -601,7 +601,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	kvs = append(kvs, toKVs...)
 
 
-	transferToNewLog := &zt.TransferReceipt{
+	transferToNewLog := &zt.TransferReceipt4L2{
 		From:receiptFrom,
 		To: receiptTo,
 	}
@@ -1477,7 +1477,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	}
 	kvs = append(kvs, toKVsFrom...)
 
-	transferLog := &zt.TransferReceipt{
+	transferLog := &zt.TransferReceipt4L2{
 		From:receiptFrom,
 		To: receiptTo,
 	}

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -x
+set -e
+
 #1ks returner chain31
 ZKSYNC_CLI31="docker exec ${NODE1} /root/chain33-cli "
 #1jr  authorize chain32

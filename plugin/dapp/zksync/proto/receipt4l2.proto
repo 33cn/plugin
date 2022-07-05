@@ -14,7 +14,7 @@ message AccountTokenBalanceReceipt {
     string balanceAfter   = 6;
 }
 
-message TransferReceipt {
+message TransferReceipt4l2 {
     AccountTokenBalanceReceipt from = 1;
     AccountTokenBalanceReceipt to   = 2;
 }
