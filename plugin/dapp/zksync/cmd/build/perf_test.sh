@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
+#set -x
+#set -e
 
 CLI="docker exec build_chain33_1 /root/chain33-cli"
-managerPrivkey=4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01 #对应的chain33地址为: 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+managerPrivkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" #对应的chain33地址为: 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
 
 function GetChain33Addr() {
     chain33Addr1=$(${CLI} zksync l2addr -k $1)
@@ -216,6 +218,34 @@ function zksync_transfer_nft() {
     signAndSend ${rawData} ${privkey}
 }
 
+#ZKSYNC_ACCOUNT_3 ---> 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+#ZKSYNC_ACCOUNT_4 ---> 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+function send_l2_deposit() {
+    echo "=========== # send_l2_txs ============="
+    local tokenId=0
+    local ethAddr="12a0E25E62C1dBD32E505446062B26AECB65F028"
+    local chain33Addr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
+
+#    docker exec build_chain33_1 ./chain33-cli zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
+
+    local ethAddr4="abcd68033A72978C1084E2d44D1Fa06DdC4A2d57"
+    local chain33AddrAcc4="2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1"
+    local privkey="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    local Acc4privkey="19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
+    local fromId=3
+    local toId=4
+    local amount=100000
+    local queueId=4
+    local contentHash="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    local contentHash_two="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+# ZKERC1155 = 1
+#	ZKERC721  = 2
+    local protocol=2
+    local nftTokenId=258
+
+    zksync_deposit ${tokenId} ${amount} ${ethAddr4} ${chain33AddrAcc4} ${queueId}
+}
+
 function send_l2_txs() {
     echo "=========== # send_l2_txs ============="
     local tokenId=0
@@ -223,26 +253,29 @@ function send_l2_txs() {
 #    docker exec build_chain33_1 ./chain33-cli zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
     local chain33Addr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
     local privkey="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    local Acc4privkey="19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
     local fromId=3
     local toId=4
     local amount=1
     local queueId=1
     local contentHash="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+    local contentHash_two="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
 # ZKERC1155 = 1
 #	ZKERC721  = 2
     local protocol=2
+    local nftTokenId=258
 
 #    zksync_deposit ${tokenId} ${amount} ${ethAddr} ${chain33Addr} ${queueId}
-    zksync_mint_nft ${fromId} ${toId} ${contentHash} ${protocol} ${amount} ${privkey}
+#    zksync_mint_nft ${fromId} ${toId} ${contentHash_two} ${protocol} ${amount} ${privkey}
 #    queueId=$((queueId + 1))
 #    zksync_deposit ${tokenId} ${amount} ${ethAddr} ${chain33Addr} ${queueId}
 #    zksync_transfer2new ${tokenId} ${amount} ${fromId} ${ethAddr} ${chain33Addr} ${privkey}
-    zksync_transfer_nft ${fromId} ${toId} ${tokenId} ${amount} ${privkey}
+#    zksync_transfer_nft ${toId} ${fromId} ${nftTokenId} ${amount} ${Acc4privkey}
 
 #    zksync_transfer ${tokenId} ${amount} ${fromId} ${toId} ${privkey}
 #    zksync_transfer ${tokenId} ${amount} ${fromId} ${toId} ${privkey}
 #    zksync_transfer ${tokenId} ${amount} ${fromId} ${toId} ${privkey}
-    zksync_withdraw_nft ${fromId} ${tokenId} ${amount} ${privkey}
+    zksync_withdraw_nft ${fromId} ${nftTokenId} ${amount} ${privkey}
 
 
     local count=0
@@ -257,6 +290,7 @@ function send_l2_txs() {
     done
 }
 
+#send_l2_deposit
 send_l2_txs
 
 

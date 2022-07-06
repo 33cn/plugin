@@ -352,6 +352,22 @@ func initSetup() {
 	dbDir = dir
 }
 
+//++ docker exec build_chain33_1 /root/chain33-cli zksync l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
+//+ chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+
+func TestOutputChain33L2AddrDecimal(t *testing.T) {
+	chain33AddrL2 := "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1"
+	chain33AddrL2Decimal := zksyncTypes.HexAddr2Decimal(chain33AddrL2)
+	fmt.Println("chain33AddrL2Decimal=", chain33AddrL2Decimal)
+	//2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a --->
+	//20033148478649779061292402960935477249437023394422514689332944628159941947226
+
+	//2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c  --->
+	//19449356208766688579807449875624267384186019758574787579222132129615224099980
+	//2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1    --->
+	//19694183066356799104974294716313078444659172842638956126168373945465009608401
+}
+
 func TestDeposit(t *testing.T) {
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
@@ -1052,6 +1068,89 @@ func TestTransferNFT(t *testing.T) {
 	assert.Equal(t, toBalance.Balance, balanceStr)
 	fmt.Println("TokenBalance for account ID", toAccountID, "tokenId", nftTokenId, toBalance.Balance)
 }
+
+func TestNFTMisc(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	queueId := uint64(0)
+	tokenId := uint64(0)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID := uint64(3)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+
+	//测试向新账户进行转币操作
+	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
+	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
+	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
+	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	//设置公钥,给账户４
+	acc4privkeySli, err := chain33Common.FromHex("0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115")
+	assert.Nil(t, err)
+	acc4privkey, err := driver.PrivKeyFromBytes(acc4privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc4privkey, accountID+1)
+	assert.Nil(t, err)
+
+	//NFT 铸币
+	nftTokenId := uint64(258)
+	fromAccountID := accountID
+	toAccountID := accountID + 1
+	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, toAccountID, contentHash)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	//NFT 转币操作
+	receipt, localReceipt, err = transferNFT(zksyncHandle, acc4privkey, toAccountID, fromAccountID, nftTokenId, 1)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+
+	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
+	assert.Nil(t, err)
+	balanceStr := "1"
+	assert.Equal(t, tokenBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", accountID, "tokenId", nftTokenId, tokenBalance.Balance)
+
+	toBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), toAccountID, nftTokenId)
+	assert.Nil(t, err)
+	balanceStr = "0"
+	assert.Equal(t, toBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", toAccountID, "tokenId", nftTokenId, toBalance.Balance)
+}
+
+
 
 func deposit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, queueId uint64, amount, ethAddress, chain33Addr string) (*types.Receipt, *types.LocalDBSet, error) {
 	deposit := &zksyncTypes.ZkDeposit{

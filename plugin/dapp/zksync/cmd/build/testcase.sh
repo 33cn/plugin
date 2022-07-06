@@ -14,6 +14,7 @@ ZKSYNC_ACCOUNT_3="3"
 ZKSYNC_ACCOUNT_4="4"
 TOKENID_0="0"
 TOKENID_1="1"
+queueId=0
 # shellcheck source=/dev/null
 #source test-rpc.sh
 
@@ -69,10 +70,11 @@ function zksync_deposit() {
     echo "=========== # zksync deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
     chain33Addr=$(${CLI} zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
-    hash=$(${CLI} send zksync deposit -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i 0 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${CLI} send zksync deposit -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i ${queueId} -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_3}"
+    queueId=$((queueId + 1))
 }
 
 function zksync_setPubKey() {
@@ -134,7 +136,7 @@ function zksync_contractToTree() {
 
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR deposit amount 1000000000
     chain33Addr=$(${CLI} zksync l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
-    rawData=$(${CLI} zksync deposit -t "${TOKENID_1}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i 1)
+    rawData=$(${CLI} zksync deposit -t "${TOKENID_1}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i ${queueId})
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -143,6 +145,19 @@ function zksync_contractToTree() {
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_4}"
+    queueId=$((queueId + 1))
+
+#    存入tokenID_0
+    rawData=$(${CLI} zksync deposit -t "${TOKENID_0}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i ${queueId})
+    echo "${rawData}"
+
+    signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${signData}"
+    hash=$(${CLI} wallet send -d "$signData")
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    query_account "${CLI}" "${ZKSYNC_ACCOUNT_4}"
+    queueId=$((queueId + 1))
 }
 
 function zksync_transfer() {
@@ -214,7 +229,7 @@ function zksync_fullExit() {
     query_account "${CLI}" 4
 
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k fullExit
-    rawData=$(${CLI} zksync fullexit -t "${TOKENID_0}" -a 4 -i 2)
+    rawData=$(${CLI} zksync fullexit -t "${TOKENID_0}" -a 4 -i ${queueId})
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -223,6 +238,8 @@ function zksync_fullExit() {
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     query_account "${CLI}" 4
+
+    queueId=$((queueId + 1))
 }
 
 function zksync_setVerifyKey() {
