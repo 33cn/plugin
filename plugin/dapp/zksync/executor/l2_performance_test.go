@@ -34,7 +34,7 @@ func BenchmarkTransfer(b *testing.B) {
 	assert.Nil(b, err)
 
 	queueId := uint64(0)
-	tokenId := uint64(1)
+	tokenId := uint64(0)
 	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(b, err)
 	assert.Equal(b, receipt.Ty, int32(types.ExecOk))

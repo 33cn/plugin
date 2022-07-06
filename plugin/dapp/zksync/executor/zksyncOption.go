@@ -1042,7 +1042,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	}
 
 	//暂定0 后面从数据库读取 TODO
-	feeTokenId := uint64(1)
+	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyMintNFTAction]
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
@@ -1258,7 +1258,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	}
 
 	//暂定0 后面从数据库读取 TODO
-	feeTokenId := uint64(1)
+	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyWithdrawNFTAction]
 
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
@@ -1400,7 +1400,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	}
 
 	//暂定0 后面从数据库读取 TODO
-	feeTokenId := uint64(1)
+	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyTransferNFTAction]
 
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
