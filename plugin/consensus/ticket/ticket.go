@@ -599,27 +599,28 @@ func (client *Client) Miner(parent, block *types.Block) error {
 	ticket, priv, diff, modify, ticketID, err := client.searchTargetTicket(parent, block)
 	if err != nil {
 		tlog.Error("Miner", "err", err)
-		newblock, err := client.RequestLastBlock()
+		lastBlock, err := client.RequestLastBlock()
 		if err != nil {
 			tlog.Error("Miner.RequestLastBlock", "err", err)
 		}
-		client.SetCurrentBlock(newblock)
+		client.SetCurrentBlock(lastBlock)
 		return err
 	}
 	if ticket == nil {
 		return errors.New("ticket is nil")
 	}
-	err = client.addMinerTx(parent, block, diff, priv, ticket.TicketId, modify)
+	newBlock := *block
+	err = client.addMinerTx(parent, &newBlock, diff, priv, ticket.TicketId, modify)
 	if err != nil {
 		return err
 	}
 	//需要首先对交易进行排序
 	cfg := client.GetAPI().GetConfig()
-	if cfg.IsFork(block.Height, "ForkRootHash") {
-		block.Txs = types.TransactionSort(block.Txs)
+	if cfg.IsFork(newBlock.Height, "ForkRootHash") {
+		newBlock.Txs = types.TransactionSort(newBlock.Txs)
 	}
 
-	err = client.WriteBlock(parent.StateHash, block)
+	err = client.WriteBlock(parent.StateHash, &newBlock)
 	if err != nil {
 		return err
 	}
@@ -731,36 +732,35 @@ func (client *Client) createBlock() (*types.Block, *types.Block) {
 	return &newblock, lastBlock
 }
 
-func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (*types.Block, *types.Block, [][]byte) {
+func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (txList [][]byte) {
 	chain33Cfg := client.GetAPI().GetConfig()
 	lastBlock := client.GetCurrentBlock()
-	newblock := *block
-	newblock.BlockTime = types.Now().Unix()
+	block.BlockTime = types.Now().Unix()
 
 	//需要去重复tx并删除过期tx交易
-	if lastBlock.Height != newblock.Height-1 {
-		newblock.Txs = client.CheckTxDup(newblock.Txs)
-		newblock.Txs = client.CheckTxExpire(newblock.Txs, lastBlock.Height+1, newblock.BlockTime)
+	if lastBlock.Height != block.Height-1 {
+		block.Txs = client.CheckTxDup(block.Txs)
+		block.Txs = client.CheckTxExpire(block.Txs, lastBlock.Height+1, block.BlockTime)
 	}
-	newblock.ParentHash = lastBlock.Hash(chain33Cfg)
-	newblock.Height = lastBlock.Height + 1
-	cfg := chain33Cfg.GetP(newblock.Height)
+	block.ParentHash = lastBlock.Hash(chain33Cfg)
+	block.Height = lastBlock.Height + 1
+	cfg := chain33Cfg.GetP(block.Height)
 	var txs []*types.Transaction
-	if len(newblock.Txs) < int(cfg.MaxTxNumber-1) {
-		txs = client.RequestTx(int(cfg.MaxTxNumber)-1-len(newblock.Txs), txHashList)
+	if len(block.Txs) < int(cfg.MaxTxNumber-1) {
+		txs = client.RequestTx(int(cfg.MaxTxNumber)-1-len(block.Txs), txHashList)
 	}
 	//tx 有更新
 	if len(txs) > 0 {
 		//防止区块过大
-		txs = client.AddTxsToBlock(&newblock, txs)
+		txs = client.AddTxsToBlock(block, txs)
 		if len(txs) > 0 {
 			txHashList = append(txHashList, getTxHashes(txs)...)
 		}
 	}
-	if lastBlock.BlockTime >= newblock.BlockTime {
-		newblock.BlockTime = lastBlock.BlockTime + 1
+	if lastBlock.BlockTime >= block.BlockTime {
+		block.BlockTime = lastBlock.BlockTime + 1
 	}
-	return &newblock, lastBlock, txHashList
+	return txHashList
 }
 
 // CreateBlock ticket create block func
@@ -781,7 +781,7 @@ func (client *Client) CreateBlock() {
 			continue
 		}
 		block, lastBlock := client.createBlock()
-		hashlist := getTxHashes(block.Txs)
+		txList := getTxHashes(block.Txs)
 		for err := client.Miner(lastBlock, block); err != nil; err = client.Miner(lastBlock, block) {
 			if err == queue.ErrIsQueueClosed {
 				break
@@ -792,7 +792,7 @@ func (client *Client) CreateBlock() {
 			for lasttime >= types.Now().Unix() {
 				time.Sleep(time.Second / 10)
 			}
-			block, lastBlock, hashlist = client.updateBlock(block, hashlist)
+			txList = client.updateBlock(block, txList)
 		}
 	}
 }
