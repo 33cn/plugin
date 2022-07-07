@@ -37,6 +37,10 @@ var (
 	defaultModify = []byte("modify")
 )
 
+const (
+	defaultFlushTicketInterval = 3600
+)
+
 func init() {
 	drivers.Reg("ticket", New)
 	drivers.QueryData.Register("ticket", &Client{})
@@ -62,6 +66,8 @@ type genesisTicket struct {
 type subConfig struct {
 	GenesisBlockTime int64            `json:"genesisBlockTime"`
 	Genesis          []*genesisTicket `json:"genesis"`
+	// FlushTicketInterval flush ticket status backend interval
+	FlushTicketInterval int64 `json:"flushTicketInterval"`
 }
 
 // New  ticket's init env
@@ -73,6 +79,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	if subcfg.GenesisBlockTime > 0 {
 		cfg.GenesisBlockTime = subcfg.GenesisBlockTime
+	}
+	if subcfg.FlushTicketInterval <= 0 {
+		subcfg.FlushTicketInterval = defaultFlushTicketInterval
 	}
 	t := &Client{
 		BaseClient: c,
@@ -87,7 +96,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 }
 
 func (client *Client) flushTicketBackend() {
-	ticket := time.NewTicker(time.Hour)
+	ticket := time.NewTicker(time.Duration(client.subcfg.FlushTicketInterval) * time.Second)
 	defer ticket.Stop()
 Loop:
 	for {
