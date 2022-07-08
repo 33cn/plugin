@@ -205,6 +205,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 
 var cfgstring = `
 Title="test"
+DisableForkCheck=true
 
 [mempool]
 poolCacheSize=102400
