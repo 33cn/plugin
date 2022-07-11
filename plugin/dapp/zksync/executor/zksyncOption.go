@@ -63,7 +63,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 	var err error
 
-	if len(payload.GetChainTitle()) == 0 {
+	if payload.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
 	err = checkParam(payload.Amount)
@@ -75,10 +75,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
-	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, payload.ChainTitle, a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -89,15 +88,24 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	}
 	lastPriorityId, ok := big.NewInt(0).SetString(lastPriority.GetID(), 10)
 	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
+		return nil, errors.Wrapf(types.ErrInvalidParam, "getID =%s", lastPriority.GetID())
 	}
 	if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
 		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
 	}
 
 	//转换10进制
-	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
-	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
+	newAddr, ok := zt.HexAddr2Decimal(payload.Chain33Addr)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer chain33Addr=%s", payload.Chain33Addr)
+	}
+	payload.Chain33Addr = newAddr
+
+	newAddr, ok = zt.HexAddr2Decimal(payload.EthAddress)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer EthAddress=%s", payload.EthAddress)
+	}
+	payload.EthAddress = newAddr
 
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
 	info, err := generateTreeUpdateInfo(a.statedb, a.localDB, ethFeeAddr, chain33FeeAddr)
@@ -789,8 +797,17 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	//转换10进制
-	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
-	payload.ToEthAddress = zt.HexAddr2Decimal(payload.ToEthAddress)
+	newAddr, ok := zt.HexAddr2Decimal(payload.ToChain33Address)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer chain33Addr=%s", payload.ToChain33Address)
+	}
+	payload.ToChain33Address = newAddr
+
+	newAddr, ok = zt.HexAddr2Decimal(payload.ToEthAddress)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer EthAddress=%s", payload.ToEthAddress)
+	}
+	payload.ToEthAddress = newAddr
 
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -1209,12 +1226,12 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 
 	fee := zt.FeeMap[zt.TyFullExitAction]
-	if len(payload.GetChainTitle()) == 0 {
+	if payload.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, payload.GetChainTitle(), a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -1480,10 +1497,10 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	cfg := a.api.GetConfig()
-	if len(payload.GetChainTitle()) == 0 {
+	if payload.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, payload.GetChainTitle(), a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 

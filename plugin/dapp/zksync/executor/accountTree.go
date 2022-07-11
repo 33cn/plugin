@@ -31,7 +31,15 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	if len(ethAddr) <= 0 || len(chain33Addr) <= 0 {
 		panic(fmt.Sprintf("zksync not cfg init fee addr, ethAddr=%s,33Addr=%s", ethAddr, chain33Addr))
 	}
-	return zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
+	newEthAddr, ok := zt.HexAddr2Decimal(ethAddr)
+	if !ok {
+		panic(fmt.Sprintf("zksync cfg init eth fee addr=%s not hex format", ethAddr))
+	}
+	newChain33Addr, ok := zt.HexAddr2Decimal(chain33Addr)
+	if !ok {
+		panic(fmt.Sprintf("zksync cfg init layer2 fee addr=%s not hex format", ethAddr))
+	}
+	return newEthAddr, newChain33Addr
 }
 
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
@@ -56,7 +64,7 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 func getInitTreeRoot(cfg *types.Chain33Config, ethAddr, chain33Addr string) string {
 	var feeEth, fee33 string
 	if len(ethAddr) > 0 && len(chain33Addr) > 0 {
-		feeEth, fee33 = zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
+		feeEth, fee33 = ethAddr, chain33Addr
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
@@ -341,8 +349,16 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	}
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
-		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		newAddr, ok := zt.DecimalAddr2Hex(data.GetEthAddress())
+		if !ok {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong format ethAddr=%s", data.GetEthAddress())
+		}
+		data.EthAddress = newAddr
+		newAddr, ok = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		if !ok {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong format chain33Addr=%s", data.GetChain33Addr())
+		}
+		data.Chain33Addr = newAddr
 		datas = append(datas, data)
 	}
 	return datas, nil
@@ -362,8 +378,16 @@ func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) 
 	}
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
-		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		newAddr, ok := zt.DecimalAddr2Hex(data.GetEthAddress())
+		if !ok {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong format ethAddr=%s", data.GetEthAddress())
+		}
+		data.EthAddress = newAddr
+		newAddr, ok = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		if !ok {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong format chain33Addr=%s", data.GetChain33Addr())
+		}
+		data.Chain33Addr = newAddr
 		datas = append(datas, data)
 	}
 	return datas, nil
