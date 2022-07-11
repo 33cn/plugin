@@ -28,15 +28,21 @@ func Byte2Uint64(v []byte) uint64 {
 }
 
 // HexAddr2Decimal 16进制地址转10进制
-func HexAddr2Decimal(addr string) string {
-	addrInt, _ := new(big.Int).SetString(strings.ToLower(addr), 16) //TODO 检查返回值
-	return addrInt.String()
+func HexAddr2Decimal(addr string) (string, bool) {
+	addrInt, ok := new(big.Int).SetString(strings.ToLower(addr), 16)
+	if !ok {
+		return "", false
+	}
+	return addrInt.String(), true
 }
 
 // DecimalAddr2Hex 10进制地址转16进制
-func DecimalAddr2Hex(addr string) string {
-	addrInt, _ := new(big.Int).SetString(strings.ToLower(addr), 10) //TODO 检查返回值
-	return hex.EncodeToString(addrInt.Bytes())
+func DecimalAddr2Hex(addr string) (string, bool) {
+	addrInt, ok := new(big.Int).SetString(strings.ToLower(addr), 10)
+	if !ok {
+		return "", false
+	}
+	return hex.EncodeToString(addrInt.Bytes()), true
 }
 
 //DecodePacVal decode pac val with man+exp format

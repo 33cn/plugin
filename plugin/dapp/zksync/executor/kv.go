@@ -43,28 +43,28 @@ func getHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
 }
 
-func getVerifyKey(chainTitle string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-verifyKey"))
+func getVerifyKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-verifyKey"))
 }
 
-func getVerifier(chainTitle string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-"+zt.ZkVerifierKey))
+func getVerifier(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-"+zt.ZkVerifierKey))
 }
 
-func getProofIdKey(chainTitle string, id uint64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+chainTitle+"-ProofId", id))
+func getProofIdKey(chainTitleId string, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+chainTitleId+"-ProofId", id))
 }
 
-func getLastProofIdKey(chainTitle string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-lastProofId"))
+func getLastProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastProofId"))
 }
 
-func getMaxRecordProofIdKey(chainTitle string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-maxRecordProofId"))
+func getMaxRecordProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-maxRecordProofId"))
 }
 
-func getLastOnChainProofIdKey(chainTitle string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitle+"-lastOnChainProofId"))
+func getLastOnChainProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastOnChainProofId"))
 }
 
 func getEthPriorityQueueKey(chainID uint32) []byte {
@@ -72,12 +72,12 @@ func getEthPriorityQueueKey(chainID uint32) []byte {
 }
 
 //特意把title放后面，方便按id=1搜索所有的chain
-func getProofIdCommitProofKey(chainTitle string, proofId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitle))
+func getProofIdCommitProofKey(chainTitleId string, proofId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitleId))
 }
 
-func getRootCommitProofKey(chainTitle, root string) []byte {
-	return []byte(fmt.Sprintf("%s-%s", chainTitle, root))
+func getRootCommitProofKey(chainTitleId, root string) []byte {
+	return []byte(fmt.Sprintf("%s-%s", chainTitleId, root))
 }
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {

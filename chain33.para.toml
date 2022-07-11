@@ -236,7 +236,15 @@ mixApprs=[]
 
 [exec.sub.zksync]
 #管理员列表
-managers=[]
+manager=[
+    "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+]
+#运营方配置收交易费地址
+#可把二层交易费提取到ETH的地址
+ethFeeAddr="832367164346888E248bd58b9A5f480299F1e88d"
+#二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址
+zkChain33FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换

@@ -145,7 +145,7 @@ function zksync_contractToTree() {
 function zksync_transfer() {
     echo "=========== # zksync transfer test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transfer to 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR amount 100000000
-    rawData=$(${CLI} zksync transfer -t "${TOKENID_0}" -a 100000000 --accountId "${ZKSYNC_ACCOUNT_3}" --toAccountId "${ZKSYNC_ACCOUNT_4}")
+    rawData=$(${CLI} zksync transfer -i "${TOKENID_0}" -a 100000000 -f "${ZKSYNC_ACCOUNT_3}" -t "${ZKSYNC_ACCOUNT_4}")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -161,7 +161,7 @@ function zksync_transferToNew() {
     echo "=========== # zksync transferToNew test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transferToNew to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k amount 100000000
     chain33Addr=$(${CLI} zksync l2addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
-    rawData=$(${CLI} zksync transfer2new -t "${TOKENID_0}" -a 100000000 --accountId "${ZKSYNC_ACCOUNT_3}" -e 12a0E25E62C1dBD32E505446062B26AECB65F027 -c "$chain33Addr")
+    rawData=$(${CLI} zksync transfer2new -t "${TOKENID_0}" -a 100000000 -f "${ZKSYNC_ACCOUNT_3}" -e 12a0E25E62C1dBD32E505446062B26AECB65F027 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
