@@ -250,6 +250,22 @@ func getByteBuff(input string) (*bytes.Buffer, error) {
 
 }
 
+func (a *Action) verifyInitRoot(payload *zt.ZkCommitProof) error {
+	//只在第一个proof检查
+	if payload.ProofId != 1 {
+		return nil
+	}
+	if len(payload.GetCfgFeeAddrs().EthFeeAddr) <= 0 || len(payload.GetCfgFeeAddrs().L2FeeAddr) <= 0 {
+		return errors.Wrapf(types.ErrInvalidParam, "1st proofId fee Addr nil, eth=%s,l2=%s", payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
+	}
+
+	initRoot := getInitTreeRoot(a.api.GetConfig(), payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
+	if initRoot != payload.OldTreeRoot {
+		return errors.Wrapf(types.ErrInvalidParam, "calcInitRoot=%s, proof's oldRoot=%s", initRoot, payload.OldTreeRoot)
+	}
+	return nil
+}
+
 //
 func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
@@ -268,6 +284,12 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if (len(payload.OnChainPubDatas) == 0 && payload.GetOnChainProofId() != 0) ||
 		(len(payload.OnChainPubDatas) > 0 && payload.GetOnChainProofId() <= 0) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "OnChainData, proofId=%d,onChainProofId=%d,lenOnChain=%d", payload.ProofId, payload.OnChainProofId, len(payload.OnChainPubDatas))
+	}
+	//验证proofId=1时候的initRoot
+	err := a.verifyInitRoot(payload)
+	if err != nil {
+		zklog.Error("commitProof.verifyInitRoot", "chainId", payload.ChainTitleId, "err", err)
+		return nil, err
 	}
 
 	//1. 先验证proof是否ok
@@ -543,7 +565,7 @@ func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
 	return historyLeaf
 }
 
-func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash string, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.HistoryAccountProofInfo, error) {
+func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash string) (*zt.HistoryAccountProofInfo, error) {
 	proofTable := NewCommitProofTable(localdb)
 	accountMap := make(map[uint64]*zt.HistoryLeaf)
 	maxAccountId := uint64(0)
@@ -557,20 +579,23 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 		return nil, errors.New("proof not exist")
 	}
 
-	initLeaves := getInitHistoryLeaf(cfgEthFeeAddr, cfgChain33FeeAddr)
-	for _, l := range initLeaves {
-		accountMap[l.AccountId] = l
-		if maxAccountId < l.AccountId {
-			maxAccountId = l.AccountId
-		}
-	}
-
 	for i := uint64(1); i <= proof.ProofId; i++ {
 		row, err := proofTable.GetData(getProofIdCommitProofKey(chainTitleIdStr, i))
 		if err != nil {
 			return nil, err
 		}
 		data := row.Data.(*zt.ZkCommitProof)
+		//从第一个proof获取cfgFeeAddr
+		if i == uint64(1) {
+			initLeaves := getInitHistoryLeaf(data.GetCfgFeeAddrs().EthFeeAddr, data.GetCfgFeeAddrs().L2FeeAddr)
+			for _, l := range initLeaves {
+				accountMap[l.AccountId] = l
+				if maxAccountId < l.AccountId {
+					maxAccountId = l.AccountId
+				}
+			}
+		}
+
 		operations := transferPubDatasToOption(data.PubDatas)
 		for _, operation := range operations {
 			switch operation.Ty {
@@ -1289,8 +1314,8 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 }
 
 //根据rootHash获取account在该root下的证明
-func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof, cfgEthFeeAddr, cfgChain33FeeAddr string) (*zt.OperationMetaBranch, error) {
-	historyAccountInfo, err := getHistoryAccountByRoot(localdb, req.ChainTitleId, req.RootHash, cfgEthFeeAddr, cfgChain33FeeAddr)
+func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof) (*zt.OperationMetaBranch, error) {
+	historyAccountInfo, err := getHistoryAccountByRoot(localdb, req.ChainTitleId, req.RootHash)
 	if err != nil {
 		return nil, err
 	}

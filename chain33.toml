@@ -453,4 +453,4 @@ manager=[
 #可把二层交易费提取到ETH的地址
 ethFeeAddr=""
 #二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址
-zkChain33FeeAddr=""
+layer2FeeAddr=""

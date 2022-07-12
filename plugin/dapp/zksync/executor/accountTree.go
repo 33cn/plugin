@@ -26,8 +26,8 @@ type TreeUpdateInfo struct {
 
 func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	confManager := types.ConfSub(cfg, zt.Zksync)
-	ethAddr := confManager.GStr("ethFeeAddr")
-	chain33Addr := confManager.GStr("zkChain33FeeAddr")
+	ethAddr := confManager.GStr(zt.ZkCfgEthFeeAddr)
+	chain33Addr := confManager.GStr(zt.ZkCfgLayer2FeeAddr)
 	if len(ethAddr) <= 0 || len(chain33Addr) <= 0 {
 		panic(fmt.Sprintf("zksync not cfg init fee addr, ethAddr=%s,33Addr=%s", ethAddr, chain33Addr))
 	}
@@ -93,7 +93,7 @@ func getInitTreeRoot(cfg *types.Chain33Config, ethAddr, chain33Addr string) stri
 // NewAccountTree 生成账户树，同时生成1号账户
 func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, *table.Table) {
 	if len(ethFeeAddr) <= 0 || len(chain33FeeAddr) <= 0 {
-		panic(fmt.Sprintf("zksync default fee addr(ethFeeAddr,zkChain33FeeAddr) is nil"))
+		panic(fmt.Sprintf("zksync default fee addr(ethFeeAddr,layer2FeeAddr) is nil"))
 	}
 	var kvs []*types.KeyValue
 	initLeafAccounts := getInitAccountLeaf(ethFeeAddr, chain33FeeAddr)
