@@ -326,7 +326,10 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	fee := zt.FeeMap[zt.TyWithdrawAction]
+	fee, err := getFeeData(a.statedb, zt.TyWithdrawAction, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	feeInt, _ := new(big.Int).SetString(fee, 10)
@@ -648,7 +651,10 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
-	fee := zt.FeeMap[zt.TyTransferAction]
+	fee, err := getFeeData(a.statedb, zt.TyTransferAction, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	feeInt, _ := new(big.Int).SetString(fee, 10)
@@ -790,7 +796,10 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	fee := zt.FeeMap[zt.TyTransferToNewAction]
+	fee, err := getFeeData(a.statedb, zt.TyTransferToNewAction, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	feeInt, _ := new(big.Int).SetString(fee, 10)
@@ -942,8 +951,10 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	fee := zt.FeeMap[zt.TyForceExitAction]
-
+	fee, err := getFeeData(a.statedb, zt.TyForceExitAction, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
@@ -1225,7 +1236,10 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	fee := zt.FeeMap[zt.TyFullExitAction]
+	fee, err := getFeeData(a.statedb, zt.TyFullExitAction, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	if payload.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
@@ -1576,7 +1590,10 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
-	feeAmount := zt.FeeMap[zt.TyMintNFTAction]
+	feeAmount, err := getFeeData(a.statedb, zt.TyMintNFTAction, feeTokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
@@ -1819,8 +1836,10 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	}
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
-	feeAmount := zt.FeeMap[zt.TyWithdrawNFTAction]
-
+	feeAmount, err := getFeeData(a.statedb, zt.TyWithdrawNFTAction, feeTokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
@@ -2022,8 +2041,10 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	}
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
-	feeAmount := zt.FeeMap[zt.TyTransferNFTAction]
-
+	feeAmount, err := getFeeData(a.statedb, zt.TyTransferNFTAction, feeTokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData")
+	}
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),

@@ -222,17 +222,17 @@ var (
 		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
 	}
 
-	FeeMap = map[int64]string{
-		TyWithdrawAction:      "1000000",
-		TyTransferAction:      "100000",
-		TyTransferToNewAction: "100000",
-		TyForceExitAction:     "1000000",
-		TyFullExitAction:      "1000000",
-		TySwapAction:          "100000",
-		TyMintNFTAction:       "100",
-		TyWithdrawNFTAction:   "100",
-		TyTransferNFTAction:   "100",
-	}
+	//FeeMap = map[int64]string{
+	//	TyWithdrawAction:      "1000000",
+	//	TyTransferAction:      "100000",
+	//	TyTransferToNewAction: "1000000",
+	//	TyForceExitAction:     "1000000",
+	//	TyFullExitAction:      "1000000",
+	//	TySwapAction:          "100000",
+	//	TyMintNFTAction:       "1000000",
+	//	TyWithdrawNFTAction:   "1000000",
+	//	TyTransferNFTAction:   "1000000",
+	//}
 )
 
 // init defines a register function
