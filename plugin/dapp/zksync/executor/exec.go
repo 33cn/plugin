@@ -62,7 +62,11 @@ func (z *zksync) Exec_SetVerifyKey(payload *zt.ZkVerifyKey, tx *types.Transactio
 
 func (z *zksync) Exec_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.commitProof(payload)
+	r, err := action.commitProof(payload)
+	if err != nil {
+		zlog.Error("CommitProof", "chainId", payload.ChainTitleId, "err", err)
+	}
+	return r, err
 }
 
 func (z *zksync) Exec_SetVerifier(payload *zt.ZkVerifier, tx *types.Transaction, index int) (*types.Receipt, error) {

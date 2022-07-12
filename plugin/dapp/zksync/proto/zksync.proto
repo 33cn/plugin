@@ -228,6 +228,11 @@ message ReceiptSetVerifyKey {
   ZkVerifyKey current = 2;
 }
 
+message ZkFeeAddrs {
+  string ethFeeAddr   = 1;
+  string l2FeeAddr    = 2;
+}
+
 //commit proof tx data
 message ZkCommitProof {
   uint64 blockStart  = 1;
@@ -250,8 +255,9 @@ message ZkCommitProof {
   //commit时候的blockHeight,localdb会填充
   int64  commitBlockHeight = 14;
   //proof属于的链id和title, id唯一，和proof绑定，title可重复
-  uint64 chainTitleId         = 15;
+  uint64 chainTitleId    = 15;
   string chainTitle      = 16;
+  ZkFeeAddrs cfgFeeAddrs = 17;
 }
 
 //commit proof stat, pubdata保存到localdb

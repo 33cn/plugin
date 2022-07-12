@@ -98,6 +98,8 @@ const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
+const ZkCfgEthFeeAddr = "ethFeeAddr"
+const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
 
 //msg宽度
 const (

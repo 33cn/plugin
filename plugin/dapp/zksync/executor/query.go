@@ -180,8 +180,7 @@ func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Mess
 	if in.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title is nil")
 	}
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(z.GetAPI().GetConfig())
-	return getAccountProofInHistory(z.GetLocalDB(), in, ethFeeAddr, chain33FeeAddr)
+	return getAccountProofInHistory(z.GetLocalDB(), in)
 }
 
 //Query_GetHistoryAccountProofInfo 获取指定tree root对应的所有账户信息，为批量账户产生证明做准备
@@ -192,8 +191,7 @@ func (z *zksync) Query_GetHistoryAccountProofInfo(in *zt.ZkReqExistenceProof) (t
 	if in.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title is nil")
 	}
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(z.GetAPI().GetConfig())
-	return getHistoryAccountByRoot(z.GetLocalDB(), in.GetChainTitleId(), in.GetRootHash(), ethFeeAddr, chain33FeeAddr)
+	return getHistoryAccountByRoot(z.GetLocalDB(), in.GetChainTitleId(), in.GetRootHash())
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
@@ -219,6 +217,12 @@ func (z *zksync) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error
 
 	root := getInitTreeRoot(z.GetAPI().GetConfig(), eth, chain33)
 	return &types.ReplyString{Data: root}, nil
+}
+
+//Query_GetCfgFeeAddr 获取系统初始fee addr
+func (z *zksync) Query_GetCfgFeeAddr(in *types.ReqNil) (types.Message, error) {
+	eth, l2 := getCfgFeeAddr(z.GetAPI().GetConfig())
+	return &zt.ZkFeeAddrs{EthFeeAddr: eth, L2FeeAddr: l2}, nil
 }
 
 // Query_GetTxOperationByOffSetOrCount 根据起始高度批量获取交易证明
