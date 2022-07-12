@@ -225,6 +225,14 @@ func (z *zksync) Query_GetCfgFeeAddr(in *types.ReqNil) (types.Message, error) {
 	return &zt.ZkFeeAddrs{EthFeeAddr: eth, L2FeeAddr: l2}, nil
 }
 
+//Query_GetVerifiers 获取系统初始fee addr
+func (z *zksync) Query_GetVerifiers(in *zt.ZkChainTitle) (types.Message, error) {
+	if in.GetChainTitleId() <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitleId=%d", in.GetChainTitleId())
+	}
+	return getVerifierData(z.GetStateDB(), new(big.Int).SetUint64(in.GetChainTitleId()).String())
+}
+
 // Query_GetTxOperationByOffSetOrCount 根据起始高度批量获取交易证明
 // 1、指定count，实现快速与精确偏移，获取交易快照操作。
 // 2、指定blockOffSet，高度差偏移，实现高度交易操作打包，获取交易快照操作。

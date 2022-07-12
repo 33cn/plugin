@@ -659,8 +659,43 @@ func queryAccountCmd() *cobra.Command {
 	cmd.AddCommand(getAccountByChain33Cmd())
 	cmd.AddCommand(getContractAccountCmd())
 	cmd.AddCommand(getTokenBalanceCmd())
+	cmd.AddCommand(getVerifiersCmd())
 
 	return cmd
+}
+
+func getVerifiersCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "verifier",
+		Short: "get verifiers",
+		Run:   getVerifier,
+	}
+	getVerifierFlag(cmd)
+	return cmd
+}
+
+func getVerifierFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id")
+	cmd.MarkFlagRequired("chainTitleId")
+}
+
+func getVerifier(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkChainTitle{
+		ChainTitleId: chainTitleId,
+	}
+
+	params.FuncName = "GetVerifiers"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkVerifier
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getAccountTreeCmd() *cobra.Command {
@@ -1141,7 +1176,7 @@ func getZkCommitProofCmd() *cobra.Command {
 func getZkCommitProofFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
 	cmd.MarkFlagRequired("proofId")
-	cmd.Flags().StringP("chainTitleId", "n", "", "chain  title id")
+	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain  title id")
 	cmd.MarkFlagRequired("chainTitleId")
 }
 
@@ -1181,7 +1216,7 @@ func setTokenFeeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("fee", "f", "10000", "fee")
 	cmd.MarkFlagRequired("fee")
-	cmd.Flags().Int32P("action", "a", 0, "action ty")
+	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,forceExit:5")
 	cmd.MarkFlagRequired("action")
 	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain  title id")
 	cmd.MarkFlagRequired("chainTitleId")
