@@ -660,8 +660,47 @@ func queryAccountCmd() *cobra.Command {
 	cmd.AddCommand(getContractAccountCmd())
 	cmd.AddCommand(getTokenBalanceCmd())
 	cmd.AddCommand(getVerifiersCmd())
+	cmd.AddCommand(getTokenFeeCmd())
 
 	return cmd
+}
+
+func getTokenFeeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "fee",
+		Short: "get config token fee",
+		Run:   getTokenFee,
+	}
+	getTokenFeeFlag(cmd)
+	return cmd
+}
+
+func getTokenFeeFlag(cmd *cobra.Command) {
+	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,forceExit:5")
+	cmd.MarkFlagRequired("action")
+	cmd.Flags().Uint64P("token", "t", 0, "token id")
+	cmd.MarkFlagRequired("token")
+}
+
+func getTokenFee(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	action, _ := cmd.Flags().GetInt32("action")
+	token, _ := cmd.Flags().GetUint64("token")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkSetFee{
+		ActionTy: action,
+		TokenId:  token,
+	}
+
+	params.FuncName = "GetCfgTokenFee"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getVerifiersCmd() *cobra.Command {
