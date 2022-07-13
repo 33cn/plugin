@@ -1805,8 +1805,8 @@ func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.AddrBitWidth/8
 	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1827,21 +1827,21 @@ func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
 	//2nd token, right asset
 	operation.SwapData.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
 	//1st amount, left asset amount
-	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
-	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
 	//2nd amount right asset amount
-	operation.SwapData.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
+	operation.SwapData.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
 	//1st fee, maker's fee
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
 	//2nd fee, taker's fee
-	operation.SwapData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	operation.SwapData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1854,8 +1854,8 @@ func getContract2TreeOptionByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.TokenBitWidth/8
 	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
-	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1868,8 +1868,8 @@ func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.TokenBitWidth/8
 	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
-	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1885,11 +1885,11 @@ func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.AccountBitWidth/8
 	operation.ToAccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
-	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1905,8 +1905,8 @@ func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.AccountBitWidth/8
 	operation.ToAccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacAmountManBitWidth+zt.PacAmountExpBitWidth)/8
-	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacAmountExpBitWidth)
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
 	end = start + zt.AddrBitWidth/8
 	operation.EthAddress = zt.Byte2Str(chunk[start:end])
@@ -1914,8 +1914,8 @@ func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.HashBitWidth/8
 	operation.Chain33Addr = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1953,8 +1953,8 @@ func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.AddrBitWidth/8
 	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1973,8 +1973,8 @@ func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.AddrBitWidth/8
 	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -1987,8 +1987,8 @@ func getFeeOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.TokenBitWidth/8
 	operation.FeeData.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -2018,8 +2018,8 @@ func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.TokenBitWidth/8
 	operation.FeeData.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -2064,8 +2064,8 @@ func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.TokenBitWidth/8
 	operation.FeeData.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
 
@@ -2088,7 +2088,7 @@ func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end = start + zt.TokenBitWidth/8
 	operation.FeeData.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacFeeExpBitWidth)/8
-	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacFeeExpBitWidth)
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.FeeData.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	return operation
 }
