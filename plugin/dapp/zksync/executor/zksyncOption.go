@@ -445,6 +445,10 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
+	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkPackVal")
+	}
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
@@ -538,6 +542,11 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
+	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkPackVal")
+	}
+
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
@@ -646,6 +655,10 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	err := checkParam(payload.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
+	}
+	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkPackVal")
 	}
 	if !checkIsNormalToken(payload.TokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
@@ -795,6 +808,10 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	err := checkParam(payload.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
+	}
+	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkPackVal")
 	}
 	fee, err := getFeeData(a.statedb, zt.TyTransferToNewAction, payload.TokenId)
 	if err != nil {
@@ -1507,15 +1524,40 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 	return receipts, nil
 }
 
+func checkPackValue(amount string, manMaxBitWidth int64) error {
+	//exp部分默认最大是31，不需要检查
+	man, _, err := zt.ZkTransferManExpPart(amount)
+	if err != nil {
+		return errors.Wrapf(err, "ZkTransferManExpPart,amount=%s", amount)
+	}
+	manV, ok := new(big.Int).SetString(man, 10)
+	if !ok {
+		return errors.Wrapf(types.ErrInvalidParam, "ZkTransferManExpPart,man=%s,amount=%s", manV, amount)
+	}
+
+	maxFeeV := new(big.Int).Exp(big.NewInt(2), big.NewInt(manMaxBitWidth), nil)
+	//manv <= maxFee
+	if maxFeeV.Cmp(manV) < 0 {
+		return errors.Wrapf(types.ErrNotAllow, "fee amount's manV=%s big than 2^%d", man, manMaxBitWidth)
+	}
+	return nil
+}
+
 func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	cfg := a.api.GetConfig()
+	//TODO verifier需要用这个TitleId,按说平行链来说不需要titleId，但主链verifier设置时候需要考虑titleId,可以区分开
 	if payload.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
 	}
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
+	}
+
+	err := checkPackValue(payload.Amount, zt.PacFeeManBitWidth)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkPackVal")
 	}
 
 	lastFee, err := getFeeData(a.statedb, payload.ActionTy, payload.TokenId)
