@@ -225,6 +225,15 @@ func (z *zksync) Query_GetCfgFeeAddr(in *types.ReqNil) (types.Message, error) {
 	return &zt.ZkFeeAddrs{EthFeeAddr: eth, L2FeeAddr: l2}, nil
 }
 
+//Query_GetCfgTokenFee 获取系统配置的fee
+func (z *zksync) Query_GetCfgTokenFee(in *zt.ZkSetFee) (types.Message, error) {
+	amount, err := getFeeData(z.GetStateDB(), in.GetActionTy(), in.GetTokenId())
+	if err != nil {
+		return nil, err
+	}
+	return &types.ReplyString{Data: amount}, nil
+}
+
 //Query_GetVerifiers 获取系统初始fee addr
 func (z *zksync) Query_GetVerifiers(in *zt.ZkChainTitle) (types.Message, error) {
 	if in.GetChainTitleId() <= 0 {
