@@ -626,6 +626,7 @@ func queryCmd() *cobra.Command {
 	}
 	cmd.AddCommand(queryAccountCmd())
 	cmd.AddCommand(queryProofCmd())
+	cmd.AddCommand(getQueueIDCmd())
 
 	return cmd
 }

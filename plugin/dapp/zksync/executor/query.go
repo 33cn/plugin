@@ -321,3 +321,10 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 	}
 	return rows.Data.(*zt.ZkCommitProof), nil
 }
+
+func (z *zksync) Query_GetQueueID(in *types.ReqNil) (types.Message, error) {
+	ethPriorityQueueID, err := getLastEthPriorityQueueID(z.GetStateDB(), 0)
+	return ethPriorityQueueID, err
+}
+
+
