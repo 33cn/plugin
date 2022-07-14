@@ -79,15 +79,7 @@ function zksync_deposit() {
     local chain33Addr=$4
     local queueId=$5
 
-    local rawData=$(${CLI} zksync deposit -t ${tid} -a ${amount} -e ${ethAddr} -c ${chain33Addr} -i ${queueId})
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${managerPrivkey}
-
-#    signData=$(${CLI} wallet sign -d "$rawData" -k ${managerPrivkey})
-#    echo "${signData}"
-#    hash=$(${CLI} wallet send -d "$signData")
-#    echo "${hash}"
+    local hash=$(${CLI} send zksync deposit -t ${tid} -a ${amount} -e ${ethAddr} -c ${chain33Addr} -i ${queueId} -k ${managerPrivkey})
 #    query_tx "${CLI}" "${hash}" # bug ErrExecPanic
 #    query_account "${CLI}" 1
 }
@@ -104,12 +96,9 @@ function zksync_limitorder() {
     local accEth=$7
     local privkey=$8
  
-    local rawData=$(${CLI} zksync  zkLimitOrder -o ${operator} \
+    local hash=$(${CLI} send zksync zkLimitOrder -o ${operator} \
          -l ${left} -r ${right}  -p ${price} -a ${amount}  \
-         --accountId ${accID} --ethAddress ${accEth})
-#    echo "${rawData}"
- 
-    signAndSend ${rawData} ${privkey}
+         --accountId ${accID} --ethAddress ${accEth} -k ${privkey})
 }
 
 # query asset by  $acc-id $token-id
@@ -118,18 +107,14 @@ function zksync_account2token() {
     local accID=$1
     local tid=$2
 
-    ${CLI} zksync  token -a ${accID} --token ${tid}
+    ${CLI} zksync token -a ${accID} --token ${tid}
 }
 
 function zksync_setPubKey() {
     local accid=$1
     local acckey=$2
     echo "=========== # zksync setPubKey test ============="
-    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 setPubKey
-    rawData=$(${CLI} zksync pubkey -a "${accid}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${acckey}
+    hash=$(${CLI} send zksync pubkey -a "${accid}" -k "${acckey}")
 }
 
 #zksync_transfer2new -t tokenId -a amount -i accountId -e ethAddress -c chain33Addr
@@ -142,10 +127,7 @@ function zksync_transfer2new() {
     local chain33Addr=$5
     local privkey=$6
     echo "=========== # zksync transfer2new test ============="
-    rawData=$(${CLI} zksync transfer2new -t "${tokenId}" -a "${amount}" -i "${accountId}" -e "${ethAddress}" -c "${chain33Addr}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${privkey}
+    hash=$(${CLI} send zksync transfer2new -t "${tokenId}" -a "${amount}" -i "${accountId}" -e "${ethAddress}" -c "${chain33Addr}" -k "${privkey}")
 }
 
 #zksync_transfer tokenId amount fromAccountId toAccountId privkey
@@ -156,10 +138,7 @@ function zksync_transfer() {
     local toAccountId=$4
     local privkey=$5
     echo "=========== # zksync transfer test ============="
-    rawData=$(${CLI} zksync transfer -t "${tokenId}" -a "${amount}" -f "${fromAccountId}" -o "${toAccountId}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${privkey}
+    hash=$(${CLI} send zksync transfer -t "${tokenId}" -a "${amount}" -f "${fromAccountId}" -o "${toAccountId}" -k "${privkey}")
 }
 
 #zksync_forcexit tokenId amount privkey
@@ -168,10 +147,7 @@ function zksync_forcexit() {
     local amount=$2
     local privkey=$3
     echo "=========== # zksync forceexit test ============="
-    rawData=$(${CLI} zksync forceexit -t "${tokenId}" -a "${amount}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${privkey}
+    hash=$(${CLI} send zksync forceexit -t "${tokenId}" -a "${amount}" -k "${privkey}")
 }
 
 #zksync_mint_nft creatorId recipientId contentHash protocol amount privkey
@@ -183,10 +159,7 @@ function zksync_mint_nft() {
     local amount=$5
     local privkey=$6
     echo "=========== # zksync mint test ============="
-    rawData=$(${CLI} zksync nft mint -f "${creatorId}" -t "${recipientId}" -e "${contentHash}" -p 2 -n "${amount}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${privkey}
+    hash=$(${CLI} send zksync nft mint -f "${creatorId}" -t "${recipientId}" -e "${contentHash}" -p 2 -n "${amount}" -k "${privkey}")
 }
 
 #zksync_withdraw_nft fromId tokenId amount privkey
@@ -197,10 +170,7 @@ function zksync_withdraw_nft() {
     local privkey=$4
 
     echo "=========== # zksync withdrawnft test ============="
-    rawData=$(${CLI} zksync nft withdraw -a "${fromId}" -i "${tokenId}" -n "${amount}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${privkey}
+    hash=$(${CLI} send zksync nft withdraw -a "${fromId}" -i "${tokenId}" -n "${amount}" -k "${privkey}")
 }
 
 #zksync_transfer_nft fromId toId tokenId amount privkey
@@ -212,10 +182,7 @@ function zksync_transfer_nft() {
     local privkey=$5
 
     echo "=========== # zksync transfer nft test ============="
-    rawData=$(${CLI} zksync nft transfer -a "${fromId}" -t "${toId}" -i "${tokenId}" -n "${amount}")
-#    echo "${rawData}"
-
-    signAndSend ${rawData} ${privkey}
+    hash=$(${CLI} send zksync nft transfer -a "${fromId}" -t "${toId}" -i "${tokenId}" -n "${amount}" -k "${privkey}")
 }
 
 #ZKSYNC_ACCOUNT_3 ---> 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
