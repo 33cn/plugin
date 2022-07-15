@@ -162,7 +162,6 @@ func treeToContractFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "", 0, "treeToContract accountId")
 	cmd.MarkFlagRequired("accountId")
-
 }
 
 func treeToContract(cmd *cobra.Command, args []string) {

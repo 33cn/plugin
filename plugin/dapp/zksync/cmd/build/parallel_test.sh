@@ -105,31 +105,6 @@ function zksync_transfer_nft() {
 
 #ZKSYNC_ACCOUNT_3 ---> 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
 #ZKSYNC_ACCOUNT_4 ---> 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4
-function send_l2_deposit() {
-    echo "=========== # send_l2_txs ============="
-    local tokenId=0
-    local ethAddr="12a0E25E62C1dBD32E505446062B26AECB65F028"
-    local chain33Addr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
-
-#    docker exec build_chain33_1 ./chain33-cli zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
-
-    local ethAddr4="abcd68033A72978C1084E2d44D1Fa06DdC4A2d57"
-    local chain33AddrAcc4="2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1"
-    local privkey="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-    local Acc4privkey="19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
-    local fromId=3
-    local toId=4
-    local amount=100000
-    local queueId=4
-    local contentHash="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-    local contentHash_two="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-# ZKERC1155 = 1
-#	ZKERC721  = 2
-    local protocol=2
-    local nftTokenId=258
-
-    zksync_deposit ${tokenId} ${amount} ${ethAddr4} ${chain33AddrAcc4} ${queueId}
-}
 
 function send_l2_txs() {
     echo "=========== # send_l2_txs ============="
@@ -181,7 +156,7 @@ function create_addr_all() {
         addr[$i]=$(${CLI} account create -l "zkAddr${i}" | jq -r ".acc.addr")
         key[$i]=$(${CLI} account dump_key -a "${addr[i]}" | jq -r ".data")
         l2addr[$i]=$(${CLI} zksync l2addr -k "${key[i]}")
-        hash=$(${CLI} send coins transfer -a 1 -n test -t "${addr[i]}" -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01)
+        hash=$(${CLI} send coins transfer -a 100 -n test -t "${addr[i]}" -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01)
     done
 
     for ((i = 0; i < ${addrCount}; i++)); do
@@ -207,6 +182,7 @@ function zksync_deposit_init() {
 
 function zksync_many_deposit() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    echo -e "${IYellow} deposit many 部分哈希成功 部分失败失败原因: queueId 不对 eth last priority queue id=9,new=11: ErrNotAllow${NOC}"
 
     ${CLI} zksync sendl2 deposit_many -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -m 1000 -a ${l2addr[0]},${l2addr[1]},${l2addr[2]},${l2addr[3]},${l2addr[4]},${l2addr[5]},${l2addr[6]},${l2addr[7]},${l2addr[8]},${l2addr[9]} \
      -t 0 -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01 -q ${queueId}
@@ -232,10 +208,23 @@ function zksync_setPubKeys() {
     done
 }
 
+function zksync_many_withdraw() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    ${CLI} zksync sendl2 withdraw_many -t "${TOKENID_0}" -m 200000 -a 3,4,5,6,7,8,9,10,11,12 \
+     -k ${key[0]},${key[1]},${key[2]},${key[3]},${key[4]},${key[5]},${key[6]},${key[7]},${key[8]},${key[9]}
+
+    for ((i = 3; i < 13; i++)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+#        balance1=$(${CLI} zksync query account token -a "${i}" -t 1 | jq -r ".tokenBalances[].balance")
+        echo -e "${IYellow} balance0=$balance0  balance1=$balance1 ${NOC}"
+    done
+}
+
 function zksync_test_all() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     create_addr_all
     zksync_deposit_init
-    zksync_many_deposit
+#    zksync_many_deposit
     zksync_setPubKeys
+    zksync_many_withdraw
 }

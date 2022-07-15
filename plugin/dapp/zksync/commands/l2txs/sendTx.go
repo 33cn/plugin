@@ -22,6 +22,7 @@ func SendChain33L2TxCmd() *cobra.Command {
 		BatchSendTransferTxCmd(),
 		SendTransferTxCmd(),
 		sendManyDepositTxCmd(),
+		sendManyWithdrawTxCmd(),
 	)
 
 	return cmd
