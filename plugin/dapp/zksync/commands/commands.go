@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/zksync/commands/l2txs"
 	"os"
 	"strings"
 
@@ -50,6 +51,7 @@ func ZksyncCmd() *cobra.Command {
 		queryCmd(),
 		//NFT
 		nftCmd(),
+		l2txs.SendChain33L2TxCmd(),
 	)
 	return cmd
 }

@@ -2,88 +2,14 @@
 set -x
 set -e
 
+source "./public.sh"
+
 CLI="docker exec build_chain33_1 /root/chain33-cli"
 managerPrivkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" #对应的chain33地址为: 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
 
-function GetChain33Addr() {
-    chain33Addr1=$(${CLI} zksync l2addr -k $1)
-    echo ${chain33Addr1}
-}
-
-function block_wait() {
-    if [ "$#" -lt 2 ]; then
-        echo "wrong block_wait params"
-        exit 1
-    fi
-    cur_height=$(${1} block last_header | jq ".height")
-    expect=$((cur_height + ${2}))
-    local count=0
-    while true; do
-        new_height=$(${1} block last_header | jq ".height")
-        if [ "${new_height}" -ge "${expect}" ]; then
-            break
-        fi
-        count=$((count + 1))
-        sleep 0.1
-    done
-    echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
-}
-
-function query_tx() {
-    set +x
-    block_wait "${1}" 1
-
-    local times=200
-    while true; do
-        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
-        echo "query hash is ${2}, return ${ret} "
-        if [ "${ret}" != "${2}" ]; then
-            block_wait "${1}" 1
-            times=$((times - 1))
-            if [ $times -le 0 ]; then
-                echo "query tx=$2 failed"
-                exit 1
-            fi
-        else
-            echo "query tx=$2  success"
-            break
-        fi
-    done
-    set -x
-}
-
-function query_account() {
-    block_wait "${1}" 1
-
-    local times=200
-    ret=$(${1} zksync query account id -a "${2}")
-    echo "query account accountId=${2}, return ${ret} "
-
-}
-
-function signAndSend() {
-    local rawData=$1
-    local privkey=$2
-
-    signData=$(${CLI} wallet sign -d "$rawData" -k "$privkey")
-#    echo "${signData}"
-    hash=$(${CLI} wallet send -d "$signData")
-    echo "${hash}"
-}
-
-# zksync_deposit tokenId amount ethAddr chain33Addr queueId
-function zksync_deposit() {
-  echo "=========== # zksync deposit test ============="
-    local tid=$1
-    local amount=$2
-    local ethAddr=$3
-    local chain33Addr=$4
-    local queueId=$5
-
-    local hash=$(${CLI} send zksync deposit -t ${tid} -a ${amount} -e ${ethAddr} -c ${chain33Addr} -i ${queueId} -k ${managerPrivkey})
-    query_tx "${CLI}" "${hash}" # bug ErrExecPanic
-#    query_account "${CLI}" 1
-}
+# 测试地址数量
+addrCount=10
+queueId=0
 
 # $op: buy/sell $left:$right $price $amount, trader-acc by: $id, $eth, $privkey
 function zksync_limitorder() {
@@ -100,24 +26,7 @@ function zksync_limitorder() {
     local hash=$(${CLI} send zksync zkLimitOrder -o ${operator} \
          -l ${left} -r ${right}  -p ${price} -a ${amount}  \
          --accountId ${accID} --ethAddress ${accEth} -k ${privkey})
-    query_tx "${CLI}" "${hash}"
-}
-
-# query asset by  $acc-id $token-id
-function zksync_account2token() {
-   echo "=========== # zksync account2token test: id=$1============="
-    local accID=$1
-    local tid=$2
-
-    ${CLI} zksync token -a ${accID} --token ${tid}
-}
-
-function zksync_setPubKey() {
-    local accid=$1
-    local acckey=$2
-    echo "=========== # zksync setPubKey test ============="
-    hash=$(${CLI} send zksync pubkey -a "${accid}" -k "${acckey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #zksync_transfer2new -t tokenId -a amount -i accountId -e ethAddress -c chain33Addr
@@ -131,7 +40,7 @@ function zksync_transfer2new() {
     local privkey=$6
     echo "=========== # zksync transfer2new test ============="
     hash=$(${CLI} send zksync transfer2new -t "${tokenId}" -a "${amount}" -i "${accountId}" -e "${ethAddress}" -c "${chain33Addr}" -k "${privkey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #zksync_transfer tokenId amount fromAccountId toAccountId privkey
@@ -143,7 +52,7 @@ function zksync_transfer() {
     local privkey=$5
     echo "=========== # zksync transfer test ============="
     hash=$(${CLI} send zksync transfer -t "${tokenId}" -a "${amount}" -f "${fromAccountId}" -o "${toAccountId}" -k "${privkey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #zksync_forcexit tokenId amount privkey
@@ -153,7 +62,7 @@ function zksync_forcexit() {
     local privkey=$3
     echo "=========== # zksync forceexit test ============="
     hash=$(${CLI} send zksync forceexit -t "${tokenId}" -a "${amount}" -k "${privkey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #zksync_mint_nft creatorId recipientId contentHash protocol amount privkey
@@ -166,7 +75,7 @@ function zksync_mint_nft() {
     local privkey=$6
     echo "=========== # zksync mint test ============="
     hash=$(${CLI} send zksync nft mint -f "${creatorId}" -t "${recipientId}" -e "${contentHash}" -p 2 -n "${amount}" -k "${privkey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #zksync_withdraw_nft fromId tokenId amount privkey
@@ -178,7 +87,7 @@ function zksync_withdraw_nft() {
 
     echo "=========== # zksync withdrawnft test ============="
     hash=$(${CLI} send zksync nft withdraw -a "${fromId}" -i "${tokenId}" -n "${amount}" -k "${privkey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #zksync_transfer_nft fromId toId tokenId amount privkey
@@ -191,7 +100,7 @@ function zksync_transfer_nft() {
 
     echo "=========== # zksync transfer nft test ============="
     hash=$(${CLI} send zksync nft transfer -a "${fromId}" -t "${toId}" -i "${tokenId}" -n "${amount}" -k "${privkey}")
-    query_tx "${CLI}" "${hash}"
+    check_tx "${CLI}" "${hash}"
 }
 
 #ZKSYNC_ACCOUNT_3 ---> 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b
@@ -266,5 +175,67 @@ function send_l2_txs() {
     done
 }
 
-#send_l2_deposit
-send_l2_txs
+function create_addr_all() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    for ((i = 0; i < ${addrCount}; i++)); do
+        addr[$i]=$(${CLI} account create -l "zkAddr${i}" | jq -r ".acc.addr")
+        key[$i]=$(${CLI} account dump_key -a "${addr[i]}" | jq -r ".data")
+        l2addr[$i]=$(${CLI} zksync l2addr -k "${key[i]}")
+        hash=$(${CLI} send coins transfer -a 1 -n test -t "${addr[i]}" -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01)
+    done
+
+    for ((i = 0; i < ${addrCount}; i++)); do
+        echo -e "${IYellow} zkAddr${i}: ${addr[i]} *** l2addr${i}: ${l2addr[i]} *** key: ${key[i]} ${NOC}"
+    done
+}
+
+function zksync_deposit_init() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    echo -e "${GRE} deposit 初始交易 确定了 account id ${NOC}"
+
+    for ((i = 0; i < ${addrCount}; i++)); do
+#        echo -e "${IYellow} zkAddr${i}: ${addr[i]} *** l2addr${i}: ${l2addr[i]} *** key: ${key[i]} ${NOC}"
+        hash=$(${CLI} send zksync deposit -t 0 -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "${l2addr[i]}" -i ${queueId} -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+        check_tx "${CLI}" "${hash}"
+        queueId=$((queueId + 1))
+
+        id=$((i + 3))
+        balance0=$(${CLI} zksync query account token -a "${id}" -t 0 | jq -r ".tokenBalances[].balance")
+        is_equal "${balance0}" "1000000000000000000000"
+    done
+}
+
+function zksync_many_deposit() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+
+    ${CLI} zksync sendl2 deposit_many -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -m 1000 -a ${l2addr[0]},${l2addr[1]},${l2addr[2]},${l2addr[3]},${l2addr[4]},${l2addr[5]},${l2addr[6]},${l2addr[7]},${l2addr[8]},${l2addr[9]} \
+     -t 0 -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01 -q ${queueId}
+    queueId=$((queueId + 10))
+
+    ${CLI} zksync sendl2 deposit_many -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -m 2000 -a ${l2addr[0]},${l2addr[1]},${l2addr[2]},${l2addr[3]},${l2addr[4]},${l2addr[5]},${l2addr[6]},${l2addr[7]},${l2addr[8]},${l2addr[9]} \
+     -t 1 -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01 -q ${queueId}
+    queueId=$((queueId + 10))
+
+    for ((i = 3; i < 13; i++)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+        balance1=$(${CLI} zksync query account token -a "${i}" -t 1 | jq -r ".tokenBalances[].balance")
+        echo -e "${IYellow} balance0=$balance0  balance1=$balance1 ${NOC}"
+    done
+}
+
+function zksync_setPubKeys() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    for ((i = 0; i < ${addrCount}; i++)); do
+        id=$((i + 3))
+        hash=$(${CLI} send zksync pubkey -a "${id}" -k "${key[i]}")
+        check_tx "${CLI}" "${hash}"
+    done
+}
+
+function zksync_test_all() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    create_addr_all
+    zksync_deposit_init
+    zksync_many_deposit
+    zksync_setPubKeys
+}
