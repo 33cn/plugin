@@ -19,7 +19,7 @@ const (
 	TyWithdrawAction       = 2  //eth取款
 	TyTransferAction       = 3  //转账
 	TyTransferToNewAction  = 4  //向新地址转账
-	TyForceExitAction      = 5  //强制退出
+	TyProxyExitAction      = 5  //强制退出
 	TySetPubKeyAction      = 6  //设置公钥
 	TyFullExitAction       = 7  //从L1完全退出
 	TySwapAction           = 8  //交换
@@ -43,7 +43,7 @@ const (
 	NameTreeToContractAction = "TreeToContract"
 	NameTransferAction       = "Transfer"
 	NameTransferToNewAction  = "TransferToNew"
-	NameForceExitAction      = "ForceExit"
+	NameProxyExitAction      = "ProxyExit"
 	NameSetPubKeyAction      = "SetPubKey"
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
@@ -65,7 +65,7 @@ const (
 	TyWithdrawLog       = 102 //取款
 	TyTransferLog       = 103 //转账
 	TyTransferToNewLog  = 104 //向新地址转账
-	TyForceExitLog      = 105 //强制退出
+	TyProxyExitLog      = 105 //代理退出
 	TySetPubKeyLog      = 106 //设置公钥
 	TyFullExitLog       = 107 //从L1完全退出
 	TySwapLog           = 108 //交换
@@ -138,7 +138,7 @@ const (
 	TransferChunks      = 2
 	Transfer2NewChunks  = 5
 	WithdrawChunks      = 3
-	ForceExitChunks     = 3
+	ProxyExitChunks     = 3
 	FullExitChunks      = 3
 	SwapChunks          = 4
 	NoopChunks          = 1
@@ -183,7 +183,7 @@ var (
 		NameTreeToContractAction: TyTreeToContractAction,
 		NameTransferAction:       TyTransferAction,
 		NameTransferToNewAction:  TyTransferToNewAction,
-		NameForceExitAction:      TyForceExitAction,
+		NameProxyExitAction:      TyProxyExitAction,
 		NameSetPubKeyAction:      TySetPubKeyAction,
 		NameFullExitAction:       TyFullExitAction,
 		NameSwapAction:           TySwapAction,
@@ -204,7 +204,7 @@ var (
 		TyTreeToContractLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
 		TyTransferLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
 		TyTransferToNewLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyForceExitLog"},
+		TyProxyExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyProxyExitLog"},
 		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
@@ -224,7 +224,7 @@ var (
 	//	TyWithdrawAction:      "1000000",
 	//	TyTransferAction:      "100000",
 	//	TyTransferToNewAction: "1000000",
-	//	TyForceExitAction:     "1000000",
+	//	TyProxyExitAction:     "1000000",
 	//	TyFullExitAction:      "1000000",
 	//	TySwapAction:          "100000",
 	//	TyMintNFTAction:       "1000000",

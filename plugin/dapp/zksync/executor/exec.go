@@ -35,9 +35,9 @@ func (z *zksync) Exec_TransferToNew(payload *zt.ZkTransferToNew, tx *types.Trans
 	return action.TransferToNew(payload)
 }
 
-func (z *zksync) Exec_ForceExit(payload *zt.ZkForceExit, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (z *zksync) Exec_ProxyExit(payload *zt.ZkProxyExit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.ForceExit(payload)
+	return action.ProxyExit(payload)
 }
 
 func (z *zksync) Exec_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, index int) (*types.Receipt, error) {

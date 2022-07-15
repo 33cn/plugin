@@ -7,23 +7,26 @@ option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
 message ZksyncAction {
   oneof value {
-    ZkDeposit  deposit = 1;
-    ZkWithdraw withdraw = 2;
-    ZkContractToTree contractToTree = 3;
-    ZkTreeToContract treeToContract = 4;
-    ZkTransfer transfer = 5;
-    ZkTransferToNew transferToNew = 6;
-    ZkForceExit forceExit = 7;
-    ZkSetPubKey setPubKey = 8;
-    ZkFullExit  fullExit = 9;
-    ZkSwap  swap = 10;
-    ZkVerifyKey         setVerifyKey = 11;
-    ZkCommitProof         commitProof  = 12;
-    ZkVerifier  setVerifier = 13;
-    ZkSetFee    setFee = 14;
-    ZkMintNFT     mintNFT = 16;
-    ZkWithdrawNFT withdrawNFT = 17;
-    ZkTransferNFT transferNFT = 18;
+    ZkDeposit  deposit          = 1;
+    ZkWithdraw withdraw         = 2;
+    ZkTransfer transfer           = 3;
+    ZkTransferToNew transferToNew = 4;
+    ZkProxyExit proxyExit         = 5;
+    ZkSetPubKey setPubKey         = 6;
+    ZkFullExit  fullExit          = 7;
+    ZkSwap  swap                  = 8;
+    ZkContractToTree contractToTree = 9;
+    ZkTreeToContract treeToContract = 10;
+
+    ZkMintNFT     mintNFT       = 12;
+    ZkWithdrawNFT withdrawNFT   = 13;
+    ZkTransferNFT transferNFT   = 14;
+
+    ZkVerifyKey         setVerifyKey = 31;
+    ZkCommitProof         commitProof  = 32;
+    ZkVerifier  setVerifier         = 33;
+    ZkSetFee    setFee              = 34;
+
   }
 
   int32 ty = 15;
@@ -105,106 +108,7 @@ message ZkTokenTreeProof {
 }
 
 
-message ZkDeposit {
-  uint64 tokenId = 1;
-  string amount = 2;
-  string ethAddress = 3;
-  string chain33Addr = 4;
-  int64 ethPriorityQueueId = 5; //需要在合约保证id连续
-  ZkSignature signature = 6;
-  uint64 chainTitleId = 7;
 
-}
-
-message ZkWithdraw {
-  uint64 tokenId = 1;
-  string amount = 2;
-  uint64 accountId = 3;
-  ZkSignature signature = 4;
-}
-
-message ZkContractToTree {
-  uint64 tokenId = 1;
-  string amount = 2;
-  uint64 accountId = 3;
-  ZkSignature signature = 4;
-}
-
-message ZkTreeToContract {
-  uint64 tokenId = 1;
-  string amount = 2;
-  uint64 accountId = 3;
-  ZkSignature signature = 4;
-}
-
-message ZkTransfer {
-  uint64 tokenId = 1;
-  string amount = 2;
-  uint64 fromAccountId = 3;
-  uint64 toAccountId = 4;
-  ZkSignature signature = 5;
-}
-
-message ZkTransferToNew {
-  uint64 tokenId = 1;
-  string amount = 2;
-  uint64 fromAccountId = 3;
-  string toEthAddress = 4;
-  string toChain33Address = 5;
-  ZkSignature signature = 6;
-}
-
-message ZkForceExit {
-  uint64 tokenId = 1;
-  uint64 accountId = 2;
-  ZkSignature signature = 3;
-}
-
-message ZkSetPubKey {
-  uint64 accountId = 1;
-  ZkPubKey  pubKey = 2;
-  uint64    pubKeyTy = 3;
-  ZkSignature signature = 4;
-}
-
-message ZkFullExit {
-  uint64 tokenId = 1;
-  uint64 accountId = 2;
-  int64 ethPriorityQueueId = 3;
-  ZkSignature signature = 4;
-  uint64 chainTitleId = 8;
-}
-
-message ZkSwap {
-  ZkSignature signature = 1;
-}
-
-
-message ZkMintNFT {
-  uint64 fromAccountId = 1;
-  uint64 recipientId = 2;
-  string contentHash = 3;
-  uint64 ercProtocol = 4;
-  uint64 amount      = 5;
-  ZkSignature signature = 6;
-}
-
-message ZkWithdrawNFT {
-  uint64 fromAccountId = 1;
-  uint64 NFTTokenId = 2;
-  uint64 amount     = 3;
-
-  ZkSignature signature = 5;
-}
-
-message ZkTransferNFT {
-  uint64 fromAccountId = 1;
-  uint64 recipientId = 2;
-  uint64 NFTTokenId = 3;
-  uint64 amount     = 4;
-
-  ZkSignature signature = 6;
-}
 
 message ZkNFTTokenStatus {
   uint64 Id = 1;

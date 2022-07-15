@@ -192,15 +192,16 @@ func TestZksyncOption(t *testing.T) {
 	/*************************forceQuit*************************/
 	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
-	forceQuit := &zt.ZkForceExit{
-		AccountId: 2,
-		TokenId:   1,
+	proxyQuit := &zt.ZkProxyExit{
+		ProxyId:  2,
+		TokenId:  1,
+		TargetId: 3,
 	}
-	msg = wallet.GetForceExitMsg(forceQuit)
+	msg = wallet.GetProxyExitMsg(proxyQuit)
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
-	forceQuit.Signature = signInfo
-	receipt, err = action.ForceExit(forceQuit)
+	proxyQuit.Signature = signInfo
+	receipt, err = action.ProxyExit(proxyQuit)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
@@ -241,8 +242,8 @@ func TestBigInt(t *testing.T) {
 }
 
 func TestInitTreeRoot(t *testing.T) {
-	eth := zt.HexAddr2Decimal("832367164346888E248bd58b9A5f480299F1e88d")
-	chain33 := zt.HexAddr2Decimal("2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a")
+	eth, _ := zt.HexAddr2Decimal("832367164346888E248bd58b9A5f480299F1e88d")
+	chain33, _ := zt.HexAddr2Decimal("2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a")
 	leafs := getInitAccountLeaf(eth, chain33)
 	merkleTree := getNewTree()
 	for _, l := range leafs {
