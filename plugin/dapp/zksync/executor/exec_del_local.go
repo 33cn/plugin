@@ -29,7 +29,7 @@ func (z *zksync) ExecDelLocal_TransferToNew(payload *zt.ZkTransferToNew, tx *typ
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_ForceExit(payload *zt.ZkForceExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecDelLocal_ProxyExit(payload *zt.ZkProxyExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 

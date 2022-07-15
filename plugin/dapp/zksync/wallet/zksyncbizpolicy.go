@@ -181,15 +181,15 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		transferToNew.Signature = signInfo
-	case zt.TyForceExitAction:
-		forceQuit := action.GetForceExit()
-		msg = GetForceExitMsg(forceQuit)
+	case zt.TyProxyExitAction:
+		proxyQuit := action.GetProxyExit()
+		msg = GetProxyExitMsg(proxyQuit)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
 		}
-		forceQuit.Signature = signInfo
+		proxyQuit.Signature = signInfo
 	case zt.TySetPubKeyAction:
 		setPubKey := action.GetSetPubKey()
 		//如果是添加公钥的操作，则默认设置这里生成的公钥

@@ -172,8 +172,8 @@ function zksync_transferToNew() {
     query_account "${CLI}" 4
 }
 
-function zksync_forceExit() {
-    echo "=========== # zksync forceExit test ============="
+function zksync_proxyExit() {
+    echo "=========== # zksync proxyExit test ============="
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR setPubKey
     rawData=$(${CLI} zksync pubkey -a "${ZKSYNC_ACCOUNT_4}")
     echo "${rawData}"
@@ -185,8 +185,8 @@ function zksync_forceExit() {
     query_tx "${CLI}" "${hash}"
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_4}"
 
-    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 help 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR forceExit
-    rawData=$(${CLI} zksync forceexit -t "${TOKENID_0}" -a "${ZKSYNC_ACCOUNT_4}")
+    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 help 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR proxyExit
+    rawData=$(${CLI} zksync proxyexit -t "${TOKENID_0}" -a "${ZKSYNC_ACCOUNT_4}")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)

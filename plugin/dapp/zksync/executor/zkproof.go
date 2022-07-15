@@ -758,7 +758,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				if operation.ToAccountId > maxAccountId {
 					maxAccountId = operation.ToAccountId
 				}
-			case zt.TyForceExitAction:
+			case zt.TyProxyExitAction:
 				fromLeaf, ok := accountMap[operation.AccountId]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("account=%d not exist", operation.AccountId))
@@ -1376,8 +1376,8 @@ func getChunkNum(opType uint64) int {
 		return zt.TransferChunks
 	case zt.TyTransferToNewAction:
 		return zt.Transfer2NewChunks
-	case zt.TyForceExitAction:
-		return zt.ForceExitChunks
+	case zt.TyProxyExitAction:
+		return zt.ProxyExitChunks
 	case zt.TySetPubKeyAction:
 		return zt.SetPubKeyChunks
 	case zt.TyFullExitAction:
@@ -1417,8 +1417,8 @@ func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
 		return getTransferOperationByChunk(totalChunk)
 	case zt.TyTransferToNewAction:
 		return getTransfer2NewOperationByChunk(totalChunk)
-	case zt.TyForceExitAction:
-		return getForceExitOperationByChunk(totalChunk)
+	case zt.TyProxyExitAction:
+		return getProxyExitOperationByChunk(totalChunk)
 	case zt.TySetPubKeyAction:
 		return getSetPubKeyOperationByChunk(totalChunk)
 	case zt.TyFullExitAction:
@@ -1695,7 +1695,7 @@ func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64, chainTitle string
 				if err != nil {
 					return localKvs, err
 				}
-			case zt.TyForceExitAction:
+			case zt.TyProxyExitAction:
 				if fromLeaf == nil {
 					return localKvs, errors.New("account not exist")
 				}
@@ -1938,8 +1938,8 @@ func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
 	return operation
 }
 
-func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyForceExitAction, FeeData: new(zt.ZkOpFeeData)}
+func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyProxyExitAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])

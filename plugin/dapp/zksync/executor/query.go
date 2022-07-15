@@ -227,7 +227,7 @@ func (z *zksync) Query_GetCfgFeeAddr(in *types.ReqNil) (types.Message, error) {
 
 //Query_GetCfgTokenFee 获取系统配置的fee
 func (z *zksync) Query_GetCfgTokenFee(in *zt.ZkSetFee) (types.Message, error) {
-	amount, err := getFeeData(z.GetStateDB(), in.GetActionTy(), in.GetTokenId())
+	amount, err := getDbFeeData(z.GetStateDB(), in.GetActionTy(), in.GetTokenId())
 	if err != nil {
 		return nil, err
 	}

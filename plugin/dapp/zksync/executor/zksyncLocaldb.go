@@ -34,7 +34,7 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyTransferLog,
 			zt.TyTransferToNewLog,
 			zt.TySetPubKeyLog,
-			zt.TyForceExitLog,
+			zt.TyProxyExitLog,
 			zt.TyFullExitLog,
 			zt.TySwapLog,
 			zt.TyMintNFTLog,

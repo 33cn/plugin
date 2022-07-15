@@ -41,7 +41,7 @@ func ZksyncCmd() *cobra.Command {
 		treeToContractCmd(),
 		transferCmd(),
 		transferToNewCmd(),
-		forceExitCmd(),
+		proxyExitCmd(),
 		setPubKeyCmd(),
 		fullExitCmd(),
 		setVerifyKeyCmd(),
@@ -321,38 +321,41 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func forceExitCmd() *cobra.Command {
+func proxyExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "forceexit",
+		Use:   "proxyexit",
 		Short: "withdraw by other addr",
-		Run:   forceExit,
+		Run:   proxyExit,
 	}
-	forceExitFlag(cmd)
+	proxyExitFlag(cmd)
 	return cmd
 }
 
-func forceExitFlag(cmd *cobra.Command) {
+func proxyExitFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("tokenId", "t", 1, "target tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("accountId", "a", 0, "target accountId")
+	cmd.Flags().Uint64P("accountId", "p", 0, "proxy accountId")
 	cmd.MarkFlagRequired("accountId")
+	cmd.Flags().Uint64P("toId", "a", 0, "target accountId")
+	cmd.MarkFlagRequired("toId")
 
 }
 
-func forceExit(cmd *cobra.Command, args []string) {
+func proxyExit(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	toId, _ := cmd.Flags().GetUint64("toId")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", "", accountId, toId)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
-		ActionName: "ForceExit",
+		ActionName: "ProxyExit",
 		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
@@ -676,7 +679,7 @@ func getTokenFeeCmd() *cobra.Command {
 }
 
 func getTokenFeeFlag(cmd *cobra.Command) {
-	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,forceExit:5")
+	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,proxyExit:5")
 	cmd.MarkFlagRequired("action")
 	cmd.Flags().Uint64P("token", "t", 0, "token id")
 	cmd.MarkFlagRequired("token")
@@ -1255,7 +1258,7 @@ func setTokenFeeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("fee", "f", "10000", "fee")
 	cmd.MarkFlagRequired("fee")
-	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,forceExit:5")
+	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,proxyExit:5")
 	cmd.MarkFlagRequired("action")
 	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain  title id")
 	cmd.MarkFlagRequired("chainTitleId")
