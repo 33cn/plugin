@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -177,6 +178,7 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+	fmt.Println("EVM.call-------------->addr", addr, "input", string(input), "gas", gas, "value", value)
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
@@ -223,6 +225,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	}
 
 	if isPrecompile {
+		fmt.Println("EVM.call-------------->STEP2 isPrecompile")
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
@@ -360,17 +363,21 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	}
 
 	isPrecompile := false
-	precompiles := PrecompiledContractsByzantium
+	//precompiles := PrecompiledContractsByzantium
+	var p PrecompiledContract
+	var ok bool
 	if !evm.StateDB.Exist(addr.String()) {
 
 		//预编译分叉处理： chain33中目前只存在拜占庭和最新的黄皮书v1版本（兼容伊斯坦布尔版本）
 
 		// 是否是黄皮书v1分叉
-		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
+		/*if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
 			precompiles = PrecompiledContractsIstanbul
-		}
+		}*/
 		// 合约地址在自定义合约和预编译合约中都不存在时，可能为外部账户
-		if precompiles[addr.ToHash160()] == nil {
+		//if precompiles[addr.ToHash160()] == nil {
+		p, ok = evm.precompile(addr)
+		if !ok {
 			// 只有一种情况会走到这里来，就是合约账户向外部账户转账的情况
 			if len(input) > 0 {
 
@@ -404,7 +411,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 
 	contract := NewContract(caller, to, 0, gas)
 	if isPrecompile {
-		ret, gas, err = RunPrecompiledContract(precompiles[addr.ToHash160()], input, gas)
+		ret, gas, err = RunPrecompiledContract(p, input, gas)
 	} else {
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		// 执行合约指令时如果出错，需要进行回滚，并且扣除剩余的Gas
@@ -491,5 +498,11 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 
 func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
 	p, ok := PrecompiledContractsBerlin[addr.ToHash160()]
+	if ok {
+		return p, ok
+	}
+	//增加了自定义的预编译合约判断
+	p, ok = CustomizePrecompiledContractsBinjiang[addr.ToHash160()]
 	return p, ok
+
 }
