@@ -149,7 +149,6 @@ func sendManyDepositFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("ethAddr")
 	cmd.Flags().StringP("chain33Addrs", "a", "", "to chain33 addrs, use ',' separate")
 	_ = cmd.MarkFlagRequired("chain33Addrs")
-
 	cmd.Flags().StringP("key", "k", "", "private key")
 	_ = cmd.MarkFlagRequired("key")
 }

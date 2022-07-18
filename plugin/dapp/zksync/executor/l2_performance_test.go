@@ -64,18 +64,17 @@ func BenchmarkTransfer(b *testing.B) {
 	assert.Greater(b, len(localReceipt.KV), 0)
 	//继续发送交易
 	fromAccountId := accountID
-	toAccountId := accountID+ 1
+	toAccountId := accountID + 1
 	receipt, localReceipt, err = transfer(zksyncHandle, acc1privkey, fromAccountId, toAccountId, tokenId, "200")
 	assert.Nil(b, err)
 	assert.Equal(b, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(b, len(localReceipt.KV), 0)
 
-
 	//确认发送者的balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(b, err)
 	tranferFee := 100000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200*2 - tranferFee*2)
+	balance := fmt.Sprintf("%d", 1000000000000-200*2-tranferFee*2)
 	fmt.Println("Balance is", balance)
 	assert.Equal(b, acc4token1Balance.Balance, balance)
 	assert.Equal(b, acc4token1Balance.TokenId, uint64(1))

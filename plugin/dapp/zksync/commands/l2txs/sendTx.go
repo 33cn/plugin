@@ -23,6 +23,11 @@ func SendChain33L2TxCmd() *cobra.Command {
 		SendTransferTxCmd(),
 		sendManyDepositTxCmd(),
 		sendManyWithdrawTxCmd(),
+		treeManyToContractCmd(),
+		contractManyToTreeCmd(),
+		SendManyTransferTxCmd(),
+		transferManyToNewCmd(),
+		forceManyExitCmd(),
 	)
 
 	return cmd

@@ -445,8 +445,8 @@ func TestWithdraw(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-    withdrawFee := 1000000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200 - withdrawFee)
+	withdrawFee := 1000000
+	balance := fmt.Sprintf("%d", 1000000000000-200-withdrawFee)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -497,18 +497,17 @@ func TestTransfer(t *testing.T) {
 	assert.Greater(t, len(localReceipt.KV), 0)
 	//继续发送交易
 	fromAccountId := accountID
-	toAccountId := accountID+ 1
+	toAccountId := accountID + 1
 	receipt, localReceipt, err = transfer(zksyncHandle, acc1privkey, fromAccountId, toAccountId, tokenId, "200")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 
-
 	//确认发送者的balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	tranferFee := 100000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200*2 - tranferFee*2)
+	balance := fmt.Sprintf("%d", 1000000000000-200*2-tranferFee*2)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -569,7 +568,7 @@ func TestTransfer2New(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	tranferFee := 100000
-	balance := fmt.Sprintf("%d", 1000000000000 - 200 - tranferFee)
+	balance := fmt.Sprintf("%d", 1000000000000-200-tranferFee)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -632,15 +631,15 @@ func TestTree2contract(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", 1000000000000 - 10000000000)
+	balance := fmt.Sprintf("%d", 1000000000000-10000000000)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
 
 	//确认合约余额
 	zkQueryReq := &zksyncTypes.ZkQueryReq{
-		TokenSymbol: strconv.Itoa(int(tokenId)),
-		Chain33WalletAddr:"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
+		TokenSymbol:       strconv.Itoa(int(tokenId)),
+		Chain33WalletAddr: "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
 	}
 	msg, err := zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
 	assert.Nil(t, err)
@@ -698,15 +697,15 @@ func TestContract2Tree(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", 1000000000000 - 10000000000)
+	balance := fmt.Sprintf("%d", 1000000000000-10000000000)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
 
 	//确认合约余额
 	zkQueryReq := &zksyncTypes.ZkQueryReq{
-		TokenSymbol: strconv.Itoa(int(tokenId)),
-		Chain33WalletAddr:"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
+		TokenSymbol:       strconv.Itoa(int(tokenId)),
+		Chain33WalletAddr: "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
 	}
 	msg, err := zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
 	assert.Nil(t, err)
@@ -884,7 +883,7 @@ func TestMintNFT(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	mintFee := 100
-	balance := fmt.Sprintf("%d", 1000000000000 - mintFee)
+	balance := fmt.Sprintf("%d", 1000000000000-mintFee)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -1150,8 +1149,6 @@ func TestNFTMisc(t *testing.T) {
 	fmt.Println("TokenBalance for account ID", toAccountID, "tokenId", nftTokenId, toBalance.Balance)
 }
 
-
-
 func deposit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, queueId uint64, amount, ethAddress, chain33Addr string) (*types.Receipt, *types.LocalDBSet, error) {
 	deposit := &zksyncTypes.ZkDeposit{
 		TokenId:            tokenId,
@@ -1240,9 +1237,9 @@ func setPubKey(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountId
 
 func withdraw(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	withdraw := &zksyncTypes.ZkWithdraw{
-		TokenId:            tokenId,
-		Amount:             amount,
-		AccountId:         accountID,
+		TokenId:   tokenId,
+		Amount:    amount,
+		AccountId: accountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1251,7 +1248,6 @@ func withdraw(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 			Withdraw: withdraw,
 		},
 	}
-
 
 	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
 	if err := types.Decode(tx.Payload, action); nil != err {
@@ -1285,10 +1281,10 @@ func withdraw(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 
 func transfer(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, toAccountId, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	transfer := &zksyncTypes.ZkTransfer{
-		TokenId:            tokenId,
-		Amount:             amount,
-		FromAccountId:      fromAccountId,
-		ToAccountId:        toAccountId,
+		TokenId:       tokenId,
+		Amount:        amount,
+		FromAccountId: fromAccountId,
+		ToAccountId:   toAccountId,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1330,12 +1326,11 @@ func transfer(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccoun
 
 func transfer2New(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, fromAccountId uint64, amount, toEthAddress, toChain33Address string) (*types.Receipt, *types.LocalDBSet, error) {
 	transfer2New := &zksyncTypes.ZkTransferToNew{
-		TokenId:            tokenId,
-		Amount:             amount,
-		FromAccountId:      fromAccountId,
-		ToEthAddress:       toEthAddress,
-		ToChain33Address:   toChain33Address,
-
+		TokenId:          tokenId,
+		Amount:           amount,
+		FromAccountId:    fromAccountId,
+		ToEthAddress:     toEthAddress,
+		ToChain33Address: toChain33Address,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1377,9 +1372,9 @@ func transfer2New(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenI
 
 func tree2contract(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	tree2contract := &zksyncTypes.ZkTreeToContract{
-		TokenId:            tokenId,
-		Amount:             amount,
-		AccountId:         accountID,
+		TokenId:   tokenId,
+		Amount:    amount,
+		AccountId: accountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1421,9 +1416,9 @@ func tree2contract(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 
 func contract2tree(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	contract2tree := &zksyncTypes.ZkContractToTree{
-		TokenId:            tokenId,
-		Amount:             amount,
-		AccountId:         accountID,
+		TokenId:   tokenId,
+		Amount:    amount,
+		AccountId: accountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1465,8 +1460,8 @@ func contract2tree(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 
 func forceExit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64) (*types.Receipt, *types.LocalDBSet, error) {
 	forceExit := &zksyncTypes.ZkForceExit{
-		TokenId:            tokenId,
-		AccountId:         accountID,
+		TokenId:   tokenId,
+		AccountId: accountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1552,11 +1547,11 @@ func fullExit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 
 func mintNFT(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, recipientAccountId uint64, contentHash string) (*types.Receipt, *types.LocalDBSet, error) {
 	mintNFT := &zksyncTypes.ZkMintNFT{
-		FromAccountId:        fromAccountId,
-		RecipientId:          recipientAccountId,
-		ContentHash:          contentHash,
-		ErcProtocol:          zksyncTypes.ZKERC721,
-		Amount:               1,
+		FromAccountId: fromAccountId,
+		RecipientId:   recipientAccountId,
+		ContentHash:   contentHash,
+		ErcProtocol:   zksyncTypes.ZKERC721,
+		Amount:        1,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1599,9 +1594,9 @@ func mintNFT(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccount
 
 func withdrawNFT(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, nftTokenId, amount uint64) (*types.Receipt, *types.LocalDBSet, error) {
 	withdrawNFT := &zksyncTypes.ZkWithdrawNFT{
-		FromAccountId:        fromAccountId,
-		NFTTokenId:           nftTokenId,
-		Amount:               amount,
+		FromAccountId: fromAccountId,
+		NFTTokenId:    nftTokenId,
+		Amount:        amount,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1643,10 +1638,10 @@ func withdrawNFT(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAcc
 
 func transferNFT(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, recipientAccountId, ntTokenId, amount uint64) (*types.Receipt, *types.LocalDBSet, error) {
 	transferNFT := &zksyncTypes.ZkTransferNFT{
-		FromAccountId:        fromAccountId,
-		RecipientId:          recipientAccountId,
-		NFTTokenId:           ntTokenId,
-		Amount:               amount,
+		FromAccountId: fromAccountId,
+		RecipientId:   recipientAccountId,
+		NFTTokenId:    ntTokenId,
+		Amount:        amount,
 	}
 
 	action := &zksyncTypes.ZksyncAction{

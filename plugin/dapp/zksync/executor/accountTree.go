@@ -289,7 +289,7 @@ func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32
 	return kvs, log, l2Log, nil
 }
 
-func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain33Addr string, statedb dbm.KV, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
+func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress, chain33Addr string, statedb dbm.KV, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
 	var kvs []*types.KeyValue
 	var log *types.ReceiptLog
 	balancekv, balancehistory, err := deposit2NewAccount(accountID, tokenID, amount)
@@ -626,7 +626,6 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, pubKeyTy uint64, pubKey *zt.Zk
 	}
 
 	kvs = append(kvs, kv)
-
 
 	kv = &types.KeyValue{
 		Key:   GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),

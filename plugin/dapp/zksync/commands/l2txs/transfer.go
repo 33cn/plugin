@@ -4,6 +4,8 @@ import (
 	"fmt"
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/spf13/cobra"
+	"strconv"
+	"strings"
 )
 
 func SendTransferTxCmd() *cobra.Command {
@@ -123,6 +125,72 @@ func batchSendTransfer(cmd *cobra.Command, args []string) {
 			return
 		}
 		fmt.Println("tx with index", i)
+		sendTx(rpcLaddr, tx)
+	}
+}
+
+func SendManyTransferTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer_many",
+		Short: "send many transfer tx to chain33",
+		Run:   tranferMany,
+	}
+	sendManyTransferFlags(cmd)
+	return cmd
+}
+
+func sendManyTransferFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 0, "eth token id")
+	_ = cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().StringP("amount", "m", "0", "contractToTree amount")
+	_ = cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("fromIDs", "f", "0", "from account ids on chain33, use ',' separate")
+	_ = cmd.MarkFlagRequired("fromIDs")
+	cmd.Flags().StringP("toIDs", "d", "0", "to account ids on chain33, use ',' separate")
+	_ = cmd.MarkFlagRequired("accountIDs")
+	cmd.Flags().StringP("keys", "k", "", "private keys, use ',' separate")
+	_ = cmd.MarkFlagRequired("keys")
+}
+
+func tranferMany(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	amount, _ := cmd.Flags().GetString("amount")
+	fromIDs, _ := cmd.Flags().GetString("fromIDs")
+	toIDs, _ := cmd.Flags().GetString("toIDs")
+	privateKeys, _ := cmd.Flags().GetString("keys")
+
+	fids := strings.Split(fromIDs, ",")
+	tids := strings.Split(toIDs, ",")
+	keys := strings.Split(privateKeys, ",")
+
+	if len(fids) != len(tids) || len(fids) != len(keys) {
+		fmt.Println("err len(ids) != len(keys)", len(fids), "!=", len(tids), "!=", len(keys))
+		return
+	}
+
+	for i := 0; i < len(fids); i++ {
+		fid, _ := strconv.ParseInt(fids[i], 10, 64)
+		tid, _ := strconv.ParseInt(tids[i], 10, 64)
+		param := &zksyncTypes.ZkTransfer{
+			TokenId:       tokenId,
+			Amount:        amount,
+			FromAccountId: uint64(fid),
+			ToAccountId:   uint64(tid),
+		}
+
+		action := &zksyncTypes.ZksyncAction{
+			Ty: zksyncTypes.TyTransferAction,
+			Value: &zksyncTypes.ZksyncAction_Transfer{
+				Transfer: param,
+			},
+		}
+
+		tx, err := createChain33Tx(keys[i], action)
+		if nil != err {
+			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
+			return
+		}
 		sendTx(rpcLaddr, tx)
 	}
 }
