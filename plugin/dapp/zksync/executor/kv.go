@@ -83,6 +83,6 @@ func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d.%16d", actionTy, tokenId))
 }
 
-func calcLatestAccountIDKey() []byte {
+func CalcLatestAccountIDKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"latestAccountID"))
 }

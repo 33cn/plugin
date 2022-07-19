@@ -885,7 +885,7 @@ func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueI
 }
 
 func getLatestAccountID(db dbm.KV) (int64, error) {
-	key := calcLatestAccountIDKey()
+	key := CalcLatestAccountIDKey()
 	v, err := db.Get(key)
 
 	if err != nil {
@@ -902,7 +902,7 @@ func getLatestAccountID(db dbm.KV) (int64, error) {
 }
 
 func calcNewAccountKV(accounID int64) (*types.KeyValue) {
-	key := calcLatestAccountIDKey()
+	key := CalcLatestAccountIDKey()
 	id := &types.Int64{
 		Data: accounID,
 	}
