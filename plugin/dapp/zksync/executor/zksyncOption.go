@@ -254,7 +254,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 
 	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
 	amount_len := len(payload.Amount)
-	if amount_len < 10 {
+	if amount_len < 11 {
 		return nil, errors.New("Too Little value to do operation TreeToContract")
 	}
 
@@ -327,7 +327,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	var kvs []*types.KeyValue
 	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
 	amount_len := len(payload.Amount)
-	if amount_len < 10 {
+	if amount_len < 11 {
 		return nil, errors.New("Too Little value to do operation TreeToContract")
 	}
 

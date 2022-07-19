@@ -7,6 +7,7 @@ source "./public.sh"
 CLI="docker exec build_chain33_1 /root/chain33-cli"
 managerPrivkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" #对应的chain33地址为: 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
 ethAddr="12a0E25E62C1dBD32E505446062B26AECB65F028"
+contentHash="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 
 # 准备地址数量
 addrInit=20
@@ -105,21 +106,24 @@ function zksync_many_withdraw() {
 
 function zksync_tree2contract_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
-    ${CLI} zksync sendl2 tree2contract_many -t "${TOKENID_0}" -m "3${le8zero}" -a ${accountIDs} -k ${keys}
+    ${CLI} zksync sendl2 tree2contract_many -t "${TOKENID_0}" -m "300${le8zero}" -a ${accountIDs} -k ${keys}
 
     for ((i = 3; i < ${idMax}; i++)); do
         balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
         echo -e "${IYellow} balance0=$balance0  ${NOC}"
+        is_equal "${balance0}" "999999999970008000000"
     done
 }
 
 function zksync_contract2tree_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
-    ${CLI} zksync sendl2 contract2tree_many -t "${TOKENID_0}" -m "3${le8zero}" -a ${accountIDs} -k ${keys}
+    ${CLI} zksync sendl2 contract2tree_many -t "${TOKENID_0}" -m "300${le8zero}" -a ${accountIDs} -k ${keys}
+    sleep 10
 
     for ((i = 3; i < ${idMax}; i++)); do
         balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
         echo -e "${IYellow} balance0=$balance0  ${NOC}"
+        is_equal "${balance0}" "1000000000000008000000"
     done
 }
 
@@ -167,7 +171,43 @@ function zksync_forceexit_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     ${CLI} zksync sendl2 forceexit_many -t "${TOKENID_0}" -a ${accountIDs} -k ${keys}
 
-    sleep 2
+    sleep 10
+
+     for ((i = 3; i < ${idMax}; i++)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+        is_equal "${balance0}" "0"
+    done
+}
+
+function zksync_mintNFT_ERC1155_many() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    ${CLI} zksync sendl2 nft mint -p 1 -m 1000 -e "${contentHash}" -t "${accountIDs}" -f ${accountIDs} -k ${keys}
+
+    sleep 10
+
+     for ((i = 3; i < ${idMax}; i++)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+        is_equal "${balance0}" "0"
+    done
+}
+
+function zksync_mintNFT_ERC721_many() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    ${CLI} zksync sendl2 nft mint -p 2 -m 1 -e "${contentHash}" -t "${accountIDs}" -f ${accountIDs} -k ${keys}
+
+    sleep 10
+
+     for ((i = 3; i < ${idMax}; i++)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+        is_equal "${balance0}" "0"
+    done
+}
+
+function zksync_transferNFT_many() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    ${CLI} zksync sendl2 forceexit_many -t "${TOKENID_0}" -a ${accountIDs} -k ${keys}
+
+    sleep 10
 
      for ((i = 3; i < ${idMax}; i++)); do
         balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
@@ -179,12 +219,28 @@ function zksync_test_all() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     create_addr_all
     zksync_deposit_init
-#    zksync_many_deposit
     zksync_setPubKeys
-#    zksync_many_withdraw
-#    zksync_tree2contract_many
+
+#    zksync_many_deposit
+
+    # 10 200 300 个地址测试通过
+    zksync_many_withdraw
+
+    # 10 200 300 个地址测试通过
+    zksync_tree2contract_many
+
+    # 10 200 300 个地址测试通过
 #    zksync_contract2tree_many
+
 #    zksync_transfer_many
 #    zksync_transfer2new_many
-    zksync_forceexit_many
+
+    # 10 200 300 个地址测试通过
+#    zksync_forceexit_many
+
+    zksync_mintNFT_ERC1155_many
+
 }
+
+
+

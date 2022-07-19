@@ -20,11 +20,11 @@ func transferManyToNewCmd() *cobra.Command {
 
 func transferManyToNewFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("tokenId", "t", 0, "transferToNew tokenId")
-	_ =cmd.MarkFlagRequired("tokenId")
+	_ = cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "m", "0", "transferToNew amount")
-	_ =cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 	cmd.Flags().StringP("ethAddress", "e", "", "transferToNew toEthAddress")
-	_=cmd.MarkFlagRequired("ethAddress")
+	_ = cmd.MarkFlagRequired("ethAddress")
 	cmd.Flags().StringP("fromIDs", "f", "0", "from account ids on chain33, use ',' separate")
 	_ = cmd.MarkFlagRequired("fromIDs")
 	cmd.Flags().StringP("chain33Addrs", "d", "0", "transferToNew toChain33Addrs, use ',' separate")
@@ -54,11 +54,11 @@ func transferManyToNew(cmd *cobra.Command, _ []string) {
 	for i := 0; i < len(fids); i++ {
 		fid, _ := strconv.ParseInt(fids[i], 10, 64)
 		param := &zksyncTypes.ZkTransferToNew{
-			TokenId:       tokenId,
-			Amount:        amount,
-			FromAccountId: uint64(fid),
-			ToEthAddress:toEthAddress,
-			ToChain33Address:   addrs[i],
+			TokenId:          tokenId,
+			Amount:           amount,
+			FromAccountId:    uint64(fid),
+			ToEthAddress:     toEthAddress,
+			ToChain33Address: addrs[i],
 		}
 
 		action := &zksyncTypes.ZksyncAction{
