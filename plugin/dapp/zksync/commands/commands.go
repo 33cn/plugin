@@ -125,6 +125,8 @@ func withdrawFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "i", 0, "withdraw accountId")
 	cmd.MarkFlagRequired("accountId")
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
 
 }
 
@@ -132,10 +134,12 @@ func withdraw(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0, maker, taker)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -176,7 +180,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0, "0", "0")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -217,7 +221,7 @@ func contractToTree(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0, "0", "0")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -250,6 +254,8 @@ func transferFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().Uint64P("toAccountId", "t", 0, "transfer toAccountId")
 	cmd.MarkFlagRequired("toAccountId")
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
 
 }
 
@@ -258,10 +264,12 @@ func transfer(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	toAccountId, _ := cmd.Flags().GetUint64("toAccountId")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId)
+	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId, maker, taker)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -296,6 +304,8 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("ethAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "transferToNew toChain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
 }
 
 func transferToNew(cmd *cobra.Command, args []string) {
@@ -304,10 +314,12 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	toEthAddress, _ := cmd.Flags().GetString("ethAddress")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0, maker, taker)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -332,12 +344,14 @@ func proxyExitCmd() *cobra.Command {
 }
 
 func proxyExitFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "target tokenId")
+	cmd.Flags().Uint64P("tokenId", "i", 1, "target tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("accountId", "p", 0, "proxy accountId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "proxy accountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("toId", "a", 0, "target accountId")
+	cmd.Flags().Uint64P("toId", "t", 0, "target accountId")
 	cmd.MarkFlagRequired("toId")
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
 
 }
 
@@ -345,10 +359,12 @@ func proxyExit(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	toId, _ := cmd.Flags().GetUint64("toId")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", "", accountId, toId)
+	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", "", accountId, toId, maker, taker)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -1449,13 +1465,15 @@ func mintNFTFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("recipientId", "t", 0, "NFT recipient id")
 	cmd.MarkFlagRequired("recipientId")
 
-	cmd.Flags().StringP("contentHash", "e", "", "NFT content hash,must 64 hex char")
+	cmd.Flags().StringP("contentHash", "c", "", "NFT content hash,must 64 hex char")
 	cmd.MarkFlagRequired("contentHash")
 
-	cmd.Flags().Uint64P("protocol", "p", 1, "NFT protocol, 1:ERC1155, 2: ERC721")
+	cmd.Flags().Uint64P("protocol", "e", 1, "NFT protocol, 1:ERC1155, 2: ERC721")
 	cmd.MarkFlagRequired("protocol")
 
-	cmd.Flags().Uint64P("amount", "n", 1, "mint amount, only for ERC1155 case")
+	cmd.Flags().Uint64P("amount", "a", 1, "mint amount, only for ERC1155 case")
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
 
 }
 
@@ -1465,6 +1483,8 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 	contentHash, _ := cmd.Flags().GetString("contentHash")
 	protocol, _ := cmd.Flags().GetUint64("protocol")
 	amount, _ := cmd.Flags().GetUint64("amount")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	if protocol == zt.ZKERC721 && amount > 1 {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(types.ErrInvalidParam, "NFT erc721 only allow 1 amount"))
@@ -1478,6 +1498,10 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 		ContentHash:   contentHash,
 		ErcProtocol:   protocol,
 		Amount:        amount,
+		Fee: &zt.ZkSwapFee{
+			FromFee: maker,
+			ToFee:   taker,
+		},
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
@@ -1499,7 +1523,7 @@ func transferNFTCmd() *cobra.Command {
 }
 
 func transferNFTFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
+	cmd.Flags().Uint64P("fromId", "f", 0, "NFT from id")
 	cmd.MarkFlagRequired("fromId")
 
 	cmd.Flags().Uint64P("toId", "t", 0, "NFT to id")
@@ -1508,8 +1532,12 @@ func transferNFTFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
 	cmd.MarkFlagRequired("tokenId")
 
-	cmd.Flags().Uint64P("amount", "n", 1, "NFT token id")
+	cmd.Flags().Uint64P("amount", "a", 1, "NFT token id")
 	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
+
 }
 
 func transferNFT(cmd *cobra.Command, args []string) {
@@ -1517,6 +1545,8 @@ func transferNFT(cmd *cobra.Command, args []string) {
 	toId, _ := cmd.Flags().GetUint64("toId")
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetUint64("amount")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -1526,6 +1556,10 @@ func transferNFT(cmd *cobra.Command, args []string) {
 		RecipientId:   toId,
 		NFTTokenId:    tokenId,
 		Amount:        amount,
+		Fee: &zt.ZkSwapFee{
+			FromFee: maker,
+			ToFee:   taker,
+		},
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
@@ -1547,20 +1581,26 @@ func withdrawNFTCmd() *cobra.Command {
 }
 
 func withdrawNFTFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
+	cmd.Flags().Uint64P("fromId", "f", 0, "NFT from id")
 	cmd.MarkFlagRequired("fromId")
 
 	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
 	cmd.MarkFlagRequired("tokenId")
 
-	cmd.Flags().Uint64P("amount", "n", 0, "amount")
+	cmd.Flags().Uint64P("amount", "a", 0, "amount")
 	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("maker", "p", "0", "from account fee")
+	cmd.Flags().StringP("taker", "q", "0", "to account fee")
+
 }
 
 func withdrawNFT(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("fromId")
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetUint64("amount")
+	maker, _ := cmd.Flags().GetString("maker")
+	taker, _ := cmd.Flags().GetString("taker")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -1569,6 +1609,10 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 		FromAccountId: accountId,
 		NFTTokenId:    tokenId,
 		Amount:        amount,
+		Fee: &zt.ZkSwapFee{
+			FromFee: maker,
+			ToFee:   taker,
+		},
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),

@@ -12,14 +12,19 @@ import (
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
-	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
+	chain33Addr string, accountId uint64, toAccountId uint64, fromFee, toFee string) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
 	case zt.TyWithdrawAction:
+
 		withdraw := &zt.ZkWithdraw{
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
+			Fee: &zt.ZkSwapFee{
+				FromFee: fromFee,
+				ToFee:   toFee,
+			},
 		}
 		payload = types.MustPBToJSON(withdraw)
 	case zt.TyContractToTreeAction:
@@ -42,6 +47,10 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			Amount:        amount,
 			FromAccountId: accountId,
 			ToAccountId:   toAccountId,
+			Fee: &zt.ZkSwapFee{
+				FromFee: fromFee,
+				ToFee:   toFee,
+			},
 		}
 		payload = types.MustPBToJSON(transfer)
 	case zt.TyTransferToNewAction:
@@ -51,6 +60,10 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			FromAccountId:    accountId,
 			ToEthAddress:     toEthAddress,
 			ToChain33Address: chain33Addr,
+			Fee: &zt.ZkSwapFee{
+				FromFee: fromFee,
+				ToFee:   toFee,
+			},
 		}
 		payload = types.MustPBToJSON(transferToNew)
 	case zt.TyProxyExitAction:
@@ -58,6 +71,10 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			TokenId:  tokenId,
 			ProxyId:  accountId,
 			TargetId: toAccountId,
+			Fee: &zt.ZkSwapFee{
+				FromFee: fromFee,
+				ToFee:   toFee,
+			},
 		}
 		payload = types.MustPBToJSON(proxyExit)
 	//case zt.TySetPubKeyAction:

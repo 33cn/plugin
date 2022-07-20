@@ -109,3 +109,39 @@ func ZkTransferManExpPart(s string) (string, int, error) {
 	}
 	return s[0 : len(s)-exp], exp, nil
 }
+
+func GetOpChunkNum(opType uint32) (int, error) {
+	switch opType {
+	case TyDepositAction:
+		return DepositChunks, nil
+	case TyWithdrawAction:
+		return WithdrawChunks, nil
+	case TyContractToTreeAction:
+		return Contract2TreeChunks, nil
+	case TyTreeToContractAction:
+		return Tree2ContractChunks, nil
+	case TyTransferAction:
+		return TransferChunks, nil
+	case TyTransferToNewAction:
+		return Transfer2NewChunks, nil
+	case TyProxyExitAction:
+		return ProxyExitChunks, nil
+	case TyFullExitAction:
+		return FullExitChunks, nil
+	case TySetPubKeyAction:
+		return SetPubKeyChunks, nil
+	case TyFeeAction:
+		return FeeChunks, nil
+	case TyMintNFTAction:
+		return MintNFTChunks, nil
+	case TyWithdrawNFTAction:
+		return WithdrawNFTChunks, nil
+	case TyTransferNFTAction:
+		return TransferNFTChunks, nil
+	case TySwapAction:
+		return SwapChunks, nil
+	default:
+		return 0, errors.Wrapf(types.ErrInvalidParam, "operation tx type=%d not support", opType)
+	}
+
+}

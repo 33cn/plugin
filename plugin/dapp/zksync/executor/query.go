@@ -252,7 +252,7 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 	startHeight := in.GetStartBlockHeight()
 	endBlockHeight := z.GetHeight() - int64(in.Maturity)
 
-	if startHeight > uint64(endBlockHeight) {
+	if startHeight >= uint64(endBlockHeight) {
 		return new(zt.ZkQueryProofResp), nil
 	}
 
@@ -266,8 +266,8 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 	if in.Count > 0 {
 		totalCount := int(in.Count)
 	END:
-		for i := startHeight; totalCount > 0; i++ {
-			if totalCount <= 0 || i > uint64(endBlockHeight) {
+		for i := startHeight; i < uint64(endBlockHeight); i++ {
+			if totalCount <= 0 {
 				break END
 			}
 			var primaryKey []byte
@@ -277,7 +277,7 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 				primaryKey = nil
 			}
 
-			rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, int32(totalCount), zt.ListASC)
+			rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, types.MaxTxsPerBlock, zt.ListASC)
 			if err != nil {
 				if isNotFound(err) {
 					continue
@@ -287,17 +287,23 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 			}
 			for _, row := range rows {
 				data := row.Data.(*zt.OperationInfo)
-				info := new(zt.OperationInfo)
-				info.BlockHeight = i
-				info.TxType = data.TxType
-				ops = append(ops, info)
-				totalCount--
+				chunk, err := zt.GetOpChunkNum(data.TxType)
+				if err != nil {
+					zklog.Error("GetTxOperationByOffSetOrCount.GetOpChunk", "ty", data.TxType)
+					return nil, types.ErrInvalidParam
+				}
+				if totalCount < chunk {
+					break END
+				}
+				ops = append(ops, data)
+				totalCount -= chunk
 			}
 		}
 		res.OperationInfos = ops
 		return res, nil
 	}
 
+	//2. 按高度offset查找
 	if endBlockHeight > int64(startHeight)+int64(in.BlockOffset) {
 		endBlockHeight = int64(startHeight) + int64(in.BlockOffset)
 	} else {
