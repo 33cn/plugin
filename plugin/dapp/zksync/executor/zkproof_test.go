@@ -169,14 +169,25 @@ func TestHistoryProof(t *testing.T) {
 		assert.Equal(t, nil, err)
 	}
 	rootHash := "19719700540305761665169694243927237153902441322376380373346058669141823295465"
-	ethFeeAddr := "832367164346888E248bd58b9A5f480299F1e88d"
-	chain33FeeAddr := "2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
+	//ethFeeAddr := "832367164346888E248bd58b9A5f480299F1e88d"
+	//chain33FeeAddr := "2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
 	req := &zt.ZkReqExistenceProof{
 		AccountId: 3,
 		TokenId:   1,
 		RootHash:  rootHash,
 	}
-	proof, err := getAccountProofInHistory(localdb, req, zt.HexAddr2Decimal(ethFeeAddr), zt.HexAddr2Decimal(chain33FeeAddr))
+	proof, err := getAccountProofInHistory(localdb, req)
 	assert.Equal(t, nil, err)
 	t.Log(proof)
+}
+
+func TestGetOperationByChunk(t *testing.T) {
+	chunks := []string{
+		"105312291742116972659480692884871089622277708374248589119125140943",
+		"4456014040586311680015918522164279193879411858150409902812907919443",
+		"3410743365975142837943473808261655767383931994113549982714201899008",
+	}
+	op := getOperationByChunk(chunks, zt.TyDepositAction)
+	t.Log("op", op)
+	t.Log("op", op.Op.GetDeposit().EthAddress)
 }

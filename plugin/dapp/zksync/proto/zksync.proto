@@ -5,6 +5,7 @@ import "common.proto";
 package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
+
 message ZksyncAction {
   oneof value {
     ZkDeposit  deposit          = 1;
@@ -107,6 +108,117 @@ message ZkTokenTreeProof {
   MerkleTreeProof proof = 2;
 }
 
+
+
+message ZkDeposit {
+  uint64 tokenId = 1;
+  string amount = 2;
+  string ethAddress = 3;
+  string chain33Addr = 4;
+  int64 ethPriorityQueueId = 5; //需要在合约保证id连续
+  ZkSignature signature = 6;
+  uint64 chainTitleId = 7;
+
+}
+
+message ZkWithdraw {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  ZkSignature signature = 4;
+  ZkSwapFee fee    = 5;
+}
+
+message ZkContractToTree {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  ZkSignature signature = 4;
+}
+
+message ZkTreeToContract {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  ZkSignature signature = 4;
+}
+
+message ZkTransfer {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 fromAccountId = 3;
+  uint64 toAccountId = 4;
+  ZkSignature signature = 5;
+  ZkSwapFee fee    = 6;
+}
+
+message ZkTransferToNew {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 fromAccountId = 3;
+  string toEthAddress = 4;
+  string toChain33Address = 5;
+  ZkSignature signature = 6;
+  ZkSwapFee fee    = 7;
+}
+
+message ZkProxyExit {
+  uint64 tokenId = 1;
+  uint64 proxyId = 2; //代理id，扣手续费
+  uint64 targetId = 3; //目标id
+  ZkSignature signature = 4;
+  ZkSwapFee fee    = 5;
+}
+
+message ZkSetPubKey {
+  uint64 accountId = 1;
+  ZkPubKey  pubKey = 2;
+  uint64    pubKeyTy = 3;
+  ZkSignature signature = 4;
+}
+
+message ZkFullExit {
+  uint64 tokenId = 1;
+  uint64 accountId = 2;
+  int64 ethPriorityQueueId = 3;
+  ZkSignature signature = 4;
+  uint64 chainTitleId = 5;
+  ZkSwapFee fee    = 6;
+}
+
+message ZkSwap {
+  ZkSignature signature = 1;
+}
+
+
+message ZkMintNFT {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  string contentHash = 3;
+  uint64 ercProtocol = 4;
+  uint64 amount      = 5;
+  ZkSignature signature = 6;
+  ZkSwapFee fee    = 7;
+}
+
+message ZkWithdrawNFT {
+  uint64 fromAccountId = 1;
+  uint64 NFTTokenId = 2;
+  uint64 amount     = 3;
+
+  ZkSignature signature = 5;
+  ZkSwapFee fee    = 6;
+}
+
+message ZkTransferNFT {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  uint64 NFTTokenId = 3;
+  uint64 amount     = 4;
+
+  ZkSignature signature = 6;
+  ZkSwapFee fee    = 7;
+}
 
 
 
@@ -301,53 +413,6 @@ message ZkFetchProofList {
   uint64 chainTitleId = 6;
 }
 
-//NFT content hash切分成两部分
-message ZkContentHash {
-  string part1 = 1;
-  string part2 = 2;
-}
-
-message ZkOpNFTData {
-  uint64 tokenId = 1;
-  uint64 creatorId = 2;  //for withdraw NFT
-  uint64 creatorSerialId = 3; //for withdraw NFT
-  uint64 ercProtocol = 4;
-  string mintAmount = 5;
-  string amount = 6;
-  ZkContentHash content = 7;
-}
-
-//swapData: from maker pov
-message ZkOpSwapData {
-  uint64 tokenId = 1;
-  string amount  = 2;
-  string fee     = 3;
-}
-
-message ZkOpFeeData {
-  uint64 tokenId = 1;
-  string fee     = 2;
-}
-
-message ZkSetPubKeyData {
-   uint64 ty = 1; //set type, self or proxy
-   ZkPubKey pubKey = 7; //eddsa公钥，用于验证身份
-}
-
-message ZkOperation {
-  int32 ty = 1;
-  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
-  uint64 tokenId = 3;
-  string amount = 4;
-  ZkOpFeeData feeData    = 5;
-  string ethAddress = 6; //账户对应的以太坊地址
-  ZkSetPubKeyData setPubKey = 7; //eddsa公钥，用于验证身份
-  string chain33Addr = 8; //chain33地址
-  uint64 toAccountId = 9;
-  ZkOpNFTData NFTData = 10;
-  ZkOpSwapData swapData = 11;
-
-}
 
 message EthPriorityQueueID {
   string ID = 1;
