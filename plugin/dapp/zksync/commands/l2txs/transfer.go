@@ -165,7 +165,7 @@ func tranferMany(cmd *cobra.Command, args []string) {
 	keys := strings.Split(privateKeys, ",")
 
 	if len(fids) != len(tids) || len(fids) != len(keys) {
-		fmt.Println("err len(ids) != len(keys)", len(fids), "!=", len(tids), "!=", len(keys))
+		fmt.Println("err len(fids) != len(tids) != len(keys)", len(fids), "!=", len(tids), "!=", len(keys))
 		return
 	}
 

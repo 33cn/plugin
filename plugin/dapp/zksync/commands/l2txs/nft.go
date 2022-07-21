@@ -38,8 +38,8 @@ func mintNFTFlag(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("creatorIds")
 	cmd.Flags().StringP("recipientIds", "t", "0", "NFT recipient ids, use ',' separate")
 	_ = cmd.MarkFlagRequired("recipientIds")
-	cmd.Flags().StringP("contentHash", "e", "", "NFT content hash,must 64 hex char")
-	_ = cmd.MarkFlagRequired("contentHash")
+	cmd.Flags().StringP("contentHashs", "e", "", "NFT content hash,must 64 hex chars, use ',' separate")
+	_ = cmd.MarkFlagRequired("contentHashs")
 	cmd.Flags().Uint64P("protocol", "p", 1, "NFT protocol, 1:ERC1155, 2: ERC721")
 	_ = cmd.MarkFlagRequired("protocol")
 	cmd.Flags().Uint64P("amount", "m", 1, "mint amount, only for ERC1155 case")
@@ -49,7 +49,7 @@ func mintNFTFlag(cmd *cobra.Command) {
 
 func setMintNFT(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	contentHash, _ := cmd.Flags().GetString("contentHash")
+	contentHashs, _ := cmd.Flags().GetString("contentHashs")
 	protocol, _ := cmd.Flags().GetUint64("protocol")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	accountIDs, _ := cmd.Flags().GetString("creatorIds")
@@ -59,9 +59,10 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 	ids := strings.Split(accountIDs, ",")
 	rids := strings.Split(recipientIds, ",")
 	keys := strings.Split(privateKeys, ",")
+	chashs := strings.Split(contentHashs, ",")
 
-	if len(ids) != len(keys) || len(ids) != len(rids) {
-		fmt.Println("err len(ids) != len(keys) != len(rids)", len(ids), "!=", len(keys), "!=", len(rids))
+	if len(ids) != len(keys) || len(ids) != len(rids) || len(ids) != len(chashs) {
+		fmt.Println("err len(ids) != len(keys) != len(rids) != len(chashs)", len(ids), "!=", len(keys), "!=", len(rids), "!=", len(chashs))
 		return
 	}
 
@@ -75,7 +76,7 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 		param := &zksyncTypes.ZkMintNFT{
 			FromAccountId: uint64(id),
 			RecipientId:   uint64(rid),
-			ContentHash:   contentHash,
+			ContentHash:   chashs[i],
 			ErcProtocol:   protocol,
 			Amount:        amount,
 		}
@@ -109,11 +110,11 @@ func transferNFTCmd() *cobra.Command {
 func transferNFTFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("fromIds", "a", "0", "NFT from ids")
 	_ = cmd.MarkFlagRequired("fromIds")
-	cmd.Flags().StringP("toIds", "t", "0", "NFT to ids")
+	cmd.Flags().StringP("toIds", "r", "0", "NFT to ids")
 	_ = cmd.MarkFlagRequired("toIds")
-	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
-	_ = cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("amount", "n", 1, "NFT token id")
+	cmd.Flags().StringP("tokenIds", "t", "0", "NFT token ids")
+	_ = cmd.MarkFlagRequired("tokenIds")
+	cmd.Flags().Uint64P("amount", "m", 1, "amount")
 	_ = cmd.MarkFlagRequired("amount")
 	cmd.Flags().StringP("keys", "k", "", "private keys, use ',' separate")
 	_ = cmd.MarkFlagRequired("keys")
@@ -121,7 +122,7 @@ func transferNFTFlag(cmd *cobra.Command) {
 
 func transferNFT(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	tokenIds, _ := cmd.Flags().GetString("tokenIds")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	fromIds, _ := cmd.Flags().GetString("fromIds")
 	toIds, _ := cmd.Flags().GetString("toIds")
@@ -130,18 +131,20 @@ func transferNFT(cmd *cobra.Command, args []string) {
 	ids := strings.Split(fromIds, ",")
 	tids := strings.Split(toIds, ",")
 	keys := strings.Split(privateKeys, ",")
-	if len(ids) != len(keys) || len(ids) != len(tids) {
-		fmt.Println("err len(ids) != len(keys) != len(tids)", len(ids), "!=", len(keys), "!=", len(tids))
+	tokenids := strings.Split(tokenIds, ",")
+	if len(ids) != len(keys) || len(ids) != len(tids) || len(ids) != len(tokenids) {
+		fmt.Println("err len(ids) != len(keys) != len(tids) != len(tokenids)", len(ids), "!=", len(keys), "!=", len(tids), "!=", len(tokenids))
 		return
 	}
 
 	for i := 0; i < len(ids); i++ {
 		id, _ := strconv.ParseInt(ids[i], 10, 64)
 		tid, _ := strconv.ParseInt(tids[i], 10, 64)
+		tokenid, _ := strconv.ParseInt(tokenids[i], 10, 64)
 		param := &zksyncTypes.ZkTransferNFT{
 			FromAccountId: uint64(id),
 			RecipientId:   uint64(tid),
-			NFTTokenId:    tokenId,
+			NFTTokenId:    uint64(tokenid),
 			Amount:        amount,
 		}
 
@@ -174,9 +177,9 @@ func withdrawNFTCmd() *cobra.Command {
 func withdrawNFTFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("fromIds", "a", "0", "NFT from ids")
 	_ = cmd.MarkFlagRequired("fromIds")
-	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
-	_ = cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("amount", "n", 0, "amount")
+	cmd.Flags().StringP("tokenIds", "t", "0", "NFT token ids")
+	_ = cmd.MarkFlagRequired("tokenIds")
+	cmd.Flags().Uint64P("amount", "m", 0, "amount")
 	_ = cmd.MarkFlagRequired("amount")
 	cmd.Flags().StringP("keys", "k", "", "private keys, use ',' separate")
 	_ = cmd.MarkFlagRequired("keys")
@@ -184,23 +187,25 @@ func withdrawNFTFlag(cmd *cobra.Command) {
 
 func withdrawNFT(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	tokenIds, _ := cmd.Flags().GetString("tokenIds")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	fromIds, _ := cmd.Flags().GetString("fromIds")
 	privateKeys, _ := cmd.Flags().GetString("keys")
 
 	ids := strings.Split(fromIds, ",")
 	keys := strings.Split(privateKeys, ",")
-	if len(ids) != len(keys) {
-		fmt.Println("err len(ids) != len(keys) != len(tids)", len(ids), "!=", len(keys))
+	tokenids := strings.Split(tokenIds, ",")
+	if len(ids) != len(keys)  || len(ids) != len(tokenids) {
+		fmt.Println("err len(ids) != len(keys) != len(tokenids)", len(ids), "!=", len(keys), "!=", len(tokenids))
 		return
 	}
 
 	for i := 0; i < len(ids); i++ {
 		id, _ := strconv.ParseInt(ids[i], 10, 64)
+		tokenid, _ := strconv.ParseInt(tokenids[i], 10, 64)
 		param := &zksyncTypes.ZkWithdrawNFT{
 			FromAccountId: uint64(id),
-			NFTTokenId:    tokenId,
+			NFTTokenId:    uint64(tokenid),
 			Amount:        amount,
 		}
 
