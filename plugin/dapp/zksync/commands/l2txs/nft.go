@@ -195,7 +195,7 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 	ids := strings.Split(fromIds, ",")
 	keys := strings.Split(privateKeys, ",")
 	tokenids := strings.Split(tokenIds, ",")
-	if len(ids) != len(keys)  || len(ids) != len(tokenids) {
+	if len(ids) != len(keys) || len(ids) != len(tokenids) {
 		fmt.Println("err len(ids) != len(keys) != len(tokenids)", len(ids), "!=", len(keys), "!=", len(tokenids))
 		return
 	}

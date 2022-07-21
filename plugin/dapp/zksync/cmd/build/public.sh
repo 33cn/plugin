@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154
+# shellcheck disable=SC2034
+# shellcheck disable=SC2128
 set -x
 set -e
 
@@ -11,8 +14,8 @@ IYellow="\033[0;93m"
 CLI="docker exec build_chain33_1 /root/chain33-cli"
 
 function GetChain33Addr() {
-    chain33Addr1=$(${CLI} zksync l2addr -k $1)
-    echo ${chain33Addr1}
+    chain33Addr1=$(${CLI} zksync l2addr -k "$1")
+    echo "${chain33Addr1}"
 }
 
 function block_wait() {
@@ -33,6 +36,7 @@ function block_wait() {
     done
     echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
 }
+
 # 检查交易是否执行成功 $1:cli 路径  $2:交易hash
 function check_tx() {
     set +x
@@ -128,12 +132,12 @@ function is_equal() {
     set +x
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong parameter${NOC}"
-#        exit 1
+        exit 1
     fi
 
     if [[ $1 != "$2" ]]; then
         echo -e "${RED}$1 != ${2}${NOC}"
-#        exit 1
+        exit 1
     fi
 
     set -x
