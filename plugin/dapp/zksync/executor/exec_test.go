@@ -930,6 +930,87 @@ func TestMintNFT(t *testing.T) {
 	balanceStr := "1"
 	assert.Equal(t, tokenBalance.Balance, balanceStr)
 	fmt.Println("TokenBalance for account ID", accountID, "tokenId", newNFTid, tokenBalance.Balance)
+
+	// 再次铸币
+	// zkAddr0: 12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d *** l2addr0: 27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97 *** key: 0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4
+	queueId = uint64(1)
+	tokenId = uint64(0)
+	receipt, localReceipt, err = deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	accountID = uint64(4)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
+
+	//设置公钥
+	acc1privkeySli, err = chain33Common.FromHex("0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4")
+	assert.Nil(t, err)
+	acc1privkey, err = driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, accountID)
+	assert.Nil(t, err)
+
+	//NFT 铸币
+	contentHash = "9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4"
+	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	//1.检查交易费变动，确认铸币者的balance,扣除了交易费
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
+	assert.Nil(t, err)
+	mintFee = 100
+	balance = fmt.Sprintf("%d", 1000000000000-mintFee)
+	fmt.Println("Balance is", balance)
+	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
+	//1.2系统交易费账户增加相应的数量
+	systemFeeAccountBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), zksyncTypes.SystemFeeAccountId, tokenId)
+	assert.Nil(t, err)
+	mintFeeStr = "200"
+	assert.Equal(t, systemFeeAccountBalance.Balance, mintFeeStr)
+	assert.Equal(t, systemFeeAccountBalance.TokenId, uint64(0))
+	fmt.Println("systemFeeAccountBalance is", systemFeeAccountBalance.Balance)
+
+	//2　铸币账户的次数为1
+	SystemNFTTokenBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, zksyncTypes.SystemNFTTokenId)
+	assert.Nil(t, err)
+	systemNFTTokenBalanceStr = "1"
+	assert.Equal(t, SystemNFTTokenBalance.Balance, systemNFTTokenBalanceStr)
+	assert.Equal(t, SystemNFTTokenBalance.TokenId, uint64(zksyncTypes.SystemNFTTokenId))
+	fmt.Println("TokenBalance for account ID", accountID, "tokenId", zksyncTypes.SystemNFTTokenId, SystemNFTTokenBalance.Balance)
+
+	//3.SystemNFTAccountId's SystemNFTTokenId+1, 产生新的NFT的id
+	SystemNFTTokenBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), zksyncTypes.SystemNFTAccountId, zksyncTypes.SystemNFTTokenId)
+	assert.Nil(t, err)
+	systemNFTTokenBalanceStr = "259"
+	assert.Equal(t, SystemNFTTokenBalance.Balance, systemNFTTokenBalanceStr)
+	assert.Equal(t, SystemNFTTokenBalance.TokenId, uint64(zksyncTypes.SystemNFTTokenId))
+	fmt.Println("TokenBalance for account ID", zksyncTypes.SystemNFTAccountId, "tokenId", zksyncTypes.SystemNFTTokenId, SystemNFTTokenBalance.Balance)
+
+	//4. SystemNFTAccountId set new NFT id to balance by NFT contentHash
+	newNFTid = uint64(259)
+	newNFTIdBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), zksyncTypes.SystemNFTAccountId, newNFTid)
+	assert.Nil(t, err)
+	creatorSerialId = "0"
+	contentPart1, contentPart2, _, err = zksyncTypes.SplitNFTContent(contentHash)
+	assert.Nil(t, err)
+	newNFTTokenBalanceStr, err = getNewNFTTokenBalance(accountID, creatorSerialId, zksyncTypes.ZKERC721, 1, contentPart1.String(), contentPart2.String())
+	assert.Nil(t, err)
+	assert.Equal(t, newNFTIdBalance.Balance, newNFTTokenBalanceStr)
+	assert.Equal(t, newNFTIdBalance.TokenId, newNFTid)
+	fmt.Println("TokenBalance for account ID", zksyncTypes.SystemNFTAccountId, "tokenId", newNFTid, newNFTIdBalance.Balance)
+
+	//5. recipientAddr new NFT id balance+amount
+	tokenBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, newNFTid)
+	assert.Nil(t, err)
+	balanceStr = "1"
+	assert.Equal(t, tokenBalance.Balance, balanceStr)
+	fmt.Println("TokenBalance for account ID", accountID, "tokenId", newNFTid, tokenBalance.Balance)
 }
 
 func TestWithdrawNFT(t *testing.T) {
