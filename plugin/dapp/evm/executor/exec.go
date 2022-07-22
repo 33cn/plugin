@@ -101,6 +101,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		log.Info("innerExec", "Contract exist for address", contractAddrStr)
 	}
 
+	//	evm
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
 

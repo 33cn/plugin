@@ -106,16 +106,30 @@ var PrecompiledContractsBerlin = map[common.Hash160Address]PrecompiledContract{
 // - the returned bytes,
 // - the _remaining_ gas,
 // - any error that occurred
-func RunPrecompiledContract(p PrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
-	gasCost := p.RequiredGas(input)
+func RunPrecompiledContract(evm *EVM, p PrecompiledContract, sp StatefulPrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
+	if p != nil {
+		gasCost := p.RequiredGas(input)
+		//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
+		if suppliedGas < gasCost {
+			return nil, 0, ErrOutOfGas
+
+		}
+
+		suppliedGas -= gasCost
+		output, err := p.Run(input)
+		return output, suppliedGas, err
+	}
+
+	gasCost := sp.RequiredGas(input)
 	//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
 	if suppliedGas < gasCost {
 		return nil, 0, ErrOutOfGas
 
 	}
 	suppliedGas -= gasCost
-	output, err := p.Run(input)
+	output, err := sp.Run(evm, input)
 	return output, suppliedGas, err
+
 }
 
 // 预编译合约 ECRECOVER 椭圆曲线算法支持
