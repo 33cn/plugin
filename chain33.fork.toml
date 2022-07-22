@@ -31,6 +31,7 @@ ForkUseTimeDelay=0
 
 [fork.sub.coins]
 Enable=0
+ForkFriendExecer=0
 
 [fork.sub.manage]
 Enable=120000
