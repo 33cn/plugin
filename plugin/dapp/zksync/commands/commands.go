@@ -979,10 +979,58 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
 	cmd.AddCommand(getProofChainTitleListCmd())
 	cmd.AddCommand(getEthPriorityInfoCmd())
+	cmd.AddCommand(getOpsByChunkCmd())
 
 	//cmd.AddCommand(commitProofCmd())
 
 	return cmd
+}
+
+func getOpsByChunkCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "chunk",
+		Short: "get witness op by chunk",
+		Run:   getOpsByChunk,
+	}
+	getOpsByChunkFlag(cmd)
+	return cmd
+}
+
+func getOpsByChunkFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("chunk", "n", 1, "req op's chunks")
+	cmd.MarkFlagRequired("chunk")
+	cmd.Flags().Uint64P("startHeight", "s", 0, "start height")
+	cmd.MarkFlagRequired("startHeight")
+	cmd.Flags().Uint64P("startIndex", "i", 0, "start index")
+	cmd.Flags().Uint32P("startOpIndex", "o", 0, "start op index")
+	cmd.Flags().Uint32P("maturity", "m", 0, "maturity height")
+}
+
+func getOpsByChunk(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	chunk, _ := cmd.Flags().GetUint32("chunk")
+	height, _ := cmd.Flags().GetUint64("startHeight")
+	index, _ := cmd.Flags().GetUint64("startIndex")
+	opIndex, _ := cmd.Flags().GetUint32("startOpIndex")
+	maturity, _ := cmd.Flags().GetUint32("maturity")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryTxOperationReq{
+		StartBlockHeight: height,
+		StartIndex:       index,
+		OpIndex:          opIndex,
+		Count:            chunk,
+		Maturity:         maturity,
+	}
+
+	params.FuncName = "GetTxOperationByOffSetOrCount"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkQueryProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getTxProofCmd() *cobra.Command {
