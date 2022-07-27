@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"fmt"
+	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	"math/big"
 	"sync/atomic"
 
@@ -37,7 +38,7 @@ func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte,
 	if contract.CodeAddr != nil {
 		precompiles := PrecompiledContractsBerlin
 		if p := precompiles[contract.CodeAddr.ToHash160()]; p != nil {
-			ret, contract.Gas, err = RunPrecompiledContract(evm, p, nil, input, contract.Gas)
+			ret, contract.Gas, err = RunPrecompiledContract(evm, contract, p, nil, input, contract.Gas)
 			return
 		}
 	}
@@ -89,6 +90,7 @@ type Context struct {
 type EVM struct {
 	// Context 链相关的一些辅助属性和操作方法
 	Context
+	evmexecutor *evm.EVMExecutor
 	// EVMStateDB 状态数据操作入口
 	StateDB state.EVMStateDB
 	// 当前调用深度
@@ -129,6 +131,10 @@ func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config, cfg *types.C
 
 	evm.Interpreter = NewInterpreter(evm, vmConfig)
 	return evm
+}
+
+func (evm *EVM) SetExecutor(exec *evm.EVMExecutor) {
+	evm.evmexecutor = exec
 }
 
 // GasTable 返回不同操作消耗的Gas定价表
@@ -223,10 +229,9 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
 		evm.StateDB.TransferStateData(addr.String())
 	}
-
 	if isPrecompile {
 		fmt.Println("EVM.call-------------->STEP2 isPrecompile")
-		ret, gas, err = RunPrecompiledContract(evm, p, sp, input, gas)
+		ret, gas, err = RunPrecompiledContract(evm, caller, p, sp, input, gas)
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.
@@ -237,9 +242,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			// 创建新的合约对象，包含双方地址以及合约代码，可用Gas信息
 			contract := NewContract(caller, to, value, gas)
 			contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
-
 			start := types.Now()
-
 			// 调试模式下启用跟踪
 			if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 				evm.VMConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
@@ -284,7 +287,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, cp, isPrecompile := evm.precompile(addr); isPrecompile {
-		ret, gas, err = RunPrecompiledContract(evm, p, cp, input, gas)
+		ret, gas, err = RunPrecompiledContract(evm, caller, p, cp, input, gas)
 	} else {
 		// 创建合约对象时，讲调用者和被调用者地址均设置为外部账户地址
 		contract := NewContract(caller, to, value, gas)
@@ -324,7 +327,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	)
 
 	if p, cp, isPrecompile := evm.precompile(addr); isPrecompile {
-		ret, gas, err = RunPrecompiledContract(evm, p, cp, input, gas)
+		ret, gas, err = RunPrecompiledContract(evm, caller, p, cp, input, gas)
 	} else {
 		// 同外部合约的创建和修改逻辑，在每次调用时，需要创建并初始化一个新的合约内存对象
 		// 需要注意，这里不同的是，需要设置合约的委托调用模式（会进行一些属性设置）
@@ -412,7 +415,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 
 	contract := NewContract(caller, to, 0, gas)
 	if isPrecompile {
-		ret, gas, err = RunPrecompiledContract(evm, p, cp, input, gas)
+		ret, gas, err = RunPrecompiledContract(evm, caller, p, cp, input, gas)
 	} else {
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		// 执行合约指令时如果出错，需要进行回滚，并且扣除剩余的Gas

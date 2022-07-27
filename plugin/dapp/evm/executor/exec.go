@@ -49,6 +49,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	cfg := evm.GetAPI().GetConfig()
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
+	env.SetExecutor(evm)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
@@ -104,7 +105,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	//	evm
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
-
 	if isCreate {
 
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
@@ -178,7 +178,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	}
 
 	receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
-
 	// 返回之前，把本次交易在区块中生成的合约日志集中打印出来
 	if evm.mStateDB != nil {
 		evm.mStateDB.WritePreimages(evm.GetHeight())
@@ -193,6 +192,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
+
 	return receipt, nil
 }
 

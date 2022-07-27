@@ -460,6 +460,58 @@ const (
 	Error
 )
 
+func safeAdd(balance, amount int64) (int64, error) {
+	if balance+amount < amount || balance+amount > types.MaxTokenBalance {
+		return balance, types.ErrAmount
+	}
+	return balance + amount, nil
+}
+func (mdb *MemoryStateDB) TransferToExchange(recipient, symbol string, amount int64) (*types.Receipt, error) { //([]*types.KeyValue, []*types.ReceiptLog, error) {
+	evmxgoAccount, err := account.NewAccountDB(mdb.api.GetConfig(), "evmxgo", symbol, mdb.StateDB)
+	if err != nil {
+		return nil, err
+	}
+
+	execName := mdb.api.GetConfig().ExecName("exchange")
+	execaddress := address.ExecAddress(execName)
+	//导出账户地址
+	acc, err := evmxgoAccount.LoadExecAccountQueue(mdb.api, recipient, execaddress)
+	if err != nil {
+		return nil, err
+	}
+
+	newbalance, err := safeAdd(acc.Balance, amount)
+	if err != nil {
+		return nil, err
+	}
+	copyAcc := types.CloneAccount(acc)
+	acc.Balance = newbalance
+	receiptTransfer := &types.ReceiptAccountTransfer{
+		Prev:    copyAcc,
+		Current: acc,
+	}
+	kvset := evmxgoAccount.GetKVSet(acc)
+	evmxgoAccount.SaveKVSet(kvset)
+	ty := int32(types.TyLogExecTransfer)
+	log1 := &types.ReceiptLog{
+		Ty:  ty,
+		Log: types.Encode(receiptTransfer),
+	}
+	receipt := &types.Receipt{
+		Ty:   types.ExecOk,
+		KV:   kvset,
+		Logs: []*types.ReceiptLog{log1},
+	}
+	mdb.addChange(transferChange{
+		baseChange: baseChange{},
+		amount:     amount,
+		data:       kvset,
+		logs:       receipt.GetLogs(),
+	})
+	return receipt, nil
+
+}
+
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)

@@ -106,7 +106,7 @@ var PrecompiledContractsBerlin = map[common.Hash160Address]PrecompiledContract{
 // - the returned bytes,
 // - the _remaining_ gas,
 // - any error that occurred
-func RunPrecompiledContract(evm *EVM, p PrecompiledContract, sp StatefulPrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
+func RunPrecompiledContract(evm *EVM, caller ContractRef, p PrecompiledContract, sp StatefulPrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
 	if p != nil {
 		gasCost := p.RequiredGas(input)
 		//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
@@ -127,7 +127,11 @@ func RunPrecompiledContract(evm *EVM, p PrecompiledContract, sp StatefulPrecompi
 
 	}
 	suppliedGas -= gasCost
-	output, err := sp.Run(evm, input)
+
+	//contract := NewContract(caller, to, value, gas)
+	//contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
+
+	output, err := sp.Run(evm, caller, input)
 	return output, suppliedGas, err
 
 }

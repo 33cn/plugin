@@ -75,6 +75,33 @@ func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transactio
 	return action.mint(payload, txs[index-1])
 }
 
+//Exec_EvmMint 提供接口给evm 调用
+func (e *evmxgo) Exec_EvmMint(amount int64, recipient, symbol string) (*types.Receipt, error) {
+	evmxgodb, err := loadEvmxgoDB(e.GetStateDB(), symbol)
+	if err != nil {
+		return nil, err
+	}
+	kvs, logs, err := evmxgodb.mint(amount)
+	if err != nil {
+		elog.Error("evmxgo mint ", "symbol", symbol, "error", err)
+		return nil, err
+	}
+	evmxgoAccount, err := account.NewAccountDB(e.GetAPI().GetConfig(), "evmxgo", symbol, e.GetStateDB())
+	if err != nil {
+		return nil, err
+	}
+	elog.Debug("mint", "evmxgo.Symbol", symbol, "evmxgo.Amount", amount)
+	receipt, err := evmxgoAccount.Mint(recipient, amount)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+
 func (e *evmxgo) Exec_MintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if mint == nil {
 		return nil, types.ErrInvalidParam

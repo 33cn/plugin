@@ -4,18 +4,14 @@ go 1.16
 
 require (
 	github.com/33cn/chain33 v1.67.4-0.20220704034506-4c1d3b9170fb
+	github.com/33cn/plugincgo v0.0.0-20220601090406-a293c92ca3e8
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
-	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
-	github.com/NebulousLabs/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
-	github.com/NebulousLabs/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta
 	github.com/consensys/gnark v0.5.2
 	github.com/consensys/gnark-crypto v0.5.3
 	github.com/coreos/etcd v3.3.15+incompatible
-	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/ethereum/go-ethereum v1.10.16
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
@@ -44,7 +40,6 @@ require (
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.28.0
-	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 )
