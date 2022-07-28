@@ -213,12 +213,12 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	kvs = append(kvs, updateLeafKvs...)
 
 	withdrawReceiptLog := &zt.AccountTokenBalanceReceipt{
-		EthAddress: leaf.EthAddress,
-		Chain33Addr: leaf.Chain33Addr,
-		TokenId: payload.GetTokenId(),
-		AccountId: leaf.AccountId,
+		EthAddress:    leaf.EthAddress,
+		Chain33Addr:   leaf.Chain33Addr,
+		TokenId:       payload.GetTokenId(),
+		AccountId:     leaf.AccountId,
 		BalanceBefore: balancehistory.before,
-		BalanceAfter: balancehistory.after,
+		BalanceAfter:  balancehistory.after,
 	}
 
 	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(withdrawReceiptLog)}
@@ -254,7 +254,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 
 	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
 	amount_len := len(payload.Amount)
-	if amount_len < 10 {
+	if amount_len < 11 {
 		return nil, errors.New("Too Little value to do operation TreeToContract")
 	}
 
@@ -299,12 +299,12 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	kvs = append(kvs, updateLeafKvs...)
 
 	l2BalanceLog := &zt.AccountTokenBalanceReceipt{}
-	l2BalanceLog.EthAddress    = leaf.EthAddress
-	l2BalanceLog.Chain33Addr   = leaf.Chain33Addr
-	l2BalanceLog.TokenId       = payload.GetTokenId()
-	l2BalanceLog.AccountId     = leaf.AccountId
+	l2BalanceLog.EthAddress = leaf.EthAddress
+	l2BalanceLog.Chain33Addr = leaf.Chain33Addr
+	l2BalanceLog.TokenId = payload.GetTokenId()
+	l2BalanceLog.AccountId = leaf.AccountId
 	l2BalanceLog.BalanceBefore = balancehistory.before
-	l2BalanceLog.BalanceAfter  = balancehistory.after
+	l2BalanceLog.BalanceAfter = balancehistory.after
 	l2Log := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(l2BalanceLog)}
 
 	//更新合约账户
@@ -327,7 +327,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	var kvs []*types.KeyValue
 	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
 	amount_len := len(payload.Amount)
-	if amount_len < 10 {
+	if amount_len < 11 {
 		return nil, errors.New("Too Little value to do operation TreeToContract")
 	}
 
@@ -379,12 +379,12 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	kvs = append(kvs, updateLeafKvs...)
 
 	l2BalanceLog := &zt.AccountTokenBalanceReceipt{}
-	l2BalanceLog.EthAddress    = leaf.EthAddress
-	l2BalanceLog.Chain33Addr   = leaf.Chain33Addr
-	l2BalanceLog.TokenId       = payload.GetTokenId()
-	l2BalanceLog.AccountId     = leaf.AccountId
+	l2BalanceLog.EthAddress = leaf.EthAddress
+	l2BalanceLog.Chain33Addr = leaf.Chain33Addr
+	l2BalanceLog.TokenId = payload.GetTokenId()
+	l2BalanceLog.AccountId = leaf.AccountId
 	l2BalanceLog.BalanceBefore = balancehistory.before
-	l2BalanceLog.BalanceAfter  = balancehistory.after
+	l2BalanceLog.BalanceAfter = balancehistory.after
 	l2Log := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(l2BalanceLog)}
 
 	//更新合约账户
@@ -406,12 +406,12 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
 	contractAccount := accountdb.LoadAccount(addr)
 	//accountdb去除末尾10位小数
-	amount2Contract := amount[ : len(amount) - 10]
+	amount2Contract := amount[:len(amount)-10]
 	shortChangeBigInt, _ := new(big.Int).SetString(amount2Contract, 10)
 	shortChange := shortChangeBigInt.Int64()
 	accBefore := &types.Account{
-		Balance:contractAccount.Balance,
-		Addr: addr,
+		Balance: contractAccount.Balance,
+		Addr:    addr,
 	}
 	if option == zt.Sub {
 		if contractAccount.Balance < shortChange {
@@ -425,8 +425,8 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	kvs := accountdb.GetKVSet(contractAccount)
 
 	accAfter := &types.Account{
-		Balance:contractAccount.Balance,
-		Addr: addr,
+		Balance: contractAccount.Balance,
+		Addr:    addr,
 	}
 
 	receiptBalance := &types.ReceiptAccountTransfer{
@@ -480,7 +480,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	}
 
 	//1.操作from 账户
-	fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount,zt.Sub, a.statedb, fromLeaf, false)
+	fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub, a.statedb, fromLeaf, false)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
@@ -501,11 +501,11 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	}
 	kvs = append(kvs, toKVs...)
 	transferLog := &zt.TransferReceipt4L2{
-		From:receiptFrom,
-		To: receiptTo,
+		From: receiptFrom,
+		To:   receiptTo,
 	}
 	l2Transferlog := &types.ReceiptLog{
-		Ty: zt.TyTransferLog,
+		Ty:  zt.TyTransferLog,
 		Log: types.Encode(transferLog),
 	}
 	logs = append(logs, l2Transferlog)
@@ -579,13 +579,11 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	}
 
 	//1.操作from 账户
-	fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount,zt.Sub, a.statedb, fromLeaf, false)
+	fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub, a.statedb, fromLeaf, false)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
 	kvs = append(kvs, fromKVs...)
-
-
 
 	//1.操作to 账户
 	lastAccountID, err := getLatestAccountID(a.statedb)
@@ -594,19 +592,18 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	}
 	accountIDNew := uint64(lastAccountID) + 1
 
-	toKVs, _, receiptTo, err := applyL2AccountCreate(accountIDNew, operationInfo.TokenID, operationInfo.Amount, payload.GetToEthAddress(),  payload.GetToChain33Address(), a.statedb, false)
+	toKVs, _, receiptTo, err := applyL2AccountCreate(accountIDNew, operationInfo.TokenID, operationInfo.Amount, payload.GetToEthAddress(), payload.GetToChain33Address(), a.statedb, false)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountCreate")
 	}
 	kvs = append(kvs, toKVs...)
 
-
 	transferToNewLog := &zt.TransferReceipt4L2{
-		From:receiptFrom,
-		To: receiptTo,
+		From: receiptFrom,
+		To:   receiptTo,
 	}
 	l2Transferlog := &types.ReceiptLog{
-		Ty: zt.TyTransferToNewLog,
+		Ty:  zt.TyTransferToNewLog,
 		Log: types.Encode(transferToNewLog),
 	}
 	logs = append(logs, l2Transferlog)
@@ -698,7 +695,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		hash.Write(zt.Str2Byte(payload.PubKey.Y))
 		calcChain33Addr := zt.Byte2Str(hash.Sum(nil))
 		if calcChain33Addr != leaf.Chain33Addr {
-            zklog.Error("SetPubKey", "leaf.Chain33Addr", leaf.Chain33Addr, "calcChain33Addr", calcChain33Addr)
+			zklog.Error("SetPubKey", "leaf.Chain33Addr", leaf.Chain33Addr, "calcChain33Addr", calcChain33Addr)
 			return nil, errors.New("not your account")
 		}
 	}
@@ -728,8 +725,8 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 
 	zklog := &zt.SetPubKeyReceipt{
 		AccountId: payload.AccountId,
-		PubKey: payload.PubKey,
-		PubKeyTy: payload.PubKeyTy,
+		PubKey:    payload.PubKey,
+		PubKeyTy:  payload.PubKeyTy,
 	}
 	receiptLog := &types.ReceiptLog{Ty: zt.TySetPubKeyLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
@@ -901,6 +898,7 @@ func getLatestAccountID(db dbm.KV) (int64, error) {
 	return id.Data, nil
 }
 
+
 func CalcNewAccountIDkv(accounID int64) (*types.KeyValue) {
 	key := CalcLatestAccountIDKey()
 	id := &types.Int64{
@@ -908,7 +906,7 @@ func CalcNewAccountIDkv(accounID int64) (*types.KeyValue) {
 	}
 	value := types.Encode(id)
 	kv := &types.KeyValue{
-		Key: key,
+		Key:   key,
 		Value: value,
 	}
 	return kv
@@ -958,7 +956,7 @@ func (a *Action) MakeFeeLog(amount string, tokenId uint64, sign *zt.ZkSignature)
 		return nil, errors.New("account not exist")
 	}
 
-	toKVs, l2Log, _, err := applyL2AccountUpdate(leaf.GetAccountId(), tokenId, amount,zt.Add, a.statedb, leaf, true)
+	toKVs, l2Log, _, err := applyL2AccountUpdate(leaf.GetAccountId(), tokenId, amount, zt.Add, a.statedb, leaf, true)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
@@ -1092,7 +1090,6 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	l2feeLogFrom.Ty = zt.TyFeeLog
 	logs = append(logs, l2feeLogFrom)
 
-
 	//2. creator SystemNFTTokenId balance+1 产生serialId
 	//创建者的NFT_TOKEN_ID余额代表创建nft的次数，同时将当前余额(即未计入当前创建次数)设置为serial_id,且将当前余额+1
 	creatorLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
@@ -1152,7 +1149,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "new NFT token balance=%s nok", systemNFToken.Balance)
 	}
-	if newNFTTokenId.Uint64() - 1 <= zt.SystemNFTTokenId {
+	if newNFTTokenId.Uint64()-1 <= zt.SystemNFTTokenId {
 		return nil, errors.Wrapf(types.ErrNotAllow, "newNFTTokenId=%d should big than default %d", newNFTTokenId.Uint64(), zt.SystemNFTTokenId)
 	}
 
@@ -1162,7 +1159,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	}
 
 	//4. SystemNFTAccountId set new NFT id to balance by NFT contentHash
-    //将系统用户名下account = SystemNFTAccountId　且　tokenID = creatorSerialId指定的token balance 设置为NFT contentHash
+	//将系统用户名下account = SystemNFTAccountId　且　tokenID = creatorSerialId指定的token balance 设置为NFT contentHash
 	newNFTTokenBalance, err := getNewNFTTokenBalance(payload.GetFromAccountId(), creatorSerialId, payload.ErcProtocol, payload.Amount, contentPart1.String(), contentPart2.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNewNFTToken balance")
@@ -1478,15 +1475,14 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	kvs = append(kvs, toKVsFrom...)
 
 	transferLog := &zt.TransferReceipt4L2{
-		From:receiptFrom,
-		To: receiptTo,
+		From: receiptFrom,
+		To:   receiptTo,
 	}
 	l2TransferNFTlog := &types.ReceiptLog{
-		Ty: zt.TyTransferNFTLog,
+		Ty:  zt.TyTransferNFTLog,
 		Log: types.Encode(transferLog),
 	}
 	logs = append(logs, l2TransferNFTlog)
-
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/zksync/commands/l2txs"
 	"os"
 	"strings"
 
@@ -50,6 +51,7 @@ func ZksyncCmd() *cobra.Command {
 		queryCmd(),
 		//NFT
 		nftCmd(),
+		l2txs.SendChain33L2TxCmd(),
 	)
 	return cmd
 }
@@ -160,7 +162,6 @@ func treeToContractFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "", 0, "treeToContract accountId")
 	cmd.MarkFlagRequired("accountId")
-
 }
 
 func treeToContract(cmd *cobra.Command, args []string) {

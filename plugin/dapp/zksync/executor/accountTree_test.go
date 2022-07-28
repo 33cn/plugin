@@ -12,7 +12,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
 
-
 func getChain33Addr(privateKeyString string) string {
 	privateKeyBytes, err := hex.DecodeString(privateKeyString)
 	if err != nil {
