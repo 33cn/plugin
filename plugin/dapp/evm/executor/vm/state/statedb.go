@@ -466,6 +466,58 @@ func safeAdd(balance, amount int64) (int64, error) {
 	}
 	return balance + amount, nil
 }
+
+func safeSub(balance, amount int64) (int64, error) {
+	if balance-amount > amount || balance-amount < 0 {
+		return balance, types.ErrAmount
+	}
+	return balance - amount, nil
+}
+
+func (mdb *MemoryStateDB) WithDrawExchange(recipient, symbol string, amount int64) (*types.Receipt, error) {
+	evmxgoAccount, err := account.NewAccountDB(mdb.api.GetConfig(), "evmxgo", symbol, mdb.StateDB)
+	if err != nil {
+		return nil, err
+	}
+
+	execName := mdb.api.GetConfig().ExecName("exchange")
+	execaddress := address.ExecAddress(execName)
+	//导出账户地址
+	acc, err := evmxgoAccount.LoadExecAccountQueue(mdb.api, recipient, execaddress)
+	if err != nil {
+		return nil, err
+	}
+	newbalance, err := safeSub(acc.Balance, -amount)
+	if err != nil {
+		return nil, err
+	}
+	copyAcc := types.CloneAccount(acc)
+	acc.Balance = newbalance
+	receiptTransfer := &types.ReceiptAccountTransfer{
+		Prev:    copyAcc,
+		Current: acc,
+	}
+	kvset := evmxgoAccount.GetKVSet(acc)
+	evmxgoAccount.SaveKVSet(kvset)
+	ty := int32(types.TyLogExecTransfer)
+	log1 := &types.ReceiptLog{
+		Ty:  ty,
+		Log: types.Encode(receiptTransfer),
+	}
+	receipt := &types.Receipt{
+		Ty:   types.ExecOk,
+		KV:   kvset,
+		Logs: []*types.ReceiptLog{log1},
+	}
+	mdb.addChange(transferChange{
+		baseChange: baseChange{},
+		amount:     amount,
+		data:       kvset,
+		logs:       receipt.GetLogs(),
+	})
+	return receipt, nil
+
+}
 func (mdb *MemoryStateDB) TransferToExchange(recipient, symbol string, amount int64) (*types.Receipt, error) { //([]*types.KeyValue, []*types.ReceiptLog, error) {
 	evmxgoAccount, err := account.NewAccountDB(mdb.api.GetConfig(), "evmxgo", symbol, mdb.StateDB)
 	if err != nil {
@@ -720,4 +772,8 @@ func (mdb *MemoryStateDB) GetBlockHeight() int64 {
 // GetConfig 获取系统配置
 func (mdb *MemoryStateDB) GetConfig() *types.Chain33Config {
 	return mdb.api.GetConfig()
+}
+
+func (mdb *MemoryStateDB) GetApi() client.QueueProtocolAPI {
+	return mdb.api
 }

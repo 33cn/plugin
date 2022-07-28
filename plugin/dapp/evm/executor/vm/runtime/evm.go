@@ -6,7 +6,6 @@ package runtime
 
 import (
 	"fmt"
-	evm "github.com/33cn/plugin/plugin/dapp/evm/executor"
 	"math/big"
 	"sync/atomic"
 
@@ -90,7 +89,8 @@ type Context struct {
 type EVM struct {
 	// Context 链相关的一些辅助属性和操作方法
 	Context
-	evmexecutor *evm.EVMExecutor
+	//evmexecutor *evm.EVMExecutor
+	mStateDB *state.MemoryStateDB
 	// EVMStateDB 状态数据操作入口
 	StateDB state.EVMStateDB
 	// 当前调用深度
@@ -133,8 +133,8 @@ func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config, cfg *types.C
 	return evm
 }
 
-func (evm *EVM) SetExecutor(exec *evm.EVMExecutor) {
-	evm.evmexecutor = exec
+func (evm *EVM) SetStatDB(mStateDB *state.MemoryStateDB) {
+	evm.mStateDB = mStateDB
 }
 
 // GasTable 返回不同操作消耗的Gas定价表
