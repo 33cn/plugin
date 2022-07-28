@@ -45,14 +45,14 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 		EthAddress:  ethFeeAddr,
 		AccountId:   zt.SystemFeeAccountId,
 		Chain33Addr: chain33FeeAddr,
-		TokenHash:   "0",
+		TokenHash:   []byte("0"),
 	}
 	//default NFT system account
 	NFTAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemNFTAccountId,
 		Chain33Addr: "0",
-		TokenHash:   "0",
+		TokenHash:   []byte("0"),
 	}
 	return []*zt.Leaf{feeAccount, NFTAccount}
 }
@@ -305,7 +305,7 @@ func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress,  chain3
 	kvs = append(kvs, addLeafKvs...)
 
 	//设置新账户的ID.
-	newAccountKV := calcNewAccountKV(int64(accountID))
+	newAccountKV := CalcNewAccountIDkv(int64(accountID))
 	kvs = append(kvs, newAccountKV)
 
 	l2Log := &zt.AccountTokenBalanceReceipt{}
@@ -532,7 +532,7 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
 
-	h.Write(zt.Str2Byte(leaf.GetTokenHash()))
+	h.Write(leaf.GetTokenHash())
 	return h.Sum(nil)
 }
 

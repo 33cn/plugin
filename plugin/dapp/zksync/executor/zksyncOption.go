@@ -901,7 +901,7 @@ func getLatestAccountID(db dbm.KV) (int64, error) {
 	return id.Data, nil
 }
 
-func calcNewAccountKV(accounID int64) (*types.KeyValue) {
+func CalcNewAccountIDkv(accounID int64) (*types.KeyValue) {
 	key := CalcLatestAccountIDKey()
 	id := &types.Int64{
 		Data: accounID,

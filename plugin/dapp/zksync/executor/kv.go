@@ -6,6 +6,10 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
+func GetAccountIdPrimaryKeyPrefix() string {
+	return fmt.Sprintf("%s%", KeyPrefixStateDB+"accountId-")
+}
+
 func GetAccountIdPrimaryKey(accountId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"accountId-", accountId))
 }
@@ -21,6 +25,10 @@ func GetChain33EthPrimaryKey(chain33Addr string, ethAddr string) []byte {
 
 func GetTokenPrimaryKey(accountId uint64, tokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d%s%022d", KeyPrefixStateDB+"token-", accountId, "-", tokenId))
+}
+
+func GetTokenPrimaryKeyPrefix() string {
+	return fmt.Sprintf("%s", KeyPrefixStateDB+"token-")
 }
 
 func GetNFTIdPrimaryKey(nftTokenId uint64) []byte {

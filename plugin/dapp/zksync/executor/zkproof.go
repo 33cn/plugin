@@ -390,7 +390,7 @@ func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
 			EthAddress:  l.EthAddress,
 			AccountId:   l.AccountId,
 			Chain33Addr: l.Chain33Addr,
-			TokenHash:   l.TokenHash,
+			TokenHash:   zt.Byte2Str(l.TokenHash),
 		}
 		historyLeaf = append(historyLeaf, history)
 	}

@@ -34,6 +34,7 @@ message ZksyncAction {
 message TokenBalance {
   uint64 tokenId = 1;
   string balance = 2;
+  bytes tokenHash = 3;
 }
 
 message AccountTree {
@@ -48,9 +49,10 @@ message Leaf {
   string ethAddress = 2; //账户对应的以太坊地址
   ZkPubKey pubKey = 3; //eddsa公钥，用于验证身份
   string chain33Addr = 4; //chain33地址
-  string tokenHash = 5; //叶子下token的hash
+  bytes tokenHash = 5; //叶子下token的hash
   repeated uint64 tokenIds = 6; //叶子下拥有的tokenId
   AccountProxyPubKeys proxyPubKeys = 7; //eddsa代理公钥，用于验证代理者的身份
+  bytes leafHash = 8;
 }
 
 message HistoryLeaf {
@@ -65,7 +67,7 @@ message HistoryLeaf {
 }
 
 message RootInfo {
-  string rootHash = 1; //归档Merkle Tree的根hash
+  bytes rootHash = 1; //归档Merkle Tree的根hash
   int32 height = 2; //归档的高度
   uint64 startIndex = 3; //开始的全局index
 }
