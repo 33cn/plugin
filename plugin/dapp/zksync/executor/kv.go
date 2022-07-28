@@ -7,7 +7,7 @@ import (
 )
 
 func GetAccountIdPrimaryKeyPrefix() string {
-	return fmt.Sprintf("%s%", KeyPrefixStateDB+"accountId-")
+	return fmt.Sprintf("%s", KeyPrefixStateDB+"accountId-")
 }
 
 func GetAccountIdPrimaryKey(accountId uint64) []byte {
