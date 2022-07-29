@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/system/dapp/commands"
 	"math/big"
 	"os"
 	"strings"
@@ -35,6 +36,22 @@ func ZksyncCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
+		layer2Cmd(),
+
+		contractCmd(),
+		queryCmd(),
+		//NFT
+		nftCmd(),
+	)
+	return cmd
+}
+
+func layer2Cmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "layer2",
+		Short: "layer2 related cmd",
+	}
+	cmd.AddCommand(
 		depositCmd(),
 		withdrawCmd(),
 		contractToTreeCmd(),
@@ -48,10 +65,8 @@ func ZksyncCmd() *cobra.Command {
 		setOperatorCmd(),
 		getChain33AddrCmd(),
 		setTokenFeeCmd(),
-		queryCmd(),
-		//NFT
-		nftCmd(),
 	)
+
 	return cmd
 }
 
@@ -76,8 +91,6 @@ func depositFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("chain33Addr")
 	cmd.Flags().Uint64P("queueId", "i", 0, "eth queue id")
 	cmd.MarkFlagRequired("queueId")
-	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain id for proof")
-	cmd.MarkFlagRequired("chainTitleId")
 }
 
 func deposit(cmd *cobra.Command, args []string) {
@@ -86,7 +99,6 @@ func deposit(cmd *cobra.Command, args []string) {
 	ethAddress, _ := cmd.Flags().GetString("ethAddress")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 	queueId, _ := cmd.Flags().GetUint64("queueId")
-	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -97,7 +109,6 @@ func deposit(cmd *cobra.Command, args []string) {
 		EthAddress:         ethAddress,
 		Chain33Addr:        chain33Addr,
 		EthPriorityQueueId: int64(queueId),
-		ChainTitleId:       chainTitleId,
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
@@ -205,23 +216,26 @@ func contractToTreeCmd() *cobra.Command {
 }
 
 func contractToTreeFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "contractToTree tokenId")
-	cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().StringP("tokenSymbol", "t", "", "token symbol asset")
+	cmd.MarkFlagRequired("tokenSymbol")
 	cmd.Flags().StringP("amount", "a", "0", "contractToTree amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "contractToTree accountId")
-	cmd.MarkFlagRequired("accountId")
+	cmd.Flags().Uint64P("accountId", "i", 0, "contractToTree to accountId")
+	cmd.Flags().StringP("ethAddr", "e", "", "to eth addr")
+	cmd.Flags().StringP("layer2Addr", "l", "", "to layer2 addr")
 
 }
 
 func contractToTree(cmd *cobra.Command, args []string) {
-	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	tokenSymbol, _ := cmd.Flags().GetUint64("tokenSymbol")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	ethAddr, _ := cmd.Flags().GetString("ethAddr")
+	layer2Addr, _ := cmd.Flags().GetString("layer2Addr")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0, "0", "0")
+	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenSymbol, amount, "", ethAddr, layer2Addr, accountId, 0, "0", "0")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -447,15 +461,12 @@ func fullExitFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().Uint64P("queueId", "i", 0, "eth queue id")
 	cmd.MarkFlagRequired("queueId")
-	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id")
-	cmd.MarkFlagRequired("chainTitleId")
 }
 
 func fullExit(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	queueId, _ := cmd.Flags().GetUint64("queueId")
-	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -463,7 +474,6 @@ func fullExit(cmd *cobra.Command, args []string) {
 		TokenId:            tokenId,
 		AccountId:          accountId,
 		EthPriorityQueueId: int64(queueId),
-		ChainTitleId:       chainTitleId,
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
@@ -616,7 +626,7 @@ func commitProof(cmd *cobra.Command, args []string) {
 func getChain33AddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "l2addr",
-		Short: "get chain33 l2 address by privateKey",
+		Short: "get chain33 layer2 address by privateKey",
 		Run:   getChain33Addr,
 	}
 	getChain33AddrFlag(cmd)
@@ -1324,8 +1334,6 @@ func setTokenFeeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("fee")
 	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,proxyExit:5")
 	cmd.MarkFlagRequired("action")
-	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain  title id")
-	cmd.MarkFlagRequired("chainTitleId")
 }
 
 func setTokenFee(cmd *cobra.Command, args []string) {
@@ -1333,14 +1341,12 @@ func setTokenFee(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	fee, _ := cmd.Flags().GetString("fee")
 	action, _ := cmd.Flags().GetInt32("action")
-	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
 	paraName, _ := cmd.Flags().GetString("paraName")
 
 	payload := &zt.ZkSetFee{
-		TokenId:      tokenId,
-		Amount:       fee,
-		ActionTy:     action,
-		ChainTitleId: chainTitleId,
+		TokenId:  tokenId,
+		Amount:   fee,
+		ActionTy: action,
 	}
 
 	params := &rpctypes.CreateTxIn{
@@ -1737,4 +1743,102 @@ func getNftHash(cmd *cobra.Command, args []string) {
 	var id types.Int64
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &id)
 	ctx.Run()
+}
+
+func contractCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "contract",
+		Short: "zksync contract related cmd",
+	}
+	cmd.AddCommand(
+		CreateRawTransferCmd(),
+		CreateRawTransferToExecCmd(),
+		CreateRawWithdrawCmd(),
+	)
+
+	return cmd
+}
+
+//CreateRawTransferCmd  create raw transfer tx
+func CreateRawTransferCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer",
+		Short: "Create a transfer transaction",
+		Run:   createTransfer,
+	}
+	addCreateTransferFlags(cmd)
+	return cmd
+}
+
+func addCreateTransferFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("to", "t", "", "receiver account address")
+	_ = cmd.MarkFlagRequired("to")
+
+	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
+	_ = cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol in layer2")
+	_ = cmd.MarkFlagRequired("symbol")
+}
+
+func createTransfer(cmd *cobra.Command, args []string) {
+	commands.CreateAssetTransfer(cmd, args, zt.Zksync)
+}
+
+//CreateRawTransferToExecCmd create raw transfer to exec tx
+func CreateRawTransferToExecCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer_exec",
+		Short: "Create a transfer to exec transaction",
+		Run:   createTransferToExec,
+	}
+	addCreateTransferToExecFlags(cmd)
+	return cmd
+}
+
+func addCreateTransferToExecFlags(cmd *cobra.Command) {
+	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
+	_ = cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol in layer2")
+	_ = cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
+	_ = cmd.MarkFlagRequired("exec")
+}
+
+func createTransferToExec(cmd *cobra.Command, args []string) {
+	commands.CreateAssetSendToExec(cmd, args, zt.Zksync)
+}
+
+//CreateRawWithdrawCmd create raw withdraw tx
+func CreateRawWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw",
+		Short: "Create a withdraw transaction",
+		Run:   createWithdraw,
+	}
+	addCreateWithdrawFlags(cmd)
+	return cmd
+}
+
+func addCreateWithdrawFlags(cmd *cobra.Command) {
+	cmd.Flags().Float64P("amount", "a", 0, "withdraw amount")
+	_ = cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol in layer2")
+	_ = cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
+	_ = cmd.MarkFlagRequired("exec")
+}
+
+func createWithdraw(cmd *cobra.Command, args []string) {
+	commands.CreateAssetWithdraw(cmd, args, zt.Zksync)
 }

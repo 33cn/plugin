@@ -143,23 +143,32 @@ func getVerifyKeyData(db dbm.KV, chainTitleId string) (*zt.ZkVerifyKey, error) {
 //合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if payload.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+	v, ok := new(big.Int).SetString(zt.ZkParaChainInnerTitleId, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "innertitleId=%s", zt.ZkParaChainInnerTitleId)
 	}
+	chainId := v.Uint64()
+	if !cfg.IsPara() {
+		if payload.GetChainTitleId() <= 0 {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+		}
+		chainId = payload.GetChainTitleId()
+	}
+
 	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
-	oldKey, err := getVerifyKeyData(a.statedb, new(big.Int).SetUint64(payload.GetChainTitleId()).String())
+	oldKey, err := getVerifyKeyData(a.statedb, new(big.Int).SetUint64(chainId).String())
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.ZkVerifyKey{ChainTitleId: payload.GetChainTitleId(), Key: payload.Key}
+		key := &zt.ZkVerifyKey{ChainTitleId: chainId, Key: payload.Key}
 
 		return makeSetVerifyKeyReceipt(nil, key), nil
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.ZkVerifyKey{ChainTitleId: payload.ChainTitleId, Key: payload.Key}
+	newKey := &zt.ZkVerifyKey{ChainTitleId: chainId, Key: payload.Key}
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
@@ -269,10 +278,15 @@ func (a *Action) verifyInitRoot(payload *zt.ZkCommitProof) error {
 //
 func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if payload.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitle is null")
+	chainId := zt.ZkParaChainInnerTitleId
+	if !cfg.IsPara() {
+		if payload.GetChainTitleId() <= 0 {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitle is null")
+		}
+		chainId = new(big.Int).SetUint64(payload.GetChainTitleId()).String()
 	}
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
+
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, chainId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 
@@ -288,13 +302,13 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	//验证proofId=1时候的initRoot
 	err := a.verifyInitRoot(payload)
 	if err != nil {
-		zklog.Error("commitProof.verifyInitRoot", "chainId", payload.ChainTitleId, "err", err)
+		zklog.Error("commitProof.verifyInitRoot", "chainId", chainId, "err", err)
 		return nil, err
 	}
 
 	//1. 先验证proof是否ok
 	//get verify key
-	verifyKey, err := getVerifyKeyData(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String())
+	verifyKey, err := getVerifyKeyData(a.statedb, chainId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get verify key")
 	}
@@ -304,6 +318,10 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	}
 
 	//更新数据库, public and proof, pubdata 不上链，存localdb
+	chainTitleVal, ok := new(big.Int).SetString(chainId, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitleVal=%s", chainId)
+	}
 	newProof := &zt.CommitProofState{
 		BlockStart:        payload.BlockStart,
 		BlockEnd:          payload.BlockEnd,
@@ -315,11 +333,11 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		NewTreeRoot:       payload.NewTreeRoot,
 		OnChainProofId:    payload.OnChainProofId,
 		CommitBlockHeight: a.height,
-		ChainTitleId:      payload.ChainTitleId,
+		ChainTitleId:      chainTitleVal.Uint64(),
 	}
 
 	//2. 验证proof是否连续，不连续则暂时保存(考虑交易顺序被打散的场景)
-	lastProof, err := getLastCommitProofData(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String())
+	lastProof, err := getLastCommitProofData(a.statedb, chainId)
 	if err != nil {
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
@@ -327,7 +345,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d <= lastProofId=%d", payload.ProofId, lastProof.ProofId)
 	}
 	//get未处理的证明的最大id
-	maxRecordId, err := getMaxRecordProofIdData(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String())
+	maxRecordId, err := getMaxRecordProofIdData(a.statedb, chainId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getMaxRecordProofId for id=%d", payload.ProofId)
 	}
@@ -335,7 +353,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if payload.ProofId > lastProof.ProofId+1 {
 		return makeCommitProofRecordReceipt(newProof, uint64(maxRecordId.Data)), nil
 	}
-	lastOnChainProof, err := getLastOnChainProofData(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String())
+	lastOnChainProof, err := getLastOnChainProofData(a.statedb, chainId)
 	if err != nil {
 		return nil, errors.Wrap(err, "getLastOnChainProof")
 	}
@@ -348,7 +366,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	//循环检查可能未处理的recordProof
 	lastProof = newProof
 	for i := lastProof.ProofId + 1; i < uint64(maxRecordId.Data); i++ {
-		recordProof, _ := getRecordProof(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), i)
+		recordProof, _ := getRecordProof(a.statedb, chainId, i)
 		if recordProof == nil {
 			break
 		}
@@ -501,19 +519,31 @@ func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
 	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
-	if payload.GetChainTitleId() <= 0 || len(payload.Verifiers) == 0 {
-		return nil, errors.Wrap(types.ErrInvalidParam, "chainTitle or verifier nil")
+	if len(payload.Verifiers) == 0 {
+		return nil, errors.Wrap(types.ErrInvalidParam, "verifier nil")
 	}
-	chainTitleId := new(big.Int).SetUint64(payload.ChainTitleId).String()
-	oldKey, err := getVerifierData(a.statedb, chainTitleId)
+	//chainTitle只是在主链有作用，区分不同平行链， 平行链默认为0
+	v, ok := new(big.Int).SetString(zt.ZkParaChainInnerTitleId, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "innertitleId=%s", zt.ZkParaChainInnerTitleId)
+	}
+	chainTitleId := v.Uint64()
+	if !cfg.IsPara() {
+		if payload.GetChainTitleId() <= 0 {
+			return nil, errors.Wrap(types.ErrInvalidParam, "chainTitle or verifier nil")
+		}
+		chainTitleId = payload.ChainTitleId
+	}
+
+	oldKey, err := getVerifierData(a.statedb, new(big.Int).SetUint64(chainTitleId).String())
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.ZkVerifier{ChainTitleId: payload.ChainTitleId, Verifiers: payload.Verifiers}
+		key := &zt.ZkVerifier{ChainTitleId: chainTitleId, Verifiers: payload.Verifiers}
 		return makeSetVerifierReceipt(nil, key), nil
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.ZkVerifier{ChainTitleId: payload.ChainTitleId, Verifiers: payload.Verifiers}
+	newKey := &zt.ZkVerifier{ChainTitleId: chainTitleId, Verifiers: payload.Verifiers}
 	return makeSetVerifierReceipt(oldKey, newKey), nil
 }
 

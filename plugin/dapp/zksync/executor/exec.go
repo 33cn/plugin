@@ -10,9 +10,9 @@ func (z *zksync) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 	return action.Deposit(payload)
 }
 
-func (z *zksync) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (z *zksync) Exec_ZkWithdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.Withdraw(payload)
+	return action.ZkWithdraw(payload)
 }
 
 func (z *zksync) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -25,9 +25,9 @@ func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Tra
 	return action.TreeToContract(payload)
 }
 
-func (z *zksync) Exec_Transfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (z *zksync) Exec_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.Transfer(payload)
+	return action.ZkTransfer(payload)
 }
 
 func (z *zksync) Exec_TransferToNew(payload *zt.ZkTransferToNew, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -79,6 +79,11 @@ func (z *zksync) Exec_SetFee(payload *zt.ZkSetFee, tx *types.Transaction, index 
 	return action.setFee(payload)
 }
 
+func (z *zksync) Exec_SetTokenSymbol(payload *zt.ZkTokenSymbol, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.setTokenSymbol(payload)
+}
+
 func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.MintNFT(payload)
@@ -92,4 +97,22 @@ func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transacti
 func (z *zksync) Exec_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.transferNFT(payload)
+}
+
+//Exec_Transfer exec asset transfer process
+func (z *zksync) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.AssetTransfer(payload, tx, index)
+}
+
+//Exec_Withdraw exec asset withdraw
+func (z *zksync) Exec_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.AssetWithdraw(payload, tx, index)
+}
+
+//Exec_TransferToExec exec transfer asset
+func (z *zksync) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.AssetTransferToExec(payload, tx, index)
 }

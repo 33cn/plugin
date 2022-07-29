@@ -23,6 +23,16 @@ func GetTokenPrimaryKey(accountId uint64, tokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d%s%022d", KeyPrefixStateDB+"token-", accountId, "-", tokenId))
 }
 
+//GetTokenSymbolKey tokenId 对应symbol
+func GetTokenSymbolKey(tokenId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenId-"+tokenId))
+}
+
+//GetTokenSymbolIdKey token symbol 对应id
+func GetTokenSymbolIdKey(symbol string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenSym-"+symbol))
+}
+
 func GetNFTIdPrimaryKey(nftTokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"nftTokenId-", nftTokenId))
 }

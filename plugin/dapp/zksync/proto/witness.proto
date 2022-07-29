@@ -167,6 +167,17 @@ message ZkContractToTreeWitnessInfo {
   ZkSignature signature = 4;
 }
 
+//直接产生新的tree地址
+message ZkContractToTreeNewWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  uint64 toAccountId = 4;
+  string ethAddress = 5;
+  string layer2Addr = 6;
+  ZkSignature signature = 7;
+}
+
 message ZkTreeToContractWitnessInfo {
   uint64 tokenId = 1;
   string amount = 2;
@@ -248,11 +259,12 @@ message OperationSpecialInfo {
     ZkFullExitWitnessInfo  fullExit  = 7;
     ZkSwapWitnessInfo  swap         = 8;
     ZkContractToTreeWitnessInfo contractToTree = 9;
-    ZkTreeToContractWitnessInfo treeToContract = 10;
-    ZkFeeWitnessInfo fee        = 11;  //fee action
-    ZkMintNFTWitnessInfo     mintNFT       = 12;
-    ZkWithdrawNFTWitnessInfo withdrawNFT   = 13;
-    ZkTransferNFTWitnessInfo transferNFT   = 14;
+    ZkContractToTreeNewWitnessInfo contract2TreeNew = 10;
+    ZkTreeToContractWitnessInfo treeToContract = 11;
+    ZkFeeWitnessInfo fee        = 12;  //fee action
+    ZkMintNFTWitnessInfo     mintNFT       = 13;
+    ZkWithdrawNFTWitnessInfo withdrawNFT   = 14;
+    ZkTransferNFTWitnessInfo transferNFT   = 15;
   }
 }
 
