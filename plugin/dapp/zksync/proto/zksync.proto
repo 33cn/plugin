@@ -9,8 +9,8 @@ option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 message ZksyncAction {
   oneof value {
     ZkDeposit  deposit          = 1;
-    ZkWithdraw withdraw         = 2;
-    ZkTransfer transfer           = 3;
+    ZkWithdraw zkWithdraw         = 2;
+    ZkTransfer zkTransfer           = 3;
     ZkTransferToNew transferToNew = 4;
     ZkProxyExit proxyExit         = 5;
     ZkSetPubKey setPubKey         = 6;
@@ -27,7 +27,10 @@ message ZksyncAction {
     ZkCommitProof         commitProof  = 32;
     ZkVerifier  setVerifier         = 33;
     ZkSetFee    setFee              = 34;
-
+    ZkTokenSymbol setTokenSymbol    = 35;
+    AssetsTransfer        transfer        = 36;
+    AssetsWithdraw        withdraw        = 37;
+    AssetsTransferToExec  transferToExec  = 38;
   }
 
   int32 ty = 15;
@@ -117,7 +120,6 @@ message ZkDeposit {
   string chain33Addr = 4;
   int64 ethPriorityQueueId = 5; //需要在合约保证id连续
   ZkSignature signature = 6;
-  uint64 chainTitleId = 7;
 
 }
 
@@ -130,17 +132,22 @@ message ZkWithdraw {
 }
 
 message ZkContractToTree {
-  uint64 tokenId = 1;
+  string tokenSymbol = 1;
   string amount = 2;
-  uint64 accountId = 3;
-  ZkSignature signature = 4;
+  uint64 toAccountId = 3;
+  string toEthAddr = 4;
+  string toLayer2Addr = 5;
+  ZkSignature signature = 6;
+  string fromExec = 7;
 }
 
 message ZkTreeToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  ZkSignature signature = 4;
+  uint64 toAcctId = 4;  //缺省的systemTree2ContractId， 这里设置是为了签名需要和电路验证，也防止重放
+  ZkSignature signature = 5;
+  string toExec = 6;
 }
 
 message ZkTransfer {
@@ -182,7 +189,6 @@ message ZkFullExit {
   uint64 accountId = 2;
   int64 ethPriorityQueueId = 3;
   ZkSignature signature = 4;
-  uint64 chainTitleId = 5;
   ZkSwapFee fee    = 6;
 }
 
@@ -325,7 +331,6 @@ message ZkSetFee {
   uint64 tokenId = 1;
   string amount = 2;
   int32 actionTy = 3;
-  uint64 chainTitleId = 4;
 }
 
 message ReceiptSetFee {
@@ -333,6 +338,19 @@ message ReceiptSetFee {
   int32 actionTy = 2;
   string prevAmount = 3;
   string currentAmount = 4;
+}
+
+message ZkTokenSymbol {
+  string id = 1;
+  string symbol = 2;
+  uint32 frozen = 3;  //是否可修改，如果已经从tree2Contract使用过，则不可修改=1
+}
+
+message ReceiptSetTokenSymbol {
+  string tokenId = 1;
+  string prevSymbol = 2;
+  string curSymbol = 3;
+  uint32 frozen = 4;
 }
 
 //zk relayer operators

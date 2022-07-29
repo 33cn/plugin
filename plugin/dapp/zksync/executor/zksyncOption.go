@@ -2,13 +2,13 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/account"
 	"math/big"
 	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/common/log/log15"
 
-	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -63,9 +63,6 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 	var err error
 
-	if payload.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
-	}
 	err = checkParam(payload.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
@@ -77,7 +74,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -324,7 +321,7 @@ func getTreeUpdateInfo(stateDb dbm.KV) (*TreeUpdateInfo, error) {
 	return &TreeUpdateInfo{updateMap: updateMap, kvs: make([]*types.KeyValue, 0), localKvs: make([]*types.KeyValue, 0)}, nil
 }
 
-func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
+func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
@@ -447,45 +444,31 @@ func checkAmount(token *zt.TokenBalance, amount string) error {
 	return errors.New("balance not enough")
 }
 
-func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, error) {
+func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId uint64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
 
-	//因为合约balance需要/1e10，因此要先去掉精度
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
-
-	err := checkParam(payload.Amount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkParam")
-	}
-	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkPackVal")
-	}
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 
-	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
+	leaf, err := GetLeafByAccountId(a.statedb, payload.GetToAccountId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
 	if leaf == nil {
-		return nil, errors.New("account:" + strconv.FormatUint(payload.AccountId, 10) + " not exist")
+		return nil, errors.New("account:" + strconv.FormatUint(payload.ToAccountId, 10) + " not exist")
 	}
-
-	err = authVerification(payload.GetSignature().PubKey, leaf.GetPubKey())
-	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
-	}
+	//accountId 的地址需要和转入者对应，对转入者的保护，防止转到别人ID
+	//err = authVerification(payload.GetSignature().PubKey, leaf.GetPubKey())
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "authVerification")
+	//}
 
 	special := &zt.ZkContractToTreeWitnessInfo{
-		TokenId:   payload.TokenId,
+		TokenId:   tokenId,
 		Amount:    payload.Amount,
-		AccountId: payload.AccountId,
+		AccountId: payload.ToAccountId,
 		Signature: payload.Signature,
 	}
 
@@ -496,48 +479,16 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ContractToTree{ContractToTree: special}},
 	}
 
-	//更新之前先计算证明
-	receipt, err := calProof(a.statedb, info, payload.AccountId, payload.TokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-	var balance string
-	if receipt.Token == nil {
-		balance = "0"
-	} else {
-		balance = receipt.Token.Balance
-	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, payload.AccountId, payload.TokenId, balance)
-
-	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
-	}
 	//更新合约账户
-	accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Sub)
+	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), payload.TokenSymbol, zt.Sub, payload.FromExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
-	kvs = append(kvs, accountKvs...)
-	//存款到叶子之后计算证明
-	receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
+
+	kvs, localKvs, err := a.transferProc(zt.SystemTree2ContractAcctId, payload.ToAccountId, tokenId, payload.Amount, payload.Amount, info, operationInfo)
 	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+		return nil, errors.Wrapf(err, "transferProc")
 	}
-
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, payload.AccountId, payload.TokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-	kv := &types.KeyValue{
-		Key:   getHeightKey(a.height),
-		Value: rootHash,
-	}
-	kvs = append(kvs, kv)
-
-	branch := &zt.OperationPairBranch{
-		Before: before,
-		After:  after,
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
 
 	zksynclog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
@@ -546,13 +497,94 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(zksynclog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
+
+	return mergeReceipt(receipts, contractReceipt), nil
 }
 
-func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
+//contract2Tree 根据ethAddr、layer2Addr 自动创建新accountId
+func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uint64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
+	if len(payload.GetToEthAddr()) <= 0 || len(payload.GetToLayer2Addr()) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "accountId=%d,ethAddr=%s or layer2Addr=%s nil",
+			payload.GetToAccountId(), payload.GetToEthAddr(), payload.GetToLayer2Addr())
+	}
+	//转换10进制
+	newAddr, ok := zt.HexAddr2Decimal(payload.ToLayer2Addr)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer chain33Addr=%s", payload.ToLayer2Addr)
+	}
+	payload.ToLayer2Addr = newAddr
+
+	newAddr, ok = zt.HexAddr2Decimal(payload.ToEthAddr)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer EthAddress=%s", payload.ToEthAddr)
+	}
+	payload.ToEthAddr = newAddr
+
+	info, err := getTreeUpdateInfo(a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
+	}
+	toLeaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.ToLayer2Addr, payload.ToEthAddr, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress")
+	}
+	//toAccount存在，走accountId流程, 因为contract2New 电路不验证签名
+	if toLeaf != nil {
+		payload.ToAccountId = toLeaf.AccountId
+		return a.ContractToTreeAcctIdProc(payload, tokenId)
+	}
+
+	//accountId 的地址需要和转入者对应，对转入者的保护，防止转到别人ID
+	//err = authVerification(payload.GetSignature().PubKey, leaf.GetPubKey())
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "authVerification")
+	//}
+
+	special := &zt.ZkContractToTreeNewWitnessInfo{
+		TokenId:   tokenId,
+		Amount:    payload.Amount,
+		AccountId: payload.ToAccountId,
+		//ToAccountId: nil,
+		EthAddress: payload.ToEthAddr,
+		Layer2Addr: payload.ToLayer2Addr,
+		Signature:  payload.Signature,
+	}
+
+	operationInfo := &zt.OperationInfo{
+		BlockHeight: uint64(a.height),
+		TxIndex:     uint32(a.index),
+		TxType:      zt.TyContractToTreeNewAction,
+		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Contract2TreeNew{Contract2TreeNew: special}},
+	}
+
+	//更新合约账户
+	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), payload.TokenSymbol, zt.Sub, payload.FromExec)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+	}
+
+	kvs, localKvs, err := a.transfer2NewProc(zt.SystemTree2ContractAcctId, tokenId, payload.ToEthAddr, payload.ToLayer2Addr, payload.Amount, payload.Amount, info, operationInfo)
+	if err != nil {
+		return nil, errors.Wrapf(err, "transfer2NewProc")
+	}
+	zksynclog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(zksynclog)}
+	logs = append(logs, receiptLog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+
+	return mergeReceipt(receipts, contractReceipt), nil
+}
+
+func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, error) {
+	//保证精度是小数后8位，eth转换去掉10位
+	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "coin precision is not defual=%d", types.DefaultCoinPrecision)
+	}
+
 	//因为合约balance需要/1e10，因此要先去掉精度
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
@@ -566,68 +598,376 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "checkPackVal")
 	}
 
-	info, err := getTreeUpdateInfo(a.statedb)
+	tokenId, err := getTokenSymbolId(a.statedb, payload.TokenSymbol)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
+		return nil, err
 	}
-	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
-	}
-	if leaf == nil {
-		return nil, errors.New("account not exist")
-	}
-	err = authVerification(payload.Signature.PubKey, leaf.GetPubKey())
-	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
+	//如果设置了toAccountId 直接转到id，否则根据ethAddr、layer2Addr创建新account
+	if payload.GetToAccountId() > 0 {
+		return a.ContractToTreeAcctIdProc(payload, tokenId)
 	}
 
-	token, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.AccountId, payload.TokenId, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
-	}
-	err = checkAmount(token, payload.GetAmount())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.checkAmount")
+	return a.contractToTreeNewProc(payload, tokenId)
+}
+
+//func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
+//	var logs []*types.ReceiptLog
+//	//因为合约balance需要/1e10，因此要先去掉精度
+//	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+//	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
+//
+//	err := checkParam(payload.Amount)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "checkParam")
+//	}
+//	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "checkPackVal")
+//	}
+//	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
+//	if payload.ToAccId != zt.SystemTree2ContractAcctId{
+//		return nil, errors.Wrapf(types.ErrInvalidParam,"toAcctId not systemId=%d",zt.SystemTree2ContractAcctId)
+//	}
+//
+//	info, err := getTreeUpdateInfo(a.statedb)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
+//	}
+//	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+//	}
+//	if leaf == nil {
+//		return nil, errors.New("account not exist")
+//	}
+//	err = authVerification(payload.Signature.PubKey, leaf.GetPubKey())
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "authVerification")
+//	}
+//
+//
+//	special := &zt.ZkTreeToContractWitnessInfo{
+//		TokenId:   payload.TokenId,
+//		Amount:    payload.Amount,
+//		AccountId: payload.AccountId,
+//		Signature: payload.Signature,
+//	}
+//	operationInfo := &zt.OperationInfo{
+//		BlockHeight: uint64(a.height),
+//		TxIndex:     uint32(a.index),
+//		TxType:      zt.TyTreeToContractAction,
+//		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TreeToContract{TreeToContract: special}},
+//	}
+//
+//
+//	kvs,localKvs,err := a.transferProc(payload.AccountId,zt.SystemTree2ContractAcctId,payload.TokenId,payload.Amount,payload.Amount,info,operationInfo)
+//	if err != nil{
+//		return nil, errors.Wrapf(err,"transferProc")
+//	}
+//
+//	zklog := &zt.ZkReceiptLog{
+//		OperationInfo: operationInfo,
+//		LocalKvs:      localKvs,
+//	}
+//	receiptLog := &types.ReceiptLog{Ty: zt.TyTreeToContractLog, Log: types.Encode(zklog)}
+//	logs = append(logs, receiptLog)
+//	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+//
+//	//更新合约账户
+//	symbol,err :=getTokenIdSymbol(a.statedb,strconv.Itoa(int(payload.GetTokenId())))
+//	if err != nil{
+//		return nil,err
+//	}
+//	contractReceipt, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), symbol, zt.Add,payload.ToExec)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+//	}
+//	return mergeReceipt(receipts,contractReceipt), nil
+//}
+
+func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
+	//保证精度是小数后8位，eth转换去掉10位
+	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "coin precision is not defual=%d", types.DefaultCoinPrecision)
 	}
 
-	special := &zt.ZkTreeToContractWitnessInfo{
-		TokenId:   payload.TokenId,
-		Amount:    payload.Amount,
-		AccountId: payload.AccountId,
-		Signature: payload.Signature,
-	}
-	operationInfo := &zt.OperationInfo{
-		BlockHeight: uint64(a.height),
-		TxIndex:     uint32(a.index),
-		TxType:      zt.TyTreeToContractAction,
-		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TreeToContract{TreeToContract: special}},
+	//因为合约balance需要/1e10，因此要先去掉精度
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
+	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
+	if payload.ToAcctId != zt.SystemTree2ContractAcctId {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "toAcctId not systemId=%d", zt.SystemTree2ContractAcctId)
 	}
 
-	//更新之前先计算证明
-	receipt, err := calProof(a.statedb, info, payload.AccountId, payload.TokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+	//重用transfer电路
+	transfer := &zt.ZkTransfer{
+		TokenId:       payload.TokenId,
+		Amount:        payload.Amount,
+		FromAccountId: payload.AccountId,
+		ToAccountId:   zt.SystemTree2ContractAcctId,
+		Signature:     payload.Signature,
+		//跨链不收手续费
+		Fee: &zt.ZkSwapFee{FromFee: "0", ToFee: "0"},
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, payload.AccountId, payload.TokenId, receipt.Token.Balance)
+	receipt, err := a.ZkTransfer(transfer)
+	if err != nil {
+		return nil, errors.Wrapf(err, "transfer")
+	}
 
-	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
-	}
 	//更新合约账户
-	accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Add)
+	symbol, err := getTokenIdSymbol(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
+	if err != nil {
+		return nil, err
+	}
+	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), symbol, zt.Add, payload.ToExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
-	kvs = append(kvs, accountKvs...)
-	//从叶子取款之后计算证明
-	receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+	return mergeReceipt(receipt, contractReceipt), nil
+}
+
+func makeSetTokenSymbolReceipt(id, oldVal, newVal string) *types.Receipt {
+	key := GetTokenSymbolKey(id)
+	keySym := GetTokenSymbolIdKey(newVal)
+	log := &zt.ReceiptSetTokenSymbol{
+		TokenId:    id,
+		PrevSymbol: oldVal,
+		CurSymbol:  newVal,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(&zt.ZkTokenSymbol{Id: id, Symbol: newVal})},
+			{Key: keySym, Value: types.Encode(&types.ReqString{Data: id})},
+		},
+		Logs: []*types.ReceiptLog{
+			{Ty: zt.TyLogSetTokenSymbol, Log: types.Encode(log)},
+		},
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, payload.AccountId, payload.TokenId, receipt.Token.Balance)
+}
+
+//tokenId可以对应多个symbol，但一个symbol只能对应一个Id,比如Id=1,symbol=USTC,后改成USTD, USTC仍然会对应Id=1, 新的Id不能使用已存在的名字，防止重复混乱
+func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+
+	//只有管理员可以设置
+	if !isSuperManager(cfg, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
+	}
+	if len(payload.Id) <= 0 || len(payload.Symbol) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "id=%s or symbol=%s nil", payload.Id, payload.Symbol)
+	}
+
+	//首先检查symbol是否存在，symbol存在不允许修改
+	id, err := getTokenSymbolId(a.statedb, payload.Symbol)
+	if !isNotFound(errors.Cause(err)) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%s", err, id)
+	}
+
+	lastSym, err := getTokenIdSymbol(a.statedb, payload.Id)
+	if isNotFound(errors.Cause(err)) {
+		return makeSetTokenSymbolReceipt(payload.Id, "", payload.Symbol), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return makeSetTokenSymbolReceipt(payload.Id, lastSym, payload.Symbol), nil
+
+}
+
+func getTokenIdSymbol(db dbm.KV, tokenId string) (string, error) {
+	key := GetTokenSymbolKey(tokenId)
+	r, err := db.Get(key)
+	if err != nil {
+		return "", errors.Wrapf(err, "getTokenIdSymbol.getDb")
+	}
+	var symbol zt.ZkTokenSymbol
+	err = types.Decode(r, &symbol)
+	if err != nil {
+		return "", errors.Wrapf(err, "getTokenIdSymbol.decode")
+	}
+	return symbol.Symbol, nil
+}
+func getTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
+	if len(symbol) <= 0 {
+		return 0, errors.Wrapf(types.ErrInvalidParam, "symbol nil=%s", symbol)
+	}
+	key := GetTokenSymbolIdKey(symbol)
+	r, err := db.Get(key)
+	if err != nil {
+		return 0, errors.Wrapf(err, "getTokenIdSymbol.getDb")
+	}
+	var token types.ReqString
+	err = types.Decode(r, &token)
+	if err != nil {
+		return 0, errors.Wrapf(err, "getTokenIdSymbol.decode")
+	}
+	id, ok := new(big.Int).SetString(token.Data, 10)
+	if !ok {
+		return 0, errors.Wrapf(types.ErrInvalidParam, "token.data=%s", token.Data)
+	}
+	return id.Uint64(), nil
+}
+
+//func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue, error) {
+//	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
+//	contractAccount := accountdb.LoadAccount(addr)
+//	change, _ := new(big.Int).SetString(amount, 10)
+//	//accountdb去除末尾10位小数
+//	shortChange := new(big.Int).Div(change, big.NewInt(1e10)).Int64()
+//	if option == zt.Sub {
+//		if contractAccount.Balance < shortChange {
+//			return nil, errors.New("balance not enough")
+//		}
+//		contractAccount.Balance -= shortChange
+//	} else {
+//		contractAccount.Balance += shortChange
+//	}
+//
+//	kvs := accountdb.GetKVSet(contractAccount)
+//	return kvs, nil
+//}
+
+//func (a *Action) assetTransfer2Exec(acc *account.DB,execName string,amount int64)(*types.Receipt, error){
+//	types.GetParaExecName()
+//	if dapp.IsDriverAddress(dapp.ExecAddress(execName), a.height)  {
+//		return acc.TransferToExec(a.fromaddr, dapp.ExecAddress(execName), amount)
+//	}
+//	return nil, errors.Wrapf()
+//}
+
+func (a *Action) UpdateContractAccount(amount, symbol string, option int32, execName string) (*types.Receipt, error) {
+	accountdb, err := newZkSyncAccount(a.api.GetConfig(), symbol, a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "newZkSyncAccount")
+	}
+	change, ok := new(big.Int).SetString(amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "UpdateContractAccount amount=%s", amount)
+	}
+	//accountdb去除末尾10位小数
+	shortChange := new(big.Int).Div(change, big.NewInt(1e10)).Int64()
+	var execReceipt types.Receipt
+	if option == zt.Sub {
+		if len(execName) > 0 {
+			r, err := a.UpdateExecAccount(accountdb, shortChange, option, execName)
+			if err != nil {
+				return nil, errors.Wrapf(err, "withdraw from exec=%s,val=%d", execName, shortChange)
+			}
+			mergeReceipt(&execReceipt, r)
+		}
+		r, err := assetWithdrawBalance(accountdb, a.fromaddr, shortChange)
+		return mergeReceipt(&execReceipt, r), err
+	}
+	//deposit
+	r, err := assetDepositBalance(accountdb, a.fromaddr, shortChange)
+	if err != nil {
+		return nil, errors.Wrapf(err, "deposit val=%d", shortChange)
+	}
+	mergeReceipt(&execReceipt, r)
+	if len(execName) > 0 {
+		r, err = a.UpdateExecAccount(accountdb, shortChange, option, execName)
+		return mergeReceipt(&execReceipt, r), err
+	}
+	return &execReceipt, nil
+}
+
+func (a *Action) UpdateExecAccount(accountdb *account.DB, amount int64, option int32, execName string) (*types.Receipt, error) {
+	execAddr := dapp.ExecAddress(execName)
+	if !dapp.IsDriverAddress(execAddr, a.height) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "execName=%s not driver", execName)
+	}
+	if option == zt.Sub {
+		return accountdb.TransferWithdraw(a.fromaddr, execAddr, amount)
+	}
+	return accountdb.TransferToExec(a.fromaddr, execAddr, amount)
+}
+
+func (a *Action) transferProc(fromAcctId, toAcctId, tokenId uint64, fromAmount, toAmount string, treeInfo *TreeUpdateInfo, opInfo *zt.OperationInfo) ([]*types.KeyValue, []*types.KeyValue, error) {
+	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
+
+	fromLeaf, err := GetLeafByAccountId(a.statedb, fromAcctId, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if fromLeaf == nil {
+		return nil, nil, errors.New("account not exist")
+	}
+
+	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, fromAcctId, tokenId, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+	}
+	err = checkAmount(fromToken, fromAmount)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.checkAmount")
+	}
+
+	//更新之前先计算证明
+	receipt, err := calProof(a.statedb, treeInfo, fromAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+
+	before := getBranchByReceipt(receipt, opInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, fromAcctId, tokenId, receipt.Token.Balance)
+
+	//更新fromLeaf
+	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, treeInfo, fromLeaf.GetAccountId(), tokenId, fromAmount, zt.Sub)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	kvs = append(kvs, fromKvs...)
+	localKvs = append(localKvs, fromLocal...)
+	//更新之后计算证明
+	receipt, err = calProof(a.statedb, treeInfo, fromAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+
+	after := getBranchByReceipt(receipt, opInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, fromAcctId, tokenId, receipt.Token.Balance)
+
+	branch := &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	opInfo.OperationBranches = append(opInfo.GetOperationBranches(), branch)
+
+	toLeaf, err := GetLeafByAccountId(a.statedb, toAcctId, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if toLeaf == nil {
+		return nil, nil, errors.New("account not exist")
+	}
+
+	//更新之前先计算证明
+	receipt, err = calProof(a.statedb, treeInfo, toAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+	var balance string
+	if receipt.Token == nil {
+		balance = "0"
+	} else {
+		balance = receipt.Token.Balance
+	}
+	before = getBranchByReceipt(receipt, opInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, toAcctId, tokenId, balance)
+
+	//更新toLeaf
+	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, treeInfo, toLeaf.GetAccountId(), tokenId, toAmount, zt.Add)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	kvs = append(kvs, tokvs...)
+	localKvs = append(localKvs, toLocal...)
+	//更新之后计算证明
+	receipt, err = calProof(a.statedb, treeInfo, toAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+	after = getBranchByReceipt(receipt, opInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, toAcctId, tokenId, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -635,44 +975,19 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 	kvs = append(kvs, kv)
 
-	branch := &zt.OperationPairBranch{
+	branch = &zt.OperationPairBranch{
 		Before: before,
 		After:  after,
 	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	zklog := &zt.ZkReceiptLog{
-		OperationInfo: operationInfo,
-		LocalKvs:      localKvs,
-	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyTreeToContractLog, Log: types.Encode(zklog)}
-	logs = append(logs, receiptLog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
+	opInfo.OperationBranches = append(opInfo.GetOperationBranches(), branch)
+
+	return kvs, localKvs, nil
 }
 
-func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue, error) {
-	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
-	contractAccount := accountdb.LoadAccount(addr)
-	change, _ := new(big.Int).SetString(amount, 10)
-	//accountdb去除末尾10位小数
-	shortChange := new(big.Int).Div(change, big.NewInt(1e10)).Int64()
-	if option == zt.Sub {
-		if contractAccount.Balance < shortChange {
-			return nil, errors.New("balance not enough")
-		}
-		contractAccount.Balance -= shortChange
-	} else {
-		contractAccount.Balance += shortChange
-	}
-
-	kvs := accountdb.GetKVSet(contractAccount)
-	return kvs, nil
-}
-
-func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
+func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
+	//var kvs []*types.KeyValue
+	//var localKvs []*types.KeyValue
 
 	err := checkParam(payload.Amount)
 	if err != nil {
@@ -719,14 +1034,6 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
-	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
-	}
-	err = checkAmount(fromToken, totalMakerAmount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.checkAmount")
-	}
 
 	special := &zt.ZkTransferWitnessInfo{
 		TokenId:       payload.TokenId,
@@ -747,81 +1054,10 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: special}},
 	}
 
-	//更新之前先计算证明
-	receipt, err := calProof(a.statedb, info, payload.FromAccountId, payload.TokenId)
+	kvs, localKvs, err := a.transferProc(payload.FromAccountId, payload.ToAccountId, payload.TokenId, totalMakerAmount, totakTakerAmount, info, operationInfo)
 	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+		return nil, errors.Wrapf(err, "transferProc")
 	}
-
-	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
-
-	//更新fromLeaf
-	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalMakerAmount, zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
-	}
-	kvs = append(kvs, fromKvs...)
-	localKvs = append(localKvs, fromLocal...)
-	//更新之后计算证明
-	receipt, err = calProof(a.statedb, info, payload.FromAccountId, payload.TokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-
-	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
-
-	branch := &zt.OperationPairBranch{
-		Before: before,
-		After:  after,
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-
-	toLeaf, err := GetLeafByAccountId(a.statedb, payload.ToAccountId, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
-	}
-	if toLeaf == nil {
-		return nil, errors.New("account not exist")
-	}
-
-	//更新之前先计算证明
-	receipt, err = calProof(a.statedb, info, payload.ToAccountId, payload.TokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-	var balance string
-	if receipt.Token == nil {
-		balance = "0"
-	} else {
-		balance = receipt.Token.Balance
-	}
-	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, payload.ToAccountId, payload.TokenId, balance)
-
-	//更新toLeaf
-	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), totakTakerAmount, zt.Add)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
-	}
-	kvs = append(kvs, tokvs...)
-	localKvs = append(localKvs, toLocal...)
-	//更新之后计算证明
-	receipt, err = calProof(a.statedb, info, payload.GetToAccountId(), payload.GetTokenId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, payload.ToAccountId, payload.TokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-	kv := &types.KeyValue{
-		Key:   getHeightKey(a.height),
-		Value: rootHash,
-	}
-	kvs = append(kvs, kv)
-
-	branch = &zt.OperationPairBranch{
-		Before: before,
-		After:  after,
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
 	zklog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
@@ -839,10 +1075,109 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
+func (a *Action) transfer2NewProc(fromAcctId, tokenId uint64, toEthAddr, toLayer2Addr, fromAmount, toAmount string, treeInfo *TreeUpdateInfo, operationInfo *zt.OperationInfo) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+
+	fromLeaf, err := GetLeafByAccountId(a.statedb, fromAcctId, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if fromLeaf == nil {
+		return nil, nil, errors.New("account not exist")
+	}
+
+	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, fromAcctId, tokenId, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+	}
+	err = checkAmount(fromToken, fromAmount)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.checkAmount")
+	}
+
+	toLeaf, err := GetLeafByChain33AndEthAddress(a.statedb, toLayer2Addr, toEthAddr, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress")
+	}
+	//不能直接走transfer流程，因为电路签名不一样
+	if toLeaf != nil {
+		return nil, nil, errors.Wrapf(types.ErrNotAllow, "toAccountId=%d existed", toLeaf.AccountId)
+	}
+	//更新之前先计算证明
+	receipt, err := calProof(a.statedb, treeInfo, fromAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+
+	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, fromAcctId, tokenId, receipt.Token.Balance)
+
+	//更新fromLeaf
+	fromkvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, treeInfo, fromAcctId, tokenId, fromAmount, zt.Sub)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	kvs = append(kvs, fromkvs...)
+	localKvs = append(localKvs, fromLocal...)
+	//更新之后计算证明
+	receipt, err = calProof(a.statedb, treeInfo, fromAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+
+	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, fromAcctId, tokenId, receipt.Token.Balance)
+
+	branch := &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+
+	tree, err := getAccountTree(a.statedb, treeInfo)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.getAccountTree")
+	}
+	newAcctId := tree.GetTotalIndex() + 1
+	//更新之前先计算证明
+	receipt, err = calProof(a.statedb, treeInfo, newAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+
+	before = getBranchByReceipt(receipt, operationInfo, toEthAddr, toLayer2Addr, nil, nil, newAcctId, tokenId, "0")
+
+	//新增toLeaf
+	tokvs, toLocal, err := AddNewLeaf(a.statedb, a.localDB, treeInfo, toEthAddr, tokenId, toAmount, toLayer2Addr)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "db.AddNewLeaf")
+	}
+	kvs = append(kvs, tokvs...)
+	localKvs = append(localKvs, toLocal...)
+	//新增之后计算证明
+	receipt, err = calProof(a.statedb, treeInfo, newAcctId, tokenId)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "calProof")
+	}
+
+	after = getBranchByReceipt(receipt, operationInfo, toEthAddr, toLayer2Addr, nil, nil, newAcctId, tokenId, receipt.Token.Balance)
+	branch = &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+
+	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
+
+	return kvs, localKvs, nil
+}
+
+func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
 
 	err := checkParam(payload.Amount)
 	if err != nil {
@@ -866,7 +1201,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if amountInt.Cmp(takerFeeInt) < 0 {
 		return nil, errors.Wrapf(types.ErrNotAllow, "amount=%s less takerFee=%s", payload.Amount, feeInfo.ToFee)
 	}
-	totakTakerAmount := new(big.Int).Sub(amountInt, takerFeeInt).String()
+	totalTakerAmount := new(big.Int).Sub(amountInt, takerFeeInt).String()
 
 	//转换10进制
 	newAddr, ok := zt.HexAddr2Decimal(payload.ToChain33Address)
@@ -897,15 +1232,6 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
-	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
-	}
-	err = checkAmount(fromToken, totalMakerAmount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.checkAmount")
-	}
-
 	special := &zt.ZkTransferToNewWitnessInfo{
 		TokenId:       payload.TokenId,
 		Amount:        payload.Amount,
@@ -927,81 +1253,10 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferToNew{TransferToNew: special}},
 	}
 
-	toLeaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetToChain33Address(), payload.GetToEthAddress(), info)
+	kvs, localKvs, err := a.transfer2NewProc(payload.FromAccountId, payload.TokenId, payload.ToEthAddress, payload.ToChain33Address, totalMakerAmount, totalTakerAmount, info, operationInfo)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress")
+		return nil, errors.Wrapf(err, "transfer2NewProc")
 	}
-	if toLeaf != nil {
-		return nil, errors.New("to account already exist")
-	}
-	//更新之前先计算证明
-	receipt, err := calProof(a.statedb, info, payload.GetFromAccountId(), payload.GetTokenId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-
-	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
-
-	//更新fromLeaf
-	fromkvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalMakerAmount, zt.Sub)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
-	}
-	kvs = append(kvs, fromkvs...)
-	localKvs = append(localKvs, fromLocal...)
-	//更新之后计算证明
-	receipt, err = calProof(a.statedb, info, payload.GetFromAccountId(), payload.GetTokenId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-
-	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
-
-	branch := &zt.OperationPairBranch{
-		Before: before,
-		After:  after,
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-
-	tree, err := getAccountTree(a.statedb, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getAccountTree")
-	}
-	accountId := tree.GetTotalIndex() + 1
-	//更新之前先计算证明
-	receipt, err = calProof(a.statedb, info, accountId, payload.GetTokenId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-
-	before = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, nil, accountId, payload.TokenId, "0")
-
-	//新增toLeaf
-	tokvs, toLocal, err := AddNewLeaf(a.statedb, a.localDB, info, payload.GetToEthAddress(), payload.GetTokenId(), totakTakerAmount, payload.GetToChain33Address())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.AddNewLeaf")
-	}
-	kvs = append(kvs, tokvs...)
-	localKvs = append(localKvs, toLocal...)
-	//新增之后计算证明
-	receipt, err = calProof(a.statedb, info, accountId, payload.GetTokenId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
-	}
-
-	after = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, nil, accountId, payload.TokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-	kv := &types.KeyValue{
-		Key:   getHeightKey(a.height),
-		Value: rootHash,
-	}
-	kvs = append(kvs, kv)
-
-	branch = &zt.OperationPairBranch{
-		Before: before,
-		After:  after,
-	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
 	zklog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
@@ -1369,12 +1624,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if payload.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
-	}
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -1680,11 +1932,8 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	cfg := a.api.GetConfig()
-	//TODO verifier需要用这个TitleId,按说平行链来说不需要titleId，但主链verifier设置时候需要考虑titleId,可以区分开
-	if payload.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
-	}
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, new(big.Int).SetUint64(payload.ChainTitleId).String(), a.fromaddr) {
+
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
 
@@ -2373,4 +2622,46 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
+}
+
+func (a *Action) AssetTransfer(transfer *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+	from := tx.From()
+
+	cfg := a.api.GetConfig()
+	acc, err := account.NewAccountDB(cfg, zt.Zksync, transfer.Cointoken, a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "newAccountDb")
+	}
+	//to 是 execs 合约地址
+	if dapp.IsDriverAddress(tx.GetRealToAddr(), a.height) {
+		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
+	}
+	return acc.Transfer(from, tx.GetRealToAddr(), transfer.Amount)
+}
+
+func (a *Action) AssetWithdraw(withdraw *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	acc, err := account.NewAccountDB(cfg, zt.Zksync, withdraw.Cointoken, a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "newAccountDb")
+	}
+	if dapp.IsDriverAddress(tx.GetRealToAddr(), a.height) || dapp.ExecAddress(withdraw.ExecName) == tx.GetRealToAddr() {
+		return acc.TransferWithdraw(tx.From(), tx.GetRealToAddr(), withdraw.Amount)
+	}
+	return nil, types.ErrToAddrNotSameToExecAddr
+}
+
+func (a *Action) AssetTransferToExec(transfer *types.AssetsTransferToExec, tx *types.Transaction, index int) (*types.Receipt, error) {
+	from := tx.From()
+
+	cfg := a.api.GetConfig()
+	acc, err := account.NewAccountDB(cfg, zt.Zksync, transfer.Cointoken, a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "newAccountDb")
+	}
+	//to 是 execs 合约地址
+	if dapp.IsDriverAddress(tx.GetRealToAddr(), a.height) || dapp.ExecAddress(transfer.ExecName) == tx.GetRealToAddr() {
+		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
+	}
+	return nil, types.ErrToAddrNotSameToExecAddr
 }

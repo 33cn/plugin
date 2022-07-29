@@ -57,7 +57,20 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 		Chain33Addr: "0",
 		TokenHash:   "0",
 	}
-	return []*zt.Leaf{feeAccount, NFTAccount}
+	treeToContractAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.SystemTree2ContractAcctId,
+		Chain33Addr: "0",
+		TokenHash:   "0",
+	}
+	//default NFT system account
+	defaultAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.SystemDefaultAcctId,
+		Chain33Addr: "0",
+		TokenHash:   "0",
+	}
+	return []*zt.Leaf{feeAccount, NFTAccount, treeToContractAccount, defaultAccount}
 }
 
 //获取系统初始root，如果未设置fee账户，缺省采用配置文件，
@@ -139,8 +152,8 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	merkleTree.Push(getLeafHash(leafNFTAccount))
 
 	tree := &zt.AccountTree{
-		Index:           2,
-		TotalIndex:      2,
+		Index:           zt.SystemDefaultAcctId,
+		TotalIndex:      zt.SystemDefaultAcctId,
 		MaxCurrentIndex: 1024,
 		SubTrees:        make([]*zt.SubTree, 0),
 	}

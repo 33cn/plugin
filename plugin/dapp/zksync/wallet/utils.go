@@ -11,7 +11,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
-func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
+func CreateRawTx(actionTy int32, tokenId uint64, amount string, tokenSymbol string, toEthAddress string,
 	chain33Addr string, accountId uint64, toAccountId uint64, fromFee, toFee string) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
@@ -29,9 +29,11 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		payload = types.MustPBToJSON(withdraw)
 	case zt.TyContractToTreeAction:
 		contractToLeaf := &zt.ZkContractToTree{
-			TokenId:   tokenId,
-			Amount:    amount,
-			AccountId: accountId,
+			TokenSymbol:  tokenSymbol,
+			Amount:       amount,
+			ToAccountId:  accountId,
+			ToEthAddr:    toEthAddress,
+			ToLayer2Addr: chain33Addr,
 		}
 		payload = types.MustPBToJSON(contractToLeaf)
 	case zt.TyTreeToContractAction:
@@ -39,6 +41,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
+			ToAcctId:  zt.SystemTree2ContractAcctId,
 		}
 		payload = types.MustPBToJSON(leafToContract)
 	case zt.TyTransferAction:
@@ -212,23 +215,33 @@ func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 }
 
 func GetTreeToContractMsg(payload *zt.ZkTreeToContract) *zt.ZkMsg {
-	var pubData []uint
-
-	binaryData := make([]uint, zt.MsgWidth)
-
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTreeToContractAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
-	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
-
-	copy(binaryData, pubData)
-
-	return &zt.ZkMsg{
-		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
-		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	transfer := &zt.ZkTransfer{
+		TokenId:       payload.TokenId,
+		Amount:        payload.Amount,
+		FromAccountId: payload.AccountId,
+		ToAccountId:   zt.SystemTree2ContractAcctId,
 	}
+	//签名直接使用transfer的签名
+	return GetTransferMsg(transfer)
+	//var pubData []uint
+	//
+	//binaryData := make([]uint, zt.MsgWidth)
+	//
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTreeToContractAction), zt.TxTypeBitWidth)...)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.SystemTree2ContractAcctId), zt.AccountBitWidth)...)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
+	//amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
+	//
+	//
+	//copy(binaryData, pubData)
+	//
+	//return &zt.ZkMsg{
+	//	First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+	//	Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+	//	Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	//}
 
 }
 
@@ -238,10 +251,9 @@ func GetContractToTreeMsg(payload *zt.ZkContractToTree) *zt.ZkMsg {
 	binaryData := make([]uint, zt.MsgWidth)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyContractToTreeAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ToAccountId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 
