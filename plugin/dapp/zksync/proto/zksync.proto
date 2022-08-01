@@ -1,6 +1,7 @@
 syntax = "proto3";
 import "witness.proto";
 import "common.proto";
+import "transaction.proto";
 
 package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
@@ -343,14 +344,12 @@ message ReceiptSetFee {
 message ZkTokenSymbol {
   string id = 1;
   string symbol = 2;
-  uint32 frozen = 3;  //是否可修改，如果已经从tree2Contract使用过，则不可修改=1
 }
 
 message ReceiptSetTokenSymbol {
   string tokenId = 1;
   string prevSymbol = 2;
   string curSymbol = 3;
-  uint32 frozen = 4;
 }
 
 //zk relayer operators

@@ -9,7 +9,7 @@ func (z *zksync) ExecDelLocal_Deposit(payload *zt.ZkDeposit, tx *types.Transacti
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecDelLocal_ZkWithdraw(payload *zt.ZkWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
@@ -21,7 +21,7 @@ func (z *zksync) ExecDelLocal_TreeToContract(payload *zt.ZkTreeToContract, tx *t
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_Transfer(payload *zt.ZkTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecDelLocal_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
@@ -50,6 +50,16 @@ func (z *zksync) ExecDelLocal_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.T
 }
 
 func (z *zksync) ExecDelLocal_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+
+func (z *zksync) ExecDelLocal_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+func (z *zksync) ExecDelLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+func (z *zksync) ExecDelLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
