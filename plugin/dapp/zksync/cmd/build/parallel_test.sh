@@ -45,6 +45,7 @@ function create_addr_all() {
         ${CLI} account import_key -l "zkAddr${i}" -k "${key[i]}"
         hash=$(${CLI} send coins transfer -a 20 -n test -t "${addr[i]}" -k ${managerPrivkey})
     done
+    sleep 5
 
     l2addrs="${l2addr[0]}"
     keys="${key[0]}"
