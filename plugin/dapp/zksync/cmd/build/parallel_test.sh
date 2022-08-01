@@ -7,6 +7,7 @@ set -x
 set -e
 
 source "./public.sh"
+source "./testAddress.sh"
 
 CLI="docker exec build_chain33_1 /root/chain33-cli"
 managerPrivkey="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01" #对应的chain33地址为: 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
@@ -41,9 +42,7 @@ sleepTime=20
 function create_addr_all() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"    
     for ((i = 0; i < ${addrInit}; i++)); do
-        addr[$i]=$(${CLI} account create -l "zkAddr${i}" | jq -r ".acc.addr")
-        key[$i]=$(${CLI} account dump_key -a "${addr[i]}" | jq -r ".data")
-        l2addr[$i]=$(${CLI} zksync l2addr -k "${key[i]}")
+        ${CLI} account import_key -l "zkAddr${i}" -k "${key[i]}"
         hash=$(${CLI} send coins transfer -a 20 -n test -t "${addr[i]}" -k ${managerPrivkey})
     done
 
@@ -58,7 +57,7 @@ function create_addr_all() {
         accountIDs="${accountIDs},${id}"
         tid=$((i + 258))
         tokenIds="${tokenIds},${tid}"
-    done    
+    done
     echo -e "${IYellow} accountIDs: ${accountIDs} ${NOC}"
     echo -e "${IYellow} l2addrs: ${l2addrs} ${NOC}"
     echo -e "${IYellow} keys: ${keys} ${NOC}"
