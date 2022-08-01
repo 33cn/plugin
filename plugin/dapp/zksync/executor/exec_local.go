@@ -11,7 +11,7 @@ func (z *zksync) ExecLocal_Deposit(payload *zt.ZkDeposit, tx *types.Transaction,
 }
 
 //ExecLocal_Withdraw asset withdraw local db process
-func (z *zksync) ExecLocal_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecLocal_ZkWithdraw(payload *zt.ZkWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
@@ -25,7 +25,7 @@ func (z *zksync) ExecLocal_TreeToContract(payload *zt.ZkTreeToContract, tx *type
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
-func (z *zksync) ExecLocal_Transfer(payload *zt.ZkTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecLocal_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
@@ -54,6 +54,16 @@ func (z *zksync) ExecLocal_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Tran
 }
 
 func (z *zksync) ExecLocal_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+
+func (z *zksync) ExecLocal_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+func (z *zksync) ExecLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+func (z *zksync) ExecLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 

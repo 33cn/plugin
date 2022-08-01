@@ -1,10 +1,14 @@
 package types
 
 import (
+	"encoding/json"
+	"github.com/33cn/chain33/common/log/log15"
 	"reflect"
 
 	"github.com/33cn/chain33/types"
 )
+
+var ztlog = log15.New("module", Zksync)
 
 /*
  * 交易相关类型定义
@@ -38,7 +42,7 @@ const (
 	TyCommitProofAction         = 103 //提交zk proof
 	TySetVerifierAction         = 104 //设置验证者
 	TySetFeeAction              = 105 //设置手续费
-	TySetTokenSymbolAction      = 106
+	TySetTokenSymbolAction      = 106 //设置token的symbol 以方便在合约使用
 	TyAssetTransferAction       = 107 //从tree转到zksync合约的资产账户之间转账
 	TyAssetTransferToExecAction = 108 //从tree转到zksync合约的资产转到执行器
 	TyAssetWithdrawAction       = 109 //从执行器提款到zksync合约账户
@@ -97,6 +101,7 @@ const (
 	TyLogContractAssetDeposit  = 208 //tree资产存储到contract
 	TyLogContractAssetWithdraw = 209 //contract 资产withdraw到tree
 	TyLogSetTokenSymbol        = 210 //设置电路验证key
+
 )
 
 const (
@@ -244,6 +249,7 @@ var (
 		TySetVerifierLog:           {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId:    {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
 		TySetFeeLog:                {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
+		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
 		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
 		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
 	}
@@ -305,4 +311,30 @@ func (e *ZksyncType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取合约log相关信息
 func (e *ZksyncType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
+}
+
+// CreateTx zksync 创建交易，系统构造缺省to地址为合约地址，对于transfer/transferToExec 的to地址需要特殊处理为paylaod的to地址，
+func (e *ZksyncType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+	tx, err := e.ExecTypeBase.CreateTx(action, msg)
+	if err != nil {
+		ztlog.Error("zksync CreateTx failed", "err", err, "action", action, "msg", string(msg))
+		return nil, err
+	}
+	cfg := e.GetConfig()
+	if !cfg.IsPara() {
+		var transfer ZksyncAction
+		err = types.Decode(tx.Payload, &transfer)
+		if err != nil {
+			ztlog.Error("zksync CreateTx failed", "decode payload err", err, "action", action, "msg", string(msg))
+			return nil, err
+		}
+		if action == "Transfer" {
+			tx.To = transfer.GetTransfer().To
+		} else if action == "Withdraw" {
+			tx.To = transfer.GetWithdraw().To
+		} else if action == "TransferToExec" {
+			tx.To = transfer.GetTransferToExec().To
+		}
+	}
+	return tx, nil
 }

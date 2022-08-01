@@ -2,7 +2,6 @@ package executor
 
 import (
 	"errors"
-
 	"github.com/33cn/chain33/common"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -72,8 +71,8 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		signature = action.GetDeposit().GetSignature()
 		msg = wallet.GetDepositMsg(action.GetDeposit())
 	case zt.TyWithdrawAction:
-		signature = action.GetWithdraw().GetSignature()
-		msg = wallet.GetWithdrawMsg(action.GetWithdraw())
+		signature = action.GetZkWithdraw().GetSignature()
+		msg = wallet.GetWithdrawMsg(action.GetZkWithdraw())
 	case zt.TyContractToTreeAction:
 		signature = action.GetContractToTree().GetSignature()
 		msg = wallet.GetContractToTreeMsg(action.GetContractToTree())
@@ -81,8 +80,8 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		signature = action.GetTreeToContract().GetSignature()
 		msg = wallet.GetTreeToContractMsg(action.GetTreeToContract())
 	case zt.TyTransferAction:
-		signature = action.GetTransfer().GetSignature()
-		msg = wallet.GetTransferMsg(action.GetTransfer())
+		signature = action.GetZkTransfer().GetSignature()
+		msg = wallet.GetTransferMsg(action.GetZkTransfer())
 	case zt.TyTransferToNewAction:
 		signature = action.GetTransferToNew().GetSignature()
 		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())

@@ -11,7 +11,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
-func CreateRawTx(actionTy int32, tokenId uint64, amount string, tokenSymbol string, toEthAddress string,
+func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress string,
 	chain33Addr string, accountId uint64, toAccountId uint64, fromFee, toFee string) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
@@ -27,23 +27,9 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, tokenSymbol stri
 			},
 		}
 		payload = types.MustPBToJSON(withdraw)
-	case zt.TyContractToTreeAction:
-		contractToLeaf := &zt.ZkContractToTree{
-			TokenSymbol:  tokenSymbol,
-			Amount:       amount,
-			ToAccountId:  accountId,
-			ToEthAddr:    toEthAddress,
-			ToLayer2Addr: chain33Addr,
-		}
-		payload = types.MustPBToJSON(contractToLeaf)
+
 	case zt.TyTreeToContractAction:
-		leafToContract := &zt.ZkTreeToContract{
-			TokenId:   tokenId,
-			Amount:    amount,
-			AccountId: accountId,
-			ToAcctId:  zt.SystemTree2ContractAcctId,
-		}
-		payload = types.MustPBToJSON(leafToContract)
+
 	case zt.TyTransferAction:
 		transfer := &zt.ZkTransfer{
 			TokenId:       tokenId,
@@ -80,11 +66,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, tokenSymbol stri
 			},
 		}
 		payload = types.MustPBToJSON(proxyExit)
-	//case zt.TySetPubKeyAction:
-	//	setPubKey := &zt.ZkSetPubKey{
-	//		AccountId: accountId,
-	//	}
-	//	payload = types.MustPBToJSON(setPubKey)
 
 	case zt.TySetVerifierAction:
 		verifier := &zt.ZkVerifier{

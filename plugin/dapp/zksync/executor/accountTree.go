@@ -54,20 +54,21 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	NFTAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemNFTAccountId,
-		Chain33Addr: "0",
+		Chain33Addr: "1",
 		TokenHash:   "0",
 	}
+	//ethAddr/chain33Addr 不能全为0, 因为系统会以ethAddr/chain33Addr 唯一确定一个account id，这样会数据库设置失败
 	treeToContractAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemTree2ContractAcctId,
-		Chain33Addr: "0",
+		Chain33Addr: "2",
 		TokenHash:   "0",
 	}
 	//default NFT system account
 	defaultAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemDefaultAcctId,
-		Chain33Addr: "0",
+		Chain33Addr: "3",
 		TokenHash:   "0",
 	}
 	return []*zt.Leaf{feeAccount, NFTAccount, treeToContractAccount, defaultAccount}
@@ -110,50 +111,33 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	}
 	var kvs []*types.KeyValue
 	initLeafAccounts := getInitAccountLeaf(ethFeeAddr, chain33FeeAddr)
-	leafFeeAccount := initLeafAccounts[0]
-	kv := &types.KeyValue{
-		Key:   GetAccountIdPrimaryKey(leafFeeAccount.AccountId),
-		Value: types.Encode(leafFeeAccount),
-	}
-	kvs = append(kvs, kv)
-
-	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leafFeeAccount.Chain33Addr, leafFeeAccount.EthAddress),
-		Value: types.Encode(leafFeeAccount),
-	}
-	kvs = append(kvs, kv)
-
-	//NFT account
-	leafNFTAccount := initLeafAccounts[1]
-	kv = &types.KeyValue{
-		Key:   GetAccountIdPrimaryKey(leafNFTAccount.AccountId),
-		Value: types.Encode(leafNFTAccount),
-	}
-	kvs = append(kvs, kv)
-
-	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leafNFTAccount.Chain33Addr, leafNFTAccount.EthAddress),
-		Value: types.Encode(leafNFTAccount),
-	}
-	kvs = append(kvs, kv)
-
 	accountTable := NewAccountTreeTable(localDb)
-	err := accountTable.Add(leafFeeAccount)
-	if err != nil {
-		panic(err)
-	}
-	err = accountTable.Add(leafNFTAccount)
-	if err != nil {
-		panic(err)
-	}
-
 	merkleTree := getNewTree()
-	merkleTree.Push(getLeafHash(leafFeeAccount))
-	merkleTree.Push(getLeafHash(leafNFTAccount))
+
+	for _, account := range initLeafAccounts {
+		kv := &types.KeyValue{
+			Key:   GetAccountIdPrimaryKey(account.AccountId),
+			Value: types.Encode(account),
+		}
+		kvs = append(kvs, kv)
+
+		kv = &types.KeyValue{
+			Key:   GetChain33EthPrimaryKey(account.Chain33Addr, account.EthAddress),
+			Value: types.Encode(account),
+		}
+		kvs = append(kvs, kv)
+
+		err := accountTable.Add(account)
+		if err != nil {
+			panic(fmt.Sprintf("init account accountTable add account=%d", account.AccountId))
+		}
+		merkleTree.Push(getLeafHash(account))
+
+	}
 
 	tree := &zt.AccountTree{
-		Index:           zt.SystemDefaultAcctId,
-		TotalIndex:      zt.SystemDefaultAcctId,
+		Index:           uint64(len(initLeafAccounts)),
+		TotalIndex:      uint64(len(initLeafAccounts)),
 		MaxCurrentIndex: 1024,
 		SubTrees:        make([]*zt.SubTree, 0),
 	}
@@ -165,7 +149,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 		})
 	}
 
-	kv = &types.KeyValue{
+	kv := &types.KeyValue{
 		Key:   GetAccountTreeKey(),
 		Value: types.Encode(tree),
 	}
