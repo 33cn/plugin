@@ -29,7 +29,7 @@ func createChain33Tx(privateKeyStr string, action proto.Message) (*types.Transac
 	}
 
 	execer := "zksync"
-	fee := int64(1e8)
+	fee := int64(1e7)
 	toAddr := address.ExecAddress(execer)
 	tx := &types.Transaction{Execer: []byte(execer), Payload: types.Encode(action), Fee: fee, To: toAddr}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
