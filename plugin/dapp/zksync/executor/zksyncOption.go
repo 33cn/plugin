@@ -542,9 +542,8 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 	//}
 
 	special := &zt.ZkContractToTreeNewWitnessInfo{
-		TokenId:   tokenId,
-		Amount:    payload.Amount,
-		AccountId: payload.ToAccountId,
+		TokenId: tokenId,
+		Amount:  payload.Amount,
 		//ToAccountId: nil,
 		EthAddress: payload.ToEthAddr,
 		Layer2Addr: payload.ToLayer2Addr,

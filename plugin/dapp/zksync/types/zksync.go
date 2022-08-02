@@ -155,18 +155,19 @@ const (
 
 //不同type chunk数量
 const (
-	DepositChunks       = 3
-	Contract2TreeChunks = 1
-	Tree2ContractChunks = 1
-	TransferChunks      = 2
-	Transfer2NewChunks  = 3
-	WithdrawChunks      = 2
-	ProxyExitChunks     = 2
-	FullExitChunks      = 2
-	SwapChunks          = 4
-	NoopChunks          = 1
-	SetPubKeyChunks     = 3
-	FeeChunks           = 1
+	DepositChunks          = 3
+	Contract2TreeChunks    = 2
+	Contract2TreeNewChunks = 3
+	Tree2ContractChunks    = 2
+	TransferChunks         = 2
+	Transfer2NewChunks     = 3
+	WithdrawChunks         = 2
+	ProxyExitChunks        = 2
+	FullExitChunks         = 2
+	SwapChunks             = 4
+	NoopChunks             = 1
+	SetPubKeyChunks        = 3
+	FeeChunks              = 1
 	//MintNFTChunks, withrawNFT, transferNft, NFT chunks 不只是看pubdata长度，更要看需要几个chunk完成，这里chunks超出了pubdata的长度
 	MintNFTChunks     = 5
 	WithdrawNFTChunks = 6

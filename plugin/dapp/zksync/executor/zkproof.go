@@ -1459,6 +1459,8 @@ func getChunkNum(opType uint64) int {
 		return zt.SwapChunks
 	case zt.TyContractToTreeAction:
 		return zt.Contract2TreeChunks
+	case zt.TyContractToTreeNewAction:
+		return zt.Contract2TreeNewChunks
 	case zt.TyTreeToContractAction:
 		return zt.Tree2ContractChunks
 	case zt.TyFeeAction:
