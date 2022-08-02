@@ -49,7 +49,7 @@ func ZksyncCmd() *cobra.Command {
 
 func layer2Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "layer2",
+		Use:   "l2",
 		Short: "layer2 related cmd",
 	}
 	cmd.AddCommand(
@@ -1799,8 +1799,8 @@ func getNftHash(cmd *cobra.Command, args []string) {
 
 func contractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contract",
-		Short: "zksync contract related cmd",
+		Use:   "asset",
+		Short: "zksync contract asset related cmd",
 	}
 	cmd.AddCommand(
 		CreateRawTransferCmd(),

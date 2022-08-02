@@ -111,7 +111,7 @@ func (z *zksync) Exec_Withdraw(payload *types.AssetsWithdraw, tx *types.Transact
 	return action.AssetWithdraw(payload, tx, index)
 }
 
-//Exec_TransferToExec exec transfer asset
+//Exec_TransferToExec exec transfer asset，在平行链上payload里面的ExecName应该是title+Exec，command里面会自动加上，rpc需要注意添加
 func (z *zksync) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.AssetTransferToExec(payload, tx, index)
