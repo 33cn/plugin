@@ -721,7 +721,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), symbol, zt.Add, payload.ToExec)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+		return nil, errors.Wrapf(err, "UpdateContractAccount")
 	}
 	return mergeReceipt(receipt, contractReceipt), nil
 }
@@ -874,6 +874,8 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 }
 
 func (a *Action) UpdateExecAccount(accountdb *account.DB, amount int64, option int32, execName string) (*types.Receipt, error) {
+	//平行链的execName是通过title+execname注册的，比如参数execName=user.p.para.paracross,在user.p.para.的平行链上也是同步注册了的
+	//所以这里exeName为paracross或者user.p.para.paracross都可以正确获取到address，但是如果是user.p.xx.paracross就会失败
 	execAddr := dapp.ExecAddress(execName)
 	if !dapp.IsDriverAddress(execAddr, a.height) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "execName=%s not driver", execName)
