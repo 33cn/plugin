@@ -118,6 +118,8 @@ func GetOpChunkNum(opType uint32) (int, error) {
 		return WithdrawChunks, nil
 	case TyContractToTreeAction:
 		return Contract2TreeChunks, nil
+	case TyContractToTreeNewAction:
+		return Contract2TreeNewChunks, nil
 	case TyTreeToContractAction:
 		return Tree2ContractChunks, nil
 	case TyTransferAction:

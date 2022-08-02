@@ -159,7 +159,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
-		ActionName: "Withdraw",
+		ActionName: "ZkWithdraw",
 		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
@@ -303,7 +303,7 @@ func transfer(cmd *cobra.Command, args []string) {
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
-		ActionName: "Transfer",
+		ActionName: "ZkTransfer",
 		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
