@@ -993,7 +993,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 
 			case zt.TyContractToTreeAction:
 				operation := op.Op.GetContractToTree()
-				fromLeaf, ok := accountMap[operation.AccountId]
+				fromLeaf, ok := accountMap[zt.SystemTree2ContractAcctId]
 				if !ok {
 					return nil, errors.New("account not exist")
 				}
@@ -1005,17 +1005,79 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					}
 				}
 				if tokenBalance == nil {
-					tokenBalance = &zt.TokenBalance{
-						TokenId: operation.TokenId,
-						Balance: operation.Amount,
-					}
-					fromLeaf.Tokens = append(fromLeaf.Tokens, tokenBalance)
+					panic(fmt.Sprintf("contract2tree system acct balance nil token=%d", operation.TokenId))
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
 					change, _ := new(big.Int).SetString(operation.Amount, 10)
-					tokenBalance.Balance = new(big.Int).Add(balance, change).String()
+					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
 				}
-				accountMap[operation.AccountId] = fromLeaf
+				accountMap[zt.SystemTree2ContractAcctId] = fromLeaf
+
+				//toAccount
+				toLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.Wrapf(types.ErrAccountNotExist, "ty=%d,toAccountId=%d not exist", zt.TyContractToTreeAction, operation.AccountId)
+				}
+				//找到toToken
+				var toTokenBalance *zt.TokenBalance
+				for _, token := range toLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						toTokenBalance = token
+					}
+				}
+				change, _ := new(big.Int).SetString(operation.Amount, 10)
+				if toTokenBalance == nil {
+					toTokenBalance = &zt.TokenBalance{
+						TokenId: operation.TokenId,
+						Balance: change.String(),
+					}
+					toLeaf.Tokens = append(toLeaf.Tokens, toTokenBalance)
+				} else {
+					balance, _ := new(big.Int).SetString(toTokenBalance.GetBalance(), 10)
+					toTokenBalance.Balance = new(big.Int).Add(balance, change).String()
+				}
+				accountMap[operation.AccountId] = toLeaf
+
+			case zt.TyContractToTreeNewAction:
+				operation := op.Op.GetContract2TreeNew()
+				fromLeaf, ok := accountMap[zt.SystemTree2ContractAcctId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					panic(fmt.Sprintf("contract2treeNew system acct balance nil token=%d", operation.TokenId))
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+				accountMap[zt.SystemTree2ContractAcctId] = fromLeaf
+
+				//to leaf
+				change, _ := new(big.Int).SetString(operation.Amount, 10)
+				toLeaf := &zt.HistoryLeaf{
+					AccountId:   operation.ToAccountId,
+					EthAddress:  operation.GetEthAddress(),
+					Chain33Addr: operation.GetLayer2Addr(),
+					Tokens: []*zt.TokenBalance{
+						{
+							TokenId: operation.TokenId,
+							Balance: change.String(),
+						},
+					},
+				}
+				accountMap[operation.ToAccountId] = toLeaf
+				if operation.ToAccountId > maxAccountId {
+					maxAccountId = operation.ToAccountId
+				}
+
 			case zt.TyTreeToContractAction:
 				operation := op.Op.GetTreeToContract()
 				fromLeaf, ok := accountMap[operation.AccountId]
