@@ -567,6 +567,9 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 	if err != nil {
 		return nil, errors.Wrapf(err, "transfer2NewProc")
 	}
+	//设置new account id, 在重建proof时候使用
+	special.ToAccountId = operationInfo.OperationBranches[len(operationInfo.OperationBranches)-1].After.AccountWitness.ID
+
 	zksynclog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
@@ -1258,6 +1261,9 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "transfer2NewProc")
 	}
+	//设置new AccountId 在重建proof时候使用
+	special.ToAccountId = operationInfo.OperationBranches[len(operationInfo.OperationBranches)-1].After.AccountWitness.ID
+
 	zklog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
