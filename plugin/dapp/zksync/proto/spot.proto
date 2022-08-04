@@ -1,0 +1,369 @@
+syntax = "proto3";
+package types;
+import "witness.proto";
+option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
+
+message SpotAction {
+  oneof value {
+    SpotLimitOrder  limitOrder = 1;
+    SpotMarketOrder marketOrder = 2;
+    SpotRevokeOrder revokeOrder = 3;
+    SpotExchangeBind exchangeBind = 4;
+    SpotEntrustOrder entrustOrder = 5;
+    SpotEntrustRevokeOrder entrustRevokeOrder = 7;
+  }
+  int32 ty = 6;
+}
+
+// Asset may come from L1 ERC20,  other contract Token, zksync gened NFT, evm-solidity-NFT
+enum AssetType {
+  Unknow = 0;
+ L1Erc20 = 1;
+  Token = 2;
+  ZkNft = 3;
+  EvmNft = 4;
+}
+
+message TokenAsset {
+    string execer = 1;
+    string symbol = 2;
+  }
+
+message ZkAsset {
+  AssetType ty = 1;
+  oneof value {
+    // L1Erc20, zkNft
+    uint64 zkAssetid = 2;
+    // Token
+    TokenAsset tokenAsset = 3;
+    // nft kind
+    uint64 evmNftID = 4;
+  }
+}
+
+message ZkOrder {
+  uint64 accountID = 1;
+  string ethAddress = 2;
+  //uint64 nonce = 3;
+  uint64 tokenSell = 4;
+  uint64 tokenBuy = 5;
+  string amount = 6;
+  string ratio1 = 7;
+  string ratio2 = 8;
+  //uint64 validFrom = 9;
+  //uint64 validUntil = 10;
+  AssetType sellAssetType = 11;
+  AssetType buyAssetType = 12;
+  ZkSignature signature = 20;
+}
+
+//限价订单
+message SpotLimitOrder {
+  //交易对
+  uint64 leftAsset = 1;
+  //交易对
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
+//限价订单
+message AssetLimitOrder {
+  //交易对
+  ZkAsset leftAsset = 1;
+  //交易对
+  ZkAsset rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
+
+// 使用挂单摘单模式, 先挂单
+message SpotNftOrder {
+  //交易对
+  uint64 leftAsset = 1;
+  //交易对
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
+
+// 使用挂单摘单模式, 后摘单
+message SpotNftTakerOrder {
+  //交易对
+  int64 orderID = 1;
+  ZkOrder order = 2;
+}
+
+/*
+message ExNft {
+  string contract = 1;
+  string symbol = 2;
+}
+
+// 使用挂单摘单模式, 先挂单
+message SpotExNftOrder {
+  //交易对
+  ExNft  leftAsset = 1;
+  //交易对
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
+// 使用挂单摘单模式, 后摘单
+message SpotExNftTakerOrder {
+  //交易对
+  int64 orderID = 1;
+  ZkOrder order = 2;
+}
+*/
+
+//市价委托
+message SpotMarketOrder {
+  //资产1
+  uint32 leftAsset = 1;
+  //资产2
+  uint32 rightAsset = 2;
+  //总量
+  int64 amount = 3;
+  //操作， 1为买，2为卖
+  int32 op = 4;
+}
+
+message SpotExchangeBind {
+  //交易地址
+  string exchangeAddress = 1;
+  //委托地址
+  string entrustAddress = 2;
+}
+
+//委托限价订单
+message SpotEntrustOrder {
+  //交易对
+  uint64 leftAsset = 1;
+  //交易对
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  //交易地址
+  string addr = 6;
+  ZkOrder order = 7;
+}
+
+//委托撤回订单
+message SpotEntrustRevokeOrder {
+  //订单号
+  int64 orderID = 1;
+  //交易地址
+  string addr = 2;
+}
+
+//撤回订单
+message SpotRevokeOrder {
+  //订单号
+  int64 orderID = 1;
+}
+
+//订单信息
+message SpotOrder {
+  int64 orderID = 1;
+  oneof value {
+    SpotLimitOrder  limitOrder = 2;
+    SpotMarketOrder marketOrder = 3;
+    SpotNftOrder nftOrder = 20;
+    SpotNftTakerOrder nftTakerOrder = 21;
+    AssetLimitOrder assetLimitOrder = 22;
+  }
+  //挂单类型
+  int32 ty = 4;
+  //已经成交的数量
+  int64 executed = 5;
+  //成交均价
+  int64 AVG_price = 6;
+  //余额
+  int64 balance = 7;
+  //状态,0 挂单中ordered， 1 完成completed， 2撤回 revoked
+  int32 status = 8;
+  //用户地址
+  string addr = 9;
+  //更新时间
+  int64 updateTime = 10;
+  //索引
+  int64 index = 11;
+  //手续费率 (挂单)
+  int32 rate = 12;
+  //手续费
+  int64 digestedFee = 13;
+  // 主动成交手续费
+  int32 takerRate = 14;
+  //挂单hash
+  string hash = 15;
+  //撤单hash
+  string revokeHash = 16;
+  //创建时间
+  int64 createTime = 17;
+  //委托地址
+  string entrustAddr = 18;
+  // frozen fee
+  int64 feeBalance = 19;
+}
+
+//查询接口
+message SpotQueryMarketDepth {
+  //资产1
+  uint64 leftAsset = 1;
+  //资产2
+  uint64 rightAsset = 2;
+  //操作， 1为买，2为卖
+  int32 op = 3;
+  // 这里用价格作为索引值
+  string primaryKey = 4;
+  //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
+  int32 count = 5;
+}
+//市场深度
+message SpotMarketDepth {
+  //资产1
+  uint64 leftAsset = 1;
+  //资产2
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+}
+//查询接口返回的市场深度列表
+message SpotMarketDepthList {
+  repeated SpotMarketDepth list = 1;
+  string               primaryKey = 2;
+}
+
+//查询最新得成交信息,外部接口
+message SpotQueryHistoryOrderList {
+  //资产1
+  uint64 leftAsset = 1;
+  //资产2
+  uint64 rightAsset = 2;
+  // 索引值
+  string primaryKey = 3;
+  //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
+  int32 count = 4;
+  // 0降序，1升序，默认降序
+  int32 direction = 5;
+}
+
+//根据orderID去查询订单信息
+message SpotQueryOrder {
+  int64 orderID = 1;
+}
+//根据地址，状态查询用户自己的挂单信息
+message SpotQueryOrderList {
+  //挂单状态必填(默认是0,只查询ordered挂单中的)
+  int32 status = 1;
+  //用户地址信息，必填
+  string address = 2;
+  // 主键索引
+  string primaryKey = 3;
+  //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
+  int32 count = 4;
+  // 0降序，1升序，默认降序
+  int32 direction = 5;
+}
+//订单列表
+message SpotOrderList {
+  repeated SpotOrder list = 1;
+  string         primaryKey = 2;
+}
+
+// exchange执行票据日志
+message ReceiptSpotMatch {
+  SpotOrder    order = 1;
+  repeated SpotOrder matchOrders = 2;
+  int64          index = 3;
+}
+
+message ReceiptDexBind {
+  //交易地址
+  string exchangeAddress = 1;
+  //委托地址
+  string newEntrustAddress = 2;
+  //委托地址
+  string oldEntrustAddress = 3;
+}
+
+// 每种代币的数量
+message DexAccountBalance {
+  // token id
+  uint64 id = 1; 
+  uint64 balance = 2;
+  uint64 frozen = 3;
+}
+
+// 用户代币的数量
+message DexAccount {
+  uint64 id = 1;
+  string addr = 2;
+  repeated DexAccountBalance balance = 3; 
+  string dexName = 4;
+}
+
+message TradeAccounts {
+  DexAccount taker = 1;
+  DexAccount maker = 2;
+  DexAccount fee = 3;
+}
+
+message MatchInfo {
+  // trade match balance
+	int64 matched = 1;
+	int64 leftBalance = 2;
+  // = matched * price
+	int64 rightBalance = 3;
+  // fee use right token
+	int64 feeTaker = 4;
+	int64 feeMaker = 5;
+  int64 price = 6;
+}
+
+message ReceiptSpotTrade {
+  MatchInfo Match = 1;
+  TradeAccounts prev = 2;
+  TradeAccounts current = 3;
+  // 加入zk order, 在电路验证需要
+  ZkOrder makerOrder = 4;
+}
+
+message ReceiptDexAccount {
+  DexAccount prev = 1;
+  DexAccount current = 2;
+}
+
+service zkspot {}
