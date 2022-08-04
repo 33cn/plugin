@@ -73,7 +73,7 @@ message SpotLimitOrder {
 }
 
 //限价订单
-message AssetLimitOrder {
+message SpotAssetLimitOrder {
   //交易对
   ZkAsset leftAsset = 1;
   //交易对
@@ -198,7 +198,7 @@ message SpotOrder {
     SpotMarketOrder marketOrder = 3;
     SpotNftOrder nftOrder = 20;
     SpotNftTakerOrder nftTakerOrder = 21;
-    AssetLimitOrder assetLimitOrder = 22;
+    SpotAssetLimitOrder assetLimitOrder = 22;
   }
   //挂单类型
   int32 ty = 4;

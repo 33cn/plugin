@@ -2,6 +2,7 @@ syntax = "proto3";
 import "witness.proto";
 import "common.proto";
 import "transaction.proto";
+import "spot.proto";
 
 package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
@@ -32,6 +33,15 @@ message ZksyncAction {
     AssetsTransfer        transfer        = 36;
     AssetsWithdraw        withdraw        = 37;
     AssetsTransferToExec  transferToExec  = 38;
+
+    // spot
+    SpotLimitOrder  limitOrder = 201;
+    SpotNftOrder nftOrder = 202;
+    SpotNftTakerOrder nftTakerOrder = 203;
+    SpotNftOrder nftOrder2 = 204;
+    SpotNftTakerOrder nftTakerOrder2 = 205;
+    SpotAssetLimitOrder assetLimitOrder = 206;
+    SpotRevokeOrder revokeOrder = 207;
   }
 
   int32 ty = 15;
