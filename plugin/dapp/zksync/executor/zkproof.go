@@ -342,7 +342,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
 	if payload.ProofId < lastProof.ProofId+1 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d <= lastProofId=%d", payload.ProofId, lastProof.ProofId)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d less or equal  lastProofId=%d", payload.ProofId, lastProof.ProofId)
 	}
 	//get未处理的证明的最大id
 	maxRecordId, err := getMaxRecordProofIdData(a.statedb, chainId)

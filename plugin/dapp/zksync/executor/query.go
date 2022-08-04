@@ -151,7 +151,7 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 // Query_GetLastCommitProof 获取最新proof信息
 func (z *zksync) Query_GetLastCommitProof(in *zt.ZkChainTitle) (types.Message, error) {
 	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id <=0")
+		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id less or equal 0")
 	}
 	return getLastCommitProofData(z.GetStateDB(), new(big.Int).SetUint64(in.ChainTitleId).String())
 }
@@ -159,7 +159,7 @@ func (z *zksync) Query_GetLastCommitProof(in *zt.ZkChainTitle) (types.Message, e
 //Query_GetLastOnChainProof 获取最新的包含OnChainPubData的Proof
 func (z *zksync) Query_GetLastOnChainProof(in *zt.ZkChainTitle) (types.Message, error) {
 	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id <=0")
+		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id less or equal 0")
 	}
 	return getLastOnChainProofData(z.GetStateDB(), new(big.Int).SetUint64(in.ChainTitleId).String())
 }
