@@ -66,6 +66,57 @@ func GetSpotMatch(receipt *types.Receipt) *types.Receipt {
 	return receipt2
 }
 
+// 处理撮合结果
+//  如果是 按不同的交易类型来处理的话, 零知识证明部分的代码, 会随交易的多样化, 需要也写很多函数来支持.
+//  所以结果最好以 结算的形式作为参数.
+//  不同交易的结果, 转化为有限的几种结算
+//    主动结算: (用户地址发起的交易)    如: 撮合
+//    被动结算: (系统特定帐号发起的交易) 如: 永续中暴仓, 和资金费
+//  结算的列表以结果的形式体现帐号的变化, 和具体的业务无关
+func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+	for _, tradeRaw := range list.Logs {
+		switch tradeRaw.Ty {
+		case et.TySpotTradeLog:
+			var trade et.ReceiptSpotTrade
+			err := types.Decode(tradeRaw.Log, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt2, err := a.Swap(payload, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt = mergeReceipt(receipt, receipt2)
+		default:
+			//
+		}
+	}
+	return receipt, nil
+}
+
+func (a *Action) AssetMatch(payload *et.SpotAssetLimitOrder, list *types.Receipt) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+	for _, tradeRaw := range list.Logs {
+		switch tradeRaw.Ty {
+		case et.TySpotTradeLog:
+			var trade et.ReceiptSpotTrade
+			err := types.Decode(tradeRaw.Log, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt2, err := a.Swap(nil /* payload */, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt = mergeReceipt(receipt, receipt2)
+		default:
+			//
+		}
+	}
+	return receipt, nil
+}
+
 func (a *Action) SpotNftMatch(payload *et.SpotNftTakerOrder, list *types.Receipt) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
 	for _, tradeRaw := range list.Logs {
@@ -266,56 +317,6 @@ func (a *Action) nftSwapGenTransfer(op int32, takerOrder *et.ZkOrder, trade *et.
 }
 
 */
-// 处理撮合结果
-//  如果是 按不同的交易类型来处理的话, 零知识证明部分的代码, 会随交易的多样化, 需要也写很多函数来支持.
-//  所以结果最好以 结算的形式作为参数.
-//  不同交易的结果, 转化为有限的几种结算
-//    主动结算: (用户地址发起的交易)    如: 撮合
-//    被动结算: (系统特定帐号发起的交易) 如: 永续中暴仓, 和资金费
-//  结算的列表以结果的形式体现帐号的变化, 和具体的业务无关
-func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*types.Receipt, error) {
-	receipt := &types.Receipt{}
-	for _, tradeRaw := range list.Logs {
-		switch tradeRaw.Ty {
-		case et.TySpotTradeLog:
-			var trade et.ReceiptSpotTrade
-			err := types.Decode(tradeRaw.Log, &trade)
-			if err != nil {
-				return nil, err
-			}
-			receipt2, err := a.Swap(payload, &trade)
-			if err != nil {
-				return nil, err
-			}
-			receipt = mergeReceipt(receipt, receipt2)
-		default:
-			//
-		}
-	}
-	return receipt, nil
-}
-
-func (a *Action) AssetMatch(payload *et.SpotAssetLimitOrder, list *types.Receipt) (*types.Receipt, error) {
-	receipt := &types.Receipt{}
-	for _, tradeRaw := range list.Logs {
-		switch tradeRaw.Ty {
-		case et.TySpotTradeLog:
-			var trade et.ReceiptSpotTrade
-			err := types.Decode(tradeRaw.Log, &trade)
-			if err != nil {
-				return nil, err
-			}
-			receipt2, err := a.Swap(nil /* payload */, &trade)
-			if err != nil {
-				return nil, err
-			}
-			receipt = mergeReceipt(receipt, receipt2)
-		default:
-			//
-		}
-	}
-	return receipt, nil
-}
 
 // A 和 B 交换 = transfer(A,B) + transfer(B,A) + swapfee()
 // A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + swapfee()
