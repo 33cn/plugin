@@ -506,10 +506,10 @@ func assetOrderCmd() *cobra.Command {
 // ratio: p * 1e8, 1e8
 func assetLimitOrderFlag(cmd *cobra.Command) {
 	assetTypeInfo := "1 for zksync token, 2 for token,  3 for zksync nft, 4 for evm nft, default 1"
-	cmd.Flags().Int32P("leftAssetType", "", "", assetTypeInfo)
+	cmd.Flags().Int32P("leftAssetType", "", 1, assetTypeInfo)
 	cmd.Flags().StringP("leftAssetExec", "", "zksync", "default zksync")
 	cmd.Flags().StringP("leftAssetSymbol", "", "", "token symbol or nft id")
-	cmd.Flags().Int32P("rightAssetType", "", "", assetTypeInfo)
+	cmd.Flags().Int32P("rightAssetType", "", 1, assetTypeInfo)
 	cmd.Flags().StringP("rightAssetExec", "", "zksync", "default zksync")
 	cmd.Flags().StringP("rightAssetSymbol", "", "", "token symbol or nft id")
 	cmd.Flags().Uint64P("price", "p", 0, "price 1e8 lt = p rt ")
