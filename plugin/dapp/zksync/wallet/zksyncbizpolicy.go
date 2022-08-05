@@ -244,6 +244,62 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		nft.Signature = signInfo
+
+		// spot tx
+	case zt.TyLimitOrderAction:
+		limitOrder := action.GetLimitOrder()
+		msg = GetLimitOrderMsg(limitOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		limitOrder.Order.Signature = signInfo
+	case zt.TyAssetLimitOrderAction:
+		order := action.GetAssetLimitOrder()
+		msg = GetAssetLimitOrderMsg(order)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		order.Order.Signature = signInfo
+	case zt.TyNftOrderAction:
+		nftOrder := action.GetNftOrder()
+		msg = GetNftOrderMsg(nftOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nftOrder.Order.Signature = signInfo
+	case zt.TyNftTakerOrderAction:
+		nftTakerOrder := action.GetNftTakerOrder()
+		msg = GetNftTakerOrderMsg(nftTakerOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nftTakerOrder.Order.Signature = signInfo
+	case zt.TyNftOrder2Action:
+		nftOrder := action.GetNftOrder2()
+		msg = GetNftOrder2Msg(nftOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nftOrder.Order.Signature = signInfo
+	case zt.TyNftTakerOrder2Action:
+		nftTakerOrder := action.GetNftTakerOrder2()
+		msg = GetNftTakerOrder2Msg(nftTakerOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nftTakerOrder.Order.Signature = signInfo
 	}
 
 	tx.Payload = types.Encode(action)
