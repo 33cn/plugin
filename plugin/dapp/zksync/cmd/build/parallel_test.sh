@@ -190,6 +190,45 @@ function zksync_transfer_many() {
     is_equal "${balance0}" "${balanceEnd}"
 }
 
+function zksync_transfer_many_2() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    fromIDs="3"
+    toIDs="4"
+    end=$((addrTest-2))
+    keys2="${key[0]}"
+    for ((i = 2; i < ${end};)); do
+        id=$((i + 3))
+        fromIDs="${fromIDs},${id}"
+        tid=$((i + 4))
+        toIDs="${toIDs},${tid}"
+        keys2="${keys2},${key[i]}"
+        i=$((i + 2))
+    done
+
+    balanceBf3=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
+    balanceBf4=$(${CLI} zksync query account token -a "4" -t 0 | jq -r ".tokenBalances[].balance")
+    echo -e "${IYellow} 3转给4 5转给6 7转给8 ... ${NOC}"
+    ${CLI} zksync sendl2 transfer_many -t "${TOKENID_0}" -m "4${le8zero}" -f ${fromIDs} -d ${toIDs} -k "${keys2}"
+    sleep $sleepTime
+
+    endId2=$(( endId - 1 ))
+    balanceAf3=$(( balanceBf3 - transferFee - 4${le8zero} ))
+    echo -e "${IYellow} 3 5 7 ... 都少了金额 扣了手续费 ${NOC}"
+    for ((i = 3; i < ${endId2};)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+        is_equal "${balance0}" "${balanceAf3}"
+        i=$((i + 2))
+    done
+
+    balanceAf4=$(( balanceBf4 + 4${le8zero} ))
+    echo -e "${IYellow} 4 6 8 ... 都多了金额 ${NOC}"
+    for ((i = 4; i < ${endId2};)); do
+        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+        is_equal "${balance0}" "${balanceAf4}"
+        i=$((i + 2))
+    done
+}
+
 function zksync_transfer2new_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     accountIDs3="3"
@@ -322,6 +361,7 @@ function zksync_test_all() {
     echo -e "${GRE}=========== transfer ===========${NOC}"
     zksync_transfer_many
     zksync_transfer2new_many
+    zksync_transfer_many_2
 
     zksync_forceexit_many
     zksync_deposit_init
