@@ -536,7 +536,7 @@ func makeAsset(ty int32, exec, symbol string) (*et.ZkAsset, error) {
 		return &et.ZkAsset{
 			Ty: et.AssetType_Token,
 			Value: &et.ZkAsset_TokenAsset{
-				&et.TokenAsset{
+				TokenAsset: &et.TokenAsset{
 					Execer: exec,
 					Symbol: symbol,
 				},
