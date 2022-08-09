@@ -3,6 +3,8 @@
 # shellcheck disable=SC2128
 # shellcheck disable=SC2154
 # shellcheck disable=SC2004
+# shellcheck disable=SC2002
+# shellcheck disable=SC2116
 set -x
 set -e
 
@@ -15,7 +17,7 @@ ethAddr="12a0E25E62C1dBD32E505446062B26AECB65F028"
 contentHash="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 
 # 测试地址数量
-addrTest=5
+addrTest=100
 # 测试 transfer2new 需要的地址 < addrTest
 transfer2newAddr=2
 # 共需准备地址数量
@@ -45,16 +47,15 @@ function create_addr_all() {
         ${CLI} account import_key -l "zkAddr${i}" -k "${key[i]}"
         hash=$(${CLI} send coins transfer -a 20 -n test -t "${addr[i]}" -k ${managerPrivkey})
     done
+    ${CLI} send coins transfer -a 100 -n test -t "${addr[0]}" -k ${managerPrivkey}
     sleep 5
 
     l2addrs="${l2addr[0]}"
-    keys="${key[0]}"
     accountIDs="3"
     tokenIds="258"
     for ((i = 1; i < ${addrTest}; i++)); do
         id=$((i + 3))
         l2addrs="${l2addrs},${l2addr[i]}"
-        keys="${keys},${key[i]}"
         accountIDs="${accountIDs},${id}"
         tid=$((i + 258))
         tokenIds="${tokenIds},${tid}"
@@ -64,7 +65,7 @@ function create_addr_all() {
     echo -e "${IYellow} keys: ${keys} ${NOC}"
 
     for ((i = 0; i < ${addrInit}; i++)); do
-        echo -e "${IYellow} zkAddr${i}: ${addr[i]} *** l2addr${i}: ${l2addr[i]} *** key: ${key[i]} ${NOC}"
+        echo -e "${IYellow} zkAddr${i}: ${addr[i]} *** l2addr${i}: ${l2addr[i]} ${NOC}"
     done
 }
 
@@ -85,13 +86,45 @@ function zksync_deposit_init() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     echo -e "${GRE} deposit 初始交易 确定了 account id ${NOC}"
 
-    for ((i = 0; i < ${addrTest}; i++)); do
-        hash=$(${CLI} send zksync deposit -t 0 -a ${initBalance} -e ${ethAddr} -c "${l2addr[i]}" -i ${queueId} -k ${managerPrivkey})
-        check_tx "${CLI}" "${hash}"
-        queueId=$((queueId + 1))
+#    for ((i = 0; i < ${addrTest}; i++)); do
+#        hash=$(${CLI} send zksync deposit -t 0 -a ${initBalance} -e ${ethAddr} -c "${l2addr[i]}" -i ${queueId} -k ${managerPrivkey})
+#        check_tx "${CLI}" "${hash}"
+#        queueId=$((queueId + 1))
+#    done
+
+    # 第一个地址先 deposit
+    hash=$(${CLI} send zksync deposit -t 0 -a 2400000000000000000000 -e ${ethAddr} -c "${l2addr[0]}" -i ${queueId} -k ${managerPrivkey})
+    check_tx "${CLI}" "${hash}"
+    queueId=$((queueId + 1))
+
+    ${CLI} zksync sendl2 pubkey_many -a 3 -k "${key[0]}"
+    sleep 5
+
+    tol2addrs="${l2addr[1]}"
+    for ((i = 2; i < ${addrTest}; i++)); do
+        tol2addrs="${tol2addrs},${l2addr[i]}"
     done
 
+    # transfer2new_to_many 其他地址创建 account id
+    ${CLI} zksync sendl2 transfer2new_to_many -t "${TOKENID_0}" -m "${initBalance}" -e ${ethAddr} -f 3 -d "${tol2addrs}" -k "${key[0]}"
+    sleep $sleepTime
+
+    # 第一个地址 forceexit_many 再 deposit -a "${initBalance}" 为了跟其他地址金额一样 方便测试
+    ${CLI} zksync sendl2 forceexit_many -t "${TOKENID_0}" -a 3 -k "${key[0]}"
+    sleep 2
+    hash=$(${CLI} send zksync deposit -t 0 -a "${initBalance}" -e ${ethAddr} -c "${l2addr[0]}" -i ${queueId} -k ${managerPrivkey})
+    check_tx "${CLI}" "${hash}"
+    queueId=$((queueId + 1))
+
     check_balance "${initBalance}"
+
+    # 获取 keys
+    keys="${key[0]}"
+    for ((i = 1; i < ${addrTest}; i++)); do
+        id=$((i + 3))
+        gkey=$( get_key $id )
+        keys="${keys},${gkey}"
+    done
 }
 
 function zksync_many_deposit() {
@@ -147,8 +180,7 @@ function zksync_contract2tree_many() {
     check_balance "${balanceAf}"
 }
 
-function zksync_transfer_many() {
-    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+function get_transfer_many_ids() {
     toIDs="4"
     accountIDs2="3"
     end=$((addrTest - 1))
@@ -160,10 +192,14 @@ function zksync_transfer_many() {
         id=$((i + 3))
         accountIDs2="${accountIDs2},${id}"
         endIDs="${endIDs},${endId}"
-        keys2="${keys2},${key[i]}"
+        gkey=$( get_key $id )
+        keys2="${keys2},${gkey}"
     done
     toIDs="${toIDs},3"
+}
 
+function zksync_transfer_many() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     echo -e "${IYellow} 3转给4 4转给5 ... 最后大家都是只扣了手续费 ${NOC}"
     ${CLI} zksync sendl2 transfer_many -t "${TOKENID_0}" -m "4${le8zero}" -f ${accountIDs} -d ${toIDs} -k "${keys}"
@@ -190,8 +226,7 @@ function zksync_transfer_many() {
     is_equal "${balance0}" "${balanceEnd}"
 }
 
-function zksync_transfer_many_2() {
-    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+function get_transfer_many_2_ids() {
     fromIDs="3"
     toIDs="4"
     end=$((addrTest-2))
@@ -201,10 +236,14 @@ function zksync_transfer_many_2() {
         fromIDs="${fromIDs},${id}"
         tid=$((i + 4))
         toIDs="${toIDs},${tid}"
-        keys2="${keys2},${key[i]}"
+        gkey=$( get_key $id )
+        keys2="${keys2},${gkey}"
         i=$((i + 2))
     done
+}
 
+function zksync_transfer_many_2() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf3=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     balanceBf4=$(${CLI} zksync query account token -a "4" -t 0 | jq -r ".tokenBalances[].balance")
     echo -e "${IYellow} 3转给4 5转给6 7转给8 ... ${NOC}"
@@ -229,8 +268,7 @@ function zksync_transfer_many_2() {
     done
 }
 
-function zksync_transfer2new_many() {
-    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+function get_transfer2new_many_ids() {
     accountIDs3="3"
     toIDs="${idMax}"
     tol2addrs="${l2addr[addrTest]}"
@@ -242,9 +280,13 @@ function zksync_transfer2new_many() {
         toIDs="${toIDs},${tid}"
         toAddr=$((i + addrTest))
         tol2addrs="${tol2addrs},${l2addr[toAddr]}"
-        keys2="${keys2},${key[i]}"
+        gkey=$( get_key $id )
+        keys2="${keys2},${gkey}"
     done
+}
 
+function zksync_transfer2new_many() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     echo -e "${IYellow} 3转给13 4转给14 ... ${NOC}"
     ${CLI} zksync sendl2 transfer2new_many -t "${TOKENID_0}" -m "6${le8zero}" -e ${ethAddr} -f ${accountIDs3} -d "${tol2addrs}" -k "${keys2}"
@@ -339,6 +381,33 @@ function zksync_withdrawNFT_many() {
     done
 }
 
+function zksync_deposit_transfer() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    # forceexit 后 让所有id金额为 initBalance 方便后面测试
+    # 第一个地址先 deposit
+    hash=$(${CLI} send zksync deposit -t 0 -a 2400000000000000000000 -e ${ethAddr} -c "${l2addr[0]}" -i ${queueId} -k ${managerPrivkey})
+    check_tx "${CLI}" "${hash}"
+    queueId=$((queueId + 1))
+
+    toIDs="4"
+    end=$((addrTest - 1))
+    for ((i = 1; i < ${end}; i++)); do
+        tid=$((i + 4))
+        toIDs="${toIDs},${tid}"
+    done
+    ${CLI} zksync sendl2 transfer_many_2 -t "${TOKENID_0}" -m "${initBalance}" -f 3 -d ${toIDs} -k "${key[0]}"
+    sleep $sleepTime
+
+    # 第一个地址 forceexit_many 再 deposit -a "${initBalance}" 为了跟其他地址金额一样 方便测试
+    ${CLI} zksync sendl2 forceexit_many -t "${TOKENID_0}" -a 3 -k "${key[0]}"
+    sleep 2
+    hash=$(${CLI} send zksync deposit -t 0 -a "${initBalance}" -e ${ethAddr} -c "${l2addr[0]}" -i ${queueId} -k ${managerPrivkey})
+    check_tx "${CLI}" "${hash}"
+    queueId=$((queueId + 1))
+
+    check_balance "${initBalance}"
+}
+
 function zksync_test_all() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     create_addr_all
@@ -359,12 +428,17 @@ function zksync_test_all() {
 
     # 10 200 300 个地址测试通过
     echo -e "${GRE}=========== transfer ===========${NOC}"
+    get_transfer_many_ids
     zksync_transfer_many
-    zksync_transfer2new_many
+
+    get_transfer_many_2_ids
     zksync_transfer_many_2
 
+#    get_transfer2new_many_ids
+#    zksync_transfer2new_many
+
     zksync_forceexit_many
-    zksync_deposit_init
+    zksync_deposit_transfer
     echo -e "${GRE}=========== nft ERC1155 和 ERC721 分开测试 ===========${NOC}"
     zksync_mintNFT_ERC1155_many
 
@@ -373,4 +447,3 @@ function zksync_test_all() {
 #    zksync_transferNFT_ERC721_many
 #    zksync_withdrawNFT_many 1
 }
-
