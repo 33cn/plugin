@@ -2,6 +2,8 @@
 # shellcheck disable=SC2154
 # shellcheck disable=SC2034
 # shellcheck disable=SC2128
+# shellcheck disable=SC2002
+# shellcheck disable=SC2116
 set -x
 set -e
 
@@ -143,3 +145,11 @@ function is_equal() {
     set -x
 }
 
+function get_key() {
+    local id=$1
+    l2Addr=$(${CLI} zksync query account id -a "$id" | jq -r ".chain33Addr")
+    account=$(cat "./testAddress.sh" | grep "${l2Addr}")
+    account=$(echo "${account#*[}")
+    account=$(echo "${account%]*}")
+    echo "${key[account]}"
+}

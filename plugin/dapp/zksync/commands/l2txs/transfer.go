@@ -194,3 +194,62 @@ func tranferMany(cmd *cobra.Command, args []string) {
 		sendTx(rpcLaddr, tx)
 	}
 }
+
+func SendManyTransferTxFromOneCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer_many_2",
+		Short: "from one addr, send many transfer tx to chain33",
+		Run:   tranferManyFromOne,
+	}
+	sendManyTransferFromOneFlags(cmd)
+	return cmd
+}
+
+func sendManyTransferFromOneFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 0, "eth token id")
+	_ = cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().StringP("amount", "m", "0", "contractToTree amount")
+	_ = cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("fromID", "f", "0", "from account id")
+	_ = cmd.MarkFlagRequired("fromID")
+	cmd.Flags().StringP("toIDs", "d", "0", "to account ids on chain33, use ',' separate")
+	_ = cmd.MarkFlagRequired("accountIDs")
+	cmd.Flags().StringP("key", "k", "", "private key")
+	_ = cmd.MarkFlagRequired("key")
+}
+
+func tranferManyFromOne(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	amount, _ := cmd.Flags().GetString("amount")
+	fromID, _ := cmd.Flags().GetString("fromID")
+	toIDs, _ := cmd.Flags().GetString("toIDs")
+	key, _ := cmd.Flags().GetString("key")
+
+	tids := strings.Split(toIDs, ",")
+
+	fid, _ := strconv.ParseInt(fromID, 10, 64)
+	for i := 0; i < len(tids); i++ {
+		tid, _ := strconv.ParseInt(tids[i], 10, 64)
+		param := &zksyncTypes.ZkTransfer{
+			TokenId:       tokenId,
+			Amount:        amount,
+			FromAccountId: uint64(fid),
+			ToAccountId:   uint64(tid),
+		}
+
+		action := &zksyncTypes.ZksyncAction{
+			Ty: zksyncTypes.TyTransferAction,
+			Value: &zksyncTypes.ZksyncAction_Transfer{
+				Transfer: param,
+			},
+		}
+
+		tx, err := createChain33Tx(key, action)
+		if nil != err {
+			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
+			return
+		}
+		sendTx(rpcLaddr, tx)
+	}
+}
