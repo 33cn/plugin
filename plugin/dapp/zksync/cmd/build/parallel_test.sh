@@ -44,6 +44,7 @@ function create_addr_all() {
     for ((i = 0; i < ${addrInit}; i++)); do
         ${CLI} account import_key -l "zkAddr${i}" -k "${key[i]}"
         hash=$(${CLI} send coins transfer -a 20 -n test -t "${addr[i]}" -k ${managerPrivkey})
+
     done
     sleep 5
 
@@ -121,30 +122,30 @@ function zksync_many_withdraw() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     ${CLI} zksync sendl2 withdraw_many -t "${TOKENID_0}" -m "2${le8zero}" -a ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    balanceAf=$(( $balanceBf - 2${le8zero} - ${withdrawFee} ))
-    check_balance "${balanceAf}"
+#    sleep $sleepTime
+#
+#    balanceAf=$(( $balanceBf - 2${le8zero} - ${withdrawFee} ))
+#    check_balance "${balanceAf}"
 }
 
 function zksync_tree2contract_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     ${CLI} zksync sendl2 tree2contract_many -t "${TOKENID_0}" -m "300${le8zero}" -a ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    balanceAf=$(( $balanceBf - 300${le8zero} ))
-    check_balance "${balanceAf}"
+#    sleep $sleepTime
+#
+#    balanceAf=$(( $balanceBf - 300${le8zero} ))
+#    check_balance "${balanceAf}"
 }
 
 function zksync_contract2tree_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     ${CLI} zksync sendl2 contract2tree_many -t "${TOKENID_0}" -m "300${le8zero}" -a ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    balanceAf=$(( $balanceBf + 300${le8zero} ))
-    check_balance "${balanceAf}"
+#    sleep $sleepTime
+#
+#    balanceAf=$(( $balanceBf + 300${le8zero} ))
+#    check_balance "${balanceAf}"
 }
 
 function zksync_transfer_many() {
@@ -164,30 +165,30 @@ function zksync_transfer_many() {
     done
     toIDs="${toIDs},3"
 
-    balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
-    echo -e "${IYellow} 3转给4 4转给5 ... 最后大家都是只扣了手续费 ${NOC}"
+#    balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
+#    echo -e "${IYellow} 3转给4 4转给5 ... 最后大家都是只扣了手续费 ${NOC}"
     ${CLI} zksync sendl2 transfer_many -t "${TOKENID_0}" -m "4${le8zero}" -f ${accountIDs} -d ${toIDs} -k "${keys}"
-    sleep $sleepTime
+#    sleep $sleepTime
+#
+#    balanceAf=$(( balanceBf - transferFee ))
+#    check_balance "${balanceAf}"
 
-    balanceAf=$(( balanceBf - transferFee ))
-    check_balance "${balanceAf}"
-
-    balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
-    echo -e "${IYellow} 都转给最后一个12 ${NOC}"
+#    balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
+#    echo -e "${IYellow} 都转给最后一个12 ${NOC}"
     ${CLI} zksync sendl2 transfer_many -t "${TOKENID_0}" -m "5${le8zero}" -f ${accountIDs2} -d ${endIDs} -k "${keys2}"
-    sleep $sleepTime
+#    sleep $sleepTime
+#
+#    balanceAf=$(( balanceBf - 5${le8zero} - transferFee ))
+#    echo -e "${IYellow} 3 4 5 ... 都少了金额 扣了手续费 ${NOC}"
+#    for ((i = 3; i < ${endId}; i++)); do
+#        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
+#        is_equal "${balance0}" "${balanceAf}"
+#    done
 
-    balanceAf=$(( balanceBf - 5${le8zero} - transferFee ))
-    echo -e "${IYellow} 3 4 5 ... 都少了金额 扣了手续费 ${NOC}"
-    for ((i = 3; i < ${endId}; i++)); do
-        balance0=$(${CLI} zksync query account token -a "${i}" -t 0 | jq -r ".tokenBalances[].balance")
-        is_equal "${balance0}" "${balanceAf}"
-    done
-
-    balanceEnd=$(( balanceBf + 5${le8zero} * end))
-    echo -e "${IYellow} 最后一个金额增加 ${NOC}"
-    balance0=$(${CLI} zksync query account token -a "${endId}" -t 0 | jq -r ".tokenBalances[].balance")
-    is_equal "${balance0}" "${balanceEnd}"
+#    balanceEnd=$(( balanceBf + 5${le8zero} * end))
+#    echo -e "${IYellow} 最后一个金额增加 ${NOC}"
+#    balance0=$(${CLI} zksync query account token -a "${endId}" -t 0 | jq -r ".tokenBalances[].balance")
+#    is_equal "${balance0}" "${balanceEnd}"
 }
 
 function zksync_transfer_many_2() {
@@ -229,6 +230,26 @@ function zksync_transfer_many_2() {
     done
 }
 
+function zksync_transfer_many_2_noBalanceCheck() {
+    echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
+    fromIDs="3"
+    toIDs="4"
+    end=$((addrTest-2))
+    keys2="${key[0]}"
+    for ((i = 2; i < ${end};)); do
+        id=$((i + 3))
+        fromIDs="${fromIDs},${id}"
+        tid=$((i + 4))
+        toIDs="${toIDs},${tid}"
+        keys2="${keys2},${key[i]}"
+        i=$((i + 2))
+    done
+
+
+    ${CLI} zksync sendl2 transfer_many -t "${TOKENID_0}" -m "4${le8zero}" -f ${fromIDs} -d ${toIDs} -k "${keys2}"
+    sleep $sleepTime
+}
+
 function zksync_transfer2new_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     accountIDs3="3"
@@ -248,27 +269,27 @@ function zksync_transfer2new_many() {
     balanceBf=$(${CLI} zksync query account token -a "3" -t 0 | jq -r ".tokenBalances[].balance")
     echo -e "${IYellow} 3转给13 4转给14 ... ${NOC}"
     ${CLI} zksync sendl2 transfer2new_many -t "${TOKENID_0}" -m "6${le8zero}" -e ${ethAddr} -f ${accountIDs3} -d "${tol2addrs}" -k "${keys2}"
-    sleep $sleepTime
-
-    balanceAf=$(( balanceBf - 6${le8zero} - transferFee ))
-    echo -e "${IYellow} 3 4 5 ... 11 12 都扣了手续费和金额 最后几个地址增加金额 ${NOC}"
-    for ((i = 0; i < ${transfer2newAddr}; i++)); do
-        id=$((i + 3))
-        balance0=$(${CLI} zksync query account token -a "${id}" -t 0 | jq -r ".tokenBalances[].balance")
-        is_equal "${balance0}" "${balanceAf}"
-
-        tid=$((i + idMax))
-        balance0=$(${CLI} zksync query account token -a "${tid}" -t 0 | jq -r ".tokenBalances[].balance")
-        is_equal "${balance0}" "6${le8zero}"
-    done
+#    sleep $sleepTime
+#
+#    balanceAf=$(( balanceBf - 6${le8zero} - transferFee ))
+#    echo -e "${IYellow} 3 4 5 ... 11 12 都扣了手续费和金额 最后几个地址增加金额 ${NOC}"
+#    for ((i = 0; i < ${transfer2newAddr}; i++)); do
+#        id=$((i + 3))
+#        balance0=$(${CLI} zksync query account token -a "${id}" -t 0 | jq -r ".tokenBalances[].balance")
+#        is_equal "${balance0}" "${balanceAf}"
+#
+#        tid=$((i + idMax))
+#        balance0=$(${CLI} zksync query account token -a "${tid}" -t 0 | jq -r ".tokenBalances[].balance")
+#        is_equal "${balance0}" "6${le8zero}"
+#    done
 }
 
 function zksync_forceexit_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     ${CLI} zksync sendl2 forceexit_many -t "${TOKENID_0}" -a ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    check_balance "0"
+#    sleep $sleepTime
+#
+#    check_balance "0"
 }
 
 function zksync_mintNFT_ERC1155_many() {
@@ -276,18 +297,18 @@ function zksync_mintNFT_ERC1155_many() {
     balanceBf1=$(${CLI} zksync query account token -a 1 -t 0 | jq -r ".tokenBalances[].balance")
     balanceBf=$(${CLI} zksync query account token -a 3 -t 0 | jq -r ".tokenBalances[].balance")
     ${CLI} zksync sendl2 nft mint -p 1 -m 1000 -e "${keys}" -t "${accountIDs}" -f ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    balance=$(${CLI} zksync query account token -a 1 -t 0 | jq -r ".tokenBalances[].balance")
-    balanceAf1=$((balanceBf1 + ${addrTest} * ${nftFee}))
-    is_equal "${balance}" "${balanceAf1}"
-
-    balance=$(${CLI} zksync query account token -a 2 -t ${nftTokenId} | jq -r ".tokenBalances[].balance")
-    balance256=$((addrTest + nftTokenId + 1))
-    is_equal "${balance}" "${balance256}"
-
-    balanceAf=$((balanceBf - nftFee))
-    check_balance "${balanceAf}"
+#    sleep $sleepTime
+#
+#    balance=$(${CLI} zksync query account token -a 1 -t 0 | jq -r ".tokenBalances[].balance")
+#    balanceAf1=$((balanceBf1 + ${addrTest} * ${nftFee}))
+#    is_equal "${balance}" "${balanceAf1}"
+#
+#    balance=$(${CLI} zksync query account token -a 2 -t ${nftTokenId} | jq -r ".tokenBalances[].balance")
+#    balance256=$((addrTest + nftTokenId + 1))
+#    is_equal "${balance}" "${balance256}"
+#
+#    balanceAf=$((balanceBf - nftFee))
+#    check_balance "${balanceAf}"
 }
 
 function zksync_mintNFT_ERC721_many() {
@@ -295,19 +316,19 @@ function zksync_mintNFT_ERC721_many() {
     balanceBf1=$(${CLI} zksync query account token -a 1 -t 0 | jq -r ".tokenBalances[].balance")
     balanceBf=$(${CLI} zksync query account token -a 3 -t 0 | jq -r ".tokenBalances[].balance")
     ${CLI} zksync sendl2 nft mint -p 2 -m 1 -e "${keys}" -t "${accountIDs}" -f ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    balance=$(${CLI} zksync query account token -a 1 -t 0 | jq -r ".tokenBalances[].balance")
-    balanceAf1=$((balanceBf1 + ${addrTest} * ${nftFee}))
-    is_equal "${balance}" "${balanceAf1}"
-
-    balance=$(${CLI} zksync query account token -a 2 -t ${nftTokenId} | jq -r ".tokenBalances[].balance")
-    balance256=$((addrTest + nftTokenId + 1))
-    is_equal "${balance}" "${balance256}"
-
-    balanceAf=$((balanceBf - nftFee))
-    check_balance "${balanceAf}"
-    check_balance "1" ${nftTokenId}
+#    sleep $sleepTime
+#
+#    balance=$(${CLI} zksync query account token -a 1 -t 0 | jq -r ".tokenBalances[].balance")
+#    balanceAf1=$((balanceBf1 + ${addrTest} * ${nftFee}))
+#    is_equal "${balance}" "${balanceAf1}"
+#
+#    balance=$(${CLI} zksync query account token -a 2 -t ${nftTokenId} | jq -r ".tokenBalances[].balance")
+#    balance256=$((addrTest + nftTokenId + 1))
+#    is_equal "${balance}" "${balance256}"
+#
+#    balanceAf=$((balanceBf - nftFee))
+#    check_balance "${balanceAf}"
+#    check_balance "1" ${nftTokenId}
 
 #    # 结果不再匹配 因为258 259 260 ... 执行顺序没有按照id 3 4 5 ... 结果不能匹配查询
 #    for ((i = ${$((nftTokenId + 2))}; i < ${$((addrTest + nftTokenId + 1))}; i++)); do
@@ -319,11 +340,11 @@ function zksync_transferNFT_ERC721_many() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     balanceBf=$(${CLI} zksync query account token -a 3 -t 0 | jq -r ".tokenBalances[].balance")
     ${CLI} zksync sendl2 nft transfer -t ${nftTokenId} -m 1 -t "${tokenIds}" -a "${accountIDs}" -r ${accountIDs} -k "${keys}"
-    sleep $sleepTime
-
-    balanceAf=$((balanceBf - nftFee))
-    check_balance "${balanceAf}"
-    check_balance "1" ${nftTokenId}
+#    sleep $sleepTime
+#
+#    balanceAf=$((balanceBf - nftFee))
+#    check_balance "${balanceAf}"
+#    check_balance "1" ${nftTokenId}
 }
 
 function zksync_withdrawNFT_many() {
@@ -360,8 +381,21 @@ function zksync_test_all() {
     # 10 200 300 个地址测试通过
     echo -e "${GRE}=========== transfer ===========${NOC}"
     zksync_transfer_many
+    sleep 5
     zksync_transfer2new_many
     zksync_transfer_many_2
+
+    count=0
+    while true; do
+        zksync_transfer_many
+        count=$((count + 1))
+        sleep 5
+
+        if [[ ${count} -ge 10 ]]; then
+            echo "zksync_transfer_many 10 times"
+            break
+        fi
+    done
 
     zksync_forceexit_many
     zksync_deposit_init
