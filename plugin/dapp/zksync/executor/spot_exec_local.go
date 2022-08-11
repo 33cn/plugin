@@ -14,11 +14,12 @@ func (e *zksync) ExecLocal_LimitOrder(payload *ety.SpotLimitOrder, tx *types.Tra
 	return e.interExecLocalZksyncSpot(tx, receiptData, index)
 }
 
-func (e *zksync) ExecLocal_MarketOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zksync) ExecLocal_RevokeOrder(payload *ety.SpotRevokeOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocalZksyncSpot(tx, receiptData, index)
 }
 
-func (e *zksync) ExecLocal_RevokeOrder(payload *ety.SpotRevokeOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+/*
+func (e *zksync) ExecLocal_MarketOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocalZksyncSpot(tx, receiptData, index)
 }
 
@@ -29,6 +30,7 @@ func (e *zksync) ExecLocal_EntrustOrder(payload *ety.SpotLimitOrder, tx *types.T
 func (e *zksync) ExecLocal_EntrustRevokeOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocalZksyncSpot(tx, receiptData, index)
 }
+*/
 
 func (e *zksync) ExecLocal_SpotNftOrder(payload *ety.SpotNftOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocalZksyncSpot(tx, receiptData, index)
