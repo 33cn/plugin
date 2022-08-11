@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 
+	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"github.com/33cn/chain33/types"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
@@ -17,6 +18,28 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 	if err != nil {
 		return nil, err
 	}
+
+	defer func(lSet *types.LocalDBSet) {
+		if types.IsEthSignID(tx.GetSignature().GetTy()) {
+			nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(tx.From())
+			nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
+			var evmNonce types.EvmAccountNonce
+			if err == nil {
+				types.Decode(nonceV, &evmNonce)
+				if evmNonce.GetNonce() == tx.GetNonce() {
+					evmNonce.Nonce++
+				}
+
+			} else {
+				evmNonce.Addr = tx.From()
+				evmNonce.Nonce = 1
+			}
+			if lSet != nil {
+				lSet.KV = append(lSet.KV, &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(&evmNonce)})
+			}
+		}
+	}(set)
+
 	if receipt.GetTy() != types.ExecOk {
 		return set, nil
 	}
@@ -43,6 +66,7 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 			}
 		}
 	}
+
 	set.KV = evm.AddRollbackKV(tx, []byte(evmtypes.ExecutorName), set.KV)
 	return set, err
 }

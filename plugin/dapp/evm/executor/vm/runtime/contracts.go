@@ -8,11 +8,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"math/big"
-
 	"github.com/33cn/chain33/system/address/eth"
-
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
+	"math/big"
 
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -137,7 +135,10 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 
 	r := new(big.Int).SetBytes(input[64:96])
 	s := new(big.Int).SetBytes(input[96:128])
-	v := input[63] - 27
+	var v = input[63]
+	if input[63] != 0 && input[63] != 1 {
+		v = input[63] - 27
+	}
 
 	// tighter sig s values input homestead only apply to tx sigs
 	if !common.AllZero(input[32:63]) || !crypto.ValidateSignatureValues(r, s) {
@@ -166,6 +167,7 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 	// the first byte of pubkey is bitcoin heritage
 	driver := common.GetEvmAddressDriver()
 	// 以太坊保持兼容, 直接用原生代码更高效
+
 	if driver.GetName() == eth.Name {
 		return common.LeftPadBytes(crypto.Keccak256(pubKey[1:])[12:], 32), nil
 	}

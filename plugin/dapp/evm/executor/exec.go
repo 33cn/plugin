@@ -6,7 +6,6 @@ package executor
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -38,12 +37,13 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		evmDebugInited = true
 	}
 
-	return evm.innerExec(msg, tx.Hash(), index, msg.GasLimit(), false)
+	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
+	return receipt, err
 }
 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
-func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
+func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
@@ -51,6 +51,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+		"data size:", len(msg.Data()), "readOnly", readOnly)
 	var (
 		ret             []byte
 		vmerr           error
@@ -64,11 +66,11 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	if isTransferOnly {
 		caller := msg.From()
 		receiver := common.BytesToAddress(msg.Para())
-
 		if !evm.mStateDB.CanTransfer(caller.String(), msg.Value()) {
 			log.Error("innerExec", "Not enough balance to be transferred from", caller.String(), "amout", msg.Value())
 			return nil, types.ErrNoBalance
 		}
+
 		env.StateDB.Snapshot()
 		env.Transfer(env.StateDB, caller, receiver, msg.Value())
 		curVer := evm.mStateDB.GetLastSnapshot()
@@ -76,8 +78,13 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
-		// 使用随机生成的地址作为合约地址（这个可以保证每次创建的合约地址不会重复，不存在冲突的情况）
-		contractAddr = evm.createContractAddress(msg.From(), txHash)
+		if types.IsEthSignID(int32(sigType)) {
+			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
+			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
+		} else {
+			contractAddr = evm.createContractAddress(msg.From(), txHash)
+		}
+
 		contractAddrStr = contractAddr.String()
 		if !env.StateDB.Empty(contractAddrStr) {
 			return receipt, model.ErrContractAddressCollision
@@ -98,6 +105,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
 
 	if isCreate {
+
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
@@ -124,7 +132,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 			visiableOut = append(visiableOut, ret[i])
 		}
 		ret = visiableOut
-		vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), string(ret))
 		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
 
 		return receipt, vmerr
@@ -180,11 +188,10 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 
 	evm.collectEvmTxLog(txHash, contractReceipt, receipt)
 
-	if isCreate {
+	if isCreate && !readOnly {
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
-
 	return receipt, nil
 }
 
@@ -244,7 +251,7 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 	if gasPrice == 0 {
 		gasPrice = uint32(1)
 	}
-
+	log.Debug("GetMessage", "code size", len(action.Code), "data size:", len(action.Para))
 	// 合约的GasLimit即为调用者为本次合约调用准备支付的手续费
 	msg = common.NewMessage(from, to, tx.Nonce, action.Amount, gasLimit, gasPrice, action.Code, action.Para, action.GetAlias())
 	return msg, err

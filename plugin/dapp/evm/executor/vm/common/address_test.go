@@ -8,6 +8,11 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/address/eth"
+
+	"github.com/33cn/chain33/common"
+
 	"github.com/33cn/chain33/types"
 
 	"github.com/holiman/uint256"
@@ -59,4 +64,15 @@ func TestNewContractAddress(t *testing.T) {
 	addr2 := NewAddress(cfg, hash)
 	assert.Equal(t, hexHash, hex.EncodeToString(hash))
 	assert.Equal(t, "17ZDZhQrFRnwQgBxZdLWvqh8dqfLXBRzyj", addr2.String())
+
+	ethdriver, err := address.LoadDriver(eth.ID, -1)
+	assert.Equal(t, nil, err)
+	InitEvmAddressTypeOnce(ethdriver)
+	ab, _ := common.FromHex("0xd83b69C56834E85e023B1738E69BFA2F0dd52905")
+	addr = BytesToAddress(ab)
+	nonce := 0x13
+
+	addr3 := NewEvmContractAddress(addr, uint64(nonce))
+	t.Log("addr3", addr3)
+	assert.Equal(t, "0xdcadbe74054cdb2733ba95875339afad7af9fdf4", addr3.String())
 }

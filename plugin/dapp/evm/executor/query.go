@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync/atomic"
 
+	log "github.com/33cn/chain33/common/log/log15"
+
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 
 	"github.com/33cn/chain33/common"
@@ -79,7 +81,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	}
 
 	msg.SetGasLimit(evmtypes.MaxGasLimit)
-	receipt, err := evm.innerExec(msg, tx.Hash(), index, evmtypes.MaxGasLimit, true)
+	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +89,6 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	if receipt.Ty != types.ExecOk {
 		return nil, errors.New("contract call error")
 	}
-
 	callData := getCallReceipt(receipt.GetLogs())
 	if callData == nil {
 		return nil, errors.New("nil receipt")
@@ -163,7 +164,7 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "estimateGas")
 	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
 
-	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, true)
+	receipt, err := evm.innerExec(msg, txHash, 0, 1, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		ret.JsonData = fmt.Sprintf("%v", err)
 		return ret, nil
@@ -179,13 +180,14 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	return ret, nil
 }
 
+//Query_GetNonce 获取普通账户的Nonce
 func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Message, error) {
 	evm.CheckInit()
-	nonce := evm.mStateDB.GetNonce(in.Address)
-
+	nonce := evm.mStateDB.GetAccountNonce(in.Address)
 	return &evmtypes.EvmGetNonceRespose{Nonce: int64(nonce)}, nil
 }
 
+//Query_GetPackData ...
 func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types.Message, error) {
 	evm.CheckInit()
 	_, packData, err := evmAbi.Pack(in.Parameter, in.Abi, false)
@@ -197,6 +199,7 @@ func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types
 	return &evmtypes.EvmGetPackDataRespose{PackData: packStr}, nil
 }
 
+//Query_GetUnpackData ...
 func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (types.Message, error) {
 	evm.CheckInit()
 	data, err := common.FromHex(in.Data)
@@ -215,4 +218,28 @@ func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (t
 		ret.UnpackData = append(ret.UnpackData, fmt.Sprintf("%v", v.Value))
 	}
 	return &ret, nil
+}
+
+//Query_GetCode 获取合约地址下的code
+func (evm *EVMExecutor) Query_GetCode(in *evmtypes.CheckEVMAddrReq) (types.Message, error) {
+	evm.CheckInit()
+	addrStr := in.Addr
+	if len(addrStr) == 0 {
+		return nil, model.ErrAddrNotExists
+	}
+
+	addr := evmCommon.StringToAddress(in.GetAddr())
+	log.Debug("Query_GetCode", "addr", in.GetAddr(), "addrstring", addr.String())
+	codeData := evm.mStateDB.GetCode(addr.String())
+	abiData := evm.mStateDB.GetAbi(addr.String())
+	account := evm.mStateDB.GetAccount(addr.String())
+	var ret evmtypes.EVMContractData
+	ret.Code = codeData
+	ret.Abi = abiData
+	if account != nil {
+		ret.Creator = account.GetCreator()
+		ret.Alias = account.GetAliasName()
+	}
+	return &ret, nil
+
 }

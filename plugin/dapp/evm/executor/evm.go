@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"sort"
 
+	log "github.com/33cn/chain33/common/log/log15"
 	"reflect"
 
 	"github.com/33cn/chain33/common/address"
@@ -149,6 +151,7 @@ func (evm *EVMExecutor) Allow(tx *types.Transaction, index int) error {
 	if evm.AllowIsUserDot2(exec) {
 		return nil
 	}
+
 	return types.ErrNotAllow
 }
 
@@ -167,6 +170,7 @@ func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transac
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -186,8 +190,60 @@ func (evm *EVMExecutor) createContractAddress(b common.Address, txHash []byte) c
 	return common.NewContractAddress(b, txHash)
 }
 
+// createContractAddress creates an ethereum address given the bytes and the nonce
+func (evm *EVMExecutor) createEvmContractAddress(b common.Address, nonce uint64) common.Address {
+	return common.NewEvmContractAddress(b, nonce)
+}
+
 // CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
+	if evm.GetAPI().GetConfig().IsPara() {
+		return nil
+	}
+
+	if tx == nil {
+		return fmt.Errorf("tx empty")
+	}
+	//main chain
+	if types.IsEthSignID(tx.GetSignature().GetTy()) {
+		//获取mempool 某个地址下所有交易
+		details, err := evm.GetAPI().GetTxListByAddr(&types.ReqAddrs{Addrs: []string{tx.From()}})
+		if err != nil {
+			return err
+		}
+
+		txs := details.GetTxs()
+		txs = append(txs, &types.TransactionDetail{Tx: tx, Index: int64(index)})
+		if len(txs) > 1 {
+			sort.SliceStable(txs, func(i, j int) bool { //nonce asc
+				return txs[i].Tx.GetNonce() < txs[j].Tx.GetNonce()
+			})
+			//遇到相同的Nonce ,较低的手续费的交易将被删除
+			for i, stx := range txs {
+				if bytes.Equal(stx.Tx.Hash(), tx.Hash()) {
+					continue
+				}
+				if txs[i].GetTx().GetNonce() == tx.GetNonce() {
+					bnfee := big.NewInt(txs[i].GetTx().Fee)
+					bnfee = bnfee.Mul(bnfee, big.NewInt(110))
+					bnfee = bnfee.Div(bnfee, big.NewInt(1e2))
+					if tx.Fee < bnfee.Int64() {
+						err := fmt.Errorf("requires at least 10 percent increase in handling fee,need more:%d", bnfee.Int64()-tx.Fee)
+						log.Error("checkTxNonce", "fee err", err, "txfee", tx.Fee, "mempooltx", txs[0].GetTx().Fee)
+						return err
+					}
+					//移除手续费较低的交易
+					evm.GetAPI().RemoveTxsByHashList(&types.TxHashList{
+						Hashes: [][]byte{txs[i].GetTx().Hash()},
+					})
+					return nil
+				}
+			}
+
+		}
+
+	}
+
 	return nil
 }
 

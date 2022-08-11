@@ -56,7 +56,7 @@ func Test_GetAddressFromBridgeRegistry(t *testing.T) {
 }
 
 func Test_RelayOracleClaimToEthereum(t *testing.T) {
-	para, sim, x2EthContracts, _, err := deployContracts()
+	para, sim, _, x2EthDeployInfo, err := deployContracts()
 	require.NoError(t, err)
 
 	privateKeySlice, err := chain33Common.FromHex("0x3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e")
@@ -75,16 +75,19 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 	}
 
 	Addr2TxNonce := make(map[common.Address]*NonceMutex)
+	oracleInstance, err := GetOracleInstance(sim, x2EthDeployInfo.BridgeRegistry.Address)
+	require.Nil(t, err)
+
 	burnOrLockParameter := &BurnOrLockParameter{
-		OracleInstance: x2EthContracts.Oracle,
-		Client:         sim,
-		Sender:         para.InitValidators[0],
-		TokenOnEth:     common.HexToAddress("0x0000000000000000000000000000000000000000"),
-		Claim:          prophecyClaim,
-		PrivateKey:     privateKey,
-		Addr2TxNonce:   Addr2TxNonce,
-		ChainId:        big.NewInt(1337),
+		ClientSpec:   &EthClientWithUrl{Client: sim, OracleInstance: oracleInstance},
+		Sender:       para.InitValidators[0],
+		TokenOnEth:   common.HexToAddress("0x0000000000000000000000000000000000000000"),
+		Claim:        prophecyClaim,
+		PrivateKey:   privateKey,
+		Addr2TxNonce: Addr2TxNonce,
+		ChainId:      big.NewInt(1337),
 	}
+
 	_, err = RelayOracleClaimToEthereum(burnOrLockParameter)
 	require.Nil(t, err)
 

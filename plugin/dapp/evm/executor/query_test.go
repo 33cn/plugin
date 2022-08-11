@@ -1,9 +1,21 @@
 package executor
 
 import (
+	"bytes"
 	"fmt"
+	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
+	cty "github.com/33cn/chain33/system/dapp/coins/types"
+	vcomm "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"math/big"
+	"strings"
 	"testing"
+
+	dbmock "github.com/33cn/chain33/common/db/mocks"
+	ctypes "github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/33cn/chain33/common"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
@@ -122,4 +134,102 @@ func Test_UnpackInputLockOfBridgevmxgo(t *testing.T) {
 		}
 	}
 	assert.Equal(t, correct, 3)
+}
+
+func TestEVMExecutor_Query_GetCode(t *testing.T) {
+	api := new(apimock.QueueProtocolAPI)
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	exec := initEvmExeccutor(t, api)
+	var contractorAddr = strings.ToLower("0xDe79A84DD3A16BB91044167075dE17a1CA4b1d6b")
+	var creator = strings.ToLower("0xd83b69C56834E85e023B1738E69BFA2F0dd52905")
+	exec.mStateDB.CreateAccount(contractorAddr, creator, "evm", "ABC")
+	cacc := exec.mStateDB.GetAccount(contractorAddr)
+	code := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8}
+	exec.mStateDB.SetCode(contractorAddr, code)
+	exec.mStateDB.SetAbi(contractorAddr, "abidata")
+	t.Log("data", cacc.Data.GetCreator(), "abi", exec.mStateDB.GetAbi(contractorAddr))
+	kv := cacc.GetDataKV()
+	exec.GetMStateDB().StateDB.Set(kv[0].GetKey(), kv[0].GetValue())
+	msg, err := exec.Query_GetCode(&types.CheckEVMAddrReq{Addr: contractorAddr})
+	assert.Equal(t, nil, err)
+	ret, ok := msg.(*types.EVMContractData)
+	assert.Equal(t, true, ok)
+	t.Log("ret", ret.Code)
+	ok = bytes.Equal(code, ret.Code)
+	assert.Equal(t, true, ok)
+}
+
+func TestNewEVMExecutor_Query_GetNonce(t *testing.T) {
+	api := new(apimock.QueueProtocolAPI)
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	exec := initEvmExeccutor(t, api)
+	localDB := new(dbmock.KVDB)
+	exec.SetLocalDB(localDB)
+	var creator = "0xd83b69C56834E85e023B1738E69BFA2F0dd52905"
+	var evmAccountNonce ctypes.EvmAccountNonce
+	evmAccountNonce.Nonce = 123
+	evmAccountNonce.Addr = creator
+	localDB.On("Get", mock.Anything).Return(ctypes.Encode(&evmAccountNonce), nil)
+	msg, err := exec.Query_GetNonce(&types.EvmGetNonceReq{
+		Address: creator,
+	})
+	assert.Equal(t, nil, err)
+	resp, ok := msg.(*types.EvmGetNonceRespose)
+	assert.Equal(t, true, ok)
+	t.Log("getnonce", resp.GetNonce())
+	assert.Equal(t, evmAccountNonce.Nonce, resp.GetNonce())
+}
+func initEvmExeccutor(t *testing.T, api *apimock.QueueProtocolAPI) *EVMExecutor {
+	localDB := new(dbmock.KVDB)
+	driver, err := address.LoadDriver(2, -1)
+	assert.Equal(t, nil, err)
+
+	vcomm.InitEvmAddressTypeOnce(driver)
+	var exec = NewEVMExecutor()
+	exec.SetAPI(api)
+	statDB, err := dbm.NewGoMemDB("state", "state", 1024)
+	assert.Equal(t, nil, err)
+	exec.SetLocalDB(localDB)
+	exec.SetStateDB(statDB)
+	exec.SetEnv(0, 0, 0)
+	exec.CheckInit()
+	exec.mStateDB.StateDB = statDB
+
+	return exec
+}
+
+func TestEVMExecutor_Check(t *testing.T) {
+	api := new(apimock.QueueProtocolAPI)
+
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	pub := vcomm.FromHex("0x04715e4e07d983c2d98eeac7018bce6e68ef9de25835340f6455f1b1c9686132ac54904f5e04b07966a256140a5f487c4aef3ddc461e02d58f90cc8baa49f9c7ca")
+	sig := &ctypes.Signature{
+		Ty:     8452,
+		Pubkey: pub,
+	}
+	toAddr := "0x55d398326f99059fF775485246999027B3197955"
+	v := &cty.CoinsAction_Transfer{Transfer: &ctypes.AssetsTransfer{Amount: 111}}
+	transfer := &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}
+	//相同的NONCE，tx2手续费更高
+	tx1 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 100000, Expire: 0, To: toAddr, Nonce: 1, Signature: sig}
+	tx2 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 110002, Expire: 0, To: toAddr, Nonce: 1, Signature: sig}
+	tx3 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 100003, Expire: 0, To: toAddr, Nonce: 3, Signature: sig}
+	tx4 := &ctypes.Transaction{ChainID: 3999, Execer: []byte("coins"), Payload: ctypes.Encode(transfer), Fee: 110004, Expire: 0, To: toAddr, Nonce: 3, Signature: sig}
+	var details []*ctypes.TransactionDetail
+	details = append(details, &ctypes.TransactionDetail{Tx: tx1, Index: 0}, &ctypes.TransactionDetail{Tx: tx2, Index: 1})
+	detailTxs := &ctypes.TransactionDetails{Txs: details}
+	exec := initEvmExeccutor(t, api)
+
+	api.On("GetTxListByAddr", mock.Anything).Return(detailTxs, nil)
+	api.On("RemoveTxsByHashList", mock.Anything).Return(nil)
+	err := exec.CheckTx(tx2, 0)
+	assert.Equal(t, nil, err)
+	detailTxs.Txs = append(detailTxs.Txs, &ctypes.TransactionDetail{Tx: tx3, Index: 2}, &ctypes.TransactionDetail{Tx: tx4, Index: 3})
+	ferr := fmt.Errorf("requires at least 10 percent increase in handling fee,need more:%d", int64(float64(tx4.Fee)*1.1)-tx3.Fee)
+	err = exec.CheckTx(tx3, 0)
+	assert.Equal(t, ferr.Error(), err.Error())
+
 }

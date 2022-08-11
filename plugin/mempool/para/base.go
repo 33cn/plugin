@@ -21,7 +21,8 @@ type Mempool struct {
 	wg          sync.WaitGroup
 	client      queue.Client
 	mainGrpcCli types.Chain33Client
-	isclose     int32
+
+	isclose int32
 }
 
 //NewMempool 新建mempool 实例

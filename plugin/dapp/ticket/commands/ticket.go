@@ -8,7 +8,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/pkg/errors"
@@ -34,6 +36,7 @@ func TicketCmd() *cobra.Command {
 		CloseTicketCmd(),
 		GetColdAddrByMinerCmd(),
 		listTicketCmd(),
+		CreateCloseTicketCmd(),
 	)
 
 	return cmd
@@ -153,6 +156,7 @@ func listTicketCmd() *cobra.Command {
 	}
 	cmd.Flags().StringP("miner_acct", "m", "", "miner address (optional)")
 	cmd.Flags().Int32P("status", "s", 1, "ticket status (default 1:opened tickets)")
+	cmd.Flags().StringP("return_addr", "r", "", "return address")
 	return cmd
 }
 
@@ -160,7 +164,7 @@ func listTicket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	minerAddr, _ := cmd.Flags().GetString("miner_acct")
 	status, _ := cmd.Flags().GetInt32("status")
-
+	returnAddr, _ := cmd.Flags().GetString("return_addr")
 	if minerAddr != "" {
 		var params rpctypes.Query4Jrpc
 
@@ -168,15 +172,69 @@ func listTicket(cmd *cobra.Command, args []string) {
 		params.FuncName = "TicketList"
 		req := ty.TicketList{Addr: minerAddr, Status: status}
 		params.Payload = types.MustPBToJSON(&req)
+		if returnAddr == "" {
+			var res ty.ReplyTicketList
+			ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+			ctx.Run()
+			return
+		}
+
 		var res ty.ReplyTicketList
-		ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-		ctx.Run()
+		rpc, err := jsonclient.NewJSONClient(rpcLaddr)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		err = rpc.Call("Chain33.Query", params, &res)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+
+		returnTickets := make([]*ty.Ticket, 0)
+		for _, v := range res.Tickets {
+			if v.ReturnAddress == returnAddr {
+				returnTickets = append(returnTickets, v)
+			}
+		}
+		res.Tickets = returnTickets
+		data, err := json.MarshalIndent(res, "", "    ")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+
+		fmt.Println(string(data))
 		return
 	}
 
 	var res []ty.Ticket
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetTicketList", nil, &res)
-	ctx.Run()
+	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	err = rpc.Call("ticket.GetTicketList", nil, &res)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	if returnAddr != "" {
+		returnTickets := make([]ty.Ticket, 0)
+		for _, v := range res {
+			if v.ReturnAddress == returnAddr {
+				returnTickets = append(returnTickets, v)
+			}
+		}
+		res = returnTickets
+	}
+
+	data, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(string(data))
 }
 
 // CloseTicketCmd close all accessible tickets
@@ -284,4 +342,108 @@ func coldAddressOfMiner(cmd *cobra.Command, args []string) {
 	var res types.ReplyStrings
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
+}
+
+// CreateCloseTicketCmd create close all tickets in status (2,3)
+func CreateCloseTicketCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create_close",
+		Short: "Create Close tickets transaction",
+		Run:   createCloseTicket,
+	}
+	addCreateCloseTicket(cmd)
+	return cmd
+}
+
+func addCreateCloseTicket(cmd *cobra.Command) {
+	cmd.Flags().StringP("miner_addr", "m", "", "miner address")
+	cmd.MarkFlagRequired("miner_addr")
+	cmd.Flags().StringP("return_addr", "r", "", "return address (optional)")
+	cmd.Flags().Int32P("status", "s", 1, "ticket status (default 1:opened tickets 2: mined tickets)")
+	cmd.Flags().Int64P("withdraw_time", "w", 172800, "ticketWithdrawTime")
+	cmd.Flags().Int64P("miner_wait_time", "i", 7200, "ticketMinerWaitTime")
+
+}
+
+func createCloseTicket(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	returnAddr, _ := cmd.Flags().GetString("return_addr")
+	minerAddr, _ := cmd.Flags().GetString("miner_addr")
+	withdrawTime, _ := cmd.Flags().GetInt64("withdraw_time")
+	minerWaitTime, _ := cmd.Flags().GetInt64("miner_wait_time")
+	status, _ := cmd.Flags().GetInt32("status")
+
+	now := time.Now().Unix()
+
+	if status != ty.TicketOpened && status != ty.TicketMined {
+		fmt.Fprintln(os.Stderr, errors.New("status must be set 1 (TicketOpened) or 2 (TicketMined)"))
+		return
+	}
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = ty.TicketX
+	params.FuncName = "TicketList"
+	req := ty.TicketList{Addr: minerAddr, Status: status}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res ty.ReplyTicketList
+	rpc, err := jsonclient.NewJSONClient(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	err = rpc.Call("Chain33.Query", params, &res)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	signList := make([]string, 0)
+	for _, v := range res.Tickets {
+		if len(signList) == 200 {
+			break
+		}
+		if returnAddr != "" && returnAddr != v.ReturnAddress {
+			continue
+		}
+		if v.Status == ty.TicketOpened {
+			if v.CreateTime+withdrawTime < now {
+				signList = append(signList, v.TicketId)
+			}
+		} else if v.Status == ty.TicketMined {
+			if v.CreateTime+withdrawTime < now && v.MinerTime+minerWaitTime < now {
+				signList = append(signList, v.TicketId)
+			}
+		}
+	}
+	if len(signList) == 0 {
+		fmt.Println("no tickerIds to close")
+		return
+	}
+	tx := createTicketCloseTx(signList)
+	fee, err := tx.GetRealFee(100000)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	tx.Fee = fee
+	fmt.Println(hex.EncodeToString(types.Encode(tx)))
+}
+
+func createTicketCloseTx(ids []string) *types.Transaction {
+	var transaction types.Transaction
+	nonce := rand.Int63()
+	tclose := &ty.TicketClose{TicketId: ids}
+	action := &ty.TicketAction{
+		Ty:    ty.TicketActionClose,
+		Value: &ty.TicketAction_Tclose{Tclose: tclose},
+	}
+	transaction.Payload = types.Encode(action)
+	transaction.Execer = []byte("ticket")
+	transaction.Fee = 0
+	transaction.Nonce = nonce
+	transaction.Expire = time.Now().Unix() + 300
+	transaction.To = "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
+	return &transaction
 }
