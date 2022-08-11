@@ -1,5 +1,5 @@
 syntax = "proto3";
-package types;
+package zktypes;
 import "witness.proto";
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
