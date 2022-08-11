@@ -62,16 +62,18 @@ func (e *zksync) Exec_AssetLimitOrder(payload *et.SpotAssetLimitOrder, tx *types
 	return mergeReceipt(r, r2), nil
 }
 
-//市价交易
-func (e *zksync) Exec_MarketOrder(payload *et.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	//TODO marketOrder
-	return nil, types.ErrActionNotSupport
-}
-
 // 撤单
 func (e *zksync) Exec_RevokeOrder(payload *et.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewZkSpotDex(e, tx, index)
 	return action.RevokeOrder(payload, "")
+}
+
+/*
+
+//市价交易
+func (e *zksync) Exec_MarketOrder(payload *et.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	//TODO marketOrder
+	return nil, types.ErrActionNotSupport
 }
 
 // 绑定委托交易地址
@@ -79,6 +81,7 @@ func (e *zksync) Exec_ExchangeBind(payload *et.SpotExchangeBind, tx *types.Trans
 	actiondb := NewZkSpotDex(e, tx, index)
 	return actiondb.ExchangeBind(payload)
 }
+
 
 // 委托交易
 func (e *zksync) Exec_EntrustOrder(payload *et.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -121,7 +124,7 @@ func (e *zksync) Exec_EntrustRevokeOrder(payload *et.SpotEntrustRevokeOrder, tx 
 	action := NewZkSpotDex(e, tx, index)
 	return action.RevokeOrder(&p, action.txinfo.From)
 }
-
+*/
 // 限价交易
 func (e *zksync) Exec_NftOrder(payload *et.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	defer func() {
