@@ -16,7 +16,6 @@ ZKSYNC_ACCOUNT_4="4"
 TOKENID_0="0"
 TOKENID_1="1"
 
-
 function zksync_set_wallet() {
     echo "=========== # zksync set wallet ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
