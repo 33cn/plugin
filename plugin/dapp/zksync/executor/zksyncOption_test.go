@@ -99,7 +99,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	withdraw.Signature = signInfo
-	receipt, err = action.Withdraw(withdraw)
+	receipt, err = action.ZkWithdraw(withdraw)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
@@ -171,7 +171,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, nil, err)
 	transfer.Signature = signInfo
 
-	receipt, err = action.Transfer(transfer)
+	receipt, err = action.ZkTransfer(transfer)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
