@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package zktypes;
+package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
 

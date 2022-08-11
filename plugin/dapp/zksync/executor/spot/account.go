@@ -47,7 +47,7 @@ func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.Zk
 		}
 		info := AccountInfo{address: addr, accid: zkAccID, asset: asset}
 		return &ZkAccount{acc: acc1, AccountInfo: info}, nil
-	case et.AssetType_Token:
+	case et.AssetType_TokenType:
 		acc, err := repos.tokenRepo.NewAccount(addr, zkAccID, asset)
 		if err != nil {
 			return nil, err

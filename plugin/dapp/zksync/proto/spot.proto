@@ -1,5 +1,5 @@
 syntax = "proto3";
-package zktypes;
+package types;
 import "witness.proto";
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
@@ -19,12 +19,12 @@ message SpotAction {
 enum AssetType {
   Unknow = 0;
  L1Erc20 = 1;
-  Token = 2;
+  TokenType = 2;
   ZkNft = 3;
   EvmNft = 4;
 }
 
-message TokenAsset {
+message AssetToken {
     string execer = 1;
     string symbol = 2;
   }
@@ -35,7 +35,7 @@ message ZkAsset {
     // L1Erc20, zkNft
     uint64 zkAssetid = 2;
     // Token
-    TokenAsset tokenAsset = 3;
+    AssetToken tokenAsset = 3;
     // nft kind
     uint64 evmNftID = 4;
   }

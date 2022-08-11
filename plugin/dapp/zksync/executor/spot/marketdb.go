@@ -45,7 +45,7 @@ func SymbolStr(a *et.ZkAsset) string {
 	switch a.Ty {
 	case et.AssetType_L1Erc20:
 		return fmt.Sprintf("%08d", a.GetZkAssetid())
-	case et.AssetType_Token:
+	case et.AssetType_TokenType:
 		return a.GetTokenAsset().Symbol
 	}
 	return "unknow"

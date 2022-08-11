@@ -4,7 +4,7 @@ import "common.proto";
 import "transaction.proto";
 import "spot.proto";
 
-package zktypes;
+package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
 

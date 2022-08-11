@@ -532,11 +532,11 @@ func makeAsset(ty int32, exec, symbol string) (*et.ZkAsset, error) {
 			return nil, err
 		}
 		return spot.NewZkAsset(n), nil
-	case et.AssetType_Token:
+	case et.AssetType_TokenType:
 		return &et.ZkAsset{
-			Ty: et.AssetType_Token,
+			Ty: et.AssetType_TokenType,
 			Value: &et.ZkAsset_TokenAsset{
-				TokenAsset: &et.TokenAsset{
+				TokenAsset: &et.AssetToken{
 					Execer: exec,
 					Symbol: symbol,
 				},
