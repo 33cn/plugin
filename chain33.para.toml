@@ -221,6 +221,25 @@ useBalance=false
 ethMapFromExecutor="paracross"
 ethMapFromSymbol="coins.bty"
 
+[exec.sub.evm.preCompile]
+[exec.sub.evm.preCompile.dex]
+bridgeTokenAddress=""
+bridgeBankAddress=""
+
+[exec.sub.evm.preCompile.token]
+# token 名称
+[exec.sub.evm.preCompile.token.ccny]
+preCompileAddress="0x0000000000000000000000000000000000200001"
+decimals=8
+symbol="ccny"
+supply=10000000000000
+
+[exec.sub.evm.preCompile.token.mytoken]
+preCompileAddress="0x0000000000000000000000000000000000200002"
+decimals=8
+symbol="mytoken"
+supply=10000000000000
+
 [exec.sub.mix]
 #私对私的交易费,交易比较大，需要多的手续费
 txFee=0

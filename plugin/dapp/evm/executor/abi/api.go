@@ -116,27 +116,30 @@ func Unpack(data []byte, methodName, abiData string) (output []*Param, err error
 		log.Info("Unpack", "Data len", 0, "methodName", methodName)
 		return output, err
 	}
+	fmt.Println("step-----------------------0")
 	// 解析ABI数据结构，获取本次调用的方法对象
 	abi, err := JSON(strings.NewReader(abiData))
 	if err != nil {
 		return output, err
 	}
-
+	fmt.Println("step-----------------------1")
 	var method Method
 	var ok bool
 	if method, ok = abi.Methods[methodName]; !ok {
 		return output, fmt.Errorf("function %v not exists", methodName)
 	}
-
+	fmt.Println("step-----------------------2")
 	if method.Outputs.LengthNonIndexed() == 0 {
+		fmt.Println("step-----------------------2.2")
 		return output, err
 	}
 
 	values, err := method.Outputs.UnpackValues(data)
 	if err != nil {
+		fmt.Println("step-----------------------2.5")
 		return output, err
 	}
-
+	fmt.Println("step-----------------------3")
 	output = []*Param{}
 
 	for i, v := range values {
@@ -146,7 +149,7 @@ func Unpack(data []byte, methodName, abiData string) (output []*Param, err error
 			pval.Value = v.(common.Hash160Address).ToAddress().String()
 			log.Info("Unpack address", "address", pval.Value)
 		}
-
+		fmt.Println("step-----------------------4")
 		output = append(output, pval)
 	}
 

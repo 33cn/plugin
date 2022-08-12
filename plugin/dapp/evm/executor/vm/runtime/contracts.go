@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"github.com/33cn/chain33/system/address/eth"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	"math/big"
@@ -111,6 +112,7 @@ func RunPrecompiledContract(evm *EVM, caller ContractRef, p PrecompiledContract,
 		gasCost := p.RequiredGas(input)
 		//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
 		if suppliedGas < gasCost {
+			fmt.Println("RunPrecompiledContract------------>PrecompiledContract:", gasCost, "suppliedGas:", suppliedGas)
 			return nil, 0, ErrOutOfGas
 
 		}
@@ -120,19 +122,20 @@ func RunPrecompiledContract(evm *EVM, caller ContractRef, p PrecompiledContract,
 		return output, suppliedGas, err
 	}
 
-	gasCost := sp.RequiredGas(input)
+	/*gasCost := sp.RequiredGas(input)
 	//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
 	if suppliedGas < gasCost {
+		fmt.Println("RunPrecompiledContract------------>", gasCost, "suppliedGas:", suppliedGas)
 		return nil, 0, ErrOutOfGas
 
-	}
-	suppliedGas -= gasCost
-
+	}*/
+	//suppliedGas -= gasCost
+	fmt.Println("RunPrecompiledContract++++++++++++++++>:", suppliedGas)
 	//contract := NewContract(caller, to, value, gas)
 	//contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
-
-	output, err := sp.Run(evm, caller, input)
-	return output, suppliedGas, err
+	var reminGas uint64
+	output, reminGas, err := sp.Run(evm, caller, input, suppliedGas)
+	return output, reminGas, err
 
 }
 

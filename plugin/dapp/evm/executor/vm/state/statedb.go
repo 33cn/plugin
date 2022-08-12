@@ -6,6 +6,8 @@ package state
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -518,15 +520,62 @@ func (mdb *MemoryStateDB) WithDrawExchange(recipient, symbol string, amount int6
 	return receipt, nil
 
 }
+
+func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (*types.Receipt, error) {
+	tokendb, err := account.NewAccountDB(mdb.api.GetConfig(), "token", symbol, mdb.StateDB)
+	if err != nil {
+		return nil, err
+	}
+	execName := mdb.api.GetConfig().ExecName("token")
+	execaddress := address.ExecAddress(execName)
+	//导出账户地址
+	if recipient == execaddress {
+		return nil, errors.New("not allow")
+	}
+
+	receipt, err := tokendb.Transfer(from, recipient, amount)
+	if err != nil {
+		return nil, err
+	}
+
+	mdb.addChange(transferChange{
+		baseChange: baseChange{},
+		amount:     amount,
+		data:       receipt.GetKV(),
+		logs:       receipt.GetLogs(),
+	})
+	return receipt, nil
+
+}
 func (mdb *MemoryStateDB) TransferToExchange(recipient, symbol string, amount int64) (*types.Receipt, error) { //([]*types.KeyValue, []*types.ReceiptLog, error) {
 	evmxgoAccount, err := account.NewAccountDB(mdb.api.GetConfig(), "evmxgo", symbol, mdb.StateDB)
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("TransferToExchange-------->", evmxgoAccount)
 	execName := mdb.api.GetConfig().ExecName("exchange")
 	execaddress := address.ExecAddress(execName)
 	//导出账户地址
+	fmt.Println("TransferToExchange-------->", evmxgoAccount, "execName:", execName, "execaddress", execaddress)
+
+	execAccount := evmxgoAccount.LoadAccount(execaddress)
+	prevExecAccount := types.CloneAccount(execAccount)
+	newExecBalance, err := safeAdd(prevExecAccount.Balance, amount)
+	if err != nil {
+		return nil, err
+	}
+	execAccount.Balance = newExecBalance
+	receiptExecBalance := &types.ReceiptAccountTransfer{
+		Prev:    prevExecAccount,
+		Current: execAccount,
+	}
+	log1 := &types.ReceiptLog{
+		Ty:  int32(types.TyLogTransfer),
+		Log: types.Encode(receiptExecBalance),
+	}
+	execkv := evmxgoAccount.GetKVSet(execAccount)
+	evmxgoAccount.SaveKVSet(execkv)
+
 	acc, err := evmxgoAccount.LoadExecAccountQueue(mdb.api, recipient, execaddress)
 	if err != nil {
 		return nil, err
@@ -538,21 +587,27 @@ func (mdb *MemoryStateDB) TransferToExchange(recipient, symbol string, amount in
 	}
 	copyAcc := types.CloneAccount(acc)
 	acc.Balance = newbalance
-	receiptTransfer := &types.ReceiptAccountTransfer{
-		Prev:    copyAcc,
-		Current: acc,
+	receiptTransfer := &types.ReceiptExecAccountTransfer{
+		ExecAddr: execaddress,
+		Prev:     copyAcc,
+		Current:  acc,
 	}
-	kvset := evmxgoAccount.GetKVSet(acc)
+	evmxgoAccount.SaveExecAccount(execaddress, acc)
+	//kvset := evmxgoAccount.GetKVSet(acc)
+	kvset := evmxgoAccount.GetExecKVSet(execaddress, acc)
+	jsonreceipt, _ := json.Marshal(receiptTransfer)
+	fmt.Println("TransferToExchange------->>> receiptTransfer:", string(jsonreceipt), "kvset:------->", string(kvset[0].GetKey()))
 	evmxgoAccount.SaveKVSet(kvset)
 	ty := int32(types.TyLogExecTransfer)
-	log1 := &types.ReceiptLog{
+	log2 := &types.ReceiptLog{
 		Ty:  ty,
 		Log: types.Encode(receiptTransfer),
 	}
+	kvset = append(kvset, execkv...)
 	receipt := &types.Receipt{
 		Ty:   types.ExecOk,
 		KV:   kvset,
-		Logs: []*types.ReceiptLog{log1},
+		Logs: []*types.ReceiptLog{log1, log2},
 	}
 	mdb.addChange(transferChange{
 		baseChange: baseChange{},

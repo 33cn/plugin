@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"fmt"
+
 	"math/big"
 	"sync/atomic"
 
@@ -90,7 +91,7 @@ type EVM struct {
 	// Context 链相关的一些辅助属性和操作方法
 	Context
 	//evmexecutor *evm.EVMExecutor
-	mStateDB *state.MemoryStateDB
+	MStateDB *state.MemoryStateDB
 	// EVMStateDB 状态数据操作入口
 	StateDB state.EVMStateDB
 	// 当前调用深度
@@ -133,8 +134,8 @@ func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config, cfg *types.C
 	return evm
 }
 
-func (evm *EVM) SetStatDB(mStateDB *state.MemoryStateDB) {
-	evm.mStateDB = mStateDB
+func (evm *EVM) SetStatDB(db *state.MemoryStateDB) {
+	evm.MStateDB = db
 }
 
 // GasTable 返回不同操作消耗的Gas定价表
@@ -509,4 +510,9 @@ func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, StatefulPr
 	cp, ok := CustomizePrecompiledContractsBinjiang[addr.ToHash160()]
 	return nil, cp, ok
 
+}
+
+func (evm *EVM) CheckPrecompile(addr common.Address) bool {
+	_, _, ok := evm.precompile(addr)
+	return ok
 }

@@ -95,18 +95,20 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	} else {
 		contractAddr = *msg.To()
 		contractAddrStr = contractAddr.String()
-		if !env.StateDB.Exist(contractAddrStr) {
-			log.Error("innerExec", "Contract not exist for address", contractAddrStr)
-			return receipt, model.ErrContractNotExist
+		if !env.CheckPrecompile(contractAddr) {
+			if !env.StateDB.Exist(contractAddrStr) {
+				log.Error("innerExec", "Contract not exist for address", contractAddrStr)
+				return receipt, model.ErrContractNotExist
+			}
+			log.Info("innerExec", "Contract exist for address", contractAddrStr)
 		}
-		log.Info("innerExec", "Contract exist for address", contractAddrStr)
+
 	}
 
 	//	evm
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
 	if isCreate {
-
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
@@ -211,6 +213,7 @@ func (evm *EVMExecutor) CheckInit() {
 	if "" == ethMapFromExecutor || "" == ethMapFromSymbol {
 		panic("Both ethMapFromExecutor and ethMapFromSymbol should be configured, " + "ethMapFromExecutor=" + ethMapFromExecutor + ", ethMapFromSymbol=" + ethMapFromSymbol)
 	}
+
 	accountDB, _ := account.NewAccountDB(evm.GetAPI().GetConfig(), ethMapFromExecutor, ethMapFromSymbol, evm.GetStateDB())
 	evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), accountDB, evm.GetHeight(), evm.GetAPI())
 }
