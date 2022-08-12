@@ -80,27 +80,29 @@ type tokenCall struct {
 }
 
 func (t *tokenCall) Run(evm *EVM, caller ContractRef, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
-	remainingGas = suppliedGas - 21000
-	if remainingGas < 0 {
-		return nil, remainingGas, errors.New("out of gas")
-	}
+
 	methodKey := common.Bytes2Hex(input[:4])
 	fmt.Println("tokenCall------>Run method key", methodKey)
 	switch methodKey[2:] {
 	//evm 铸币之后转移到Exchange合约下
 	case transfer:
+		remainingGas = suppliedGas - 21000
+		if remainingGas < 0 {
+			return nil, remainingGas, errors.New("out of gas")
+		}
+
 		to := common.BytesToAddress(input[4:24])
 		amount := big.NewInt(1).SetBytes(input[24:])
 		ret, err := t.callTransfer(evm, caller.Address(), to, amount.Int64())
-		return ret, remainingGas, err
+		return ret, suppliedGas, err
 	//查询Exchange 下币种对应的余额
 	case balanceOf:
 		fmt.Println("tokenCall------>Run balanceOf,size:", len(input))
 		accountAddr := common.BytesToAddress(input[4:])
 		ret, err = t.callBalanceOf(evm, accountAddr)
-		return ret, remainingGas, err
+		return ret, suppliedGas, err
 	case decimals:
-		return big.NewInt(int64(t.decimals)).Bytes(), remainingGas, nil
+		return big.NewInt(int64(t.decimals)).Bytes(), suppliedGas, nil
 	case symbol:
 		return []byte(t.tokenName), remainingGas, nil
 	case totalSupply:
