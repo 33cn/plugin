@@ -214,7 +214,7 @@ paraConsensusStopBlocks=30000
 #是否关闭自共识,缺省开启
 #closeSelfConsensus=false
 #平行链在构建区块时候配置丢弃tx list
-#discardTxs=[""]
+discardTxs=[""]
 
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"

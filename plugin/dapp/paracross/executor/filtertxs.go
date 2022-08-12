@@ -81,7 +81,7 @@ func filterParaTxGroup(cfg *types.Chain33Config, tx *types.Transaction, allTxs [
 
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
 func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*types.Transaction {
-	cfgPara := types.Conf(cfg, pt.ParaX)
+	cfgPara := types.ConfSub(cfg, pt.ParaX)
 	discardTxs := cfgPara.GStrList("discardTxs")
 	discardTxsMap := make(map[string]bool)
 	for _, v := range discardTxs {
