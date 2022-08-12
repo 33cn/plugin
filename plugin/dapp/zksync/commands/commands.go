@@ -5,11 +5,12 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/system/dapp/commands"
 	"math/big"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/chain33/system/dapp/commands"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -1550,7 +1551,7 @@ func nftCmd() *cobra.Command {
 	cmd.AddCommand(withdrawNFTCmd())
 	cmd.AddCommand(getNftByIdCmd())
 	cmd.AddCommand(getNftByHashCmd())
-
+	cmd.AddCommand(spotCmd())
 	return cmd
 }
 

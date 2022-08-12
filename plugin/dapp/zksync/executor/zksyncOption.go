@@ -2,10 +2,11 @@ package executor
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/account"
 	"math/big"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/chain33/account"
 
 	"github.com/33cn/chain33/common/log/log15"
 
@@ -764,7 +765,7 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	//首先检查symbol是否存在，symbol存在不允许修改
 	id, err := getTokenSymbolId(a.statedb, payload.Symbol)
 	if !isNotFound(errors.Cause(err)) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%s", err, id)
+		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%d", err, id)
 	}
 
 	lastSym, err := getTokenIdSymbol(a.statedb, payload.Id)

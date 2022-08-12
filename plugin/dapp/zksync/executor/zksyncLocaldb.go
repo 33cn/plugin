@@ -7,19 +7,6 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
-func (z *zksync) execAutoLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	if receiptData.Ty != types.ExecOk {
-		return nil, types.ErrInvalidParam
-	}
-	set, err := z.execLocalZksync(tx, receiptData, index)
-	if err != nil {
-		return set, err
-	}
-	dbSet := &types.LocalDBSet{}
-	dbSet.KV = z.AddRollbackKV(tx, tx.Execer, set.KV)
-	return dbSet, nil
-}
-
 func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	infoTable := NewZksyncInfoTable(z.GetLocalDB())
 

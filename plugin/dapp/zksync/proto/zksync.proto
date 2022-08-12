@@ -2,6 +2,7 @@ syntax = "proto3";
 import "witness.proto";
 import "common.proto";
 import "transaction.proto";
+import "spot.proto";
 
 package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
@@ -29,9 +30,18 @@ message ZksyncAction {
     ZkVerifier  setVerifier         = 33;
     ZkSetFee    setFee              = 34;
     ZkTokenSymbol setTokenSymbol    = 35;
-    AssetsTransfer        transfer        = 36;
-    AssetsWithdraw        withdraw        = 37;
-    AssetsTransferToExec  transferToExec  = 38;
+    types.AssetsTransfer        transfer        = 36;
+    types.AssetsWithdraw        withdraw        = 37;
+    types.AssetsTransferToExec  transferToExec  = 38;
+
+    // spot
+    SpotLimitOrder  limitOrder = 201;
+    SpotNftOrder nftOrder = 202;
+    SpotNftTakerOrder nftTakerOrder = 203;
+    SpotNftOrder nftOrder2 = 204;
+    SpotNftTakerOrder nftTakerOrder2 = 205;
+    SpotAssetLimitOrder assetLimitOrder = 206;
+    SpotRevokeOrder revokeOrder = 207;
   }
 
   int32 ty = 15;
@@ -387,7 +397,7 @@ message ZkQueryResp {
 
 message ZkReceiptLog {
   OperationInfo operationInfo = 1;
-  repeated KeyValue localKvs = 2;
+  repeated types.KeyValue localKvs = 2;
 }
 
 message ZkQueryProofReq {

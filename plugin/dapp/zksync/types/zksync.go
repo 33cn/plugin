@@ -2,8 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/33cn/chain33/common/log/log15"
 	"reflect"
+
+	"github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/types"
 )
@@ -120,6 +121,7 @@ const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
 const ZkCfgEthFeeAddr = "ethFeeAddr"
 const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
+const ExecName = Zksync
 
 //ZkParaChainInnerTitleId 平行链内部只有一个titleId，缺省为1，在主链上不同平行链有自己的titleId
 const ZkParaChainInnerTitleId = "1"
@@ -226,6 +228,15 @@ var (
 		NameAssetTransfer:        TyAssetTransferAction,
 		NameAssetTransfer2Exec:   TyAssetTransferToExecAction,
 		NameAssetWithdraw:        TyAssetWithdrawAction,
+
+		// spot
+		NameLimitOrderAction:      TyLimitOrderAction,
+		NameRevokeOrderAction:     TyRevokeOrderAction,
+		NameNftOrderAction:        TyNftOrderAction,
+		NameNftTakerOrderAction:   TyNftTakerOrderAction,
+		NameNftOrder2Action:       TyNftOrder2Action,
+		NameNftTakerOrder2Action:  TyNftTakerOrder2Action,
+		NameAssetLimitOrderAction: TyAssetLimitOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -253,6 +264,21 @@ var (
 		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
 		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
 		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
+
+		// spot
+		TyLimitOrderLog:    {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyRevokeOrderLog"},
+		TyExchangeBindLog:  {Ty: reflect.TypeOf(ReceiptDexBind{}), Name: "TyExchangeBindLog"},
+		TySpotTradeLog:     {Ty: reflect.TypeOf(ReceiptSpotTrade{}), Name: "TySpotTradeLog"},
+		TyNftOrderLog:      {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftOrderLog"},
+		TyNftTakerOrderLog: {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftTakerOrderLog"},
+
+		// dex account
+		TyDexAccountFrozen: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountFrozen"},
+		TyDexAccountActive: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountActive"},
+		TyDexAccountBurn:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountBurn"},
+		TyDexAccountMint:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountMint"},
 	}
 
 	//FeeMap = map[int64]string{
@@ -279,6 +305,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(Zksync, "Enable", 0)
+	SpotInitFork(cfg)
 }
 
 // InitExecutor defines register executor
