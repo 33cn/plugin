@@ -999,15 +999,54 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getZkCommitProofCmd())
 	cmd.AddCommand(getFirstRootHashCmd())
 	cmd.AddCommand(getZkCommitProofListCmd())
+	cmd.AddCommand(getProofWitnessCmd())
 	cmd.AddCommand(getExistProofCmd())
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
 	cmd.AddCommand(getProofChainTitleListCmd())
 	cmd.AddCommand(getEthPriorityInfoCmd())
 	cmd.AddCommand(getOpsByChunkCmd())
+	cmd.AddCommand(getHistoryProofCmd())
 
 	//cmd.AddCommand(commitProofCmd())
 
 	return cmd
+}
+
+func getHistoryProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "history",
+		Short: "get history proof",
+		Run:   getHistoryProof,
+	}
+	getHistoryProofFlag(cmd)
+	return cmd
+}
+
+func getHistoryProofFlag(cmd *cobra.Command) {
+	cmd.Flags().StringP("hash", "s", "", "proof root hash")
+	cmd.MarkFlagRequired("hash")
+	cmd.Flags().Uint64P("account", "i", 0, "optional, only account id if too long leaves")
+}
+
+func getHistoryProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	hash, _ := cmd.Flags().GetString("hash")
+	account, _ := cmd.Flags().GetUint64("account")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkReqExistenceProof{
+		RootHash:  hash,
+		AccountId: account,
+	}
+
+	params.FuncName = "GetHistoryAccountProofInfo"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.HistoryAccountProofRsp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getOpsByChunkCmd() *cobra.Command {
@@ -1494,6 +1533,48 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func getProofWitnessCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "witness",
+		Short: "get account's proof witness at current height for specific token",
+		Run:   getProofWitness,
+	}
+	getProofWitnessFlag(cmd)
+	return cmd
+}
+
+func getProofWitnessFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("account", "a", 0, "account id")
+	cmd.MarkFlagRequired("account")
+	cmd.Flags().Uint64P("token", "t", 0, "token id")
+	cmd.MarkFlagRequired("token")
+	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id")
+
+}
+
+func getProofWitness(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	account, _ := cmd.Flags().GetUint64("account")
+	token, _ := cmd.Flags().GetUint64("token")
+	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkReqExistenceProof{
+		AccountId:    account,
+		TokenId:      token,
+		ChainTitleId: chainTitleId,
+	}
+
+	params.FuncName = "GetCurrentProof"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkProofWitness
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func getExistProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "exist",
@@ -1512,7 +1593,6 @@ func getExistFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("rootHash", "r", "", "target tree root hash")
 	cmd.MarkFlagRequired("rootHash")
 	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id")
-	cmd.MarkFlagRequired("chainTitleId")
 
 }
 
@@ -1536,7 +1616,7 @@ func getExist(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetExistenceProof"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.OperationMetaBranch
+	var resp zt.ZkProofWitness
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

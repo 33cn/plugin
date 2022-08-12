@@ -450,4 +450,9 @@ message ReceiptEthPriorityQueueID {
   int64 current = 2;
 }
 
+message ReceiptExodusMode {
+  int64 prev = 1;
+  int64 current = 2;
+}
+
 service zksync{}

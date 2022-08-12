@@ -81,6 +81,10 @@ func getEthPriorityQueueKey(chainID uint32) []byte {
 	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
 }
 
+func getExodusModeKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"exodusMode"))
+}
+
 //特意把title放后面，方便按id=1搜索所有的chain
 func getProofIdCommitProofKey(chainTitleId string, proofId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitleId))

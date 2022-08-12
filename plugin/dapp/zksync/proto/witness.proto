@@ -69,6 +69,12 @@ message OperationPairBranch {
   OperationMetaBranch after  = 2;
 }
 
+message ZkProofWitness {
+  AccountWitness accountWitness       = 1;
+  TokenWitness   tokenWitness         = 2;
+  string treeRoot = 3;
+}
+
 message OperationInfo {
   uint64    blockHeight   = 1;
   uint32    txIndex       = 2;

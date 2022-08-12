@@ -7,6 +7,7 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
 	"math/big"
+	"strconv"
 )
 
 // Query_GetAccountTree 获取当前的树
@@ -172,26 +173,77 @@ func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, e
 	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
 }
 
+func (z *zksync) Query_GetCurrentProof(in *zt.ZkReqExistenceProof) (types.Message, error) {
+	info, err := getTreeUpdateInfo(z.GetStateDB())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
+	}
+	proof, err := calProof(z.GetStateDB(), info, in.GetAccountId(), in.GetTokenId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calcProof")
+	}
+	var witness zt.ZkProofWitness
+	witness.AccountWitness = new(zt.AccountWitness)
+	witness.TokenWitness = new(zt.TokenWitness)
+	witness.TreeRoot = proof.GetTreeProof().RootHash
+	witness.AccountWitness.ID = proof.GetLeaf().GetAccountId()
+	witness.AccountWitness.EthAddr = proof.GetLeaf().GetEthAddress()
+	witness.AccountWitness.Chain33Addr = proof.GetLeaf().GetChain33Addr()
+	witness.AccountWitness.TokenTreeRoot = proof.GetTokenProof().GetRootHash()
+	witness.AccountWitness.PubKey = proof.GetLeaf().PubKey
+	witness.AccountWitness.Sibling = &zt.SiblingPath{
+		Path:   proof.GetTreeProof().GetProofSet(),
+		Helper: proof.GetTreeProof().GetHelpers(),
+	}
+	witness.AccountWitness.ProxyPubKeys = proof.GetLeaf().GetProxyPubKeys()
+	witness.TokenWitness.ID = proof.GetToken().GetTokenId()
+	witness.TokenWitness.Balance = proof.GetToken().GetBalance()
+	witness.TokenWitness.Sibling = &zt.SiblingPath{
+		Path:   proof.GetTokenProof().GetProofSet(),
+		Helper: proof.GetTokenProof().GetHelpers(),
+	}
+	zklog.Info("Query_GetCurrentProof", "leafTokenRoot", proof.GetLeaf().GetTokenHash(), "tokenroot", proof.GetTokenProof().GetRootHash())
+	return &witness, nil
+}
+
 //Query_GetExistenceProof 获取指定tree root上某accountId,tokenId对应的存在证明
 func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Message, error) {
 	if len(in.GetRootHash()) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
 	}
+
 	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title is nil")
+		chainTitleId, _ := strconv.Atoi(zt.ZkParaChainInnerTitleId)
+		in.ChainTitleId = uint64(chainTitleId)
 	}
 	return getAccountProofInHistory(z.GetLocalDB(), in)
 }
 
-//Query_GetHistoryAccountProofInfo 获取指定tree root对应的所有账户信息，为批量账户产生证明做准备
+//Query_GetHistoryAccountProofInfo 查询historyAccount leaves, 特别是预先设置historyProof变量(计算比较久)，为证明做准备
 func (z *zksync) Query_GetHistoryAccountProofInfo(in *zt.ZkReqExistenceProof) (types.Message, error) {
 	if len(in.GetRootHash()) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
 	}
-	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title is nil")
+	chainTitleId, _ := strconv.Atoi(zt.ZkParaChainInnerTitleId)
+	if in.GetChainTitleId() > 0 {
+		chainTitleId = int(in.GetChainTitleId())
 	}
-	return getHistoryAccountByRoot(z.GetLocalDB(), in.GetChainTitleId(), in.GetRootHash())
+	info, err := getHistoryAccountByRoot(z.GetLocalDB(), uint64(chainTitleId), in.GetRootHash())
+	if err != nil {
+		return nil, err
+	}
+	var rsp zt.HistoryAccountProofRsp
+	rsp.RootHash = info.RootHash
+	if in.AccountId > 0 {
+		for _, v := range info.Leaves {
+			if v.AccountId == in.AccountId {
+				rsp.Leaves = append(rsp.Leaves, v)
+			}
+		}
+		return &rsp, nil
+	}
+	rsp.Leaves = info.Leaves
+	return &rsp, nil
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root

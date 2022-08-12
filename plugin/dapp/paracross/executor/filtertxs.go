@@ -81,6 +81,12 @@ func filterParaTxGroup(cfg *types.Chain33Config, tx *types.Transaction, allTxs [
 
 //FilterTxsForPara include some main tx in tx group before ForkParacrossCommitTx
 func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*types.Transaction {
+	cfgPara := types.Conf(cfg, pt.ParaX)
+	discardTxs := cfgPara.GStrList("discardTxs")
+	discardTxsMap := make(map[string]bool)
+	for _, v := range discardTxs {
+		discardTxsMap[v] = true
+	}
 	var txs []*types.Transaction
 	forkHeight := pt.GetDappForkHeight(cfg, pt.ForkCommitTx)
 	for i := 0; i < len(main.TxDetails); i++ {
@@ -93,7 +99,12 @@ func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*typ
 		}
 		//单独的paracross tx 如果主链执行失败也要排除, 6.2fork原因 没有排除 非user.p.xx.paracross的平行链交易
 		if main.Header.Height >= forkHeight && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) && !checkReceiptExecOk(main.TxDetails[i].Receipt) {
-			clog.Error("FilterTxsForPara rmv tx", "txhash", hex.EncodeToString(tx.Hash()))
+			clog.Info("FilterTxsForPara rmv tx", "txhash", hex.EncodeToString(tx.Hash()))
+			continue
+		}
+
+		if discardTxsMap[hex.EncodeToString(tx.Hash())] {
+			clog.Info("FilterTxsForPara discard tx", "txhash", hex.EncodeToString(tx.Hash()))
 			continue
 		}
 

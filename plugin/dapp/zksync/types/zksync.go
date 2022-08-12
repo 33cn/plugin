@@ -102,6 +102,7 @@ const (
 	TyLogContractAssetDeposit  = 208 //tree资产存储到contract
 	TyLogContractAssetWithdraw = 209 //contract 资产withdraw到tree
 	TyLogSetTokenSymbol        = 210 //设置电路验证key
+	TyLogSetExodusMode         = 211 //系统设置exodus mode
 
 )
 
@@ -119,9 +120,15 @@ const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
+const ExecName = Zksync
+
+//配置的系统收交易费账户
 const ZkCfgEthFeeAddr = "ethFeeAddr"
 const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
-const ExecName = Zksync
+
+//配置的无效交易和无效证明，用于平行链zksync交易的回滚(假设proof和eth不一致，无法fix时候)
+const ZkCfgInvalidTx = "invalidTxHash"
+const ZkCfgInvalidProof = "invalidProofRootHash"
 
 //ZkParaChainInnerTitleId 平行链内部只有一个titleId，缺省为1，在主链上不同平行链有自己的titleId
 const ZkParaChainInnerTitleId = "1"
@@ -264,6 +271,7 @@ var (
 		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
 		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
 		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
+		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
 
 		// spot
 		TyLimitOrderLog:    {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
@@ -280,18 +288,6 @@ var (
 		TyDexAccountBurn:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountBurn"},
 		TyDexAccountMint:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountMint"},
 	}
-
-	//FeeMap = map[int64]string{
-	//	TyWithdrawAction:      "1000000",
-	//	TyTransferAction:      "100000",
-	//	TyTransferToNewAction: "1000000",
-	//	TyProxyExitAction:     "1000000",
-	//	TyFullExitAction:      "1000000",
-	//	TySwapAction:          "100000",
-	//	TyMintNFTAction:       "1000000",
-	//	TyWithdrawNFTAction:   "1000000",
-	//	TyTransferNFTAction:   "1000000",
-	//}
 )
 
 // init defines a register function

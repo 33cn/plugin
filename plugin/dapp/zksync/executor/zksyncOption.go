@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -159,10 +160,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		}
 
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, newAccountId, payload.TokenId, receipt.Token.Balance)
-		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 		kv := &types.KeyValue{
 			Key:   getHeightKey(a.height),
-			Value: rootHash,
+			Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 		}
 		kvs = append(kvs, kv)
 
@@ -202,10 +202,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, accountId, payload.TokenId, receipt.Token.Balance)
-		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 		kv := &types.KeyValue{
 			Key:   getHeightKey(a.height),
-			Value: rootHash,
+			Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 		}
 		kvs = append(kvs, kv)
 
@@ -403,10 +402,9 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, payload.AccountId, payload.TokenId, receipt.Token.Balance)
 
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -841,6 +839,11 @@ func getTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
 //}
 
 func (a *Action) UpdateContractAccount(amount, symbol string, option int32, execName string) (*types.Receipt, error) {
+	//如果是exodus mode下，支持超级管理员提取剩余的资金，如果用户没有提取完的话
+	if isSuperManager(a.api.GetConfig(), a.fromaddr) && nil != isExodusMode(a.statedb) {
+		return nil, nil
+	}
+
 	accountdb, err := newZkSyncAccount(a.api.GetConfig(), symbol, a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "newZkSyncAccount")
@@ -973,10 +976,9 @@ func (a *Action) transferProc(fromAcctId, toAcctId, tokenId uint64, fromAmount, 
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	after = getBranchByReceipt(receipt, opInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, toAcctId, tokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1171,10 +1173,9 @@ func (a *Action) transfer2NewProc(fromAcctId, tokenId uint64, toEthAddr, toLayer
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
 
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1383,10 +1384,9 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, proxyLeaf.EthAddress, proxyLeaf.Chain33Addr, proxyLeaf.PubKey, proxyLeaf.ProxyPubKeys, proxyLeaf.AccountId, payload.TokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1417,10 +1417,9 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 	}
 
 	targetAfter := getBranchByReceipt(receipt, operationInfo, targetLeaf.EthAddress, targetLeaf.Chain33Addr, targetLeaf.PubKey, targetLeaf.ProxyPubKeys, targetLeaf.AccountId, payload.TokenId, receipt.Token.Balance)
-	rootHash = zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv = &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1570,10 +1569,9 @@ func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, 
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, payload.PubKey, nil, payload.AccountId, leaf.TokenIds[0], receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1611,10 +1609,9 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, l
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Leaf.GetProxyPubKeys(), payload.AccountId, leaf.TokenIds[0], receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1728,10 +1725,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, payload.AccountId, payload.TokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -1808,6 +1804,38 @@ func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueI
 	}
 
 	return &id, nil
+}
+
+func makeSetExodusModeReceipt(prev, current int64) *types.Receipt {
+	key := getExodusModeKey()
+	log := &zt.ReceiptExodusMode{
+		Prev:    prev,
+		Current: current,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(&types.Int64{Data: current})},
+		},
+		Logs: []*types.ReceiptLog{
+			{
+				Ty:  zt.TyLogSetExodusMode,
+				Log: types.Encode(log),
+			},
+		},
+	}
+}
+
+func isExodusMode(statedb dbm.KV) error {
+	_, err := statedb.Get(getExodusModeKey())
+	if isNotFound(err) {
+		//非exodus mode
+		return nil
+	}
+	if err != nil {
+		return errors.Wrap(err, "isExodusMode")
+	}
+	return errors.Wrap(types.ErrNotAllow, "isExodusMode")
 }
 
 func makeSetEthPriorityIdReceipt(chainId uint32, prev, current int64) *types.Receipt {
@@ -1894,10 +1922,9 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 		return nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, leaf.GetAccountId(), tokenId, receipt.Token.Balance)
-	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
-		Value: rootHash,
+		Value: types.Encode(&types.TxHash{Hash: receipt.TreeProof.RootHash}),
 	}
 	kvs = append(kvs, kv)
 
@@ -2672,4 +2699,35 @@ func (a *Action) AssetTransferToExec(transfer *types.AssetsTransferToExec, tx *t
 		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
 	}
 	return nil, types.ErrToAddrNotSameToExecAddr
+}
+
+func getCfgInvalidTx(cfg *types.Chain33Config) (string, string) {
+	confManager := types.ConfSub(cfg, zt.Zksync)
+	invalidTx := confManager.GStr(zt.ZkCfgInvalidTx)
+	invalidProof := confManager.GStr(zt.ZkCfgInvalidProof)
+	if (len(invalidTx) <= 0 && len(invalidProof) > 0) || (len(invalidTx) > 0 && len(invalidProof) <= 0) {
+		panic(fmt.Sprintf("both invalidTx=%s and invalidProof=%s should filled", invalidTx, invalidProof))
+	}
+	if strings.HasPrefix(invalidTx, "0x") || strings.HasPrefix(invalidTx, "0X") {
+		invalidTx = invalidTx[2:]
+	}
+	if strings.HasPrefix(invalidProof, "0x") || strings.HasPrefix(invalidProof, "0X") {
+		invalidProof = invalidProof[2:]
+	}
+
+	return invalidTx, invalidProof
+}
+
+//从此invalidTx之后，系统进入退出状态(eth无法接收新的proof场景)，平行链需要从0开始重新同步交易，相当于回滚，无效交易之后的交易都失败(除contract2tree)
+//退出状态不允许deposit,withdraw等的其他交易，只允许contract2Tree的退到二层的交易，
+//退到二层后，统计各账户id的余额，根据最后的treeRootHash提交退出证明(不能走withdraw等流程退出）
+func isInvalidTx(cfg *types.Chain33Config, txHash []byte) bool {
+	invalidTx, _ := getCfgInvalidTx(cfg)
+	return invalidTx == hex.EncodeToString(txHash)
+}
+
+//在此proofRootHash(包括此hash)后的所有历史roothash都会失效，直到替换此hash之后的新的proofhash收到
+func isInvalidProof(cfg *types.Chain33Config, rootHash string) bool {
+	_, invalidProof := getCfgInvalidTx(cfg)
+	return invalidProof == rootHash
 }

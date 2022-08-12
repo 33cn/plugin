@@ -23,6 +23,7 @@ var (
 )
 
 var driverName = zt.Zksync
+var historyProof zt.HistoryAccountProofInfo
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {

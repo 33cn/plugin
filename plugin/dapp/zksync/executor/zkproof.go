@@ -289,7 +289,10 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, chainId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
-
+	//如果系统配置了无效证明，则相应证明失效，相继的证明也失效。在exodus mode场景下使用，系统回滚到此证明则丢弃，后面重新接受上一个证明基础上的新的证明
+	if isInvalidProof(a.api.GetConfig(), payload.NewTreeRoot) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "system cfg invalid proof")
+	}
 	//基本检查
 	/* len(onChainPubdata)     OnChainProofId
 	   =0                      =0
@@ -595,7 +598,25 @@ func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
 	return historyLeaf
 }
 
+//暂时保存到全局变量里面
+func getHistoryAccountProofFromDb(localdb dbm.KV, chainTitleId uint64, targetRootHash string) *zt.HistoryAccountProofInfo {
+	if historyProof.RootHash == targetRootHash {
+		return &historyProof
+	}
+	return nil
+}
+
+func setHistoryAccountProofToDb(localdb dbm.KV, chainTitleId uint64, proof *zt.HistoryAccountProofInfo) error {
+	historyProof = *proof
+	return nil
+}
+
 func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash string) (*zt.HistoryAccountProofInfo, error) {
+	info := getHistoryAccountProofFromDb(localdb, chainTitleId, targetRootHash)
+	if info != nil {
+		return info, nil
+	}
+
 	proofTable := NewCommitProofTable(localdb)
 	accountMap := make(map[uint64]*zt.HistoryLeaf)
 	maxAccountId := uint64(0)
@@ -1377,11 +1398,15 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 		return nil, errors.Wrapf(types.ErrInvalidParam, "calc root=%s,expect=%s", accountMerkleProof.RootHash, targetRootHash)
 	}
 
+	err = setHistoryAccountProofToDb(localdb, chainTitleId, historyAccounts)
+	if err != nil {
+		zklog.Error("setHistoryAccountProofToDb", "err", err)
+	}
 	return historyAccounts, nil
 
 }
 
-func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targetAccountId, targetTokenId uint64) (*zt.OperationMetaBranch, error) {
+func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targetAccountId, targetTokenId uint64) (*zt.ZkProofWitness, error) {
 	if targetAccountId > uint64(len(historyAccountInfo.Leaves)) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "targetAccountId=%d not exist", targetAccountId)
 	}
@@ -1441,15 +1466,16 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 		Balance: targetLeaf.Tokens[tokenIndex].Balance,
 		Sibling: tokenTreePath,
 	}
-	var witness zt.OperationMetaBranch
+	var witness zt.ZkProofWitness
 	witness.AccountWitness = accountW
 	witness.TokenWitness = tokenW
+	witness.TreeRoot = historyProof.RootHash
 
 	return &witness, nil
 }
 
 //根据rootHash获取account在该root下的证明
-func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof) (*zt.OperationMetaBranch, error) {
+func getAccountProofInHistory(localdb dbm.KV, req *zt.ZkReqExistenceProof) (*zt.ZkProofWitness, error) {
 	historyAccountInfo, err := getHistoryAccountByRoot(localdb, req.ChainTitleId, req.RootHash)
 	if err != nil {
 		return nil, err
