@@ -127,7 +127,8 @@ var (
 
 // SpotInitFork defines register fork
 func SpotInitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(ExecName, ForkParamV1, 0)
+	//cfg.RegisterDappFork(ExecName, ForkParamV1, 0)
+	return
 }
 
 // config part
