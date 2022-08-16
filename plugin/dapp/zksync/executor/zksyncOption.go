@@ -77,7 +77,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager,from=%s", a.fromaddr)
 	}
 
 	//TODO set chainID
@@ -336,8 +336,14 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	}
 
 	//加上手续费
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	makerFeeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	}
+	makerFeeInt, ok := new(big.Int).SetString(feeInfo.FromFee, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "fromfee=%s", feeInfo.FromFee)
+	}
 	totalMakerAmount := new(big.Int).Add(amountInt, makerFeeInt).String()
 
 	info, err := getTreeUpdateInfo(a.statedb)
@@ -587,7 +593,10 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	}
 
 	//因为合约balance需要/1e10，因此要先去掉精度
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	}
 	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
 
 	err := checkParam(payload.Amount)
@@ -693,7 +702,10 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 
 	//因为合约balance需要/1e10，因此要先去掉精度
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	}
 	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
 	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
 	if payload.ToAcctId != zt.SystemTree2ContractAcctId {
@@ -993,8 +1005,6 @@ func (a *Action) transferProc(fromAcctId, toAcctId, tokenId uint64, fromAmount, 
 
 func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	//var kvs []*types.KeyValue
-	//var localKvs []*types.KeyValue
 
 	err := checkParam(payload.Amount)
 	if err != nil {
@@ -1018,9 +1028,15 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "decode amount=%s", payload.Amount)
 	}
-	makerFeeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	makerFeeInt, ok := new(big.Int).SetString(feeInfo.FromFee, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "fromFee=%s", feeInfo.FromFee)
+	}
 	totalMakerAmount := new(big.Int).Add(amountInt, makerFeeInt).String()
-	takerFeeInt, _ := new(big.Int).SetString(feeInfo.ToFee, 10)
+	takerFeeInt, ok := new(big.Int).SetString(feeInfo.ToFee, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "toFee=%s", feeInfo.ToFee)
+	}
 	if amountInt.Cmp(takerFeeInt) < 0 {
 		return nil, errors.Wrapf(types.ErrNotAllow, "amount=%s less takerFee=%s", payload.Amount, feeInfo.ToFee)
 	}
@@ -1200,10 +1216,19 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	}
 
 	//加上手续费
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	makerFeeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	}
+	makerFeeInt, ok := new(big.Int).SetString(feeInfo.FromFee, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "fromFee=%s", feeInfo.FromFee)
+	}
 	totalMakerAmount := new(big.Int).Add(amountInt, makerFeeInt).String()
-	takerFeeInt, _ := new(big.Int).SetString(feeInfo.ToFee, 10)
+	takerFeeInt, ok := new(big.Int).SetString(feeInfo.ToFee, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "toFee=%s", feeInfo.ToFee)
+	}
 	if amountInt.Cmp(takerFeeInt) < 0 {
 		return nil, errors.Wrapf(types.ErrNotAllow, "amount=%s less takerFee=%s", payload.Amount, feeInfo.ToFee)
 	}
@@ -1340,8 +1365,14 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 	}
 
 	//加上手续费
-	amountInt, _ := new(big.Int).SetString(proxyToken.Balance, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	amountInt, ok := new(big.Int).SetString(proxyToken.Balance, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "balance=%s", proxyToken.Balance)
+	}
+	feeInt, ok := new(big.Int).SetString(feeInfo.FromFee, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "fromFee=%s", feeInfo.FromFee)
+	}
 	//存量不够手续费时，不能取
 	if amountInt.Cmp(feeInt) <= 0 {
 		return nil, errors.New("no enough fee")
@@ -1496,6 +1527,8 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	if payload.GetPubKey() == nil || len(payload.GetPubKey().X) <= 0 || len(payload.GetPubKey().Y) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey invalid")
 	}
+	payload.PubKey.X = zt.FilterHexPrefix(payload.PubKey.X)
+	payload.PubKey.Y = zt.FilterHexPrefix(payload.PubKey.Y)
 
 	if payload.PubKeyTy == 0 {
 		//已经设置过缺省公钥，不允许再设置

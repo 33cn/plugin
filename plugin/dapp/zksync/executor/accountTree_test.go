@@ -35,7 +35,7 @@ func TestAccountTree(t *testing.T) {
 
 	tree, err = getAccountTree(statedb, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(2), tree.GetTotalIndex())
+	assert.Equal(t, uint64(5), tree.GetTotalIndex())
 
 	_, localKvs, err = UpdateLeaf(statedb, localdb, info, 2, 2, "1000", zt.Add)
 	assert.Equal(t, nil, err)

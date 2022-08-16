@@ -10,10 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/33cn/chain33/system/dapp/commands"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common/commands"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -114,7 +113,7 @@ func deposit(cmd *cobra.Command, args []string) {
 		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "Deposit",
 		Payload:    types.MustPBToJSON(deposit),
 	}
@@ -159,7 +158,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 		return
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "ZkWithdraw",
 		Payload:    payload,
 	}
@@ -205,7 +204,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 		ToExec:    exec,
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "TreeToContract",
 		Payload:    types.MustPBToJSON(leafToContract),
 	}
@@ -255,7 +254,7 @@ func contractToTree(cmd *cobra.Command, args []string) {
 		FromExec:     exec,
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "ContractToTree",
 		Payload:    types.MustPBToJSON(contractToLeaf),
 	}
@@ -303,7 +302,7 @@ func transfer(cmd *cobra.Command, args []string) {
 		return
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "ZkTransfer",
 		Payload:    payload,
 	}
@@ -353,7 +352,7 @@ func transferToNew(cmd *cobra.Command, args []string) {
 		return
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "TransferToNew",
 		Payload:    payload,
 	}
@@ -398,7 +397,7 @@ func proxyExit(cmd *cobra.Command, args []string) {
 		return
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "ProxyExit",
 		Payload:    payload,
 	}
@@ -450,7 +449,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	}
 	payload := types.MustPBToJSON(pubkey)
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "SetPubKey",
 		Payload:    payload,
 	}
@@ -490,7 +489,7 @@ func fullExit(cmd *cobra.Command, args []string) {
 		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "FullExit",
 		Payload:    types.MustPBToJSON(fullExit),
 	}
@@ -527,7 +526,7 @@ func verifyKey(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "SetVerifyKey",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -565,7 +564,7 @@ func setOperator(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "SetVerifier",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -1403,7 +1402,7 @@ func setTokenFee(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "SetFee",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -1442,7 +1441,7 @@ func setTokenSymbol(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "SetTokenSymbol",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -1691,7 +1690,7 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 		},
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "MintNFT",
 		Payload:    types.MustPBToJSON(nft),
 	}
@@ -1749,7 +1748,7 @@ func transferNFT(cmd *cobra.Command, args []string) {
 		},
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "TransferNFT",
 		Payload:    types.MustPBToJSON(nft),
 	}
@@ -1802,7 +1801,7 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 		},
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getRealExecName(paraName, zt.Zksync),
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "WithdrawNFT",
 		Payload:    types.MustPBToJSON(nft),
 	}

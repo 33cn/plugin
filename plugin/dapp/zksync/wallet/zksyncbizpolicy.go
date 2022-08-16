@@ -303,7 +303,8 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	}
 
 	tx.Payload = types.Encode(action)
-	tx.Sign(int32(policy.getWalletOperate().GetSignType()), key)
+	tx.Fee = 1000000
+	tx.Sign(types.EncodeSignID(types.SECP256K1, address.GetDefaultAddressID()), key)
 	signtxhex = hex.EncodeToString(types.Encode(tx))
 	return
 }

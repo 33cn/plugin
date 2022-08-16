@@ -302,9 +302,12 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 		return nil, types.ErrInvalidParam
 	}
 	startHeight := in.GetStartBlockHeight()
+	if z.GetHeight() <= int64(startHeight) || z.GetHeight() <= int64(in.Maturity) {
+		return new(zt.ZkQueryProofResp), nil
+	}
 	endBlockHeight := z.GetHeight() - int64(in.Maturity)
 
-	if startHeight >= uint64(endBlockHeight) {
+	if int64(startHeight) >= endBlockHeight {
 		return new(zt.ZkQueryProofResp), nil
 	}
 

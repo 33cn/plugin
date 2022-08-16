@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
+	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
+	"github.com/consensys/gnark-crypto/ecc"
 	"hash"
 	"math/big"
-
-	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/types"
-	"github.com/consensys/gnark-crypto/ecc"
 
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 
@@ -101,7 +100,7 @@ func isNotFound(err error) bool {
 func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	confManager := types.ConfSub(cfg, zt.Zksync)
 	for _, m := range confManager.GStrList(zt.ZkManagerKey) {
-		if addr == m {
+		if zt.FilterHexPrefix(addr) == zt.FilterHexPrefix(m) {
 			return true
 		}
 	}
@@ -118,7 +117,7 @@ func isVerifier(statedb dbm.KV, chainTitleId, addr string) bool {
 		}
 	}
 	for _, v := range verifier.Verifiers {
-		if addr == v {
+		if zt.FilterHexPrefix(addr) == zt.FilterHexPrefix(v) {
 			return true
 		}
 	}
