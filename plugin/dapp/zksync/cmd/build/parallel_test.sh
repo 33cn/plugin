@@ -270,25 +270,10 @@ function zksync_transfer_many_2() {
     done
 }
 
-
 function zksync_transfer_many_2_noBalanceCheck() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
-    fromIDs="3"
-    toIDs="4"
-    end=$((addrTest-2))
-    keys2="${key[0]}"
-    for ((i = 2; i < ${end};)); do
-        id=$((i + 3))
-        fromIDs="${fromIDs},${id}"
-        tid=$((i + 4))
-        toIDs="${toIDs},${tid}"
-        keys2="${keys2},${key[i]}"
-        i=$((i + 2))
-    done
-
-
     ${CLI} zksync sendl2 transfer_many -t "${TOKENID_0}" -m "4${le8zero}" -f ${fromIDs} -d ${toIDs} -k "${keys2}"
-    sleep $sleepTime
+    sleep 6
 }
 function get_transfer2new_many_ids() {
     accountIDs3="3"
@@ -453,25 +438,24 @@ function zksync_test_all() {
     get_transfer_many_ids
     zksync_transfer_many
 
-#    sleep 5
-#    zksync_transfer2new_many
-#    zksync_transfer_many_2
-#
-#    count=0
-#    while true; do
-#        zksync_transfer_many
-#        count=$((count + 1))
-#        sleep 5
-#
-#        if [[ ${count} -ge 10 ]]; then
-#            echo "zksync_transfer_many 10 times"
-#            break
-#        fi
-#    done
-#=======
+    count=0
+    while true; do
+        zksync_transfer_many
+        count=$((count + 1))
+        sleep 6
+
+        if [[ ${count} -ge 6 ]]; then
+            echo "zksync_transfer_many 6 times"
+            break
+        fi
+    done
 
     get_transfer_many_2_ids
     zksync_transfer_many_2
+    zksync_transfer_many_2_noBalanceCheck
+    zksync_transfer_many_2_noBalanceCheck
+    zksync_transfer_many_2_noBalanceCheck
+    zksync_transfer_many_2_noBalanceCheck
 
 #    get_transfer2new_many_ids
 #    zksync_transfer2new_many
