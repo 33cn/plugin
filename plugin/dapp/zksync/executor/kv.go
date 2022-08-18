@@ -51,12 +51,12 @@ func getHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
 }
 
-func getVerifyKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"verifyKey"))
+func getVerifyKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-verifyKey"))
 }
 
-func getVerifier() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
+func getVerifier(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-"+zt.ZkVerifierKey))
 }
 
 func getLastProofKey() []byte {
@@ -93,4 +93,18 @@ func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
 
 func CalcLatestAccountIDKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"latestAccountID"))
+}
+
+func getExodusModeKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"exodusMode"))
+}
+
+//GetTokenSymbolKey tokenId 对应symbol
+func GetTokenSymbolKey(tokenId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenId-"+tokenId))
+}
+
+//GetTokenSymbolIdKey token symbol 对应id
+func GetTokenSymbolIdKey(symbol string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenSym-"+symbol))
 }

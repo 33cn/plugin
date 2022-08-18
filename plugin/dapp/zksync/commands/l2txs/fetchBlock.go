@@ -25,7 +25,7 @@ var (
 		zt.TyTreeToContractAction: zt.NameTreeToContractAction,
 		zt.TyTransferAction:       zt.NameTransferAction,
 		zt.TyTransferToNewAction:  zt.NameTransferToNewAction,
-		zt.TyForceExitAction:      zt.NameForceExitAction,
+		zt.TyProxyExitAction:      zt.NameForceExitAction,
 		zt.TySetPubKeyAction:      zt.NameSetPubKeyAction,
 		zt.TyFullExitAction:       zt.NameFullExitAction,
 		zt.TySwapAction:           zt.NameSwapAction,
@@ -125,8 +125,8 @@ func fetchL2Block(cmd *cobra.Command, args []string) {
 				txCntMap[zt.TyTransferAction] = txCntMap[zt.TyTransferAction] + 1
 			case zt.TyTransferToNewAction:
 				txCntMap[zt.TyTransferToNewAction] = txCntMap[zt.TyTransferToNewAction] + 1
-			case zt.TyForceExitAction:
-				txCntMap[zt.TyForceExitAction] = txCntMap[zt.TyForceExitAction] + 1
+			case zt.TyProxyExitAction:
+				txCntMap[zt.TyProxyExitAction] = txCntMap[zt.TyProxyExitAction] + 1
 			case zt.TySetPubKeyAction:
 				txCntMap[zt.TySetPubKeyAction] = txCntMap[zt.TySetPubKeyAction] + 1
 			case zt.TyFullExitAction:

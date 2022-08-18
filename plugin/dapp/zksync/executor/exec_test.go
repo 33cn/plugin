@@ -1546,7 +1546,7 @@ func forceExit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID
 	}
 
 	action := &zksyncTypes.ZksyncAction{
-		Ty: zksyncTypes.TyForceExitAction,
+		Ty: zksyncTypes.TyProxyExitAction,
 		Value: &zksyncTypes.ZksyncAction_ForceExit{
 			ForceExit: forceExit,
 		},
@@ -1838,7 +1838,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 			return
 		}
 		transferToNew.Signature = signInfo
-	case zksyncTypes.TyForceExitAction:
+	case zksyncTypes.TyProxyExitAction:
 		forceQuit := action.GetForceExit()
 		msg = wallet.GetForceExitMsg(forceQuit)
 		signInfo, err = SignTxInEddsa(msg, privateKey)

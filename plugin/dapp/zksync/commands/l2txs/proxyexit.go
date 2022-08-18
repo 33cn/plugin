@@ -49,7 +49,7 @@ func forceManyExit(cmd *cobra.Command, args []string) {
 		}
 
 		action := &zksyncTypes.ZksyncAction{
-			Ty: zksyncTypes.TyForceExitAction,
+			Ty: zksyncTypes.TyProxyExitAction,
 			Value: &zksyncTypes.ZksyncAction_ForceExit{
 				ForceExit: param,
 			},

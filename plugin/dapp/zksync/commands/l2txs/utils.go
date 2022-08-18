@@ -105,7 +105,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 			return
 		}
 		transferToNew.Signature = signInfo
-	case zksyncTypes.TyForceExitAction:
+	case zksyncTypes.TyProxyExitAction:
 		forceQuit := action.GetForceExit()
 		msg = wallet.GetForceExitMsg(forceQuit)
 		signInfo, err = SignTxInEddsa(msg, privateKey)

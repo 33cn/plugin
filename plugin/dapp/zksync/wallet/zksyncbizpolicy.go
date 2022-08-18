@@ -181,7 +181,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		transferToNew.Signature = signInfo
-	case zt.TyForceExitAction:
+	case zt.TyProxyExitAction:
 		forceQuit := action.GetForceExit()
 		msg = GetForceExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)

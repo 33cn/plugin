@@ -53,7 +53,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			ToChain33Address: chain33Addr,
 		}
 		payload = types.MustPBToJSON(transferToNew)
-	case zt.TyForceExitAction:
+	case zt.TyProxyExitAction:
 		forceExit := &zt.ZkForceExit{
 			TokenId:   tokenId,
 			AccountId: accountId,
@@ -292,7 +292,7 @@ func GetForceExitMsg(payload *zt.ZkForceExit) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyForceExitAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyProxyExitAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 

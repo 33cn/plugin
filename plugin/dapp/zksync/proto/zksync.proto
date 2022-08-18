@@ -1,34 +1,45 @@
 syntax = "proto3";
 import "witness.proto";
 import "common.proto";
+import "transaction.proto";
 
 package types;
 option go_package = "../types";
 
 message ZksyncAction {
   oneof value {
-    ZkDeposit  deposit = 1;
-    ZkWithdraw withdraw = 2;
-    ZkContractToTree contractToTree = 3;
-    ZkTreeToContract treeToContract = 4;
-    ZkTransfer transfer = 5;
-    ZkTransferToNew transferToNew = 6;
-    ZkForceExit forceExit = 7;
-    ZkSetPubKey setPubKey = 8;
-    ZkFullExit  fullExit = 9;
-    ZkSwap  swap = 10;
-    ZkVerifyKey         setVerifyKey = 11;
-    ZkCommitProof         commitProof  = 12;
-    ZkVerifier  setVerifier = 13;
-    ZkSetFee    setFee = 14;
-    ZkMintNFT     mintNFT = 16;
-    ZkWithdrawNFT withdrawNFT = 17;
-    ZkTransferNFT transferNFT = 18;
+    ZkDeposit  deposit          = 1;
+    ZkWithdraw zkWithdraw         = 2;
+    ZkTransfer zkTransfer           = 3;
+    ZkTransferToNew transferToNew = 4;
+    ZkProxyExit proxyExit         = 5;
+    ZkSetPubKey setPubKey         = 6;
+    ZkFullExit  fullExit          = 7;
+    ZkSwap  swap                  = 8;
+    ZkContractToTree contractToTree = 9;
+    ZkTreeToContract treeToContract = 10;
+
+    ZkMintNFT     mintNFT       = 12;
+    ZkWithdrawNFT withdrawNFT   = 13;
+    ZkTransferNFT transferNFT   = 14;
+
+    ZkVerifyKey         setVerifyKey = 31;
+    ZkCommitProof         commitProof  = 32;
+    ZkVerifier  setVerifier         = 33;
+    ZkSetFee    setFee              = 34;
+    ZkTokenSymbol setTokenSymbol    = 35;
+    types.AssetsTransfer        transfer        = 36;
+    types.AssetsWithdraw        withdraw        = 37;
+    types.AssetsTransferToExec  transferToExec  = 38;
   }
 
   int32 ty = 15;
 }
 
+message ZkTokenSymbol {
+  string id = 1;
+  string symbol = 2;
+}
 
 //某个token的余额
 message TokenBalance {
@@ -157,6 +168,14 @@ message ZkForceExit {
   ZkSignature signature = 3;
 }
 
+message ZkProxyExit {
+  uint64 tokenId = 1;
+  uint64 proxyId = 2; //代理id，扣手续费
+  uint64 targetId = 3; //目标id
+  ZkSignature signature = 4;
+  ZkOperationFee fee    = 5;
+}
+
 message ZkSetPubKey {
   uint64 accountId = 1;
   ZkPubKey  pubKey = 2;
@@ -223,6 +242,11 @@ message ReceiptSetVerifyKey {
   ZkVerifyKey current = 2;
 }
 
+message ZkFeeAddrs {
+  string ethFeeAddr   = 1;
+  string l2FeeAddr    = 2;
+}
+
 //commit proof tx data
 message ZkCommitProof {
   uint64 blockStart  = 1;
@@ -239,12 +263,15 @@ message ZkCommitProof {
   repeated string pubDatas = 10;
   repeated string onChainPubDatas = 11;
 
-
   uint64 proofId = 12;
   //包含onChainPubdata的proof排序
   uint64 onChainProofId = 13;
   //commit时候的blockHeight,localdb会填充
   int64  commitBlockHeight = 14;
+  //proof属于的链id和title, id唯一，和proof绑定，title可重复
+  uint64 chainTitleId    = 15;
+  string chainTitle      = 16;
+  ZkFeeAddrs cfgFeeAddrs = 17;
 }
 
 //commit proof stat, pubdata保存到localdb
@@ -414,6 +441,17 @@ message EthPriorityQueueID {
 message ReceiptEthPriorityQueueID {
   int64 prev = 1;
   int64 current = 2;
+}
+
+message ReceiptExodusMode {
+  int64 prev = 1;
+  int64 current = 2;
+}
+
+message ReceiptSetTokenSymbol {
+  string tokenId = 1;
+  string prevSymbol = 2;
+  string curSymbol = 3;
 }
 
 service zksync{}

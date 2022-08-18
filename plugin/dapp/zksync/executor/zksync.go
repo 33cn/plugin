@@ -86,7 +86,7 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	case zt.TyTransferToNewAction:
 		signature = action.GetTransferToNew().GetSignature()
 		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())
-	case zt.TyForceExitAction:
+	case zt.TyProxyExitAction:
 		signature = action.GetForceExit().GetSignature()
 		msg = wallet.GetForceExitMsg(action.GetForceExit())
 	case zt.TySetPubKeyAction:

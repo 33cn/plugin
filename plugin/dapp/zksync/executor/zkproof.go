@@ -79,8 +79,8 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
-func isVerifier(statedb dbm.KV, addr string) bool {
-	verifier, err := getVerifierData(statedb)
+func isVerifier(statedb dbm.KV, chainTitleId, addr string) bool {
+	verifier, err := getVerifierData(statedb, chainTitleId)
 	if err != nil {
 		if isNotFound(errors.Cause(err)) {
 			return false
@@ -96,8 +96,8 @@ func isVerifier(statedb dbm.KV, addr string) bool {
 	return false
 }
 
-func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
-	key := getVerifyKey()
+func getVerifyKeyData(db dbm.KV, chainTitleId string) (*zt.ZkVerifyKey, error) {
+	key := getVerifyKey(chainTitleId)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -349,8 +349,8 @@ func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
 	return makeSetVerifierReceipt(oldKey, newKey), nil
 }
 
-func getVerifierData(db dbm.KV) (*zt.ZkVerifier, error) {
-	key := getVerifier()
+func getVerifierData(db dbm.KV, chainTitleId string) (*zt.ZkVerifier, error) {
+	key := getVerifier(chainTitleId)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -587,7 +587,7 @@ func getAccountProofInHistory(localdb dbm.KV, targetAccountId uint64, targetToke
 				if operation.ToAccountId > maxAccountId {
 					maxAccountId = operation.ToAccountId
 				}
-			case zt.TyForceExitAction:
+			case zt.TyProxyExitAction:
 				fromLeaf, ok := accountMap[operation.AccountId]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("account=%d not exist", operation.AccountId))
@@ -1158,7 +1158,7 @@ func getChunkNum(opType uint64) int {
 		return zt.TransferChunks
 	case zt.TyTransferToNewAction:
 		return zt.Transfer2NewChunks
-	case zt.TyForceExitAction:
+	case zt.TyProxyExitAction:
 		return zt.ForceExitChunks
 	case zt.TySetPubKeyAction:
 		return zt.SetPubKeyChunks
@@ -1199,7 +1199,7 @@ func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
 		return getTransferOperationByChunk(totalChunk)
 	case zt.TyTransferToNewAction:
 		return getTransfer2NewOperationByChunk(totalChunk)
-	case zt.TyForceExitAction:
+	case zt.TyProxyExitAction:
 		return getForceExitOperationByChunk(totalChunk)
 	case zt.TySetPubKeyAction:
 		return getSetPubKeyOperationByChunk(totalChunk)
@@ -1477,7 +1477,7 @@ func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValu
 				if err != nil {
 					return localKvs, err
 				}
-			case zt.TyForceExitAction:
+			case zt.TyProxyExitAction:
 				if fromLeaf == nil {
 					return localKvs, errors.New("account not exist")
 				}
@@ -1721,7 +1721,7 @@ func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkOperation{Ty: zt.TyForceExitAction, FeeData: new(zt.ZkOpFeeData)}
+	operation := &zt.ZkOperation{Ty: zt.TyProxyExitAction, FeeData: new(zt.ZkOpFeeData)}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])

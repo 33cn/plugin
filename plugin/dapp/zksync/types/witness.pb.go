@@ -964,6 +964,69 @@ func (x *OperationSpecialData) GetPubKey() *ZkPubKey {
 	return nil
 }
 
+type ZkOperationFee struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	FromFee string `protobuf:"bytes,1,opt,name=fromFee,proto3" json:"fromFee,omitempty"`
+	ToFee   string `protobuf:"bytes,2,opt,name=toFee,proto3" json:"toFee,omitempty"`
+	TokenId uint64 `protobuf:"varint,3,opt,name=tokenId,proto3" json:"tokenId,omitempty"` //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
+}
+
+func (x *ZkOperationFee) Reset() {
+	*x = ZkOperationFee{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_witness_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ZkOperationFee) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZkOperationFee) ProtoMessage() {}
+
+func (x *ZkOperationFee) ProtoReflect() protoreflect.Message {
+	mi := &file_witness_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZkOperationFee.ProtoReflect.Descriptor instead.
+func (*ZkOperationFee) Descriptor() ([]byte, []int) {
+	return file_witness_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ZkOperationFee) GetFromFee() string {
+	if x != nil {
+		return x.FromFee
+	}
+	return ""
+}
+
+func (x *ZkOperationFee) GetToFee() string {
+	if x != nil {
+		return x.ToFee
+	}
+	return ""
+}
+
+func (x *ZkOperationFee) GetTokenId() uint64 {
+	if x != nil {
+		return x.TokenId
+	}
+	return 0
+}
+
 var File_witness_proto protoreflect.FileDescriptor
 
 var file_witness_proto_rawDesc = []byte{
@@ -1100,8 +1163,14 @@ var file_witness_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x70, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x54, 0x79, 0x70, 0x65,
 	0x12, 0x27, 0x0a, 0x06, 0x70, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x0f, 0x2e, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x5a, 0x6b, 0x50, 0x75, 0x62, 0x4b, 0x65,
-	0x79, 0x52, 0x06, 0x70, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f,
-	0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x79, 0x52, 0x06, 0x70, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x22, 0x5a, 0x0a, 0x0e, 0x5a, 0x6b, 0x4f,
+	0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x46, 0x65, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x66,
+	0x72, 0x6f, 0x6d, 0x46, 0x65, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x66, 0x72,
+	0x6f, 0x6d, 0x46, 0x65, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x46, 0x65, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x46, 0x65, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x07, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x49, 0x64, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65,
+	0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1116,7 +1185,7 @@ func file_witness_proto_rawDescGZIP() []byte {
 	return file_witness_proto_rawDescData
 }
 
-var file_witness_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_witness_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_witness_proto_goTypes = []interface{}{
 	(*ZkSignature)(nil),          // 0: types.ZkSignature
 	(*ZkMsg)(nil),                // 1: types.ZkMsg
@@ -1131,6 +1200,7 @@ var file_witness_proto_goTypes = []interface{}{
 	(*OperationSpecialInfo)(nil), // 10: types.OperationSpecialInfo
 	(*OrderPricePair)(nil),       // 11: types.OrderPricePair
 	(*OperationSpecialData)(nil), // 12: types.OperationSpecialData
+	(*ZkOperationFee)(nil),       // 13: types.ZkOperationFee
 }
 var file_witness_proto_depIdxs = []int32{
 	2,  // 0: types.ZkSignature.pubKey:type_name -> types.ZkPubKey
@@ -1322,6 +1392,18 @@ func file_witness_proto_init() {
 				return nil
 			}
 		}
+		file_witness_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ZkOperationFee); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1329,7 +1411,7 @@ func file_witness_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_witness_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

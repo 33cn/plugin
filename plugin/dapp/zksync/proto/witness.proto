@@ -41,7 +41,6 @@ message AccountWitness {
   ZkPubKey pubKey       = 5;
   SiblingPath sibling   = 6;
   AccountProxyPubKeys proxyPubKeys  = 7;
-
 }
 
 message TokenWitness {
@@ -106,5 +105,10 @@ message OperationSpecialData {
   repeated string contentHash = 9;
   uint64   pubKeyType         = 10;
   ZkPubKey pubKey             = 11;
+}
 
+message ZkOperationFee {
+  string fromFee    = 1;
+  string toFee      = 2;
+  uint64 tokenId    = 3; //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
 }
