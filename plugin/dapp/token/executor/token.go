@@ -14,6 +14,7 @@ token执行器支持token的创建，
 */
 
 import (
+	"bytes"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -35,7 +36,8 @@ const (
 var driverName = "token"
 
 type subConfig struct {
-	SaveTokenTxList bool `json:"saveTokenTxList"`
+	SaveTokenTxList bool     `json:"saveTokenTxList"`
+	FriendExecer    []string `json:"friendExecer,omitempty"`
 }
 
 var subCfg subConfig
@@ -74,6 +76,20 @@ func newToken() drivers.Driver {
 // GetDriverName 获取执行器名字
 func (t *token) GetDriverName() string {
 	return driverName
+}
+
+func (t *token) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
+	cfg := t.GetAPI().GetConfig()
+	//exec := cfg.GetParaExec(othertx.Execer)
+	for _, friendExec := range subCfg.FriendExecer {
+		if cfg.ExecName(friendExec) == string(othertx.Execer) {
+			if bytes.HasPrefix(writekey, []byte("mavl-token-")) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // CheckTx ...

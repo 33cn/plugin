@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"github.com/33cn/chain33/system/address/eth"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	"math/big"
@@ -107,36 +106,16 @@ var PrecompiledContractsBerlin = map[common.Hash160Address]PrecompiledContract{
 // - the returned bytes,
 // - the _remaining_ gas,
 // - any error that occurred
-func RunPrecompiledContract(evm *EVM, caller ContractRef, p PrecompiledContract, sp StatefulPrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
-	if p != nil {
-		gasCost := p.RequiredGas(input)
-		//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
-		if suppliedGas < gasCost {
-			fmt.Println("RunPrecompiledContract------------>PrecompiledContract:", gasCost, "suppliedGas:", suppliedGas)
-			return nil, 0, ErrOutOfGas
-
-		}
-
-		suppliedGas -= gasCost
-		output, err := p.Run(input)
-		return output, suppliedGas, err
-	}
-
-	/*gasCost := sp.RequiredGas(input)
+func RunPrecompiledContract(p PrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
+	gasCost := p.RequiredGas(input)
 	//log15.Info("RunPrecompiledContract", "RequiredGas", gasCost, "avaliableGas", suppliedGas)
 	if suppliedGas < gasCost {
-		fmt.Println("RunPrecompiledContract------------>", gasCost, "suppliedGas:", suppliedGas)
 		return nil, 0, ErrOutOfGas
 
-	}*/
-	//suppliedGas -= gasCost
-	fmt.Println("RunPrecompiledContract++++++++++++++++>:", suppliedGas)
-	//contract := NewContract(caller, to, value, gas)
-	//contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
-	var reminGas uint64
-	output, reminGas, err := sp.Run(evm, caller, input, suppliedGas)
-	return output, reminGas, err
-
+	}
+	suppliedGas -= gasCost
+	output, err := p.Run(input)
+	return output, suppliedGas, err
 }
 
 // 预编译合约 ECRECOVER 椭圆曲线算法支持

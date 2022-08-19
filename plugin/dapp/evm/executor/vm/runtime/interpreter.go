@@ -174,7 +174,6 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 
 		// Static portion of gas
 		cost = operation.constantGas // For tracing
-		//fmt.Println("Interpreter------------->run,gas:", cost, "contract.Gas", contract.Gas)
 		if !contract.UseGas(operation.constantGas) {
 			log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 				"CallerAddress=", contract.CallerAddress.String(),
@@ -205,7 +204,6 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			var dynamicCost uint64
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
 			cost += dynamicCost // total cost, for debug tracing
-			//fmt.Println("dynamicCosttttttttttt:", dynamicCost, "contract.Gas", contract.Gas)
 			if err != nil || !contract.UseGas(dynamicCost) {
 				log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 					"CallerAddress=", contract.CallerAddress.String(),

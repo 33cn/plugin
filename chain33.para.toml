@@ -207,6 +207,7 @@ autonomyExec=""
 [exec.sub.token]
 saveTokenTxList=true
 tokenApprs=[]
+friendExecer=["evm"]
 
 [exec.sub.paracross]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
@@ -222,19 +223,14 @@ ethMapFromExecutor="paracross"
 ethMapFromSymbol="coins.bty"
 
 [exec.sub.evm.preCompile]
-[exec.sub.evm.preCompile.dex]
-bridgeTokenAddress=""
-bridgeBankAddress=""
-
 [exec.sub.evm.preCompile.token]
 # token 名称
-[exec.sub.evm.preCompile.token.ccny]
+[exec.sub.evm.preCompile.token.ABC]
 preCompileAddress="0x0000000000000000000000000000000000200001"
-decimals=8
-symbol="ccny"
+symbol="ABC"
 supply=10000000000000
 
-[exec.sub.evm.preCompile.token.mytoken]
+[exec.sub.evm.preCompile.token.tes]
 preCompileAddress="0x0000000000000000000000000000000000200002"
 decimals=8
 symbol="mytoken"

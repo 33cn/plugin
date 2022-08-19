@@ -59,7 +59,7 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) *subConfig {
 		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
 	}
 	common.InitEvmAddressTypeOnce(driver)
-	for dapp, dinfo := range subCfg.PreCompile {
+	for dapp, dinfo := range subCfg.PreCompile { //配置token 与预编译合约的地址关系
 		if dapp == "dex" {
 			//TODO
 		} else if dapp == "token" {
@@ -68,15 +68,20 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) *subConfig {
 				var tokenInfo runtime.TokenContract
 				types.MustDecode(marshalBytes, &tokenInfo)
 				info := &tokenInfo
-				fmt.Println("initEvmSubConfig precompile config----->", tokenName)
-				_, ok := runtime.CustomizePrecompiledContractsBinjiang[common.HexToAddress(info.PreCompileAddress)]
+				log.Info("initEvmSubConfig", "precompile tokenName:", tokenName)
+				_, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]
 				if ok {
 					panic("dump precomile contract address")
 				}
 				if tokenName != info.Symbol {
 					panic("token symbol miss match")
 				}
-				runtime.CustomizePrecompiledContractsBinjiang[common.HexToAddress(info.PreCompileAddress)] = runtime.NewTokenCall(info)
+
+				if _, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]; !ok {
+					runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)] = runtime.NewTokenCall(info)
+				} else {
+					panic(fmt.Errorf("dup precompile address:", info.PreCompileAddress))
+				}
 			}
 		}
 
@@ -185,23 +190,20 @@ func (evm *EVMExecutor) Allow(tx *types.Transaction, index int) error {
 
 // IsFriend 是否允许对应的KEY
 func (evm *EVMExecutor) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
-	fmt.Println("EVMExecutor IsFriend------>>>>>>>>>>>>>>>>>>>> STEP 1")
 	if othertx == nil {
 		return false
 	}
-	fmt.Println("EVMExecutor IsFriend------>>>>>>>>>>>>>>>>>>>>  STEP 2")
 	cfg := evm.GetAPI().GetConfig()
 	exec := cfg.GetParaExec(othertx.Execer)
 	if exec == nil || len(bytes.TrimSpace(exec)) == 0 {
 		return false
 	}
-	fmt.Println("EVMExecutor IsFriend------>>>>>>>>>>>>>>>>>>>>  STEP 3")
 	if bytes.HasPrefix(exec, evmtypes.UserPrefix) || bytes.Equal(exec, evmtypes.ExecerEvm) {
 		if bytes.HasPrefix(writekey, []byte("mavl-evm-")) {
 			return true
 		}
 	}
-	fmt.Println("EVMExecutor IsFriend------>>>>>>>>>>>>>>>>>>>>  STEP 4")
+
 	return false
 }
 
