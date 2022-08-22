@@ -80,7 +80,7 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) *subConfig {
 				if _, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]; !ok {
 					runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)] = runtime.NewTokenCall(info)
 				} else {
-					panic(fmt.Errorf("dup precompile address:", info.PreCompileAddress))
+					panic(fmt.Errorf("dup precompile address:%v", info.PreCompileAddress))
 				}
 			}
 		}
