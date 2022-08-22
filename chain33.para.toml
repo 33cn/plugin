@@ -230,12 +230,6 @@ preCompileAddress="0x0000000000000000000000000000000000200001"
 symbol="ABC"
 supply=10000000000000
 
-[exec.sub.evm.preCompile.token.tes]
-preCompileAddress="0x0000000000000000000000000000000000200002"
-decimals=8
-symbol="mytoken"
-supply=10000000000000
-
 [exec.sub.mix]
 #私对私的交易费,交易比较大，需要多的手续费
 txFee=0
