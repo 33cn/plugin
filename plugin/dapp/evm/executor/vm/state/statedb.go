@@ -440,7 +440,7 @@ func (mdb *MemoryStateDB) CanTransfer(sender string, amount uint64) bool {
 	} else {
 		senderAcc = mdb.CoinsAccount.LoadExecAccount(sender, mdb.evmPlatformAddr)
 	}
-	log15.Info("CanTransfer---------------->", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
+	log15.Info("CanTransfer", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
 		"mdb.CoinsAccount", mdb.CoinsAccount)
 
 	return senderAcc.Balance >= int64(amount)
@@ -460,65 +460,6 @@ const (
 	// Error 处理出错
 	Error
 )
-
-func safeAdd(balance, amount int64) (int64, error) {
-	if balance+amount < amount || balance+amount > types.MaxTokenBalance {
-		return balance, types.ErrAmount
-	}
-	return balance + amount, nil
-}
-
-func safeSub(balance, amount int64) (int64, error) {
-	if balance-amount > amount || balance-amount < 0 {
-		return balance, types.ErrAmount
-	}
-	return balance - amount, nil
-}
-
-func (mdb *MemoryStateDB) WithDrawExchange(recipient, symbol string, amount int64) (*types.Receipt, error) {
-	evmxgoAccount, err := account.NewAccountDB(mdb.api.GetConfig(), "evmxgo", symbol, mdb.StateDB)
-	if err != nil {
-		return nil, err
-	}
-
-	execName := mdb.api.GetConfig().ExecName("exchange")
-	execaddress := address.ExecAddress(execName)
-	//导出账户地址
-	acc, err := evmxgoAccount.LoadExecAccountQueue(mdb.api, recipient, execaddress)
-	if err != nil {
-		return nil, err
-	}
-	newbalance, err := safeSub(acc.Balance, -amount)
-	if err != nil {
-		return nil, err
-	}
-	copyAcc := types.CloneAccount(acc)
-	acc.Balance = newbalance
-	receiptTransfer := &types.ReceiptAccountTransfer{
-		Prev:    copyAcc,
-		Current: acc,
-	}
-	kvset := evmxgoAccount.GetKVSet(acc)
-	evmxgoAccount.SaveKVSet(kvset)
-	ty := int32(types.TyLogExecTransfer)
-	log1 := &types.ReceiptLog{
-		Ty:  ty,
-		Log: types.Encode(receiptTransfer),
-	}
-	receipt := &types.Receipt{
-		Ty:   types.ExecOk,
-		KV:   kvset,
-		Logs: []*types.ReceiptLog{log1},
-	}
-	mdb.addChange(transferChange{
-		baseChange: baseChange{},
-		amount:     amount,
-		data:       kvset,
-		logs:       receipt.GetLogs(),
-	})
-	return receipt, nil
-
-}
 
 //TransferToToken evm call token
 func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (bool, error) {

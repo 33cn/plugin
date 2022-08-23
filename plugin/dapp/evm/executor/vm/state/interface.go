@@ -15,7 +15,6 @@ import (
 // StateDB包含区块的状态和交易的状态（当前上下文），所以不支持并发操作，区块内的多个交易只能按顺序单线程执行；
 // StateDB除了查询状态数据，还会保留在交易执行时对数据的变更信息，每个交易完成之后会返回变更影响的数据给执行器；
 type EVMStateDB interface {
-	//GetMStateDB() *MemoryStateDB
 	// CreateAccount 创建新的合约对象
 	CreateAccount(string, string, string, string)
 	// SubBalance 从指定地址扣除金额
