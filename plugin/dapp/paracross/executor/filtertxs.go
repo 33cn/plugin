@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"strings"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -85,6 +86,9 @@ func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*typ
 	discardTxs := cfgPara.GStrList("discardTxs")
 	discardTxsMap := make(map[string]bool)
 	for _, v := range discardTxs {
+		if strings.HasPrefix(v, "0x") || strings.HasPrefix(v, "0X") {
+			v = v[2:]
+		}
 		discardTxsMap[v] = true
 	}
 	var txs []*types.Transaction
@@ -104,7 +108,7 @@ func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*typ
 		}
 
 		if discardTxsMap[hex.EncodeToString(tx.Hash())] {
-			clog.Info("FilterTxsForPara discard tx", "txhash", hex.EncodeToString(tx.Hash()))
+			clog.Info("FilterTxsForPara discard tx", "txhash", common.ToHex(tx.Hash()))
 			continue
 		}
 
