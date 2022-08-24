@@ -179,6 +179,7 @@ ForkBadTokenSymbol=184000
 ForkTokenPrice=560000
 ForkTokenSymbolWithNumber=1298600
 ForkTokenCheck=1600000
+ForkTokenEvm=0
 
 [fork.sub.trade]
 Enable=100899

@@ -78,10 +78,9 @@ func (t *tokenCall) Run(evm *EVM, caller ContractRef, input []byte, suppliedGas 
 	switch action {
 	case transfer:
 		if len(input) < 100 {
-			err = errors.New("input size to low")
+			err = errors.New("input size too low")
 			return
 		}
-
 		from := common.BytesToAddress(input[4:36])
 		to := common.BytesToAddress(input[36 : 36+32])
 		amount := big.NewInt(1).SetBytes(input[36+32:])

@@ -80,11 +80,12 @@ func (t *token) GetDriverName() string {
 
 func (t *token) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
 	cfg := t.GetAPI().GetConfig()
-	//exec := cfg.GetParaExec(othertx.Execer)
-	for _, friendExec := range subCfg.FriendExecer {
-		if cfg.ExecName(friendExec) == string(othertx.Execer) {
-			if bytes.HasPrefix(writekey, []byte("mavl-token-")) {
-				return true
+	if cfg.IsDappFork(t.GetHeight(), t.GetDriverName(), tokenty.ForkTokenEvm) {
+		for _, friendExec := range subCfg.FriendExecer {
+			if cfg.ExecName(friendExec) == string(othertx.Execer) {
+				if bytes.HasPrefix(writekey, []byte("mavl-token-")) {
+					return true
+				}
 			}
 		}
 	}

@@ -92,7 +92,6 @@ type Context struct {
 type EVM struct {
 	// Context 链相关的一些辅助属性和操作方法
 	Context
-	//evmexecutor *evm.EVMExecutor
 	MStateDB *state.MemoryStateDB
 	// EVMStateDB 状态数据操作入口
 	StateDB state.EVMStateDB

@@ -29,7 +29,7 @@ contract Token is IERC20 {
      * @dev Returns the number of decimals used to get its user representation.
      */
     function decimals() public view returns (uint8) {
-        return MultiCurrency.decimals();
+        return MultiToken.decimals();
     }
 
     /**

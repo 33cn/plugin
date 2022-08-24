@@ -49,6 +49,7 @@ var (
 	ForkTokenSymbolWithNumberX = "ForkTokenSymbolWithNumber"
 	// ForkTokenCheckX  fork check impl bug
 	ForkTokenCheckX = "ForkTokenCheck"
+	ForkTokenEvm    = "ForkTokenEvm"
 )
 
 const (

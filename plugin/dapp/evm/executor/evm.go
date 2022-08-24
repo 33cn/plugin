@@ -38,7 +38,7 @@ type subConfig struct {
 	PreCompile map[string]map[string]interface{} `json:"preCompile,omitempty"`
 }
 
-func initEvmSubConfig(sub []byte, evmEnableHeight int64) *subConfig {
+func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 	var subCfg subConfig
 	if sub != nil {
 		types.MustDecode(sub, &subCfg)
@@ -69,12 +69,16 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) *subConfig {
 				types.MustDecode(marshalBytes, &tokenInfo)
 				info := &tokenInfo
 				log.Info("initEvmSubConfig", "precompile tokenName:", tokenName)
+				if _, ok := runtime.PrecompiledContractsBerlin[common.HexToAddress(info.PreCompileAddress)]; ok {
+					panic("can't use system  precompile address")
+				}
 				_, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]
 				if ok {
-					panic("dump precomile contract address")
+					panic("dump precompile contract address")
 				}
 				if tokenName != info.Symbol {
-					panic("token symbol miss match")
+					log.Error("token symbol miss match")
+					continue
 				}
 
 				if _, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]; !ok {
@@ -87,7 +91,6 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) *subConfig {
 
 	}
 
-	return &subCfg
 }
 
 // Init 初始化本合约对象
@@ -124,7 +127,6 @@ type EVMExecutor struct {
 	drivers.DriverBase
 	vmCfg    *runtime.Config
 	mStateDB *state.MemoryStateDB
-	subCfg   *subConfig
 }
 
 // NewEVMExecutor 新创建执行器对象
