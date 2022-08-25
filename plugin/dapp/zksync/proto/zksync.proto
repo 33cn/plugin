@@ -30,9 +30,11 @@ message ZksyncAction {
     ZkVerifier  setVerifier         = 33;
     ZkSetFee    setFee              = 34;
     ZkTokenSymbol setTokenSymbol    = 35;
-    types.AssetsTransfer        transfer        = 36;
-    types.AssetsWithdraw        withdraw        = 37;
-    types.AssetsTransferToExec  transferToExec  = 38;
+    ZkExodusMode setExodusMode      = 36;
+
+    types.AssetsTransfer        transfer        = 40;
+    types.AssetsWithdraw        withdraw        = 41;
+    types.AssetsTransferToExec  transferToExec  = 42;
 
     // spot
     SpotLimitOrder  limitOrder = 201;
@@ -387,6 +389,7 @@ message ZkQueryReq {
   string txHash = 9;
   uint64 proofId = 10;
   uint64 chainTitleId = 11;
+  uint32 opType = 12;
 }
 
 message ZkQueryResp {
@@ -450,9 +453,23 @@ message ReceiptEthPriorityQueueID {
   int64 current = 2;
 }
 
+message ZkExodusMode {
+  uint32 mode = 1;
+}
+
 message ReceiptExodusMode {
   int64 prev = 1;
   int64 current = 2;
+}
+
+message ZkTxProofResp {
+  uint64    blockHeight   = 1;
+  uint32    txIndex       = 2;
+  uint32    opIndex       = 3;
+  uint32    txType        = 4;
+  string    txHash        = 5;
+  uint64    proofId       = 6;
+
 }
 
 service zksync{}

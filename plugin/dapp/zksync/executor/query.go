@@ -232,7 +232,7 @@ func (z *zksync) Query_GetHistoryAccountProofInfo(in *zt.ZkReqExistenceProof) (t
 	if err != nil {
 		return nil, err
 	}
-	var rsp zt.HistoryAccountProofRsp
+	var rsp zt.HistoryAccountProofInfo
 	rsp.RootHash = info.RootHash
 	if in.AccountId > 0 {
 		for _, v := range info.Leaves {
@@ -413,6 +413,103 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	}
 	res.OperationInfos = datas
 	return res, nil
+}
+
+// Query_GetFirstOnChainOp 根据proofId获取在此proof之后的第一个onChainTx,为提供无效交易做准备
+func (z *zksync) Query_GetFirstOnChainOp(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil || in.GetProofId() <= 0 {
+		return nil, types.ErrInvalidParam
+	}
+	chainTitleId, _ := strconv.Atoi(zt.ZkParaChainInnerTitleId)
+	if in.GetChainTitleId() > 0 {
+		chainTitleId = int(in.GetChainTitleId())
+	}
+	reqProof := &zt.ZkFetchProofList{
+		ProofId:      in.GetProofId(),
+		ChainTitleId: uint64(chainTitleId),
+	}
+	rep, err := z.Query_GetProofList(reqProof)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getProofId")
+	}
+	proof := rep.(*zt.ZkCommitProof)
+	onChainOpTy := []uint32{zt.TyDepositAction, zt.TyWithdrawAction, zt.TyProxyExitAction, zt.TyFullExitAction, zt.TyWithdrawNFTAction}
+	txTypeMap := make(map[uint32]bool)
+	//如果参数提供了OpType,就采用提供的
+	if in.GetOpType() > 0 {
+		txTypeMap[in.GetOpType()] = true
+	} else {
+		for _, t := range onChainOpTy {
+			txTypeMap[t] = true
+		}
+	}
+	var txProofResp zt.ZkTxProofResp
+	table := NewZksyncInfoTable(z.GetLocalDB())
+OuterLoop:
+	for i := proof.BlockEnd; i <= uint64(z.GetHeight()); i++ {
+		var primaryKey []byte
+		if i == proof.GetBlockEnd() && proof.GetIndexEnd() != 0 {
+			//获取起始搜索的 height,txIndex,opIndex
+			primaryKey = []byte(fmt.Sprintf("%016d.%016d.%016d", i, proof.GetIndexEnd(), proof.GetOpIndex()))
+		} else {
+			primaryKey = nil
+		}
+		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, types.MaxTxsPerBlock, zt.ListASC)
+		if err != nil {
+			if isNotFound(err) {
+				continue
+			} else {
+				return nil, err
+			}
+		}
+		for _, row := range rows {
+			data := row.Data.(*zt.OperationInfo)
+			if txTypeMap[data.TxType] {
+				txProofResp.BlockHeight = data.BlockHeight
+				txProofResp.TxIndex = data.TxIndex
+				txProofResp.OpIndex = data.OpIndex
+				txProofResp.TxType = data.TxType
+				txProofResp.TxHash = data.TxHash
+				break OuterLoop
+			}
+		}
+	}
+
+	lastProof, err := getLastCommitProofData(z.GetStateDB(), strconv.Itoa(chainTitleId))
+	if err != nil {
+		zlog.Error("GetFirstOnChainOp.getLastProof", "err", err)
+		return &txProofResp, nil
+	}
+	for i := in.GetProofId() + 1; i <= lastProof.ProofId; i++ {
+
+		reqProof = &zt.ZkFetchProofList{
+			ProofId:      i,
+			ChainTitleId: uint64(chainTitleId),
+		}
+		rep, err = z.Query_GetProofList(reqProof)
+		if err != nil {
+			return &txProofResp, errors.Wrapf(err, "fetchProofId")
+		}
+		proof = rep.(*zt.ZkCommitProof)
+		//只有包含onChainTx的proof才会有对应OnChain交易
+		if proof.GetOnChainProofId() == 0 {
+			continue
+		}
+		//txOp 需要在proof的证明范围内
+		//proof 的blockStart==blockEnd时候，需要检查txIndex
+		if proof.BlockStart == proof.BlockEnd && txProofResp.BlockHeight == proof.BlockEnd &&
+			uint32(proof.IndexStart) <= txProofResp.TxIndex && txProofResp.TxIndex <= uint32(proof.IndexEnd) {
+			txProofResp.ProofId = proof.ProofId
+			return &txProofResp, nil
+		}
+		//proof blockStart!=blockEnd, 只需要检查tx的blockHeight是否在高度区间内
+		if proof.BlockStart != proof.BlockEnd && proof.BlockStart <= txProofResp.BlockHeight && txProofResp.BlockHeight <= proof.BlockEnd {
+			txProofResp.ProofId = proof.ProofId
+			return &txProofResp, nil
+		}
+	}
+
+	return &txProofResp, nil
 }
 
 // Query_GetZkContractAccount 批量获取交易证明

@@ -10,7 +10,7 @@ func (z *zksync) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 	action := NewAction(z, tx, index)
 	//无效tx则设置exodus mode
 	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
 	if err := isExodusMode(z.GetStateDB()); err != nil {
@@ -23,7 +23,7 @@ func (z *zksync) Exec_ZkWithdraw(payload *zt.ZkWithdraw, tx *types.Transaction, 
 	action := NewAction(z, tx, index)
 	//无效tx则设置exodus mode
 	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
 	if err := isExodusMode(z.GetStateDB()); err != nil {
@@ -41,12 +41,9 @@ func (z *zksync) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Tra
 
 func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	//无效tx则设置exodus mode
-	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
-	}
-	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
 		return nil, err
 	}
 	return action.TreeToContract(payload)
@@ -54,12 +51,8 @@ func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Tra
 
 func (z *zksync) Exec_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	//无效tx则设置exodus mode
-	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
-	}
-	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
 		return nil, err
 	}
 	return action.ZkTransfer(payload)
@@ -67,12 +60,9 @@ func (z *zksync) Exec_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, 
 
 func (z *zksync) Exec_TransferToNew(payload *zt.ZkTransferToNew, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	//无效tx则设置exodus mode
-	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
-	}
-	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
 		return nil, err
 	}
 	return action.TransferToNew(payload)
@@ -82,7 +72,7 @@ func (z *zksync) Exec_ProxyExit(payload *zt.ZkProxyExit, tx *types.Transaction, 
 	action := NewAction(z, tx, index)
 	//无效tx则设置exodus mode
 	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
 	if err := isExodusMode(z.GetStateDB()); err != nil {
@@ -109,11 +99,9 @@ func (z *zksync) Exec_Swap(payload *zt.ZkSwap, tx *types.Transaction, index int)
 
 func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
-	}
-	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
 		return nil, err
 	}
 	return action.MintNFT(payload)
@@ -122,7 +110,7 @@ func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, inde
 func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
 	if err := isExodusMode(z.GetStateDB()); err != nil {
@@ -133,11 +121,8 @@ func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transacti
 
 func (z *zksync) Exec_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if isInvalidTx(action.api.GetConfig(), action.txhash) {
-		return makeSetExodusModeReceipt(0, 1), nil
-	}
-	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
 		return nil, err
 	}
 	return action.transferNFT(payload)
@@ -170,6 +155,11 @@ func (z *zksync) Exec_SetFee(payload *zt.ZkSetFee, tx *types.Transaction, index 
 func (z *zksync) Exec_SetTokenSymbol(payload *zt.ZkTokenSymbol, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.setTokenSymbol(payload)
+}
+
+func (z *zksync) Exec_SetExodusMode(payload *zt.ZkExodusMode, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.setExodusMode(payload)
 }
 
 //asset related action

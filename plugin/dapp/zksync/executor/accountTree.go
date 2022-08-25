@@ -138,7 +138,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	tree := &zt.AccountTree{
 		Index:           uint64(len(initLeafAccounts)),
 		TotalIndex:      uint64(len(initLeafAccounts)),
-		MaxCurrentIndex: 1024,
+		MaxCurrentIndex: zt.MaxLeafArchiveSum,
 		SubTrees:        make([]*zt.SubTree, 0),
 	}
 
@@ -435,9 +435,9 @@ func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64, 
 func GetAllRoots(db dbm.KV, endIndex uint64, info *TreeUpdateInfo) ([]*zt.RootInfo, error) {
 	roots := make([]*zt.RootInfo, 0)
 	for i := uint64(1); i <= endIndex; i++ {
-		rootInfo, err := GetRootByStartIndex(db, (i-1)*1024+1, info)
+		rootInfo, err := GetRootByStartIndex(db, (i-1)*zt.MaxLeafArchiveSum+1, info)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "i=%d", i)
 		}
 		roots = append(roots, rootInfo)
 	}
@@ -616,11 +616,11 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		info.updateMap[string(kv.GetKey())] = kv.GetValue()
 	} else {
 		//找到对应的根
-		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/1024*1024+1, info)
+		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum+1, info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetRootByStartIndex")
 		}
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+1023, info)
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+(zt.MaxLeafArchiveSum-1), info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -747,7 +747,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 	//leaf不存在的时候，计算子树
 	if leaf == nil {
 		currentTree := getNewTree()
-		roots, err := GetAllRoots(statedb, tree.TotalIndex/1024, info)
+		roots, err := GetAllRoots(statedb, tree.TotalIndex/zt.MaxLeafArchiveSum, info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.GetAllRoots")
 		}
@@ -785,7 +785,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 	if err != nil {
 		return nil, errors.Wrapf(err, "merkleTree.setIndex")
 	}
-	roots, err := GetAllRoots(statedb, tree.GetTotalIndex()/1024, info)
+	roots, err := GetAllRoots(statedb, tree.GetTotalIndex()/zt.MaxLeafArchiveSum, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetAllRoots")
 	}
@@ -805,8 +805,8 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 			currentTree.Push(getLeafHash(v))
 		}
 	} else {
-		startIndex := (leaf.AccountId-1)/1024*1024 + 1
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, startIndex, startIndex+1023, info)
+		startIndex := (leaf.AccountId-1)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum + 1
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, startIndex, startIndex+(zt.MaxLeafArchiveSum-1), info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -978,11 +978,11 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 		info.updateMap[string(kv.GetKey())] = kv.GetValue()
 	} else {
 		//找到对应的根
-		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/1024*1024+1, info)
+		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum+1, info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetRootByStartIndex")
 		}
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+1023, info)
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+(zt.MaxLeafArchiveSum-1), info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}

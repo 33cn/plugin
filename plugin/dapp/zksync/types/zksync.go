@@ -113,6 +113,9 @@ const (
 
 	Add = int32(0)
 	Sub = int32(1)
+
+	//tree最大归档数目
+	MaxLeafArchiveSum = 1024
 )
 
 //Zksync 执行器名称定义
@@ -207,6 +210,11 @@ const (
 	NormalProxyPubKey = 1
 	SystemProxyPubKey = 2
 	SuperProxyPubKey  = 3
+)
+
+const (
+	ExodusPrepareMode = 1 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
+	ExodusClearMode   = 2 //逃生舱清算阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
 )
 
 var (

@@ -252,7 +252,7 @@ func TestInitTreeRoot(t *testing.T) {
 	tree := &zt.AccountTree{
 		Index:           2,
 		TotalIndex:      2,
-		MaxCurrentIndex: 1024,
+		MaxCurrentIndex: zt.MaxLeafArchiveSum,
 		SubTrees:        make([]*zt.SubTree, 0),
 	}
 	for _, subtree := range merkleTree.GetAllSubTrees() {

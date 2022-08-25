@@ -823,6 +823,76 @@ func getTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
 	return id.Uint64(), nil
 }
 
+//在设置了invalidTx后，平行链从0开始同步到无效交易则设置系统为exodus mode，此模式意味着此链即将停用，资产需要退出到ETH
+//目前此模式限制交易比较多，此模式开启后的后续所有跟L2 资产有关的交易(contract2tree例外)都视为无效交易，其中deposit,withdraw,proxyExit确实应该视为无效
+//但是transfer，transfer2new, tree2contract实际上应该是允许的，因为只是在L2内部流转, 禁掉的影响是跟这几个操作相关连的交易会失败
+//改进的一个方案是允许这几个操作,但是需要重新设一个截止标志，禁止这几个操作，也就是平行链同步完成后，由管理员设置，然后就只允许contract2tree流进资产
+func isExodusMode(statedb dbm.KV) error {
+	mode, err := getExodusMode(statedb)
+	if err != nil {
+		return err
+	}
+	if mode > 0 {
+		return errors.Wrapf(types.ErrNotAllow, "isExodusMode=%d", mode)
+	}
+	return nil
+}
+
+//exodus 清算模式,管理员设置，禁止除contract2tree外一切L2交易，方便尽快收敛treeRoot
+func isExodusClearMode(statedb dbm.KV) error {
+	mode, err := getExodusMode(statedb)
+	if err != nil {
+		return err
+	}
+
+	if mode >= zt.ExodusClearMode {
+		return errors.Wrapf(types.ErrNotAllow, "current exodusClearStage")
+	}
+	return nil
+}
+
+func getExodusMode(db dbm.KV) (int64, error) {
+	data, err := db.Get(getExodusModeKey())
+	if isNotFound(err) {
+		//非exodus mode
+		return 0, nil
+	}
+	if err != nil {
+		return 0, errors.Wrapf(err, "db")
+	}
+	var k types.Int64
+	err = types.Decode(data, &k)
+	if err != nil {
+		return 0, errors.Wrapf(err, "decode")
+	}
+	return k.Data, nil
+}
+
+//设置逃生舱模式,为保证顺序，管理员只允许在无效交易生效后，也就是逃生舱准备模式后设置清算模式
+func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+
+	//只有管理员可以设置
+	if !isSuperManager(cfg, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "not manager")
+	}
+
+	if payload.GetMode() <= zt.ExodusPrepareMode {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "mode=%d should big than %d", payload.GetMode(), zt.ExodusPrepareMode)
+	}
+
+	//当前mode应该是prepareMode
+	mode, err := getExodusMode(a.statedb)
+	if err != nil {
+		return nil, err
+	}
+	if mode != zt.ExodusPrepareMode {
+		return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d,not prepareMode=%d", mode, zt.ExodusPrepareMode)
+	}
+
+	return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
+}
+
 //func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue, error) {
 //	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
 //	contractAccount := accountdb.LoadAccount(addr)
@@ -1857,18 +1927,6 @@ func makeSetExodusModeReceipt(prev, current int64) *types.Receipt {
 			},
 		},
 	}
-}
-
-func isExodusMode(statedb dbm.KV) error {
-	_, err := statedb.Get(getExodusModeKey())
-	if isNotFound(err) {
-		//非exodus mode
-		return nil
-	}
-	if err != nil {
-		return errors.Wrap(err, "isExodusMode")
-	}
-	return errors.Wrap(types.ErrNotAllow, "isExodusMode")
 }
 
 func makeSetEthPriorityIdReceipt(chainId uint32, prev, current int64) *types.Receipt {

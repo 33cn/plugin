@@ -67,6 +67,7 @@ func layer2Cmd() *cobra.Command {
 		getChain33AddrCmd(),
 		setTokenFeeCmd(),
 		setTokenSymbolCmd(),
+		setExodusModeCmd(),
 	)
 
 	return cmd
@@ -1005,10 +1006,48 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getEthPriorityInfoCmd())
 	cmd.AddCommand(getOpsByChunkCmd())
 	cmd.AddCommand(getHistoryProofCmd())
+	cmd.AddCommand(getFirstOnChainOpCmd())
 
 	//cmd.AddCommand(commitProofCmd())
 
 	return cmd
+}
+
+func getFirstOnChainOpCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "firstop",
+		Short: "get first on chain op after base proof id",
+		Run:   getFirstOnChainOp,
+	}
+	getFirstOnChainOpFlag(cmd)
+	return cmd
+}
+
+func getFirstOnChainOpFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("id", "i", 0, "base proof id")
+	cmd.MarkFlagRequired("id")
+	cmd.Flags().Uint32P("optype", "t", 0, "optional, op type deposit:1,withdraw:2,proxyexit:5")
+}
+
+func getFirstOnChainOp(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	id, _ := cmd.Flags().GetUint64("id")
+	opType, _ := cmd.Flags().GetUint32("optype")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		ProofId: id,
+		OpType:  opType,
+	}
+
+	params.FuncName = "GetFirstOnChainOp"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkTxProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getHistoryProofCmd() *cobra.Command {
@@ -1043,7 +1082,7 @@ func getHistoryProof(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetHistoryAccountProofInfo"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.HistoryAccountProofRsp
+	var resp zt.HistoryAccountProofInfo
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -1404,6 +1443,41 @@ func setTokenFee(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
 		ActionName: "SetFee",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func setExodusModeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "exodusmode",
+		Short: "set exodus mode",
+		Run:   setExodusMode,
+	}
+	setExodusModeFlag(cmd)
+	return cmd
+}
+
+func setExodusModeFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("mode", "m", 0, "manager set exodus clearing mode 2")
+	cmd.MarkFlagRequired("mode")
+
+}
+
+func setExodusMode(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	mode, _ := cmd.Flags().GetUint32("mode")
+
+	payload := &zt.ZkExodusMode{
+		Mode: mode,
+	}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
+		ActionName: "SetExodusMode",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
