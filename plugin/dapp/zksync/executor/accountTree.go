@@ -238,7 +238,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	//到达1024以后，清空
 	if tree.Index == tree.MaxCurrentIndex {
 		root := &zt.RootInfo{
-			Height:     10,
+			Height:     zt.MaxTreeArchiveLevel,
 			StartIndex: tree.GetTotalIndex() - tree.GetIndex() + 1,
 			RootHash:   zt.Byte2Str(currentTree.Root()),
 		}

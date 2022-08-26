@@ -115,7 +115,8 @@ const (
 	Sub = int32(1)
 
 	//tree最大归档数目
-	MaxLeafArchiveSum = 1024
+	MaxTreeArchiveLevel = 5
+	MaxLeafArchiveSum   = 32 // =2^MaxTreeArchiveLevel
 )
 
 //Zksync 执行器名称定义
