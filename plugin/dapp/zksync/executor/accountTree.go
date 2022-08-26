@@ -43,6 +43,14 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 }
 
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
+	//reserved  system account id=0
+	defaultAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.SystemDefaultAcctId,
+		Chain33Addr: "3",
+		TokenHash:   "0",
+	}
+
 	//default system FeeAccount
 	feeAccount := &zt.Leaf{
 		EthAddress:  ethFeeAddr,
@@ -64,14 +72,8 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 		Chain33Addr: "2",
 		TokenHash:   "0",
 	}
-	//default NFT system account
-	defaultAccount := &zt.Leaf{
-		EthAddress:  "0",
-		AccountId:   zt.SystemDefaultAcctId,
-		Chain33Addr: "3",
-		TokenHash:   "0",
-	}
-	return []*zt.Leaf{feeAccount, NFTAccount, treeToContractAccount, defaultAccount}
+
+	return []*zt.Leaf{defaultAccount, feeAccount, NFTAccount, treeToContractAccount}
 }
 
 //获取系统初始root，如果未设置fee账户，缺省采用配置文件，
@@ -136,7 +138,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	}
 
 	tree := &zt.AccountTree{
-		Index:           uint64(len(initLeafAccounts)),
+		Index:           uint64(len(initLeafAccounts) - 1),
 		TotalIndex:      uint64(len(initLeafAccounts)),
 		MaxCurrentIndex: zt.MaxLeafArchiveSum,
 		SubTrees:        make([]*zt.SubTree, 0),
@@ -179,9 +181,6 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 			return kvs, localKvs, errors.Wrapf(err, "pushSubTree")
 		}
 	}
-
-	tree.Index++
-	tree.TotalIndex++
 
 	leaf := &zt.Leaf{
 		EthAddress:   ethAddress,
@@ -235,14 +234,16 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 
 	tree.SubTrees = subtrees
 
-	//到达1024以后，清空
-	if tree.Index == tree.MaxCurrentIndex {
+	tree.Index = (tree.Index + 1) % tree.MaxCurrentIndex
+	tree.TotalIndex++
+	//到达归档高度后，清空
+	if tree.Index == tree.MaxCurrentIndex-1 {
 		root := &zt.RootInfo{
 			Height:     zt.MaxTreeArchiveLevel,
-			StartIndex: tree.GetTotalIndex() - tree.GetIndex() + 1,
+			StartIndex: tree.GetTotalIndex() - tree.MaxCurrentIndex,
 			RootHash:   zt.Byte2Str(currentTree.Root()),
 		}
-		tree.Index = 0
+
 		tree.SubTrees = make([]*zt.SubTree, 0)
 
 		kv = &types.KeyValue{
@@ -304,10 +305,6 @@ func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 }
 
 func GetLeafByAccountId(db dbm.KV, accountId uint64, info *TreeUpdateInfo) (*zt.Leaf, error) {
-	if accountId <= 0 {
-		return nil, nil
-	}
-
 	var leaf zt.Leaf
 	if val, ok := info.updateMap[string(GetAccountIdPrimaryKey(accountId))]; ok {
 		err := types.Decode(val, &leaf)
@@ -422,7 +419,7 @@ func GetLeafByChain33AndEthAddress(db dbm.KV, chain33Addr, ethAddress string, in
 
 func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64, info *TreeUpdateInfo) ([]*zt.Leaf, error) {
 	leaves := make([]*zt.Leaf, 0)
-	for i := startIndex; i <= endIndex; i++ {
+	for i := startIndex; i < endIndex; i++ {
 		leaf, err := GetLeafByAccountId(db, i, info)
 		if err != nil {
 			return nil, err
@@ -434,8 +431,8 @@ func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64, 
 
 func GetAllRoots(db dbm.KV, endIndex uint64, info *TreeUpdateInfo) ([]*zt.RootInfo, error) {
 	roots := make([]*zt.RootInfo, 0)
-	for i := uint64(1); i <= endIndex; i++ {
-		rootInfo, err := GetRootByStartIndex(db, (i-1)*zt.MaxLeafArchiveSum+1, info)
+	for i := uint64(0); i < endIndex; i++ {
+		rootInfo, err := GetRootByStartIndex(db, i*zt.MaxLeafArchiveSum, info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "i=%d", i)
 		}
@@ -589,9 +586,9 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
 
 	//如果还没归档
-	if accountId > tree.GetTotalIndex()-tree.GetIndex() {
+	if accountId >= tree.GetTotalIndex()-tree.GetIndex()-1 {
 		currentTree := getNewTree()
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()+1, tree.GetTotalIndex(), info)
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()-1, tree.GetTotalIndex(), info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -616,11 +613,11 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		info.updateMap[string(kv.GetKey())] = kv.GetValue()
 	} else {
 		//找到对应的根
-		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum+1, info)
+		rootInfo, err := GetRootByStartIndex(statedb, (accountId)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum, info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetRootByStartIndex")
 		}
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+(zt.MaxLeafArchiveSum-1), info)
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+(zt.MaxLeafArchiveSum), info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -781,16 +778,16 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 	}
 
 	currentTree := getNewTree()
-	err = currentTree.SetIndex(leaf.GetAccountId() - 1)
+	err = currentTree.SetIndex(leaf.GetAccountId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "merkleTree.setIndex")
 	}
-	roots, err := GetAllRoots(statedb, tree.GetTotalIndex()/zt.MaxLeafArchiveSum, info)
+	roots, err := GetAllRoots(statedb, (tree.TotalIndex-1)/zt.MaxLeafArchiveSum, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetAllRoots")
 	}
-	if leaf.AccountId > tree.GetTotalIndex()-tree.GetIndex() {
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()+1, tree.GetTotalIndex(), info)
+	if leaf.AccountId >= tree.GetTotalIndex()-tree.GetIndex()-1 {
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()-1, tree.GetTotalIndex(), info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -805,8 +802,8 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 			currentTree.Push(getLeafHash(v))
 		}
 	} else {
-		startIndex := (leaf.AccountId-1)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum + 1
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, startIndex, startIndex+(zt.MaxLeafArchiveSum-1), info)
+		startIndex := leaf.AccountId / zt.MaxLeafArchiveSum * zt.MaxLeafArchiveSum
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, startIndex, startIndex+zt.MaxLeafArchiveSum, info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -951,8 +948,8 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 	kvs = append(kvs, kv)
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
 
-	if accountId > tree.GetTotalIndex()-tree.GetIndex() {
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()+1, tree.GetTotalIndex(), info)
+	if accountId >= tree.GetTotalIndex()-tree.GetIndex()-1 {
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()-1, tree.GetTotalIndex(), info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
@@ -978,11 +975,11 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 		info.updateMap[string(kv.GetKey())] = kv.GetValue()
 	} else {
 		//找到对应的根
-		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum+1, info)
+		rootInfo, err := GetRootByStartIndex(statedb, accountId/zt.MaxLeafArchiveSum*zt.MaxLeafArchiveSum, info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetRootByStartIndex")
 		}
-		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+(zt.MaxLeafArchiveSum-1), info)
+		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+zt.MaxLeafArchiveSum, info)
 		if err != nil {
 			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}

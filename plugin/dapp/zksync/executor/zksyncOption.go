@@ -141,7 +141,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	//leaf不存在就添加
 	if leaf == nil {
-		newAccountId := tree.GetTotalIndex() + 1
+		newAccountId := tree.GetTotalIndex()
 		//添加之前先计算证明
 		receipt, err := calProof(a.statedb, info, newAccountId, payload.TokenId)
 		if err != nil {
@@ -1230,7 +1230,7 @@ func (a *Action) transfer2NewProc(fromAcctId, tokenId uint64, toEthAddr, toLayer
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "db.getAccountTree")
 	}
-	newAcctId := tree.GetTotalIndex() + 1
+	newAcctId := tree.GetTotalIndex()
 	//更新之前先计算证明
 	receipt, err = calProof(a.statedb, treeInfo, newAcctId, tokenId)
 	if err != nil {

@@ -188,14 +188,15 @@ const (
 )
 
 const (
+	//SystemDefaultAcctId 缺省备用账户
+	SystemDefaultAcctId = 0
 	//SystemFeeAccountId 此账户作为缺省收费账户
 	SystemFeeAccountId = 1
 	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
 	SystemNFTAccountId = 2
 	//SystemTree2ContractAcctId, 汇总从 tree2contract 跨链的资产总额
 	SystemTree2ContractAcctId = 3
-	//SystemDefaultAcctId 缺省备用账户
-	SystemDefaultAcctId = 4
+
 	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
 	SystemNFTTokenId = 256 //2^8,
 
