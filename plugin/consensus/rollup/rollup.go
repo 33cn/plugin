@@ -5,14 +5,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/rpc/grpcclient"
+	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
+
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/system/consensus"
 	"github.com/33cn/chain33/types"
-	"github.com/golang/groupcache/lru"
 )
 
 const (
-	minCommitTxCount = 128
+	minCommitTxCount          = 128
+	eachValidatorCommitRounds = 10
 )
 
 var (
@@ -31,15 +34,20 @@ type RollUp struct {
 	op              *optimistic
 
 	initDone        chan struct{}
-	nextCommitRound int32
+	nextCommitRound int64
 
 	currCommitter string
 
-	commitCache *lru.Cache
-	batchCache  sync.Map
-	ctx         context.Context
-	base        *consensus.BaseClient
-	chainCfg    *types.Chain33Config
+	batchCache           sync.Map
+	signMsgCache         sync.Map
+	ctx                  context.Context
+	base                 *consensus.BaseClient
+	chainCfg             *types.Chain33Config
+	subChan              chan *rolluptypes.ValidatorSignMsg
+	minBuildRoundInCache int64
+	mainChainGrpc        types.Chain33Client
+	val                  *validator
+	cache                *batchCache
 }
 
 // Init init
@@ -49,26 +57,43 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 		return
 	}
 
+	types.MustDecode(subCfg, r.cfg)
+
 	r.chainCfg = chainCfg
 	r.ctx = base.Context
 	r.op = &optimistic{}
 	r.initDone = make(chan struct{})
+	r.subChan = make(chan *rolluptypes.ValidatorSignMsg, 32)
+
+	var err error
+	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)
+	if err != nil {
+		panic(err)
+	}
 
 	go r.fetchRollupState()
 	go r.startRollupRoutine()
 }
 
-func (r *RollUp) fetchRollupState() {
+func (r *RollUp) initJob() {
 
 	r.initDone <- struct{}{}
+}
+
+func (r *RollUp) fetchRollupState() {
+
 }
 
 func (r *RollUp) startRollupRoutine() {
 
 	<-r.initDone
 
-	go r.handleBuildBatch()
-	go r.handleCommitBatch()
+	if r.val.enable {
+
+		go r.handleBuildBatch()
+		go r.handleCommitBatch()
+		go r.syncRollupState()
+	}
 }
 
 func (r *RollUp) handleBuildBatch() {
@@ -92,15 +117,14 @@ func (r *RollUp) handleBuildBatch() {
 		}
 
 		batch := r.op.GetCommitBatch(blocks)
-		r.batchCache.Store(batch.CommitRound, batch)
 		r.nextBuildRound++
 		r.nextBuildHeight += int64(len(blocks))
+		msg, sign := r.val.sign(batch.GetCommitRound(), batch.GetBatch())
+
+		r.cache.addCommitBatch(batch)
+		r.cache.addSignMsg(msg, sign)
+		r.tryPubMsg(psValidatorSignTopic, types.Encode(sign))
 	}
-}
-
-// 提交共识
-func (r *RollUp) handleCommitBatch() {
-
 }
 
 // 同步链上已提交的最新 blockHeight 和 commitRound, 维护batch缓存

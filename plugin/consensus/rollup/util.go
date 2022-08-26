@@ -1,7 +1,10 @@
 package rollup
 
 import (
+	"time"
+
 	"github.com/33cn/chain33/types"
+	"github.com/pkg/errors"
 )
 
 func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.Block {
@@ -32,4 +35,25 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.Block {
 	}
 
 	return blocks
+}
+
+func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {
+	msg := r.base.GetQueueClient().NewMessage("p2p", ty, data)
+	err := r.base.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return errors.Wrapf(err, "ty=%d", ty)
+	}
+	resp, err := r.base.GetQueueClient().WaitTimeout(msg, time.Second*5)
+	if err != nil {
+		return errors.Wrapf(err, "wait ty=%d", ty)
+	}
+
+	if resp.GetData().(*types.Reply).IsOk {
+		return nil
+	}
+	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
+}
+
+func (r *RollUp) buildCommitTx() {
+
 }
