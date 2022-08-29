@@ -151,6 +151,11 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 
 // Query_GetLastCommitProof 获取最新proof信息
 func (z *zksync) Query_GetLastCommitProof(in *zt.ZkChainTitle) (types.Message, error) {
+	//平行链缺省是1
+	if z.GetAPI().GetConfig().IsPara() && in.GetChainTitleId() == 0 {
+		return getLastCommitProofData(z.GetStateDB(), zt.ZkParaChainInnerTitleId)
+	}
+	//主链需要注明不同的平行链titleId
 	if in.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id less or equal 0")
 	}
@@ -166,11 +171,24 @@ func (z *zksync) Query_GetLastOnChainProof(in *zt.ZkChainTitle) (types.Message, 
 }
 
 // Query_GetLastPriorityQueueId 获取最后的eth priority queue id
-func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
+func (z *zksync) Query_GetLastPriorityQueueId(in *types.ReqNil) (types.Message, error) {
+	return getLastEthPriorityQueueID(z.GetStateDB())
+}
+
+// Query_GetMaxAccountId 获取当前最大账户id
+func (z *zksync) Query_GetMaxAccountId(in *types.ReqNil) (types.Message, error) {
+	var tree zt.AccountTree
+	val, err := z.GetStateDB().Get(GetAccountTreeKey())
+	if err != nil {
+		return nil, err
 	}
-	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
+	err = types.Decode(val, &tree)
+	if err != nil {
+		return nil, err
+	}
+	var id types.Int64
+	id.Data = int64(tree.GetTotalIndex()) - 1
+	return &id, nil
 }
 
 func (z *zksync) Query_GetCurrentProof(in *zt.ZkReqExistenceProof) (types.Message, error) {

@@ -81,7 +81,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	}
 
 	//TODO set chainID
-	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
+	lastPriority, err := getLastEthPriorityQueueID(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get eth last priority queue id")
 	}
@@ -229,7 +229,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
-	r := makeSetEthPriorityIdReceipt(0, lastPriorityId.Int64(), payload.EthPriorityQueueId)
+	r := makeSetEthPriorityIdReceipt(lastPriorityId.Int64(), payload.EthPriorityQueueId)
 	return mergeReceipt(receipts, r), nil
 }
 
@@ -1739,7 +1739,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	}
 
 	//fullexit last priority id 不能为空
-	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
+	lastPriority, err := getLastEthPriorityQueueID(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get eth last priority queue id")
 	}
@@ -1847,7 +1847,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
-	r := makeSetEthPriorityIdReceipt(0, lastId.Int64(), payload.EthPriorityQueueId)
+	r := makeSetEthPriorityIdReceipt(lastId.Int64(), payload.EthPriorityQueueId)
 
 	feeReceipt, err := a.MakeFeeLog(makerFeeInt.String(), info, payload.TokenId, payload.Signature)
 	if err != nil {
@@ -1889,8 +1889,8 @@ func checkIsNFTToken(id uint64) bool {
 	return id > zt.SystemNFTTokenId
 }
 
-func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueID, error) {
-	key := getEthPriorityQueueKey(chainID)
+func getLastEthPriorityQueueID(db dbm.KV) (*zt.EthPriorityQueueID, error) {
+	key := getEthPriorityQueueKey()
 	v, err := db.Get(key)
 	//未找到返回-1
 	if isNotFound(err) {
@@ -1929,8 +1929,8 @@ func makeSetExodusModeReceipt(prev, current int64) *types.Receipt {
 	}
 }
 
-func makeSetEthPriorityIdReceipt(chainId uint32, prev, current int64) *types.Receipt {
-	key := getEthPriorityQueueKey(chainId)
+func makeSetEthPriorityIdReceipt(prev, current int64) *types.Receipt {
+	key := getEthPriorityQueueKey()
 	log := &zt.ReceiptEthPriorityQueueID{
 		Prev:    prev,
 		Current: current,

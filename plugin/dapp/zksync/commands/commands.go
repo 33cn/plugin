@@ -704,8 +704,34 @@ func queryAccountCmd() *cobra.Command {
 	cmd.AddCommand(getTokenBalanceCmd())
 	cmd.AddCommand(getVerifiersCmd())
 	cmd.AddCommand(getTokenFeeCmd())
+	cmd.AddCommand(getMaxAccountCmd())
 
 	return cmd
+}
+
+func getMaxAccountCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "max",
+		Short: "get max account id",
+		Run:   getMaxAccountId,
+	}
+	return cmd
+}
+
+func getMaxAccountId(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqNil{}
+
+	params.FuncName = "GetMaxAccountId"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.Int64
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getTokenFeeCmd() *cobra.Command {
@@ -1004,6 +1030,7 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
 	cmd.AddCommand(getProofChainTitleListCmd())
 	cmd.AddCommand(getEthPriorityInfoCmd())
+	cmd.AddCommand(getEthLastPriorityCmd())
 	cmd.AddCommand(getOpsByChunkCmd())
 	cmd.AddCommand(getHistoryProofCmd())
 	cmd.AddCommand(getFirstOnChainOpCmd())
@@ -1266,8 +1293,7 @@ func getLastCommitProofCmd() *cobra.Command {
 	return cmd
 }
 func getLastCommitProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id of proof")
-	cmd.MarkFlagRequired("chainTitleId")
+	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id of proof, needed in main chain")
 }
 
 func getLastCommitProof(cmd *cobra.Command, args []string) {
@@ -1366,6 +1392,31 @@ func getPriority(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.OperationInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getEthLastPriorityCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "lastpriority",
+		Short: "get last priority id",
+		Run:   getLastPriority,
+	}
+	return cmd
+}
+
+func getLastPriority(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqNil{}
+
+	params.FuncName = "GetLastPriorityQueueId"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.EthPriorityQueueID
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

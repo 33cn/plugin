@@ -77,8 +77,8 @@ func getLastOnChainProofIdKey(chainTitleId string) []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastOnChainProofId"))
 }
 
-func getEthPriorityQueueKey(chainID uint32) []byte {
-	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
+func getEthPriorityQueueKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"priorityQueue"))
 }
 
 func getExodusModeKey() []byte {
