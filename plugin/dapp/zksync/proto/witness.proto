@@ -84,10 +84,6 @@ message OperationInfo {
   OperationSpecialInfo specialInfo = 13;
 }
 
-message OperationSpecialInfo {
-  repeated OperationSpecialData specialDatas = 1;
-}
-
 message OrderPricePair {
   string sell = 1;
   string buy  = 2;
@@ -111,4 +107,189 @@ message ZkOperationFee {
   string fromFee    = 1;
   string toFee      = 2;
   uint64 tokenId    = 3; //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
+}
+
+message ZkDepositWitnessInfo {
+  uint64    accountId     = 1;
+  uint64    tokenId       = 3;
+  string    amount        = 4;
+  string    ethAddress       = 5;
+  string    layer2Addr    = 6;
+  ZkSignature signature = 7;
+}
+
+message ZkWithdrawWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  string ethAddress = 4;
+  ZkSignature signature = 5;
+  ZkOperationFee fee    = 6;
+}
+
+message ZkTransferWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 fromAccountId = 3;
+  uint64 toAccountId = 4;
+  ZkSignature signature = 5;
+  ZkOperationFee fee    = 6;
+}
+
+message ZkTransferToNewWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 fromAccountId = 3;
+  uint64 toAccountId = 4;
+  string ethAddress = 5;
+  string layer2Addr = 6;
+  ZkSignature signature = 7;
+  ZkOperationFee fee    = 8;
+}
+
+message ZkProxyExitWitnessInfo {
+  uint64    proxyID       = 1;
+  uint64    targetId      = 2;
+  uint64    tokenId       = 3;
+  string    amount        = 4;
+  ZkSignature signature   = 5;
+  string    ethAddress    = 7;
+  ZkOperationFee fee      = 8;
+}
+
+message ZkSetPubKeyWitnessInfo {
+  uint64 accountId = 1;
+  ZkPubKey  pubKey = 2;
+  uint64    pubKeyTy = 3;
+  ZkSignature signature = 4;
+}
+
+message ZkFullExitWitnessInfo {
+  uint64    accountId     = 1;
+  uint64    tokenId       = 2;
+  string    amount        = 3;
+  string    ethAddress     = 4;
+  ZkSignature signature   = 5;
+  ZkOperationFee fee    = 6;
+}
+
+message ZkContractToTreeWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  ZkSignature signature = 4;
+  ZkOperationFee fee    = 6;
+}
+
+//直接产生新的tree地址
+message ZkContractToTreeNewWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  //  uint64 fromAcctId = 3;
+  uint64 toAccountId = 4;
+  string ethAddress = 5;
+  string layer2Addr = 6;
+  ZkSignature signature = 7;
+  ZkOperationFee fee    = 8;
+}
+
+message ZkTreeToContractWitnessInfo {
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  ZkSignature signature = 4;
+  ZkOperationFee fee    = 5;
+}
+
+message ZkFeeWitnessInfo {
+  uint64    accountId     = 1;
+  uint64    tokenId       = 2;
+  string    amount        = 3;
+  ZkSignature signature   = 5;
+}
+
+message ZkMintNFTWitnessInfo {
+  uint64    mintAcctId    = 1;
+  uint64    recipientId   = 2;
+  uint64    ercProtocol   = 3;
+  repeated string contentHash = 4;
+  uint64    newNFTTokenID     = 5;
+  uint64    createSerialId = 6;
+  string    amount        = 7;
+  ZkSignature signature   = 8;
+  ZkOperationFee fee    = 9;
+}
+
+
+message ZkWithdrawNFTWitnessInfo {
+  uint64    fromAcctId    = 1;
+  uint64    NFTTokenID     = 2;
+  string    withdrawAmount = 3;
+  uint64    creatorAcctId = 4;
+  uint64    ercProtocol   = 5;
+  repeated string contentHash = 6;
+  uint64    creatorSerialId = 7;
+  string    initMintAmount        = 8;
+  ZkSignature signature   = 9;
+  string    ethAddress     = 11;
+  ZkOperationFee fee    = 12;
+}
+
+message ZkTransferNFTWitnessInfo {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  uint64 NFTTokenId = 3;
+  string amount     = 4;
+  ZkSignature signature = 6;
+  ZkOperationFee fee    = 7;
+}
+
+message ZkSwapOrderInfo {
+  uint64 AccountId         = 1;
+  string amount         = 2;
+  string ratioSell      = 3;
+  string ratioBuy       = 4;
+  ZkSignature signature = 5;
+}
+
+message ZkSwapWitnessInfo {
+  uint64    leftTokenId    = 1; //BTY-USDT 对
+  uint64    rightTokenID     = 2;
+  string    leftDealAmount = 3;
+  string    rightDealAmount = 4;
+  ZkSwapOrderInfo left = 5;
+  ZkSwapOrderInfo right = 6;
+  ZkOperationFee fee    = 7;
+}
+
+message OperationSpecialInfo {
+  //  repeated OperationSpecialData specialDatas = 111;
+  oneof value {
+    ZkDepositWitnessInfo  deposit            = 1;
+    ZkWithdrawWitnessInfo withdraw           = 2;
+    ZkTransferWitnessInfo transfer           = 3;
+    ZkTransferToNewWitnessInfo transferToNew = 4;
+    ZkProxyExitWitnessInfo proxyExit = 5;
+    ZkSetPubKeyWitnessInfo setPubKey         = 6;
+    ZkFullExitWitnessInfo  fullExit  = 7;
+    ZkSwapWitnessInfo  swap         = 8;
+    ZkContractToTreeWitnessInfo contractToTree = 9;
+    ZkContractToTreeNewWitnessInfo contract2TreeNew = 10;
+    ZkTreeToContractWitnessInfo treeToContract = 11;
+    ZkFeeWitnessInfo fee        = 12;  //fee action
+    ZkMintNFTWitnessInfo     mintNFT       = 13;
+    ZkWithdrawNFTWitnessInfo withdrawNFT   = 14;
+    ZkTransferNFTWitnessInfo transferNFT   = 15;
+  }
+}
+
+message ZkOperation {
+  int32 ty = 1;
+  OperationSpecialInfo op = 2;
+}
+
+message ZkProofWitness {
+  AccountWitness accountWitness       = 1;
+  TokenWitness   tokenWitness         = 2;
+  string treeRoot = 3;
 }

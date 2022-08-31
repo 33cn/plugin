@@ -30,20 +30,27 @@ const (
 	TyWithdrawNFTAction    = 13
 	TyTransferNFTAction    = 14
 
+	//纯特殊电路类型，非Zksync合约使用的action
+	TyContractToTreeNewAction = 30 //合约账户转入新的叶子
+
 	//非电路action
-	TySetVerifyKeyAction = 102 //设置电路验证key
-	TyCommitProofAction  = 103 //提交zk proof
-	TySetVerifierAction  = 104 //设置验证者
-	TySetFeeAction       = 105 //设置手续费
+	TySetVerifyKeyAction        = 102 //设置电路验证key
+	TyCommitProofAction         = 103 //提交zk proof
+	TySetVerifierAction         = 104 //设置验证者
+	TySetFeeAction              = 105 //设置手续费
+	TySetTokenSymbolAction      = 106 //设置token的symbol 以方便在合约使用
+	TyAssetTransferAction       = 107 //从tree转到zksync合约的资产账户之间转账
+	TyAssetTransferToExecAction = 108 //从tree转到zksync合约的资产转到执行器
+	TyAssetWithdrawAction       = 109 //从执行器提款到zksync合约账户
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
-	NameWithdrawAction       = "Withdraw"
+	NameWithdrawAction       = "ZkWithdraw"
 	NameContractToTreeAction = "ContractToTree"
 	NameTreeToContractAction = "TreeToContract"
-	NameTransferAction       = "Transfer"
+	NameTransferAction       = "ZkTransfer"
 	NameTransferToNewAction  = "TransferToNew"
-	NameForceExitAction      = "ForceExit"
+	NameForceExitAction      = "ProxyExit"
 	NameSetPubKeyAction      = "SetPubKey"
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
@@ -56,6 +63,10 @@ const (
 	NameCommitProofAction  = "CommitProof"
 	NameSetVerifierAction  = "SetVerifier"
 	NameSetFeeAction       = "SetFee"
+	NameSetTokenSymbolAction = "SetTokenSymbol"
+	NameAssetTransfer        = "Transfer"
+	NameAssetTransfer2Exec   = "TransferToExec"
+	NameAssetWithdraw        = "Withdraw"
 )
 
 // log类型id值
@@ -121,16 +132,14 @@ const (
 	AddrBitWidth      = 160 //20byte
 	HashBitWidth      = 256 //32byte
 	PubKeyBitWidth    = 256 //32byte
-	FeeAmountBitWidth = 56  //fee op凑满one chunk=128bit，最大10byte
 
 	PacAmountManBitWidth = 35 //amount mantissa part, 比如12340000,只取1234部分，0000用exponent表示
-	PacAmountExpBitWidth = 5  //amount exponent part
 	PacFeeManBitWidth    = 11 //fee mantissa part
-	PacFeeExpBitWidth    = 5  //fee exponent part
+	PacExpBitWidth       = 5  //amount and fee exponent part,支持31个0
 	MaxExponentVal       = 32 // 2**5 by exp bit width
 
-	ChunkBitWidth = 128               //one chunk 16 bytes
-	ChunkBytes    = ChunkBitWidth / 8 //16 bytes
+	ChunkBitWidth = 224               //one chunk 16 bytes
+	ChunkBytes    = ChunkBitWidth / 8 //28 bytes
 )
 
 const (
@@ -144,22 +153,23 @@ const (
 
 //不同type chunk数量
 const (
-	DepositChunks       = 5
-	Contract2TreeChunks = 3
-	Tree2ContractChunks = 3
-	TransferChunks      = 2
-	Transfer2NewChunks  = 5
-	WithdrawChunks      = 3
-	ForceExitChunks     = 3
-	FullExitChunks      = 3
-	SwapChunks          = 4
-	NoopChunks          = 1
-	SetPubKeyChunks     = 5
-	FeeChunks           = 1
-	SetProxyAddrChunks  = 5
-	MintNFTChunks       = 5
-	WithdrawNFTChunks   = 6
-	TransferNFTChunks   = 3
+	DepositChunks          = 3
+	Contract2TreeChunks    = 2
+	Contract2TreeNewChunks = 3
+	Tree2ContractChunks    = 2
+	TransferChunks         = 2
+	Transfer2NewChunks     = 3
+	WithdrawChunks         = 2
+	ProxyExitChunks        = 2
+	FullExitChunks         = 2
+	SwapChunks             = 4
+	NoopChunks             = 1
+	SetPubKeyChunks        = 3
+	FeeChunks              = 1
+	//MintNFTChunks, withrawNFT, transferNft, NFT chunks 不只是看pubdata长度，更要看需要几个chunk完成，这里chunks超出了pubdata的长度
+	MintNFTChunks     = 5
+	WithdrawNFTChunks = 6
+	TransferNFTChunks = 3
 )
 
 const (
@@ -168,6 +178,10 @@ const (
 	SystemFeeAccountId = 1
 	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
 	SystemNFTAccountId = 2
+	//SystemTree2ContractAcctId, 汇总从 tree2contract 跨链的资产总额
+	SystemTree2ContractAcctId = 3
+	//SystemDefaultAcctId 缺省备用账户
+	SystemDefaultAcctId = 4
 	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
 	SystemNFTTokenId = 256 //2^8,
 
@@ -207,29 +221,37 @@ var (
 		NameMintNFTAction:        TyMintNFTAction,
 		NameWithdrawNFTACTION:    TyWithdrawNFTAction,
 		NameTransferNFTAction:    TyTransferNFTAction,
+		NameSetTokenSymbolAction: TySetTokenSymbolAction,
+		NameAssetTransfer:        TyAssetTransferAction,
+		NameAssetTransfer2Exec:   TyAssetTransferToExecAction,
+		NameAssetWithdraw:        TyAssetWithdrawAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositLog"},
-		TyWithdrawLog:       {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog: {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog: {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyTreeToContractLog"},
-		TyTransferLog:       {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:  {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferToNewLog"},
-		TyProxyExitLog:      {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyForceExitLog"},
-		TySetPubKeyLog:      {Ty: reflect.TypeOf(SetPubKeyReceipt{}), Name: "TySetPubKeyLog"},
-		TyFullExitLog:       {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyFullExitLog"},
-		TySwapLog:           {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TySwapLog"},
-		TyFeeLog:            {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyFeeLog"},
-		TyMintNFTLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyMintNFTLog"},
-		TyWithdrawNFTLog:    {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawNFTLog"},
-		TyTransferNFTLog:    {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferNFTLog"},
-		TySetVerifyKeyLog:   {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProofLog:    {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
-		TySetVerifierLog:    {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		TyDepositLog:            {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositLog"},
+		TyWithdrawLog:           {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawLog"},
+		TyContractToTreeLog:     {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:     {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyTreeToContractLog"},
+		TyTransferLog:           {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:      {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferToNewLog"},
+		TyProxyExitLog:          {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyForceExitLog"},
+		TySetPubKeyLog:          {Ty: reflect.TypeOf(SetPubKeyReceipt{}), Name: "TySetPubKeyLog"},
+		TyFullExitLog:           {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyFullExitLog"},
+		TySwapLog:               {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TySwapLog"},
+		TyFeeLog:                {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyFeeLog"},
+		TyMintNFTLog:            {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyMintNFTLog"},
+		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawNFTLog"},
+		TyTransferNFTLog:        {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferNFTLog"},
+		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
 		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
+		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
+		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
+		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
+		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
 	}
 
 	FeeMap = map[int64]string{

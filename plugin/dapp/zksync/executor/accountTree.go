@@ -36,7 +36,9 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	if len(ethAddr) <= 0 || len(chain33Addr) <= 0 {
 		panic(fmt.Sprintf("zksync not cfg init fee addr, ethAddr=%s,33Addr=%s", ethAddr, chain33Addr))
 	}
-	return zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
+	ethAddrDecimal, _ := zt.HexAddr2Decimal(ethAddr)
+	chain33AddrDecimal, _ := zt.HexAddr2Decimal(chain33Addr)
+	return ethAddrDecimal, chain33AddrDecimal
 }
 
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
@@ -61,7 +63,8 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 func getInitTreeRoot(cfg *types.Chain33Config, ethAddr, chain33Addr string) string {
 	var feeEth, fee33 string
 	if len(ethAddr) > 0 && len(chain33Addr) > 0 {
-		feeEth, fee33 = zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
+		feeEth, _ = zt.HexAddr2Decimal(ethAddr)
+		fee33, _ = zt.HexAddr2Decimal(chain33Addr)
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
@@ -388,8 +391,8 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	}
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
-		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		data.EthAddress, _ = zt.DecimalAddr2Hex(data.GetEthAddress())
+		data.Chain33Addr, _ = zt.DecimalAddr2Hex(data.GetChain33Addr())
 		datas = append(datas, data)
 	}
 	return datas, nil
@@ -409,8 +412,8 @@ func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) 
 	}
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
-		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		data.EthAddress, _ = zt.DecimalAddr2Hex(data.GetEthAddress())
+		data.Chain33Addr, _ = zt.DecimalAddr2Hex(data.GetChain33Addr())
 		datas = append(datas, data)
 	}
 	return datas, nil

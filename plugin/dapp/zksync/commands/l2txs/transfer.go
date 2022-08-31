@@ -50,8 +50,8 @@ func tranfer(cmd *cobra.Command, args []string) {
 
 	action := &zksyncTypes.ZksyncAction{
 		Ty: zksyncTypes.TyTransferAction,
-		Value: &zksyncTypes.ZksyncAction_Transfer{
-			Transfer: transfer,
+		Value: &zksyncTypes.ZksyncAction_ZkTransfer{
+			ZkTransfer: transfer,
 		},
 	}
 
@@ -109,8 +109,8 @@ func batchSendTransfer(cmd *cobra.Command, args []string) {
 
 	action := &zksyncTypes.ZksyncAction{
 		Ty: zksyncTypes.TyTransferAction,
-		Value: &zksyncTypes.ZksyncAction_Transfer{
-			Transfer: transfer,
+		Value: &zksyncTypes.ZksyncAction_ZkTransfer{
+			ZkTransfer: transfer,
 		},
 	}
 
@@ -181,8 +181,8 @@ func tranferMany(cmd *cobra.Command, args []string) {
 
 		action := &zksyncTypes.ZksyncAction{
 			Ty: zksyncTypes.TyTransferAction,
-			Value: &zksyncTypes.ZksyncAction_Transfer{
-				Transfer: param,
+			Value: &zksyncTypes.ZksyncAction_ZkTransfer{
+				ZkTransfer: param,
 			},
 		}
 
@@ -240,8 +240,8 @@ func tranferManyFromOne(cmd *cobra.Command, args []string) {
 
 		action := &zksyncTypes.ZksyncAction{
 			Ty: zksyncTypes.TyTransferAction,
-			Value: &zksyncTypes.ZksyncAction_Transfer{
-				Transfer: param,
+			Value: &zksyncTypes.ZksyncAction_ZkTransfer{
+				ZkTransfer: param,
 			},
 		}
 

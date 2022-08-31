@@ -66,7 +66,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 		}
 		deposit.Signature = signInfo
 	case zksyncTypes.TyWithdrawAction:
-		withDraw := action.GetWithdraw()
+		withDraw := action.GetZkWithdraw()
 		msg = wallet.GetWithdrawMsg(withDraw)
 		signInfo, err = SignTxInEddsa(msg, privateKey)
 		if err != nil {
@@ -90,7 +90,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 		}
 		leafToContract.Signature = signInfo
 	case zksyncTypes.TyTransferAction:
-		transfer := action.GetTransfer()
+		transfer := action.GetZkTransfer()
 		msg = wallet.GetTransferMsg(transfer)
 		signInfo, err = SignTxInEddsa(msg, privateKey)
 		if err != nil {
@@ -106,8 +106,8 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 		}
 		transferToNew.Signature = signInfo
 	case zksyncTypes.TyProxyExitAction:
-		forceQuit := action.GetForceExit()
-		msg = wallet.GetForceExitMsg(forceQuit)
+		forceQuit := action.GetProxyExit()
+		msg = wallet.GetProxyExitMsg(forceQuit)
 		signInfo, err = SignTxInEddsa(msg, privateKey)
 		if err != nil {
 			return

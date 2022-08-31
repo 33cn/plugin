@@ -137,7 +137,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		}
 		deposit.Signature = signInfo
 	case zt.TyWithdrawAction:
-		withDraw := action.GetWithdraw()
+		withDraw := action.GetZkWithdraw()
 		msg = GetWithdrawMsg(withDraw)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
@@ -164,7 +164,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		}
 		leafToContract.Signature = signInfo
 	case zt.TyTransferAction:
-		transfer := action.GetTransfer()
+		transfer := action.GetZkTransfer()
 		msg = GetTransferMsg(transfer)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
@@ -182,8 +182,8 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		}
 		transferToNew.Signature = signInfo
 	case zt.TyProxyExitAction:
-		forceQuit := action.GetForceExit()
-		msg = GetForceExitMsg(forceQuit)
+		forceQuit := action.GetProxyExit()
+		msg = GetProxyExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)

@@ -8,50 +8,57 @@ import (
 	"strings"
 )
 
-func forceManyExitCmd() *cobra.Command {
+func proxyManyExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "forceexit_many",
-		Short: "force exit many",
-		Run:   forceManyExit,
+		Use:   "proxyexit_many",
+		Short: "proxy exit many",
+		Run:   proxyManyExit,
 	}
-	forceManyExitFlag(cmd)
+	proxyManyExitFlag(cmd)
 	return cmd
 }
 
-func forceManyExitFlag(cmd *cobra.Command) {
+func proxyManyExitFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("keys", "k", "", "private keys, use ',' separate")
 	_ = cmd.MarkFlagRequired("keys")
 	cmd.Flags().Uint64P("tokenId", "t", 0, "eth token id")
 	_ = cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().StringP("accountIDs", "a", "0", "L2 account ids on chain33, use ',' separate")
-	_ = cmd.MarkFlagRequired("accountIDs")
+	cmd.Flags().StringP("proxyIDs", "p", "0", "L2 proxy account ids on chain33, use ',' separate")
+	_ = cmd.MarkFlagRequired("proxyIDs")
+	cmd.Flags().StringP("targetIDs", "t", "0", "L2 proxy account ids on chain33, use ',' separate")
+	_ = cmd.MarkFlagRequired("targetIDs")
 }
 
-func forceManyExit(cmd *cobra.Command, args []string) {
+func proxyManyExit(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	privateKeys, _ := cmd.Flags().GetString("keys")
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
-	accountIDs, _ := cmd.Flags().GetString("accountIDs")
+	proxyId, _ := cmd.Flags().GetString("proxyIDs")
+	targetId, _ := cmd.Flags().GetString("targetIDs")
 
-	ids := strings.Split(accountIDs, ",")
+	proxyIds := strings.Split(proxyId, ",")
+	targetIds := strings.Split(targetId, ",")
 	keys := strings.Split(privateKeys, ",")
 
-	if len(ids) != len(keys) {
-		fmt.Println("err len(ids) != len(keys)", len(ids), "!=", len(keys))
+	if len(proxyIds) != len(keys) || len(targetIds) != len(keys) {
+		fmt.Println("err len(proxyIds) != len(keys) or len(targetIds) != len(keys)",
+			len(proxyIds), "!=", len(keys), " or ", len(targetIds), "!=", len(keys))
 		return
 	}
 
-	for i := 0; i < len(ids); i++ {
-		id, _ := strconv.ParseInt(ids[i], 10, 64)
-		param := &zksyncTypes.ZkForceExit{
+	for i := 0; i < len(proxyIds); i++ {
+		proxyId, _ := strconv.ParseInt(proxyIds[i], 10, 64)
+		targetId, _ := strconv.ParseInt(targetIds[i], 10, 64)
+		param := &zksyncTypes.ZkProxyExit{
 			TokenId:   tokenId,
-			AccountId: uint64(id),
+			ProxyId:   uint64(proxyId),
+			TargetId:  uint64(targetId),
 		}
 
 		action := &zksyncTypes.ZksyncAction{
 			Ty: zksyncTypes.TyProxyExitAction,
-			Value: &zksyncTypes.ZksyncAction_ForceExit{
-				ForceExit: param,
+			Value: &zksyncTypes.ZksyncAction_ProxyExit{
+				ProxyExit: param,
 			},
 		}
 

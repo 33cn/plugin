@@ -235,6 +235,7 @@ message ZkNFTTokenStatus {
 //电路验证key
 message ZkVerifyKey {
   string key = 1;
+  uint64 ChainTitleId = 2;
 }
 
 message ReceiptSetVerifyKey {
@@ -291,11 +292,8 @@ message CommitProofState {
   uint64 onChainProofId = 11;
   //commit时候的blockHeight
   int64  commitBlockHeight = 12;
-}
+  uint64 chainTitleId = 13;
 
-message LastOnChainProof {
-  uint64 proofId = 1;
-  uint64 onChainProofId = 2;
 }
 
 message ReceiptCommitProof {
@@ -303,9 +301,14 @@ message ReceiptCommitProof {
   CommitProofState current = 2;
 }
 
+message ReceiptCommitProofRecord {
+  CommitProofState proof = 1;
+}
+
 //电路验证者名单
 message ZkVerifier {
-  repeated string verifiers = 1;
+  uint64 chainTitleId = 1;
+  repeated string verifiers = 2;
 }
 
 message ReceiptSetVerifier {
@@ -352,6 +355,8 @@ message ZkQueryReq {
   uint64 tokenId = 8;
   string txHash = 9;
   uint64 proofId = 10;
+  uint64 chainTitleId = 11;
+  uint32 opType = 12;
 }
 
 message ZkQueryResp {
@@ -384,6 +389,7 @@ message ZkFetchProofList {
   bool reqOnChainProof = 3; //
   bool reqLatestProof = 4; //请求截止高度之前的最新的proof，适用于获取最新proof场景
   uint64 endHeight = 5; //截止高度
+  uint64 chainTitleId = 6;
 }
 
 //NFT content hash切分成两部分
@@ -419,21 +425,6 @@ message ZkSetPubKeyData {
    ZkPubKey pubKey = 7; //eddsa公钥，用于验证身份
 }
 
-message ZkOperation {
-  int32 ty = 1;
-  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
-  uint64 tokenId = 3;
-  string amount = 4;
-  ZkOpFeeData feeData    = 5;
-  string ethAddress = 6; //账户对应的以太坊地址
-  ZkSetPubKeyData setPubKey = 7; //eddsa公钥，用于验证身份
-  string chain33Addr = 8; //chain33地址
-  uint64 toAccountId = 9;
-  ZkOpNFTData NFTData = 10;
-  ZkOpSwapData swapData = 11;
-
-}
-
 message EthPriorityQueueID {
   string ID = 1;
 }
@@ -452,6 +443,39 @@ message ReceiptSetTokenSymbol {
   string tokenId = 1;
   string prevSymbol = 2;
   string curSymbol = 3;
+}
+
+message ZkChainTitle {
+  uint64 chainTitleId = 1;
+  string chainTitle = 2;
+}
+
+message LastOnChainProof {
+  uint64 chainTitleId  = 1;
+  uint64 proofId = 2;
+  uint64 onChainProofId = 3;
+}
+
+message HistoryAccountProofInfo {
+  string   rootHash = 1;
+  repeated HistoryLeaf leaves = 2;
+  repeated bytes leafHashes = 3;
+}
+
+message ZkReqExistenceProof{
+  uint64 accountId = 1;
+  uint64 tokenId   = 2;
+  string rootHash  = 3;
+  uint64 chainTitleId = 4;
+}
+
+message ZkQueryTxOperationReq {
+  uint64 startBlockHeight = 1; //起始高度
+  uint64 startIndex = 2; //块中交易的序号
+  uint32 opIndex = 3; //交易操作快照片序号：目前是0，1。
+  uint32 count = 4;//获取交易操作数量：默认值是：100000 = types.MaxTxsPerBlock
+  uint32 blockOffset = 5;//高度偏移：以块高度为偏移单位，计算错误时，最多是固定块的交易证明错误。块中的交易不变，proof数量不变，即proofID也不变。
+  uint32 maturity = 6;//成熟度：最新高度-成熟度 = endBlockHeigh
 }
 
 service zksync{}

@@ -63,8 +63,8 @@ func getLastProofKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
 }
 
-func getLastOnChainProofIdKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastOnChainProofId"))
+func getLastOnChainProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastOnChainProofId"))
 }
 
 func getValidatorsKey() []byte {
@@ -75,12 +75,13 @@ func getEthPriorityQueueKey(chainID uint32) []byte {
 	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
 }
 
-func getProofIdCommitProofKey(proofId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d", proofId))
+//特意把title放后面，方便按id=1搜索所有的chain
+func getProofIdCommitProofKey(chainTitleId string, proofId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitleId))
 }
 
-func getRootCommitProofKey(root string) []byte {
-	return []byte(fmt.Sprintf("%s", root))
+func getRootCommitProofKey(chainTitleId, root string) []byte {
+	return []byte(fmt.Sprintf("%s-%s", chainTitleId, root))
 }
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
@@ -107,4 +108,16 @@ func GetTokenSymbolKey(tokenId string) []byte {
 //GetTokenSymbolIdKey token symbol 对应id
 func GetTokenSymbolIdKey(symbol string) []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenSym-"+symbol))
+}
+
+func getLastProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastProofId"))
+}
+
+func getMaxRecordProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-maxRecordProofId"))
+}
+
+func getProofIdKey(chainTitleId string, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+chainTitleId+"-ProofId", id))
 }

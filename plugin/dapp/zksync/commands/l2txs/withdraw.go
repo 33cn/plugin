@@ -46,8 +46,8 @@ func sendWithdraw(cmd *cobra.Command, args []string) {
 
 	action := &zksyncTypes.ZksyncAction{
 		Ty: zksyncTypes.TyWithdrawAction,
-		Value: &zksyncTypes.ZksyncAction_Withdraw{
-			Withdraw: withdraw,
+		Value: &zksyncTypes.ZksyncAction_ZkWithdraw{
+			ZkWithdraw: withdraw,
 		},
 	}
 
@@ -105,8 +105,8 @@ func sendManyWithdraw(cmd *cobra.Command, args []string) {
 
 		action := &zksyncTypes.ZksyncAction{
 			Ty: zksyncTypes.TyWithdrawAction,
-			Value: &zksyncTypes.ZksyncAction_Withdraw{
-				Withdraw: withdraw,
+			Value: &zksyncTypes.ZksyncAction_ZkWithdraw{
+				ZkWithdraw: withdraw,
 			},
 		}
 

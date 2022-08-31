@@ -287,14 +287,15 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 }
 
-func GetForceExitMsg(payload *zt.ZkForceExit) *zt.ZkMsg {
+func GetProxyExitMsg(payload *zt.ZkProxyExit) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, zt.MsgWidth)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyProxyExitAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ProxyId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TargetId), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 

@@ -74,3 +74,75 @@ func SplitNFTContent(contentHash string) (*big.Int, *big.Int, string, error) {
 	}
 	return part1, part2, hexContent, nil
 }
+
+//ZkFindExponentPart 找到一个数的指数数量，最大31个0，也就是10^31,循环div 10， 找到最后一个余数非0
+func ZkFindExponentPart(s string) (int, error) {
+	//如果位数很少，直接返回0
+	if len(s) <= 1 {
+		return 0, nil
+	}
+
+	a, ok := big.NewInt(0).SetString(s, 10)
+	if !ok {
+		return 0, errors.Wrapf(types.ErrInvalidParam, "s=%s not base10", s)
+	}
+
+	t := big.NewInt(0)
+	m := big.NewInt(0)
+
+	//最大不会超过（MaxExponentVal-1）,如果超过MaxExponentVal个0，只截取到MaxExponentVal-1个
+	var i int
+	for i = 0; i < MaxExponentVal; i++ {
+		a, m = t.DivMod(a, big.NewInt(10), m)
+		if m.Uint64() > 0 {
+			return i, nil
+		}
+	}
+	return MaxExponentVal - 1, nil
+}
+
+//ZkTransferManExpPart 获取s的man和exp部分，exp部分只统计0的个数，man部分为尾部去掉0部分
+func ZkTransferManExpPart(s string) (string, int, error) {
+	exp, err := ZkFindExponentPart(s)
+	if err != nil {
+		return "", 0, err
+	}
+	return s[0 : len(s)-exp], exp, nil
+}
+
+func GetOpChunkNum(opType uint32) (int, error) {
+	switch opType {
+	case TyDepositAction:
+		return DepositChunks, nil
+	case TyWithdrawAction:
+		return WithdrawChunks, nil
+	case TyContractToTreeAction:
+		return Contract2TreeChunks, nil
+	case TyContractToTreeNewAction:
+		return Contract2TreeNewChunks, nil
+	case TyTreeToContractAction:
+		return Tree2ContractChunks, nil
+	case TyTransferAction:
+		return TransferChunks, nil
+	case TyTransferToNewAction:
+		return Transfer2NewChunks, nil
+	case TyProxyExitAction:
+		return ProxyExitChunks, nil
+	case TyFullExitAction:
+		return FullExitChunks, nil
+	case TySetPubKeyAction:
+		return SetPubKeyChunks, nil
+	case TyFeeAction:
+		return FeeChunks, nil
+	case TyMintNFTAction:
+		return MintNFTChunks, nil
+	case TyWithdrawNFTAction:
+		return WithdrawNFTChunks, nil
+	case TyTransferNFTAction:
+		return TransferNFTChunks, nil
+	case TySwapAction:
+		return SwapChunks, nil
+	default:
+		return 0, errors.Wrapf(types.ErrInvalidParam, "operation tx type=%d not support", opType)
+	}
+}
