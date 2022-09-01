@@ -326,7 +326,10 @@ zkChain33FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf
 	dbHanleGlobal  db.DB
 	index          = 0
 	dbDir          = ""
+	firstUserAccoutID = zksyncTypes.SystemTree2ContractAcctId + 1
 )
+
+
 
 func initSetup() {
 	env := execEnv4perf{
@@ -391,7 +394,7 @@ func TestDeposit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -421,7 +424,7 @@ func TestWithdraw(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -479,7 +482,7 @@ func TestTransfer(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -556,7 +559,7 @@ func TestTransfer2New(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -625,7 +628,7 @@ func TestTree2contract(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -691,7 +694,7 @@ func TestContract2Tree(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -775,7 +778,7 @@ func TestProxyExit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	targetAccountID := uint64(3)
+	targetAccountID := uint64(4)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), targetAccountID, tokenId)
 	assert.Nil(t, err)
@@ -800,7 +803,7 @@ func TestProxyExit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	proxyAccountID := uint64(4)
+	proxyAccountID := uint64(5)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), proxyAccountID, tokenId)
 	assert.Nil(t, err)
@@ -867,7 +870,7 @@ func TestProxyExit(t *testing.T) {
 //	assert.Nil(t, err)
 //	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 //	assert.Greater(t, len(localReceipt.KV), 0)
-//	accountID := uint64(3)
+//	accountID := uint64(firstUserAccoutID)
 //	//确认balance
 //	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 //	assert.Nil(t, err)
@@ -913,7 +916,7 @@ func TestMintNFT(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -998,7 +1001,7 @@ func TestMintNFT(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID = uint64(4)
+	accountID = uint64(5)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -1092,7 +1095,7 @@ func TestWithdrawNFT(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -1159,7 +1162,7 @@ func TestTransferNFT(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -1236,7 +1239,7 @@ func TestNFTMisc(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)

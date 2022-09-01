@@ -126,7 +126,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 		var accountID uint64
 		lastAccountID, _ := getLatestAccountID(a.statedb)
-		if zt.InvalidAccountId == lastAccountID {
+		if zt.SystemDefaultAcctId == lastAccountID {
 			ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
 			kvs4InitAccount, err := NewInitAccount(ethFeeAddr, chain33FeeAddr)
 			if nil != err {
@@ -135,7 +135,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			kvs = append(kvs, kvs4InitAccount...)
 
 			//对于首次进行存款的用户，其账户ID从SystemNFTAccountId后开始进行连续分配
-			accountID = zt.SystemNFTAccountId + 1
+			accountID = zt.SystemTree2ContractAcctId + 1
 		} else {
 			accountID = uint64(lastAccountID) + 1
 		}
@@ -616,7 +616,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 
 	//1.操作to 账户
 	lastAccountID, err := getLatestAccountID(a.statedb)
-	if lastAccountID == zt.InvalidAccountId {
+	if lastAccountID == zt.SystemDefaultAcctId {
 		return nil, errors.Wrapf(err, "getLatestAccountID")
 	}
 	accountIDNew := uint64(lastAccountID) + 1
@@ -947,13 +947,13 @@ func getLatestAccountID(db dbm.KV) (int64, error) {
 	v, err := db.Get(key)
 
 	if err != nil {
-		return zt.InvalidAccountId, err
+		return zt.SystemDefaultAcctId, err
 	}
 	var id types.Int64
 	err = types.Decode(v, &id)
 	if err != nil {
 		zklog.Error("getLastEthPriorityQueueID.decode", "err", err)
-		return zt.InvalidAccountId, err
+		return zt.SystemDefaultAcctId, err
 	}
 
 	return id.Data, nil
