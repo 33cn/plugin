@@ -25,7 +25,7 @@ func proxyManyExitFlag(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("proxyIDs", "p", "0", "L2 proxy account ids on chain33, use ',' separate")
 	_ = cmd.MarkFlagRequired("proxyIDs")
-	cmd.Flags().StringP("targetIDs", "t", "0", "L2 proxy account ids on chain33, use ',' separate")
+	cmd.Flags().StringP("targetIDs", "g", "0", "L2 target account ids on chain33, use ',' separate")
 	_ = cmd.MarkFlagRequired("targetIDs")
 }
 
