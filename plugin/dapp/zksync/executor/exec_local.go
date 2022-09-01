@@ -33,7 +33,7 @@ func (z *zksync) ExecLocal_TransferToNew(payload *zt.ZkTransferToNew, tx *types.
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
-func (z *zksync) ExecLocal_ForceExit(payload *zt.ZkForceExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecLocal_ProxyExit(payload *zt.ZkForceExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
