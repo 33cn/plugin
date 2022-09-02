@@ -54,9 +54,10 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 		payload = types.MustPBToJSON(transferToNew)
 	case zt.TyProxyExitAction:
-		forceExit := &zt.ZkForceExit{
+		forceExit := &zt.ZkProxyExit{
 			TokenId:   tokenId,
-			AccountId: accountId,
+			ProxyId: accountId,
+			TargetId:toAccountId,
 		}
 		payload = types.MustPBToJSON(forceExit)
 	//case zt.TySetPubKeyAction:
