@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "blockchain.proto";
+
+package types;
+option go_package = "../types";
+
+// rollup合约交易行为总类型
+message RollupAction {
+    int32 ty = 1;
+    oneof value {
+        CommitBatch commitBatch = 2;
+    }
+}
+
+message BlockBatch {
+
+    repeated bytes txList          = 1;
+    repeated bytes pubKeyList      = 2;
+    bytes          aggregateTxSign = 3;
+    repeated Header blockHeaders   = 4;
+}
+
+message ValidatorSignMsg {
+    int64 commitRound = 1;
+    bytes pubKey      = 2;
+    bytes signature   = 3;
+}
+
+// CommitBatch
+message CommitBatch {
+    string     chainTitle                 = 1;
+    int64      commitRound                = 2;
+    BlockBatch batch                      = 3;
+    repeated bytes validatorPubs          = 4;
+    bytes          aggregateValidatorSign = 5;
+}
+
+message RollupStatus {
+
+    int64 currCommitRound       = 1;
+    int64 currCommitBlockHeight = 2;
+    int64 timestamp             = 3;
+    bytes lastBlockHash         = 4;
+}
+
+message CommitRoundInfo {
+
+    int64 commitRound     = 1;
+    int64 lastBlockHeight = 2;
+    bytes firstBlockHash  = 3;
+    bytes lastBlockHash   = 4;
+}
+
+service rollup {}
