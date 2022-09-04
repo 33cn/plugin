@@ -473,3 +473,11 @@ message ZkTxProofResp {
 }
 
 service zksync{}
+
+message ZkQueryProofStatusResp {
+  uint64           proofId                = 1;
+  string           txHash                 = 2;
+  CommitProofState commitProofState       = 3;
+  CommitProofState LatestCommitProofState = 4;
+  int64            maxRecordId            = 5;
+}
