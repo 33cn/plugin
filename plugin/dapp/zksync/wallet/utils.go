@@ -21,14 +21,12 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
-			Fee: &zt.ZkSwapFee{
+			Fee: &zt.ZkFee{
 				FromFee: fromFee,
 				ToFee:   toFee,
 			},
 		}
 		payload = types.MustPBToJSON(withdraw)
-
-	case zt.TyTreeToContractAction:
 
 	case zt.TyTransferAction:
 		transfer := &zt.ZkTransfer{
@@ -36,7 +34,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			Amount:        amount,
 			FromAccountId: accountId,
 			ToAccountId:   toAccountId,
-			Fee: &zt.ZkSwapFee{
+			Fee: &zt.ZkFee{
 				FromFee: fromFee,
 				ToFee:   toFee,
 			},
@@ -49,7 +47,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			FromAccountId:    accountId,
 			ToEthAddress:     toEthAddress,
 			ToChain33Address: chain33Addr,
-			Fee: &zt.ZkSwapFee{
+			Fee: &zt.ZkFee{
 				FromFee: fromFee,
 				ToFee:   toFee,
 			},
@@ -60,7 +58,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			TokenId:  tokenId,
 			ProxyId:  accountId,
 			TargetId: toAccountId,
-			Fee: &zt.ZkSwapFee{
+			Fee: &zt.ZkFee{
 				FromFee: fromFee,
 				ToFee:   toFee,
 			},

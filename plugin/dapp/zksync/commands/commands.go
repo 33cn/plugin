@@ -185,7 +185,7 @@ func treeToContractFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("accountId", "i", 0, "treeToContract accountId")
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().StringP("exec", "x", "", "to contract exec, default nil to zksync self")
-
+	cmd.Flags().StringP("fromFee", "f", "0", "from account fee")
 }
 
 func treeToContract(cmd *cobra.Command, args []string) {
@@ -193,6 +193,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	exec, _ := cmd.Flags().GetString("exec")
+	fromFee, _ := cmd.Flags().GetString("fromFee")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -203,6 +204,9 @@ func treeToContract(cmd *cobra.Command, args []string) {
 		AccountId: accountId,
 		ToAcctId:  zt.SystemTree2ContractAcctId,
 		ToExec:    exec,
+		Fee: &zt.ZkFee{
+			FromFee: fromFee,
+		},
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
@@ -232,7 +236,8 @@ func contractToTreeFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("ethAddr", "e", "", "to eth addr")
 	cmd.Flags().StringP("layer2Addr", "l", "", "to layer2 addr")
 	cmd.Flags().StringP("exec", "x", "", "from contract exec")
-
+	//账户发起者的fee
+	cmd.Flags().StringP("fromFee", "f", "0", "from account fee")
 }
 
 func contractToTree(cmd *cobra.Command, args []string) {
@@ -242,6 +247,7 @@ func contractToTree(cmd *cobra.Command, args []string) {
 	ethAddr, _ := cmd.Flags().GetString("ethAddr")
 	layer2Addr, _ := cmd.Flags().GetString("layer2Addr")
 	exec, _ := cmd.Flags().GetString("exec")
+	fromFee, _ := cmd.Flags().GetString("fromFee")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -253,6 +259,9 @@ func contractToTree(cmd *cobra.Command, args []string) {
 		ToEthAddr:    ethAddr,
 		ToLayer2Addr: layer2Addr,
 		FromExec:     exec,
+		Fee: &zt.ZkFee{
+			FromFee: fromFee,
+		},
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     commands.GetRealExecName(paraName, zt.Zksync),
@@ -1474,7 +1483,7 @@ func setTokenFeeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("fee", "f", "10000", "fee")
 	cmd.MarkFlagRequired("fee")
-	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,proxyExit:5")
+	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,proxyExit:5,contract2tree:9,tree2contract:10")
 	cmd.MarkFlagRequired("action")
 }
 
@@ -1809,7 +1818,7 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 		ContentHash:   contentHash,
 		ErcProtocol:   protocol,
 		Amount:        amount,
-		Fee: &zt.ZkSwapFee{
+		Fee: &zt.ZkFee{
 			FromFee: maker,
 			ToFee:   taker,
 		},
@@ -1867,7 +1876,7 @@ func transferNFT(cmd *cobra.Command, args []string) {
 		RecipientId:   toId,
 		NFTTokenId:    tokenId,
 		Amount:        amount,
-		Fee: &zt.ZkSwapFee{
+		Fee: &zt.ZkFee{
 			FromFee: maker,
 			ToFee:   taker,
 		},
@@ -1920,7 +1929,7 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 		FromAccountId: accountId,
 		NFTTokenId:    tokenId,
 		Amount:        amount,
-		Fee: &zt.ZkSwapFee{
+		Fee: &zt.ZkFee{
 			FromFee: maker,
 			ToFee:   taker,
 		},

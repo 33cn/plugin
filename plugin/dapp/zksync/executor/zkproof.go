@@ -1956,7 +1956,7 @@ func getDepositOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
-	withdraw := &zt.ZkWithdrawWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	withdraw := &zt.ZkWithdrawWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	withdraw.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -1980,7 +1980,7 @@ func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
 func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
 	leftOrder := &zt.ZkSwapOrderInfo{}
 	rightOrder := &zt.ZkSwapOrderInfo{}
-	operation := &zt.ZkSwapWitnessInfo{Left: leftOrder, Right: rightOrder, Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkSwapWitnessInfo{Left: leftOrder, Right: rightOrder, Fee: &zt.ZkFee{}}
 
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
@@ -2050,7 +2050,7 @@ func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTransferWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkTransferWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.FromAccountId = zt.Byte2Uint64(chunk[start:end])
@@ -2075,7 +2075,7 @@ func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTransferToNewWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkTransferToNewWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.FromAccountId = zt.Byte2Uint64(chunk[start:end])
@@ -2127,7 +2127,7 @@ func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkProxyExitWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkProxyExitWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	//proxy id
@@ -2154,7 +2154,7 @@ func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkFullExitWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkFullExitWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
@@ -2192,7 +2192,7 @@ func getFeeOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkMintNFTWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkMintNFTWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.MintAcctId = zt.Byte2Uint64(chunk[start:end])
@@ -2225,7 +2225,7 @@ func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkWithdrawNFTWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkWithdrawNFTWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	//fromId
@@ -2273,7 +2273,7 @@ func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTransferNFTWitnessInfo{Fee: &zt.ZkSwapFee{}}
+	operation := &zt.ZkTransferNFTWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.FromAccountId = zt.Byte2Uint64(chunk[start:end])

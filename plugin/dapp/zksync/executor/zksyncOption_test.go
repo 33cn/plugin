@@ -241,6 +241,38 @@ func TestBigInt(t *testing.T) {
 	t.Log("is equal", stringVal == "0")
 }
 
+func TestGetFeeInfo(t *testing.T) {
+	_, err := getFeeInfo("", 1, nil)
+	assert.NotNil(t, err)
+	_, err = getFeeInfo("0", 1, nil)
+	assert.Nil(t, err)
+
+	setFee := &zt.ZkFee{
+		FromFee: "",
+		ToFee:   "",
+	}
+	_, err = getFeeInfo("0", 1, setFee)
+	assert.NotNil(t, err)
+
+	setFee.FromFee = "-100"
+	fee, err := getFeeInfo("0", 1, setFee)
+	assert.Nil(t, err)
+	assert.Equal(t, fee.FromFee, "0")
+	assert.Equal(t, fee.ToFee, "0")
+
+	setFee.FromFee = "1"
+	fee, err = getFeeInfo("0", 1, setFee)
+	assert.Nil(t, err)
+	assert.Equal(t, fee.FromFee, "1")
+	assert.Equal(t, fee.ToFee, "0")
+
+	setFee.ToFee = "-1"
+	fee, err = getFeeInfo("0", 1, setFee)
+	assert.Nil(t, err)
+	assert.Equal(t, fee.FromFee, "1")
+	assert.Equal(t, fee.ToFee, "0")
+}
+
 func TestInitTreeRoot(t *testing.T) {
 	eth, _ := zt.HexAddr2Decimal("832367164346888E248bd58b9A5f480299F1e88d")
 	chain33, _ := zt.HexAddr2Decimal("2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a")

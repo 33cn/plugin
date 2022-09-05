@@ -136,14 +136,16 @@ message ZkDeposit {
 
 }
 
+//从二层提款
 message ZkWithdraw {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
-  ZkSwapFee fee    = 5;
+  ZkFee fee    = 5;  //收手续费接口，可以由接口设置，但不能少于系统设置的fee(如果有设置的话)
 }
 
+//从chain33合约提款到二层
 message ZkContractToTree {
   string tokenSymbol = 1;
   string amount = 2;
@@ -152,8 +154,10 @@ message ZkContractToTree {
   string toLayer2Addr = 5;
   ZkSignature signature = 6;
   string fromExec = 7;
+  ZkFee fee    = 8;  //消耗了零知识计算，防止恶意小量提款，可以设置min fee
 }
 
+//从二层铸造到chain33合约
 message ZkTreeToContract {
   uint64 tokenId = 1;
   string amount = 2;
@@ -161,6 +165,7 @@ message ZkTreeToContract {
   uint64 toAcctId = 4;  //缺省的systemTree2ContractId， 这里设置是为了签名需要和电路验证，也防止重放
   ZkSignature signature = 5;
   string toExec = 6;
+  ZkFee fee    = 7;
 }
 
 message ZkTransfer {
@@ -169,7 +174,7 @@ message ZkTransfer {
   uint64 fromAccountId = 3;
   uint64 toAccountId = 4;
   ZkSignature signature = 5;
-  ZkSwapFee fee    = 6;
+  ZkFee fee    = 6;
 }
 
 message ZkTransferToNew {
@@ -179,7 +184,7 @@ message ZkTransferToNew {
   string toEthAddress = 4;
   string toChain33Address = 5;
   ZkSignature signature = 6;
-  ZkSwapFee fee    = 7;
+  ZkFee fee    = 7;
 }
 
 message ZkProxyExit {
@@ -187,7 +192,7 @@ message ZkProxyExit {
   uint64 proxyId = 2; //代理id，扣手续费
   uint64 targetId = 3; //目标id
   ZkSignature signature = 4;
-  ZkSwapFee fee    = 5;
+  ZkFee fee    = 5;
 }
 
 message ZkSetPubKey {
@@ -202,7 +207,7 @@ message ZkFullExit {
   uint64 accountId = 2;
   int64 ethPriorityQueueId = 3;
   ZkSignature signature = 4;
-  ZkSwapFee fee    = 6;
+  ZkFee fee    = 6;
 }
 
 message ZkSwap {
@@ -217,7 +222,7 @@ message ZkMintNFT {
   uint64 ercProtocol = 4;
   uint64 amount      = 5;
   ZkSignature signature = 6;
-  ZkSwapFee fee    = 7;
+  ZkFee fee    = 7;  //收指定的token的fee
 }
 
 message ZkWithdrawNFT {
@@ -226,7 +231,7 @@ message ZkWithdrawNFT {
   uint64 amount     = 3;
 
   ZkSignature signature = 5;
-  ZkSwapFee fee    = 6;
+  ZkFee fee    = 6; //收指定的token的fee
 }
 
 message ZkTransferNFT {
@@ -236,7 +241,7 @@ message ZkTransferNFT {
   uint64 amount     = 4;
 
   ZkSignature signature = 6;
-  ZkSwapFee fee    = 7;
+  ZkFee fee    = 7; //收指定的token的fee
 }
 
 
@@ -469,7 +474,7 @@ message ZkTxProofResp {
   uint32    txType        = 4;
   string    txHash        = 5;
   uint64    proofId       = 6;
-
+  string    proofNewRoot  = 7;
 }
 
 service zksync{}

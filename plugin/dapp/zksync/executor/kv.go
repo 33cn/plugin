@@ -85,6 +85,10 @@ func getExodusModeKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"exodusMode"))
 }
 
+func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
+	return []byte(fmt.Sprintf("%s%02d-%03d", KeyPrefixStateDB+"fee-", actionTy, tokenId))
+}
+
 //特意把title放后面，方便按id=1搜索所有的chain
 func getProofIdCommitProofKey(chainTitleId string, proofId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitleId))
@@ -96,8 +100,4 @@ func getRootCommitProofKey(chainTitleId, root string) []byte {
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d.%16d", proofId, accountId))
-}
-
-func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d.%16d", actionTy, tokenId))
 }

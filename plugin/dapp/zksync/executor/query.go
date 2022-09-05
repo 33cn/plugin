@@ -518,11 +518,13 @@ OuterLoop:
 		if proof.BlockStart == proof.BlockEnd && txProofResp.BlockHeight == proof.BlockEnd &&
 			uint32(proof.IndexStart) <= txProofResp.TxIndex && txProofResp.TxIndex <= uint32(proof.IndexEnd) {
 			txProofResp.ProofId = proof.ProofId
+			txProofResp.ProofNewRoot = proof.NewTreeRoot
 			return &txProofResp, nil
 		}
 		//proof blockStart!=blockEnd, 只需要检查tx的blockHeight是否在高度区间内
 		if proof.BlockStart != proof.BlockEnd && proof.BlockStart <= txProofResp.BlockHeight && txProofResp.BlockHeight <= proof.BlockEnd {
 			txProofResp.ProofId = proof.ProofId
+			txProofResp.ProofNewRoot = proof.NewTreeRoot
 			return &txProofResp, nil
 		}
 	}
