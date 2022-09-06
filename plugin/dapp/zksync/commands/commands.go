@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/common/commands"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -666,13 +665,13 @@ func getChain33AddrFlag(cmd *cobra.Command) {
 func getChain33Addr(cmd *cobra.Command, args []string) {
 	privateKeyString, _ := cmd.Flags().GetString("private")
 	pubkey, _ := cmd.Flags().GetBool("pubkey")
-	privateKeyBytes, err := common.FromHex(privateKeyString)
+
+	seed, err := wallet.GetLayer2PrivateKeySeed(privateKeyString, "", "")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "hex.DecodeString"))
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "eddsa.GetLayer2PrivateKeySeed"))
 		return
 	}
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
-
+	privateKey, err := eddsa.GenerateKey(bytes.NewReader(seed))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "eddsa.GenerateKey"))
 		return
