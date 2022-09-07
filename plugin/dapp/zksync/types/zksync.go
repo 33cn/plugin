@@ -59,6 +59,8 @@ const (
 	NameWithdrawNFTACTION    = "WithdrawNFT"
 	NameTransferNFTAction    = "TransferNFT"
 
+	NameContractToTreeNewAction = "ContractToTreeNew"
+
 	NameSetVerifyKeyAction = "SetVerifyKey"
 	NameCommitProofAction  = "CommitProof"
 	NameSetVerifierAction  = "SetVerifier"
@@ -114,6 +116,10 @@ const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
+
+//配置的系统收交易费账户
+const ZkCfgEthFeeAddr = "ethFeeAddr"
+const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
 
 //配置的无效交易和无效证明，用于平行链zksync交易的回滚(假设proof和eth不一致，无法fix时候)
 const ZkCfgInvalidTx = "invalidTxHash"

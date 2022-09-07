@@ -31,8 +31,8 @@ type balancehistory struct {
 
 func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	confManager := types.ConfSub(cfg, zt.Zksync)
-	ethAddr := confManager.GStr("ethFeeAddr")
-	chain33Addr := confManager.GStr("zkChain33FeeAddr")
+	ethAddr := confManager.GStr(zt.ZkCfgEthFeeAddr)
+	chain33Addr := confManager.GStr(zt.ZkCfgLayer2FeeAddr)
 	if len(ethAddr) <= 0 || len(chain33Addr) <= 0 {
 		panic(fmt.Sprintf("zksync not cfg init fee addr, ethAddr=%s,33Addr=%s", ethAddr, chain33Addr))
 	}

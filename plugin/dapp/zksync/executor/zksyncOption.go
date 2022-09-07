@@ -398,7 +398,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	l2BalanceLog.AccountId = leaf.AccountId
 	l2BalanceLog.BalanceBefore = balancehistory.before
 	l2BalanceLog.BalanceAfter = balancehistory.after
-	l2Log := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(l2BalanceLog)}
+	l2Log := &types.ReceiptLog{Ty: zt.TyTreeToContractLog, Log: types.Encode(l2BalanceLog)}
 
 	//更新合约账户
 	accountKvs, l1Log, err := a.UpdateContractAccount(a.fromaddr, payload.Amount, payload.GetTokenId(), zt.Add)
@@ -407,16 +407,20 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 	kvs = append(kvs, accountKvs...)
 
-	receiptLog := &types.ReceiptLog{Ty: zt.TyTreeToContractLog, Log: types.Encode(l2Log)}
 	logs = append(logs, l1Log)
-	logs = append(logs, receiptLog)
+	logs = append(logs, l2Log)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
 func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue, *types.ReceiptLog, error) {
-	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
+	symbol, err := getTokenIdSymbol(a.statedb, strconv.Itoa(int(tokenId)))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, symbol, a.statedb)
 	contractAccount := accountdb.LoadAccount(addr)
 	//accountdb去除末尾10位小数
 	amount2Contract := amount[:len(amount)-10]
