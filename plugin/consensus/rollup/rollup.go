@@ -48,6 +48,7 @@ type RollUp struct {
 	mainChainGrpc        types.Chain33Client
 	val                  *validator
 	cache                *batchCache
+	validatorUpdate chan struct{}
 }
 
 // Init init

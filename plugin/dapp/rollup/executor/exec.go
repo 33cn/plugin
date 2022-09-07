@@ -1,8 +1,7 @@
 package executor
 
 import (
-	"bytes"
-	"encoding/hex"
+	"github.com/33cn/chain33/common"
 
 	"github.com/33cn/chain33/types"
 	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
@@ -25,23 +24,23 @@ func (r *rollup) Exec_CommitBatch(commit *rolluptypes.CommitBatch, tx *types.Tra
 		return nil, errGetRollupStatus
 	}
 
-	parentHash := commit.GetBatch().GetBlockHeaders()[0].ParentHash
-	isNextRound := status.CurrCommitRound+1 == commitRound
+	parentHash := common.ToHex(commit.GetBatch().GetBlockHeaders()[0].ParentHash)
+	isNextRound := status.CommitRound+1 == commitRound
 	// check parent block hash with last commit round
 	// 首次提交没有status记录, lastBlockHash为空
-	if status.LastBlockHash != nil && isNextRound &&
-		!bytes.Equal(status.LastBlockHash, parentHash) {
+	if len(status.CommitBlockHash) > 0 && isNextRound &&
+		status.CommitBlockHash != parentHash {
 
 		elog.Error("Exec_CommitBatch", "title", commit.GetChainTitle(),
-			"round", commitRound, "currLastHash", hex.EncodeToString(status.LastBlockHash),
-			"parentHash", hex.EncodeToString(parentHash))
+			"round", commitRound, "currLastHash", status.CommitBlockHash,
+			"parentHash", parentHash)
 		return nil, errParentHashNotEqual
 	}
 
 	headers := commit.GetBatch().GetBlockHeaders()
 	roundInfo := &rolluptypes.CommitRoundInfo{
 		CommitRound:     commitRound,
-		FirstBlockHash:  calcBlockHash(headers[0]),
+		ParentBlockHash: parentHash,
 		LastBlockHash:   calcBlockHash(headers[len(headers)-1]),
 		LastBlockHeight: headers[len(headers)-1].Height,
 	}
@@ -66,17 +65,21 @@ func (r *rollup) Exec_CommitBatch(commit *rolluptypes.CommitBatch, tx *types.Tra
 		if err != nil {
 			break
 		}
-		if bytes.Equal(roundInfo.LastBlockHash, nextInfo.FirstBlockHash) {
+		if roundInfo.LastBlockHash == nextInfo.ParentBlockHash {
 			roundInfo = nextInfo
+		} else {
+			elog.Error("Exec_CommitBatch ParentHashNotMatch", "commitRound", commitRound,
+				"expectHash", roundInfo.LastBlockHash,
+				"actualHash", nextInfo.ParentBlockHash)
 		}
 	}
 
 	if isNextRound {
 
 		status.Timestamp = r.GetBlockTime()
-		status.CurrCommitRound = roundInfo.CommitRound
-		status.CurrCommitBlockHeight = roundInfo.LastBlockHeight
-		status.LastBlockHash = roundInfo.LastBlockHash
+		status.CommitRound = roundInfo.CommitRound
+		status.CommitBlockHeight = roundInfo.LastBlockHeight
+		status.CommitBlockHash = roundInfo.LastBlockHash
 
 		encodeVal = types.Encode(status)
 		receipt.KV = append(receipt.KV, &types.KeyValue{

@@ -38,18 +38,31 @@ message CommitBatch {
 
 message RollupStatus {
 
-    int64 currCommitRound       = 1;
-    int64 currCommitBlockHeight = 2;
-    int64 timestamp             = 3;
-    bytes lastBlockHash         = 4;
+    int64  timestamp         = 1;
+    int64  commitRound       = 2;
+    int64  commitBlockHeight = 3;
+    string commitBlockHash   = 4;
 }
 
 message CommitRoundInfo {
 
     int64 commitRound     = 1;
     int64 lastBlockHeight = 2;
-    bytes firstBlockHash  = 3;
-    bytes lastBlockHash   = 4;
+    // 第一个区块的父哈希
+    string parentBlockHash = 3;
+    string lastBlockHash   = 4;
+}
+
+message Req {
+    string chainTitle = 1;
+}
+
+message chainTitle {
+    string value = 1;
+}
+
+message ValidatorPubs {
+    repeated string blsPubs = 1;
 }
 
 service rollup {}
