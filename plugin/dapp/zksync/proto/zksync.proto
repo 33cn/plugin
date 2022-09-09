@@ -131,18 +131,25 @@ message ZkWithdraw {
   ZkSignature signature = 4;
 }
 
+//从chain33合约提款到二层
 message ZkContractToTree {
-  uint64 tokenId = 1;
+  string tokenSymbol = 1;
   string amount = 2;
-  uint64 accountId = 3;
-  ZkSignature signature = 4;
+  uint64 toAccountId = 3;
+  string toEthAddr = 4;
+  string toLayer2Addr = 5;
+  ZkSignature signature = 6;
+  string fromExec = 7;
 }
 
+//从二层铸造到chain33合约
 message ZkTreeToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  ZkSignature signature = 4;
+  uint64 toAcctId = 4;  //缺省的systemTree2ContractId， 这里设置是为了签名需要和电路验证，也防止重放
+  ZkSignature signature = 5;
+  string toExec = 6;
 }
 
 message ZkTransfer {

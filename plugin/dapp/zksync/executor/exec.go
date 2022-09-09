@@ -8,40 +8,57 @@ import (
 
 func (z *zksync) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//无效tx则设置exodus mode
+	if isInvalidTx(action.api.GetConfig(), action.txhash) {
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
+	}
+	//系统设置exodus mode后，则不处理此类交易
+	if err := isExodusMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.Deposit(payload)
 }
 
 func (z *zksync) Exec_ZkWithdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//无效tx则设置exodus mode
+	if isInvalidTx(action.api.GetConfig(), action.txhash) {
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
+	}
+	//系统设置exodus mode后，则不处理此类交易
+	if err := isExodusMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.ZkWithdraw(payload)
 }
 
 func (z *zksync) Exec_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.ZkTransfer(payload)
 }
 
 func (z *zksync) Exec_TransferToNew(payload *zt.ZkTransferToNew, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.TransferToNew(payload)
 }
 
 func (z *zksync) Exec_ProxyExit(payload *zt.ZkProxyExit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//无效tx则设置exodus mode
+	if isInvalidTx(action.api.GetConfig(), action.txhash) {
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
+	}
+	//系统设置exodus mode后，则不处理此类交易
+	if err := isExodusMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.ProxyExit(payload)
 }
@@ -96,34 +113,46 @@ func (z *zksync) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Tra
 
 func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.TreeToContract(payload)
 }
 
 func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.MintNFT(payload)
 }
 
 func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	if isInvalidTx(action.api.GetConfig(), action.txhash) {
+		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
+	}
+	//系统设置exodus mode后，则不处理此类交易
+	if err := isExodusMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.withdrawNFT(payload)
 }
 
 func (z *zksync) Exec_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	if ok, receipt, err := checkTxAndNotInExodusMode(action); !ok {
-		return receipt, err
+	//系统设置exodus clear Stage后，则不处理此类交易
+	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+		return nil, err
 	}
 	return action.transferNFT(payload)
+}
+
+func (z *zksync) Exec_SetExodusMode(payload *zt.ZkExodusMode, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.setExodusMode(payload)
 }
 
 //zksync作为2层链的数字资产的发行合约，需要支持以下3种类型的资产操作
