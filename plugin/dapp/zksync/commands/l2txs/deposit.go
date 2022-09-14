@@ -41,6 +41,7 @@ func sendDeposit(cmd *cobra.Command, args []string) {
 	ethAddress, _ := cmd.Flags().GetString("ethAddr")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 	privateKey, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	deposit := &zksyncTypes.ZkDeposit{
 		TokenId:            tokenId,
@@ -57,7 +58,7 @@ func sendDeposit(cmd *cobra.Command, args []string) {
 		},
 	}
 
-	tx, err := createChain33Tx(privateKey, action)
+	tx, err := createChain33Tx(privateKey, getRealExecName(paraName, zksyncTypes.Zksync), action)
 	if nil != err {
 		fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 		return
@@ -102,6 +103,7 @@ func batchSendDeposit(cmd *cobra.Command, args []string) {
 	ethAddress, _ := cmd.Flags().GetString("ethAddr")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 	privateKey, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	deposit := &zksyncTypes.ZkDeposit{
 		TokenId:            tokenId,
@@ -119,7 +121,7 @@ func batchSendDeposit(cmd *cobra.Command, args []string) {
 	}
 
 	for i := uint64(0); i < count; i++ {
-		tx, err := createChain33Tx(privateKey, action)
+		tx, err := createChain33Tx(privateKey, getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return
@@ -161,6 +163,7 @@ func sendManyDeposit(cmd *cobra.Command, args []string) {
 	ethAddress, _ := cmd.Flags().GetString("ethAddr")
 	chain33Addrs, _ := cmd.Flags().GetString("chain33Addrs")
 	privateKey, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	toChain33Addrs := strings.Split(chain33Addrs, ",")
 
@@ -181,7 +184,7 @@ func sendManyDeposit(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(privateKey, action)
+		tx, err := createChain33Tx(privateKey, getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return

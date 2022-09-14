@@ -36,6 +36,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	pubkeyY, _ := cmd.Flags().GetString("pubkeyY")
 	privateKeys, _ := cmd.Flags().GetString("keys")
 	accountIDs, _ := cmd.Flags().GetString("accountIDs")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	ids := strings.Split(accountIDs, ",")
 	keys := strings.Split(privateKeys, ",")
 
@@ -66,7 +67,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("SetPubKey failed to createChain33Tx due to err:", err.Error())
 			return

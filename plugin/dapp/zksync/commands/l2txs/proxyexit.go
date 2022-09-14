@@ -35,6 +35,7 @@ func proxyManyExit(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	proxyId, _ := cmd.Flags().GetString("proxyIDs")
 	targetId, _ := cmd.Flags().GetString("targetIDs")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	proxyIds := strings.Split(proxyId, ",")
 	targetIds := strings.Split(targetId, ",")
@@ -50,9 +51,9 @@ func proxyManyExit(cmd *cobra.Command, args []string) {
 		proxyId, _ := strconv.ParseInt(proxyIds[i], 10, 64)
 		targetId, _ := strconv.ParseInt(targetIds[i], 10, 64)
 		param := &zksyncTypes.ZkProxyExit{
-			TokenId:   tokenId,
-			ProxyId:   uint64(proxyId),
-			TargetId:  uint64(targetId),
+			TokenId:  tokenId,
+			ProxyId:  uint64(proxyId),
+			TargetId: uint64(targetId),
 		}
 
 		action := &zksyncTypes.ZksyncAction{
@@ -62,7 +63,7 @@ func proxyManyExit(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("send ForceExit failed to createChain33Tx due to err:", err.Error())
 			return

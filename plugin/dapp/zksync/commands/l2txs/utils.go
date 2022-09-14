@@ -8,16 +8,18 @@ import (
 	chain33Crypto "github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/golang/protobuf/proto"
 	"math/rand"
+	"strings"
 	"time"
 )
 
-func createChain33Tx(privateKeyStr string, action proto.Message) (*types.Transaction, error) {
+func createChain33Tx(privateKeyStr, execer string, action proto.Message) (*types.Transaction, error) {
 	var driver secp256k1.Driver
 	privateKeySli, err := chain33Common.FromHex(privateKeyStr)
 	if nil != err {
@@ -27,8 +29,7 @@ func createChain33Tx(privateKeyStr string, action proto.Message) (*types.Transac
 	if nil != err {
 		return nil, err
 	}
-
-	execer := "zksync"
+	
 	fee := int64(1e7)
 	toAddr := address.ExecAddress(execer)
 	tx := &types.Transaction{Execer: []byte(execer), Payload: types.Encode(action), Fee: fee, To: toAddr}
@@ -186,4 +187,11 @@ func SignTxInEddsa(msg *zksyncTypes.ZkMsg, privateKey eddsa.PrivateKey) (*zksync
 		Msg:      msg,
 	}
 	return sign, nil
+}
+
+func getRealExecName(paraName string, name string) string {
+	if strings.HasPrefix(name, pt.ParaPrefix) {
+		return name
+	}
+	return paraName + name
 }

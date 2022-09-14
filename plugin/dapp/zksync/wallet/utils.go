@@ -22,20 +22,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(withdraw)
-	case zt.TyContractToTreeAction:
-		contractToLeaf := &zt.ZkContractToTree{
-			TokenId:   tokenId,
-			Amount:    amount,
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(contractToLeaf)
-	case zt.TyTreeToContractAction:
-		leafToContract := &zt.ZkTreeToContract{
-			TokenId:   tokenId,
-			Amount:    amount,
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(leafToContract)
 	case zt.TyTransferAction:
 		transfer := &zt.ZkTransfer{
 			TokenId:       tokenId,
@@ -54,17 +40,12 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 		payload = types.MustPBToJSON(transferToNew)
 	case zt.TyProxyExitAction:
-		forceExit := &zt.ZkProxyExit{
-			TokenId:   tokenId,
-			ProxyId: accountId,
-			TargetId:toAccountId,
+		proxyExit := &zt.ZkProxyExit{
+			TokenId:  tokenId,
+			ProxyId:  accountId,
+			TargetId: toAccountId,
 		}
-		payload = types.MustPBToJSON(forceExit)
-	//case zt.TySetPubKeyAction:
-	//	setPubKey := &zt.ZkSetPubKey{
-	//		AccountId: accountId,
-	//	}
-	//	payload = types.MustPBToJSON(setPubKey)
+		payload = types.MustPBToJSON(proxyExit)
 
 	case zt.TySetVerifierAction:
 		verifier := &zt.ZkVerifier{
@@ -215,16 +196,24 @@ func GetTreeToContractMsg(payload *zt.ZkTreeToContract) *zt.ZkMsg {
 
 }
 
+func transferStr2Int(s string, base int) *big.Int {
+	s = zt.FilterHexPrefix(s)
+	v, ok := new(big.Int).SetString(s, base)
+	if !ok {
+		panic(fmt.Sprintf("transferStr2Int s=%s,base=%d", s, base))
+	}
+	return v
+}
+
 func GetContractToTreeMsg(payload *zt.ZkContractToTree) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, zt.MsgWidth)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyContractToTreeAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ToAccountId), zt.TokenBitWidth)...)
+	amount := transferStr2Int(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 

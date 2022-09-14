@@ -55,6 +55,7 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 	accountIDs, _ := cmd.Flags().GetString("creatorIds")
 	recipientIds, _ := cmd.Flags().GetString("recipientIds")
 	privateKeys, _ := cmd.Flags().GetString("keys")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	ids := strings.Split(accountIDs, ",")
 	rids := strings.Split(recipientIds, ",")
@@ -88,7 +89,7 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("mint nft failed to createChain33Tx due to err:", err.Error())
 			return
@@ -127,6 +128,7 @@ func transferNFT(cmd *cobra.Command, args []string) {
 	fromIds, _ := cmd.Flags().GetString("fromIds")
 	toIds, _ := cmd.Flags().GetString("toIds")
 	privateKeys, _ := cmd.Flags().GetString("keys")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	ids := strings.Split(fromIds, ",")
 	tids := strings.Split(toIds, ",")
@@ -155,7 +157,7 @@ func transferNFT(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("transfer nft failed to createChain33Tx due to err:", err.Error())
 			return
@@ -191,6 +193,7 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetUint64("amount")
 	fromIds, _ := cmd.Flags().GetString("fromIds")
 	privateKeys, _ := cmd.Flags().GetString("keys")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	ids := strings.Split(fromIds, ",")
 	keys := strings.Split(privateKeys, ",")
@@ -216,7 +219,7 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("WithdrawNFT failed to createChain33Tx due to err:", err.Error())
 			return

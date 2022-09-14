@@ -146,3 +146,10 @@ func GetOpChunkNum(opType uint32) (int, error) {
 		return 0, errors.Wrapf(types.ErrInvalidParam, "operation tx type=%d not support", opType)
 	}
 }
+
+func FilterHexPrefix(s string) string {
+	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
+		return s[2:]
+	}
+	return s
+}

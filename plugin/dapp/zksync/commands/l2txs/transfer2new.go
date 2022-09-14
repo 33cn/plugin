@@ -41,6 +41,7 @@ func transferManyToNew(cmd *cobra.Command, _ []string) {
 	fromIDs, _ := cmd.Flags().GetString("fromIDs")
 	chain33Addrs, _ := cmd.Flags().GetString("chain33Addrs")
 	privateKeys, _ := cmd.Flags().GetString("keys")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	fids := strings.Split(fromIDs, ",")
 	addrs := strings.Split(chain33Addrs, ",")
@@ -68,7 +69,7 @@ func transferManyToNew(cmd *cobra.Command, _ []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return
@@ -110,6 +111,7 @@ func transferToNewMany(cmd *cobra.Command, _ []string) {
 	fromID, _ := cmd.Flags().GetString("fromID")
 	chain33Addrs, _ := cmd.Flags().GetString("chain33Addrs")
 	key, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	addrs := strings.Split(chain33Addrs, ",")
 	fid, _ := strconv.ParseInt(fromID, 10, 64)
@@ -130,7 +132,7 @@ func transferToNewMany(cmd *cobra.Command, _ []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(key, action)
+		tx, err := createChain33Tx(key, getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return

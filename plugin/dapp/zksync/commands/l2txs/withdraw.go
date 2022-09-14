@@ -37,6 +37,7 @@ func sendWithdraw(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountID, _ := cmd.Flags().GetUint64("accountID")
 	amount, _ := cmd.Flags().GetString("amount")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	withdraw := &zksyncTypes.ZkWithdraw{
 		TokenId:   tokenId,
@@ -51,7 +52,7 @@ func sendWithdraw(cmd *cobra.Command, args []string) {
 		},
 	}
 
-	tx, err := createChain33Tx(privateKey, action)
+	tx, err := createChain33Tx(privateKey, getRealExecName(paraName, zksyncTypes.Zksync), action)
 	if nil != err {
 		fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 		return
@@ -86,6 +87,7 @@ func sendManyWithdraw(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountIDs, _ := cmd.Flags().GetString("accountIDs")
 	amount, _ := cmd.Flags().GetString("amount")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	ids := strings.Split(accountIDs, ",")
 	keys := strings.Split(privateKeys, ",")
@@ -110,7 +112,7 @@ func sendManyWithdraw(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return

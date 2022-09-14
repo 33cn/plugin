@@ -40,6 +40,7 @@ func tranfer(cmd *cobra.Command, args []string) {
 	fromAccountId, _ := cmd.Flags().GetUint64("from")
 	toAccountId, _ := cmd.Flags().GetUint64("to")
 	privateKey, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	transfer := &zksyncTypes.ZkTransfer{
 		TokenId:       tokenId,
@@ -55,7 +56,7 @@ func tranfer(cmd *cobra.Command, args []string) {
 		},
 	}
 
-	tx, err := createChain33Tx(privateKey, action)
+	tx, err := createChain33Tx(privateKey, getRealExecName(paraName, zksyncTypes.Zksync), action)
 	if nil != err {
 		fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 		return
@@ -99,6 +100,7 @@ func batchSendTransfer(cmd *cobra.Command, args []string) {
 	fromAccountId, _ := cmd.Flags().GetUint64("from")
 	toAccountId, _ := cmd.Flags().GetUint64("to")
 	privateKey, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	transfer := &zksyncTypes.ZkTransfer{
 		TokenId:       tokenId,
@@ -119,7 +121,7 @@ func batchSendTransfer(cmd *cobra.Command, args []string) {
 	}
 
 	for i := uint64(0); i < count; i++ {
-		tx, err := createChain33Tx(privateKey, action)
+		tx, err := createChain33Tx(privateKey, getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("send transfer failed to createChain33Tx due to err:", err.Error())
 			return
@@ -159,6 +161,7 @@ func tranferMany(cmd *cobra.Command, args []string) {
 	fromIDs, _ := cmd.Flags().GetString("fromIDs")
 	toIDs, _ := cmd.Flags().GetString("toIDs")
 	privateKeys, _ := cmd.Flags().GetString("keys")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	fids := strings.Split(fromIDs, ",")
 	tids := strings.Split(toIDs, ",")
@@ -186,7 +189,7 @@ func tranferMany(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(keys[i], action)
+		tx, err := createChain33Tx(keys[i], getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return
@@ -225,6 +228,7 @@ func tranferManyFromOne(cmd *cobra.Command, args []string) {
 	fromID, _ := cmd.Flags().GetString("fromID")
 	toIDs, _ := cmd.Flags().GetString("toIDs")
 	key, _ := cmd.Flags().GetString("key")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	tids := strings.Split(toIDs, ",")
 
@@ -245,7 +249,7 @@ func tranferManyFromOne(cmd *cobra.Command, args []string) {
 			},
 		}
 
-		tx, err := createChain33Tx(key, action)
+		tx, err := createChain33Tx(key, getRealExecName(paraName, zksyncTypes.Zksync), action)
 		if nil != err {
 			fmt.Println("sendDeposit failed to createChain33Tx due to err:", err.Error())
 			return
