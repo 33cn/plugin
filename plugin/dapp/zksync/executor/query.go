@@ -324,7 +324,6 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 		return new(zt.ZkQueryProofResp), nil
 	}
 	endBlockHeight := z.GetHeight() - int64(in.Maturity)
-
 	if int64(startHeight) >= endBlockHeight {
 		return new(zt.ZkQueryProofResp), nil
 	}
@@ -349,7 +348,6 @@ func (z *zksync) Query_GetTxOperationByOffSetOrCount(in *zt.ZkQueryTxOperationRe
 			} else {
 				primaryKey = nil
 			}
-
 			rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, types.MaxTxsPerBlock, zt.ListASC)
 			if err != nil {
 				if isNotFound(err) {
@@ -553,6 +551,33 @@ func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error)
 		return nil, err
 	}
 	res.TokenBalances = append(res.TokenBalances, token)
+	return res, nil
+}
+
+// Query_GetTokenSymbol 根据id获取当前symbol，根据symbol获取对应token id
+func (z *zksync) Query_GetTokenSymbol(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	res := new(zt.ZkTokenSymbol)
+	//symbol非空，查询id
+	if len(in.TokenSymbol) > 0 {
+		id, err := getTokenSymbolId(z.GetStateDB(), in.TokenSymbol)
+		if err != nil {
+			return nil, err
+		}
+		res.Symbol = in.TokenSymbol
+		res.Id = new(big.Int).SetUint64(id).String()
+		return res, nil
+	}
+	//根据id查询symbol
+	idStr := new(big.Int).SetUint64(in.TokenId).String()
+	symbol, err := getTokenIdSymbol(z.GetStateDB(), idStr)
+	if err != nil {
+		return nil, err
+	}
+	res.Symbol = symbol
+	res.Id = idStr
 	return res, nil
 }
 

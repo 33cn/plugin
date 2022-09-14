@@ -24,7 +24,7 @@ message ZkPubKey {
 
 message ZkFee {
   string fromFee    = 1;
-  string toFee      = 2; //一般都从from账户收Fee，可能特殊需求也收To的Fee
+  string toFee      = 2; //一般都从from账户收Fee，可能特殊需求也收To的Fee,比如swap可能需要
   uint64 tokenId    = 3; //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
 }
 

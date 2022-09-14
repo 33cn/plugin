@@ -93,16 +93,14 @@ const (
 	TyTransferNFTLog    = 114 //L2提款NFT到L1
 
 	/////非电路类型
-	TySetVerifyKeyLog          = 202 //设置电路验证key
-	TyCommitProofLog           = 203 //提交zk proof
-	TySetVerifierLog           = 204 //设置验证者
-	TySetEthPriorityQueueId    = 205 //设置 eth上 priority queue id;
-	TySetFeeLog                = 206
-	TyCommitProofRecordLog     = 207 //提交zk proof
-	TyLogContractAssetDeposit  = 208 //tree资产存储到contract
-	TyLogContractAssetWithdraw = 209 //contract 资产withdraw到tree
-	TyLogSetTokenSymbol        = 210 //设置电路验证key
-	TyLogSetExodusMode         = 211 //系统设置exodus mode
+	TySetVerifyKeyLog       = 202 //设置电路验证key
+	TyCommitProofLog        = 203 //提交zk proof
+	TySetVerifierLog        = 204 //设置验证者
+	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
+	TySetFeeLog             = 206
+	TyCommitProofRecordLog  = 207 //提交zk proof
+	TyLogSetTokenSymbol     = 210 //设置电路验证key
+	TyLogSetExodusMode      = 211 //系统设置exodus mode
 
 )
 
@@ -258,30 +256,28 @@ var (
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
-		TyWithdrawLog:              {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
-		TyTransferLog:              {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:         {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyProxyExitLog:             {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyProxyExitLog"},
-		TySetPubKeyLog:             {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
-		TyFullExitLog:              {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
-		TySwapLog:                  {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
-		TyFeeLog:                   {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
-		TyMintNFTLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
-		TyWithdrawNFTLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
-		TyTransferNFTLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
-		TySetVerifyKeyLog:          {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProofLog:           {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
-		TyCommitProofRecordLog:     {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecord"},
-		TySetVerifierLog:           {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
-		TySetEthPriorityQueueId:    {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
-		TySetFeeLog:                {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
-		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
-		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
-		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
-		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
+		TyDepositLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
+		TyWithdrawLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
+		TyContractToTreeLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
+		TyTransferLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
+		TyProxyExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyProxyExitLog"},
+		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
+		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
+		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
+		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
+		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
+		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
+		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
+		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TyCommitProofRecordLog:  {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecord"},
+		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
+		TyLogSetTokenSymbol:     {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
+		TyLogSetExodusMode:      {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
 
 		// spot
 		TyLimitOrderLog:    {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},

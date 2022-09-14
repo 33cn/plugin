@@ -24,10 +24,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
-			Fee: &zt.ZkFee{
-				FromFee: fromFee,
-				ToFee:   toFee,
-			},
 		}
 		payload = types.MustPBToJSON(withdraw)
 
@@ -37,10 +33,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			Amount:        amount,
 			FromAccountId: accountId,
 			ToAccountId:   toAccountId,
-			Fee: &zt.ZkFee{
-				FromFee: fromFee,
-				ToFee:   toFee,
-			},
 		}
 		payload = types.MustPBToJSON(transfer)
 	case zt.TyTransferToNewAction:
@@ -50,10 +42,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			FromAccountId:    accountId,
 			ToEthAddress:     toEthAddress,
 			ToChain33Address: chain33Addr,
-			Fee: &zt.ZkFee{
-				FromFee: fromFee,
-				ToFee:   toFee,
-			},
 		}
 		payload = types.MustPBToJSON(transferToNew)
 	case zt.TyProxyExitAction:
@@ -61,10 +49,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 			TokenId:  tokenId,
 			ProxyId:  accountId,
 			TargetId: toAccountId,
-			Fee: &zt.ZkFee{
-				FromFee: fromFee,
-				ToFee:   toFee,
-			},
 		}
 		payload = types.MustPBToJSON(proxyExit)
 

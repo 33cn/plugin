@@ -13,8 +13,12 @@ func (z *zksync) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+	isExodus, err := isExodusMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodus {
+		return nil, errors.Wrap(types.ErrNotAllow, "current exodusMode")
 	}
 	return action.Deposit(payload)
 }
@@ -26,8 +30,12 @@ func (z *zksync) Exec_ZkWithdraw(payload *zt.ZkWithdraw, tx *types.Transaction, 
 		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+	isExodus, err := isExodusMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodus {
+		return nil, errors.Wrap(types.ErrNotAllow, "current exodusMode")
 	}
 	return action.ZkWithdraw(payload)
 }
@@ -43,8 +51,12 @@ func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Tra
 	action := NewAction(z, tx, index)
 
 	//系统设置exodus clear Stage后，则不处理此类交易
-	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+	isExodusClear, err := isExodusClearMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodusClear {
+		return nil, errors.Wrap(types.ErrNotAllow, "isExodusClear mode")
 	}
 	return action.TreeToContract(payload)
 }
@@ -52,8 +64,12 @@ func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Tra
 func (z *zksync) Exec_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	//系统设置exodus clear Stage后，则不处理此类交易
-	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+	isExodusClear, err := isExodusClearMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodusClear {
+		return nil, errors.Wrap(types.ErrNotAllow, "isExodusClear mode")
 	}
 	return action.ZkTransfer(payload)
 }
@@ -62,8 +78,12 @@ func (z *zksync) Exec_TransferToNew(payload *zt.ZkTransferToNew, tx *types.Trans
 	action := NewAction(z, tx, index)
 
 	//系统设置exodus clear Stage后，则不处理此类交易
-	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+	isExodusClear, err := isExodusClearMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodusClear {
+		return nil, errors.Wrap(types.ErrNotAllow, "isExodusClear mode")
 	}
 	return action.TransferToNew(payload)
 }
@@ -75,8 +95,12 @@ func (z *zksync) Exec_ProxyExit(payload *zt.ZkProxyExit, tx *types.Transaction, 
 		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+	isExodus, err := isExodusMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodus {
+		return nil, errors.Wrap(types.ErrNotAllow, "current exodusMode")
 	}
 	return action.ProxyExit(payload)
 }
@@ -101,8 +125,12 @@ func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, inde
 	action := NewAction(z, tx, index)
 
 	//系统设置exodus clear Stage后，则不处理此类交易
-	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+	isExodusClear, err := isExodusClearMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodusClear {
+		return nil, errors.Wrap(types.ErrNotAllow, "isExodusClear mode")
 	}
 	return action.MintNFT(payload)
 }
@@ -113,8 +141,12 @@ func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transacti
 		return makeSetExodusModeReceipt(0, zt.ExodusPrepareMode), nil
 	}
 	//系统设置exodus mode后，则不处理此类交易
-	if err := isExodusMode(z.GetStateDB()); err != nil {
+	isExodus, err := isExodusMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodus {
+		return nil, errors.Wrap(types.ErrNotAllow, "current exodusMode")
 	}
 	return action.withdrawNFT(payload)
 }
@@ -122,8 +154,12 @@ func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transacti
 func (z *zksync) Exec_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	//系统设置exodus clear Stage后，则不处理此类交易
-	if err := isExodusClearMode(z.GetStateDB()); err != nil {
+	isExodusClear, err := isExodusClearMode(z.GetStateDB())
+	if err != nil {
 		return nil, err
+	}
+	if isExodusClear {
+		return nil, errors.Wrap(types.ErrNotAllow, "isExodusClear mode")
 	}
 	return action.transferNFT(payload)
 }

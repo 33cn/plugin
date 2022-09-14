@@ -755,17 +755,15 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					}
 				}
 				change, _ := new(big.Int).SetString(operation.Amount, 10)
-				toFee, _ := new(big.Int).SetString(operation.Fee.ToFee, 10)
-				newToChange := new(big.Int).Sub(change, toFee)
 				if toTokenBalance == nil {
 					toTokenBalance = &zt.TokenBalance{
 						TokenId: operation.TokenId,
-						Balance: newToChange.String(),
+						Balance: change.String(),
 					}
 					toLeaf.Tokens = append(toLeaf.Tokens, toTokenBalance)
 				} else {
 					balance, _ := new(big.Int).SetString(toTokenBalance.GetBalance(), 10)
-					toTokenBalance.Balance = new(big.Int).Add(balance, newToChange).String()
+					toTokenBalance.Balance = new(big.Int).Add(balance, change).String()
 				}
 				accountMap[operation.FromAccountId] = fromLeaf
 				accountMap[operation.ToAccountId] = toLeaf
@@ -798,8 +796,6 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				}
 
 				change, _ := new(big.Int).SetString(operation.Amount, 10)
-				toFee, _ := new(big.Int).SetString(operation.Fee.ToFee, 10)
-				newToChange := new(big.Int).Sub(change, toFee)
 				toLeaf := &zt.HistoryLeaf{
 					AccountId:   operation.GetToAccountId(),
 					EthAddress:  operation.GetEthAddress(),
@@ -807,7 +803,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					Tokens: []*zt.TokenBalance{
 						{
 							TokenId: operation.TokenId,
-							Balance: newToChange.String(),
+							Balance: change.String(),
 						},
 					},
 				}
