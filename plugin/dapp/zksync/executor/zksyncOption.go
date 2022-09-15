@@ -173,13 +173,13 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	feeInfo, err := getFeeData(a.statedb, zt.TyWithdrawAction, payload.TokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyWithdrawAction, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId())
@@ -209,8 +209,9 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		AccountID: payload.AccountId,
 		//ethAddr nil
 		Signature: payload.Signature,
-		Fee: &zt.ZkOperationFee{
-			FromFee: feeInfo.FromFee,
+		Fee: &zt.ZkFee{
+			Fee:     feeInfo.Fee,
+			TokenID: payload.TokenId,
 		},
 	}
 
@@ -239,7 +240,7 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeInfo.FromFee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -283,7 +284,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "checkPackVal")
 	}
 
-	tokenId, err := getTokenSymbolId(a.statedb, payload.TokenSymbol)
+	tokenId, err := GetTokenSymbolId(a.statedb, payload.TokenSymbol)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +310,7 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 		return nil, errors.New("account:" + strconv.FormatUint(payload.ToAccountId, 10) + " not exist")
 	}
 
-	feeInfo, err := getFeeData(a.statedb, zt.TyContractToTreeAction, tokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyContractToTreeAction, tokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
@@ -320,8 +321,8 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 		AccountID: payload.ToAccountId,
 		Signature: payload.Signature,
 		//fee调换一下
-		Fee: &zt.ZkOperationFee{
-			ToFee: feeInfo.FromFee,
+		Fee: &zt.ZkFee{
+			Fee: feeInfo.Fee,
 		},
 	}
 
@@ -355,7 +356,7 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 	}
 	receipts = mergeReceipt(receipts, contractReceipt)
 
-	feeReceipt, err := a.MakeFeeLog(special.Fee.ToFee, tokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(special.Fee.Fee, tokenId, payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -559,13 +560,13 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
-	feeInfo, err := getFeeData(a.statedb, zt.TyTransferAction, payload.TokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyTransferAction, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
@@ -621,7 +622,7 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	//2.操作交易费账户
-	feeReceipt, err := a.MakeFeeLog(feeInfo.FromFee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -693,14 +694,14 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	feeInfo, err := getFeeData(a.statedb, zt.TyTransferToNewAction, payload.TokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyTransferToNewAction, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
 
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.FromFee, 10)
+	feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
@@ -783,7 +784,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	//
 	//receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeInfo.FromFee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -799,11 +800,11 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "proxyId same as targetId")
 	}
 
-	feeInfo, err := getFeeData(a.statedb, zt.TyProxyExitAction, payload.TokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyProxyExitAction, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
-	fee := feeInfo.FromFee
+	fee := feeInfo.Fee
 
 	targetLeaf, err := GetLeafByAccountId(a.statedb, payload.TargetId)
 	if err != nil {
@@ -1244,41 +1245,20 @@ func getDbFeeData(db dbm.KV, actionTy int32, tokenId uint64) (string, error) {
 	return string(v), nil
 }
 
-func getFeeData(db dbm.KV, actionTy int32, tokenId uint64, swapFee *zt.ZkOperationFee) (*zt.ZkOperationFee, error) {
-	if swapFee != nil {
-		if len(swapFee.FromFee) > 0 {
-			if _, ok := new(big.Int).SetString(swapFee.FromFee, 10); !ok {
-				return nil, errors.Wrapf(types.ErrInvalidParam, "decode makerFee=%s", swapFee.FromFee)
-			}
-		} else {
-			swapFee.FromFee = "0"
-		}
-
-		if len(swapFee.ToFee) > 0 {
-			if _, ok := new(big.Int).SetString(swapFee.ToFee, 10); !ok {
-				return nil, errors.Wrapf(types.ErrInvalidParam, "decode takerFee=%s", swapFee.ToFee)
-			}
-		} else {
-			swapFee.ToFee = "0"
-		}
-	}
-
+//该接口需要被zkrelayer使用
+func GetFeeData(db dbm.KV, actionTy int32, tokenId uint64) (*zt.ZkFee, error) {
 	//缺省输入的tokenId，如果swapFee有输入新tokenId，采用新的，在withdraw等action忽略swapFee tokenId
-	feeInfo := &zt.ZkOperationFee{
-		FromFee: "0",
-		ToFee:   "0",
+	feeInfo := &zt.ZkFee{
 		TokenID: tokenId,
 	}
-	if swapFee != nil {
-		feeInfo = swapFee
-	} else {
-		//从db读取
-		fee, err := getDbFeeData(db, actionTy, tokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "getDbFeeData")
-		}
-		feeInfo.FromFee = fee
+
+	//从db读取
+	fee, err := getDbFeeData(db, actionTy, tokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getDbFeeData")
 	}
+	feeInfo.Fee = fee
+
 	return feeInfo, nil
 }
 
@@ -1312,28 +1292,11 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
-	feeInfo, err := getFeeData(a.statedb, zt.TyMintNFTAction, feeTokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyMintNFTAction, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
-	feeAmount := feeInfo.FromFee
-
-	//specialInfo := &zt.ZkMintNFTWitnessInfo{
-	//	MintAcctId:  payload.FromAccountId,
-	//	RecipientId: payload.RecipientId,
-	//	ErcProtocol: payload.ErcProtocol,
-	//	ContentHash: []string{contentPart1.String(), contentPart2.String()},
-	//	Amount:      new(big.Int).SetUint64(payload.Amount).String(),
-	//	Signature:   payload.Signature,
-	//	Fee:         feeInfo,
-	//}
-	//
-	//operationInfo := &zt.OperationInfo{
-	//	BlockHeight: uint64(a.height),
-	//	TxIndex:     uint32(a.index),
-	//	TxType:      zt.TyMintNFTAction,
-	//	SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_MintNFT{MintNFT: specialInfo}},
-	//}
+	feeAmount := feeInfo.Fee
 
 	//1. calc fee,收取铸币的交易费
 	creatorLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
@@ -1530,11 +1493,11 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
-	feeInfo, err := getFeeData(a.statedb, zt.TyWithdrawNFTAction, feeTokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyWithdrawNFTAction, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
-	feeAmount := feeInfo.FromFee
+	feeAmount := feeInfo.Fee
 
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
 
@@ -1677,11 +1640,11 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
-	feeInfo, err := getFeeData(a.statedb, zt.TyTransferNFTAction, feeTokenId, nil)
+	feeInfo, err := GetFeeData(a.statedb, zt.TyTransferNFTAction, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getFeeData")
 	}
-	feeAmount := feeInfo.FromFee
+	feeAmount := feeInfo.Fee
 
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
 
@@ -1931,7 +1894,7 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	}
 
 	//首先检查symbol是否存在，symbol存在不允许修改
-	id, err := getTokenSymbolId(a.statedb, payload.Symbol)
+	id, err := GetTokenSymbolId(a.statedb, payload.Symbol)
 	if !isNotFound(errors.Cause(err)) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%d", err, id)
 	}
@@ -1960,7 +1923,7 @@ func getTokenIdSymbol(db dbm.KV, tokenId string) (string, error) {
 	return symbol.Symbol, nil
 }
 
-func getTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
+func GetTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
 	if len(symbol) <= 0 {
 		return 0, errors.Wrapf(types.ErrInvalidParam, "symbol nil=%s", symbol)
 	}

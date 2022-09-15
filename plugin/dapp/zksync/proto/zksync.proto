@@ -180,7 +180,7 @@ message ZkProxyExit {
   uint64 proxyId = 2; //代理id，扣手续费
   uint64 targetId = 3; //目标id
   ZkSignature signature = 4;
-  ZkOperationFee fee    = 5;
+  ZkFee fee    = 5;
 }
 
 message ZkSetPubKey {

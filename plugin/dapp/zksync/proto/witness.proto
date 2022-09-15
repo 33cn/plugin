@@ -93,9 +93,8 @@ message OperationSpecialData {
   ZkPubKey pubKey             = 11;
 }
 
-message ZkOperationFee {
-  string fromFee    = 1;
-  string toFee      = 2;
+message ZkFee {
+  string fee    = 1;
   uint64 tokenID    = 3; //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
 }
 
@@ -116,7 +115,7 @@ message ZkWithdrawWitnessInfo {
   uint64 accountID = 3;
   string ethAddress = 4;
   ZkSignature signature = 5;
-  ZkOperationFee fee    = 6;
+  ZkFee fee    = 6;
 }
 
 message ZkTransferWitnessInfo {
@@ -125,7 +124,7 @@ message ZkTransferWitnessInfo {
   uint64 fromAccountID = 3;
   uint64 toAccountID = 4;
   ZkSignature signature = 5;
-  ZkOperationFee fee    = 6;
+  ZkFee fee    = 6;
 }
 
 message ZkTransferToNewWitnessInfo {
@@ -136,7 +135,7 @@ message ZkTransferToNewWitnessInfo {
   string ethAddress = 5;
   string layer2Addr = 6;
   ZkSignature signature = 7;
-  ZkOperationFee fee    = 8;
+  ZkFee fee    = 8;
 }
 
 message ZkProxyExitWitnessInfo {
@@ -146,7 +145,7 @@ message ZkProxyExitWitnessInfo {
   string    amount        = 4;
   ZkSignature signature   = 5;
   string    ethAddress    = 7;
-  ZkOperationFee fee      = 8;
+  ZkFee fee      = 8;
   //记录deposit或fullExit对应的eth priorityID，方便查询对应区块高度和证明ID
   int64 ethPriorityID = 9;
 }
@@ -164,7 +163,7 @@ message ZkFullExitWitnessInfo {
   string    amount        = 3;
   string    ethAddress     = 4;
   ZkSignature signature   = 5;
-  ZkOperationFee fee    = 6;
+  ZkFee fee    = 6;
 }
 
 message ZkContractToTreeWitnessInfo {
@@ -172,7 +171,7 @@ message ZkContractToTreeWitnessInfo {
   string amount = 2;
   uint64 accountID = 3;
   ZkSignature signature = 4;
-  ZkOperationFee fee    = 6;
+  ZkFee fee    = 6;
 }
 
 //直接产生新的tree地址
@@ -184,7 +183,7 @@ message ZkContractToTreeNewWitnessInfo {
   string ethAddress = 5;
   string layer2Addr = 6;
   ZkSignature signature = 7;
-  ZkOperationFee fee    = 8;
+  ZkFee fee    = 8;
 }
 
 message ZkTreeToContractWitnessInfo {
@@ -192,7 +191,7 @@ message ZkTreeToContractWitnessInfo {
   string amount = 2;
   uint64 accountID = 3;
   ZkSignature signature = 4;
-  ZkOperationFee fee    = 5;
+  ZkFee fee    = 5;
 }
 
 message ZkFeeWitnessInfo {
@@ -211,7 +210,7 @@ message ZkMintNFTWitnessInfo {
   uint64    createSerialID = 6;
   string    amount        = 7;
   ZkSignature signature   = 8;
-  ZkOperationFee fee    = 9;
+  ZkFee fee    = 9;
 }
 
 
@@ -226,7 +225,7 @@ message ZkWithdrawNFTWitnessInfo {
   string    initMintAmount        = 8;
   ZkSignature signature   = 9;
   string    ethAddress     = 11;
-  ZkOperationFee fee    = 12;
+  ZkFee fee    = 12;
 }
 
 message ZkTransferNFTWitnessInfo {
@@ -235,7 +234,7 @@ message ZkTransferNFTWitnessInfo {
   uint64 NFTTokenID = 3;
   string amount     = 4;
   ZkSignature signature = 6;
-  ZkOperationFee fee    = 7;
+  ZkFee fee    = 7;
 }
 
 message ZkSwapOrderInfo {
@@ -253,7 +252,7 @@ message ZkSwapWitnessInfo {
   string    rightDealAmount = 4;
   ZkSwapOrderInfo left = 5;
   ZkSwapOrderInfo right = 6;
-  ZkOperationFee fee    = 7;
+  ZkFee fee    = 7;
 }
 
 message OperationSpecialInfo {

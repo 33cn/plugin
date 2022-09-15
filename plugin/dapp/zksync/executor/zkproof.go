@@ -674,7 +674,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
 					change, _ := new(big.Int).SetString(operation.Amount, 10)
-					fee, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					//add fee
 					change = new(big.Int).Add(change, fee)
 					if change.Cmp(balance) > 0 {
@@ -707,7 +707,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				} else {
 					balance, _ := new(big.Int).SetString(fromTokenBalance.GetBalance(), 10)
 					change, _ := new(big.Int).SetString(operation.Amount, 10)
-					fee, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					//add fee
 					change = new(big.Int).Add(change, fee)
 					if change.Cmp(balance) > 0 {
@@ -723,7 +723,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					}
 				}
 				change, _ := new(big.Int).SetString(operation.Amount, 10)
-				toFee, _ := new(big.Int).SetString(operation.Fee.ToFee, 10)
+				toFee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 				newToChange := new(big.Int).Sub(change, toFee)
 				if toTokenBalance == nil {
 					toTokenBalance = &zt.TokenBalance{
@@ -756,7 +756,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				} else {
 					balance, _ := new(big.Int).SetString(fromTokenBalance.GetBalance(), 10)
 					change, _ := new(big.Int).SetString(operation.Amount, 10)
-					fee, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					//add fee
 					change = new(big.Int).Add(change, fee)
 					if change.Cmp(balance) > 0 {
@@ -766,7 +766,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				}
 
 				change, _ := new(big.Int).SetString(operation.Amount, 10)
-				toFee, _ := new(big.Int).SetString(operation.Fee.ToFee, 10)
+				toFee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 				newToChange := new(big.Int).Sub(change, toFee)
 				toLeaf := &zt.HistoryLeaf{
 					AccountId:   operation.GetToAccountID(),
@@ -804,7 +804,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					return nil, errors.New(fmt.Sprintf("token=%d not exist", operation.TokenID))
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.Balance, 10)
-					fee, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					tokenBalance.Balance = new(big.Int).Sub(balance, fee).String()
 				}
 				accountMap[operation.ProxyID] = fromLeaf
@@ -912,7 +912,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				}
 				//taker 2nd fee
 				change, _ = new(big.Int).SetString(operation.RightDealAmount, 10)
-				fee, _ := new(big.Int).SetString(operation.Fee.ToFee, 10)
+				fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 				if fee.Cmp(change) > 0 {
 					return nil, errors.New("change not enough to fee to taker")
 				}
@@ -953,7 +953,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 				}
 				newBalance := new(big.Int).Sub(balance, change)
 				//1st fee
-				fee, _ = new(big.Int).SetString(operation.Fee.FromFee, 10)
+				fee, _ = new(big.Int).SetString(operation.Fee.Fee, 10)
 				if fee.Cmp(newBalance) > 0 {
 					return nil, errors.New("change not enough to fee to taker")
 				}
@@ -1138,7 +1138,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					return nil, errors.New("mint nft token not exist")
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-					change, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					change, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					if change.Cmp(balance) > 0 {
 						return nil, errors.New("mint nft fee balance not enough")
 					}
@@ -1254,7 +1254,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					return nil, errors.New("withdraw nft fee token not exist")
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-					change, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					change, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					if change.Cmp(balance) > 0 {
 						return nil, errors.New("withdraw nft fee balance not enough")
 					}
@@ -1294,7 +1294,7 @@ func getHistoryAccountByRoot(localdb dbm.KV, chainTitleId uint64, targetRootHash
 					return nil, errors.New("transfer nft fee token not exist")
 				} else {
 					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-					change, _ := new(big.Int).SetString(operation.Fee.FromFee, 10)
+					change, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
 					if change.Cmp(balance) > 0 {
 						return nil, errors.New("withdraw nft fee balance not enough")
 					}
@@ -1920,7 +1920,7 @@ func getDepositOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
-	withdraw := &zt.ZkWithdrawWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	withdraw := &zt.ZkWithdrawWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	withdraw.AccountID = zt.Byte2Uint64(chunk[start:end])
@@ -1935,7 +1935,7 @@ func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
 	withdraw.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	withdraw.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	withdraw.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Withdraw{Withdraw: withdraw}}
 	return &zt.ZkOperation{Ty: zt.TyWithdrawAction, Op: special}
@@ -1944,7 +1944,7 @@ func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
 func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
 	leftOrder := &zt.ZkSwapOrderInfo{}
 	rightOrder := &zt.ZkSwapOrderInfo{}
-	operation := &zt.ZkSwapWitnessInfo{Left: leftOrder, Right: rightOrder, Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkSwapWitnessInfo{Left: leftOrder, Right: rightOrder, Fee: &zt.ZkFee{}}
 
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
@@ -1971,11 +1971,11 @@ func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
 	//1st fee, left's fee
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
 	//2nd fee, right's fee
-	operation.Fee.ToFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Swap{Swap: operation}}
 	return &zt.ZkOperation{Ty: zt.TySwapAction, Op: special}
@@ -2014,7 +2014,7 @@ func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTransferWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkTransferWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.FromAccountID = zt.Byte2Uint64(chunk[start:end])
@@ -2029,17 +2029,14 @@ func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
-	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.ToFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: operation}}
 	return &zt.ZkOperation{Ty: zt.TyTransferAction, Op: special}
 }
 
 func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTransferToNewWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkTransferToNewWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.FromAccountID = zt.Byte2Uint64(chunk[start:end])
@@ -2060,10 +2057,7 @@ func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.Layer2Addr = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
-	start = end
-	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.ToFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferToNew{TransferToNew: operation}}
 	return &zt.ZkOperation{Ty: zt.TyTransferToNewAction, Op: special}
@@ -2091,7 +2085,7 @@ func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkProxyExitWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkProxyExitWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	//proxy id
@@ -2111,14 +2105,14 @@ func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ProxyExit{ProxyExit: operation}}
 	return &zt.ZkOperation{Ty: zt.TyProxyExitAction, Op: special}
 }
 
 func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkFullExitWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkFullExitWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
@@ -2133,7 +2127,7 @@ func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_FullExit{FullExit: operation}}
 	return &zt.ZkOperation{Ty: zt.TyFullExitAction, Op: special}
@@ -2156,7 +2150,7 @@ func getFeeOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkMintNFTWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkMintNFTWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.MintAcctID = zt.Byte2Uint64(chunk[start:end])
@@ -2182,14 +2176,14 @@ func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.Fee.TokenID = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_MintNFT{MintNFT: operation}}
 	return &zt.ZkOperation{Ty: zt.TyMintNFTAction, Op: special}
 }
 
 func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkWithdrawNFTWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkWithdrawNFTWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	//fromId
@@ -2230,14 +2224,14 @@ func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.Fee.TokenID = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_WithdrawNFT{WithdrawNFT: operation}}
 	return &zt.ZkOperation{Ty: zt.TyWithdrawNFTAction, Op: special}
 }
 
 func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTransferNFTWitnessInfo{Fee: &zt.ZkOperationFee{}}
+	operation := &zt.ZkTransferNFTWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.FromAccountID = zt.Byte2Uint64(chunk[start:end])
@@ -2256,7 +2250,7 @@ func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation.Fee.TokenID = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
-	operation.Fee.FromFee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferNFT{TransferNFT: operation}}
 	return &zt.ZkOperation{Ty: zt.TyTransferNFTAction, Op: special}
