@@ -667,7 +667,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 		ToAccountId:   zt.SystemTree2ContractAcctId,
 		Signature:     payload.Signature,
 	}
-	receipt, err := a.ZkTransfer(transfer)
+	receipt, err := a.transfer(transfer, zt.TyTreeToContractAction)
 	if err != nil {
 		return nil, errors.Wrapf(err, "transfer")
 	}
@@ -997,6 +997,10 @@ func (a *Action) transferProc(fromAcctId, toAcctId, tokenId uint64, fromAmount, 
 }
 
 func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
+	return a.transfer(payload, zt.TyTransferAction)
+}
+
+func (a *Action) transfer(payload *zt.ZkTransfer, actionTy int32) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 
 	err := checkParam(payload.Amount)
@@ -1011,8 +1015,8 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
-	//加上手续费
-	totalFromAmount, fromFee, err := getAmountWithFee(a.statedb, zt.TyTransferAction, payload.Amount, payload.TokenId)
+	//加上手续费, 按actionTy获取fee
+	totalFromAmount, fromFee, err := getAmountWithFee(a.statedb, actionTy, payload.Amount, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAmountWithFee")
 	}
@@ -1047,7 +1051,7 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
-		TxType:      zt.TyTransferAction,
+		TxType:      zt.TyTransferAction, //这个类型给电路使用, tree2contract和transfer共用相同电路类型,减少电路规模
 		SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: special}},
 	}
 
@@ -1952,8 +1956,13 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
-	if _, ok := new(big.Int).SetString(payload.Amount, 10); !ok {
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "decimal amount=%s", payload.Amount)
+	}
+	//contract2tree action涉及到合约的精度，fee不能小于最小精度1e10,也就是小数后8位
+	if payload.ActionTy == zt.TyContractToTreeAction && amountInt.Cmp(big.NewInt(1e10)) < 0 {
+		return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need big than 1e10")
 	}
 	//fee 压缩格式检查
 	err := checkPackValue(payload.Amount, zt.PacFeeManBitWidth)
