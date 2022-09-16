@@ -617,6 +617,39 @@ func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error
 	return res, nil
 }
 
+func (z *zksync) Query_GetHaveCommitProofStatusById(in *zt.ZkQueryReq) (types.Message, error) {
+	if in.GetChainTitleId() == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+	}
+	chainId := zt.ZkParaChainInnerTitleId
+	lastProof, err := getLastCommitProofData(z.GetStateDB(), chainId)
+	if err != nil {
+		return nil, errors.Wrap(err, "get last commit Proof")
+	}
+	//get未处理的证明的最大id
+	maxRecordId, err := getMaxRecordProofIdData(z.GetStateDB(), chainId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getMaxRecordProofId")
+	}
+	if maxRecordId.Data == 0 {
+		maxRecordId.Data = int64(lastProof.ProofId)
+	}
+	ret := &zt.ZkQueryProofStatusResp{
+		ProofId:                in.ProofId,
+		TxHash:                 "",
+		LatestCommitProofState: lastProof,
+		MaxRecordId:            maxRecordId.Data,
+	}
+	if in.ProofId != 0 {
+		recordProof, err := getRecordProof(z.GetStateDB(), chainId, in.ProofId)
+		if err != nil {
+			return nil, err
+		}
+		ret.CommitProofState = recordProof
+	}
+	return ret, nil
+}
+
 // Query_GetCommitProofById 根据proofId获取commitProof信息
 func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, error) {
 	if in.GetChainTitleId() == 0 {
