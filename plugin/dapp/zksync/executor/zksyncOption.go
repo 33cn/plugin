@@ -274,6 +274,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	if amount_len < 11 {
 		return nil, errors.New("Too Little value to do operation TreeToContract")
 	}
+	payload.Amount = payload.Amount[:len(payload.Amount)-10] + zt.TenZeroStr
 
 	err := checkParam(payload.Amount)
 	if err != nil {
@@ -419,28 +420,9 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	payload.Amount = payload.Amount[:len(payload.Amount)-10] + zt.TenZeroStr
 
 	err := checkParam(payload.Amount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkParam")
-	}
-	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
-	}
-	if leaf == nil {
-		return nil, errors.New("account not exist")
-	}
-	err = authVerification(payload.Signature.PubKey, leaf.GetPubKey())
-	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
-	}
-
-	token, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.AccountId, payload.TokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
-	}
-	err = checkAmount(token, payload.GetAmount())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.checkAmount")
+	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
+	if payload.ToAcctId != zt.SystemTree2ContractAcctId {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "toAcctId not systemId=%d", zt.SystemTree2ContractAcctId)
 	}
 
 	para := &zt.ZkTransfer{
@@ -454,27 +436,6 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	if nil != err {
 		return nil, err
 	}
-
-	//balancekv, balancehistory, err := updateTokenBalance(leaf.AccountId, payload.TokenId, payload.Amount, zt.Sub, a.statedb)
-	//if nil != err {
-	//	return nil, err
-	//}
-	//kvs = append(kvs, balancekv)
-	//
-	//updateLeafKvs, err := updateLeafOpt(a.statedb, leaf, payload.GetTokenId(), zt.Sub)
-	//if nil != err {
-	//	return nil, err
-	//}
-	//kvs = append(kvs, updateLeafKvs...)
-	//
-	//l2BalanceLog := &zt.AccountTokenBalanceReceipt{}
-	//l2BalanceLog.EthAddress = leaf.EthAddress
-	//l2BalanceLog.Chain33Addr = leaf.Chain33Addr
-	//l2BalanceLog.TokenId = payload.GetTokenId()
-	//l2BalanceLog.AccountId = leaf.AccountId
-	//l2BalanceLog.BalanceBefore = balancehistory.before
-	//l2BalanceLog.BalanceAfter = balancehistory.after
-	//l2Log := &types.ReceiptLog{Ty: zt.TyTreeToContractLog, Log: types.Encode(l2BalanceLog)}
 
 	//更新合约账户
 	symbol, err := getTokenIdSymbol(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
