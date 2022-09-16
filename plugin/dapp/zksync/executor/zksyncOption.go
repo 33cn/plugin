@@ -173,14 +173,11 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	feeInfo, err := GetFeeData(a.statedb, zt.TyWithdrawAction, payload.TokenId)
+
+	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, zt.TyWithdrawAction, payload.Amount, payload.TokenId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getFeeData")
+		return nil, err
 	}
-	//加上手续费
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
-	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId())
 	if err != nil {
@@ -198,7 +195,7 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(token, totalAmount)
+	err = checkAmount(token, amountPlusFee)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
@@ -210,12 +207,12 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		//ethAddr nil
 		Signature: payload.Signature,
 		Fee: &zt.ZkFee{
-			Fee:     feeInfo.Fee,
+			Fee:     fee,
 			TokenID: payload.TokenId,
 		},
 	}
 
-	balancekv, balancehistory, err := updateTokenBalance(payload.AccountId, special.TokenID, totalAmount, zt.Sub, a.statedb)
+	balancekv, balancehistory, err := updateTokenBalance(payload.AccountId, special.TokenID, amountPlusFee, zt.Sub, a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateTokenBalance")
 	}
@@ -240,7 +237,7 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -263,6 +260,7 @@ func checkAmount(token *zt.TokenBalance, amount string) error {
 }
 
 //合约　----> L2
+
 func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, error) {
 	//保证精度是小数后8位，eth转换去掉10位
 	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
@@ -298,70 +296,32 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	return a.contractToTreeNewProc(payload, tokenId)
 }
 
-//合约余额转入到已经存在l2账户的叶子中
+//合约----> L2账户操作，
+//SystemTree2ContractAcctId ----> 目的账户
+//在合约上销毁等量的余额
 func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId uint64) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-
-	leaf, err := GetLeafByAccountId(a.statedb, payload.GetToAccountId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	payload4transfer := &zt.ZkTransfer{
+		TokenId:       tokenId,
+		Amount:        payload.Amount,
+		FromAccountId: zt.SystemTree2ContractAcctId,
+		ToAccountId:   payload.ToAccountId,
 	}
-	if leaf == nil {
-		return nil, errors.New("account:" + strconv.FormatUint(payload.ToAccountId, 10) + " not exist")
-	}
-
-	feeInfo, err := GetFeeData(a.statedb, zt.TyContractToTreeAction, tokenId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getFeeData")
-	}
-
-	special := &zt.ZkContractToTreeWitnessInfo{
-		TokenID:   tokenId,
-		Amount:    payload.Amount,
-		AccountID: payload.ToAccountId,
-		Signature: payload.Signature,
-		//fee调换一下
-		Fee: &zt.ZkFee{
-			Fee: feeInfo.Fee,
-		},
-	}
-
-	balancekv, balancehistory, err := updateTokenBalance(leaf.AccountId, special.TokenID, special.Amount, zt.Add, a.statedb)
+	receipts, err := a.l2TransferProc(payload4transfer)
 	if nil != err {
 		return nil, err
 	}
-	kvs = append(kvs, balancekv)
 
-	updateLeafKvs, err := updateLeafOpt(a.statedb, leaf, tokenId, zt.Add)
+	amountPlusFee, _, err := GetAmountWithFee(a.statedb, zt.TyTransferAction, payload.Amount, tokenId)
 	if nil != err {
 		return nil, err
 	}
-	kvs = append(kvs, updateLeafKvs...)
-
-	l2BalanceLog := &zt.AccountTokenBalanceReceipt{}
-	l2BalanceLog.EthAddress = leaf.EthAddress
-	l2BalanceLog.Chain33Addr = leaf.Chain33Addr
-	l2BalanceLog.TokenId = tokenId
-	l2BalanceLog.AccountId = leaf.AccountId
-	l2BalanceLog.BalanceBefore = balancehistory.before
-	l2BalanceLog.BalanceAfter = balancehistory.after
-	l2Log := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(l2BalanceLog)}
-	logs = append(logs, l2Log)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	//更新合约账户
-	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), payload.TokenSymbol, zt.Sub, payload.FromExec)
+	contractReceipt, err := a.UpdateContractAccount(amountPlusFee, payload.TokenSymbol, zt.Sub, payload.FromExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
 	receipts = mergeReceipt(receipts, contractReceipt)
-
-	feeReceipt, err := a.MakeFeeLog(special.Fee.Fee, tokenId, payload.Signature)
-	if err != nil {
-		return nil, errors.Wrapf(err, "MakeFeeLog")
-	}
-	receipts = mergeReceipt(receipts, feeReceipt)
 
 	return receipts, nil
 }
@@ -408,8 +368,14 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 	return mergeReceipt(receiptsTransfer, contractReceipt), nil
 }
 
-//L2 ---->  合约账户
+//L2 ---->  合约账户(树)
+//操作１. FromAccountId -----> SystemTree2ContractAcctId，执行ZkTransfer
+//操作2. UpdateContractAccount，在合约内部的铸币操作
 func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
+	//保证精度是小数后8位，eth转换去掉10位
+	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "coin precision is not defual=%d", types.DefaultCoinPrecision)
+	}
 	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
 	amount_len := len(payload.Amount)
 	if amount_len < 11 {
@@ -492,8 +458,7 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 			mergeReceipt(&execReceipt, r)
 		}
 
-		//r, err := assetWithdrawBalance(accountdb, a.fromaddr, shortChange)
-		r, err := accountdb.ExecWithdraw(a.execaddr, a.fromaddr, shortChange)
+		r, err := accountdb.Burn(a.fromaddr, shortChange)
 		return mergeReceipt(&execReceipt, r), err
 	}
 	//deposit
@@ -509,7 +474,7 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 	return &execReceipt, nil
 }
 
-func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
+func (a *Action) l2TransferProc(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -521,14 +486,10 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
-	feeInfo, err := GetFeeData(a.statedb, zt.TyTransferAction, payload.TokenId)
+	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, zt.TyTransferAction, payload.Amount, payload.TokenId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getFeeData")
+		return nil, err
 	}
-	//加上手续费
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
-	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
 	if err != nil {
@@ -537,21 +498,17 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
-	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
-	}
 	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(fromToken, totalAmount)
+	err = checkAmount(fromToken, amountPlusFee)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
 	//1.操作from 账户
-	fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub, a.statedb, fromLeaf, false)
+	fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), amountPlusFee, zt.Sub, a.statedb, fromLeaf, false)
 	if nil != err {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
@@ -583,12 +540,108 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	//2.操作交易费账户
-	feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
+}
+
+func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
+	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if fromLeaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "authVerification")
+	}
+
+	return a.l2TransferProc(payload)
+
+	//var logs []*types.ReceiptLog
+	//var kvs []*types.KeyValue
+	//
+	//err := checkParam(payload.Amount)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "checkParam")
+	//}
+	//if !checkIsNormalToken(payload.TokenId) {
+	//	return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
+	//}
+	//
+	//feeInfo, err := GetFeeData(a.statedb, zt.TyTransferAction, payload.TokenId)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "getFeeData")
+	//}
+	////加上手续费
+	//amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	//feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
+	//totalAmount := new(big.Int).Add(amountInt, feeInt).String()
+	//
+	//fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	//}
+	//if fromLeaf == nil {
+	//	return nil, errors.New("account not exist")
+	//}
+	//err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "authVerification")
+	//}
+	//fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+	//}
+	//err = checkAmount(fromToken, totalAmount)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "db.checkAmount")
+	//}
+	//
+	////1.操作from 账户
+	//fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub, a.statedb, fromLeaf, false)
+	//if nil != err {
+	//	return nil, errors.Wrapf(err, "applyL2AccountUpdate")
+	//}
+	//kvs = append(kvs, fromKVs...)
+	//
+	////2.操作to 账户
+	//toLeaf, err := GetLeafByAccountId(a.statedb, payload.ToAccountId)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	//}
+	//if toLeaf == nil {
+	//	return nil, errors.New("account not exist")
+	//}
+	//
+	//toKVs, _, receiptTo, err := applyL2AccountUpdate(toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add, a.statedb, toLeaf, false)
+	//if nil != err {
+	//	return nil, errors.Wrapf(err, "applyL2AccountUpdate")
+	//}
+	//kvs = append(kvs, toKVs...)
+	//transferLog := &zt.TransferReceipt4L2{
+	//	From: receiptFrom,
+	//	To:   receiptTo,
+	//}
+	//l2Transferlog := &types.ReceiptLog{
+	//	Ty:  zt.TyTransferLog,
+	//	Log: types.Encode(transferLog),
+	//}
+	//logs = append(logs, l2Transferlog)
+	//receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	//
+	////2.操作交易费账户
+	//feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
+	//if err != nil {
+	//	return nil, errors.Wrapf(err, "MakeFeeLog")
+	//}
+	//receipts = mergeReceipt(receipts, feeReceipt)
+	//return receipts, nil
 }
 
 func (a *Action) transferToNewProcess(accountIdFrom uint64, toChain33Address, toEthAddress, totalAmount, amount string, tokenID uint64) (*types.Receipt, error) {
@@ -655,15 +708,10 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	feeInfo, err := GetFeeData(a.statedb, zt.TyTransferToNewAction, payload.TokenId)
+	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, zt.TyTransferToNewAction, payload.Amount, payload.TokenId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getFeeData")
+		return nil, err
 	}
-
-	//加上手续费
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
-	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
 	if err != nil {
@@ -695,57 +743,17 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(fromToken, totalAmount)
+	err = checkAmount(fromToken, amountPlusFee)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
-	receipts, err := a.transferToNewInnerProcess(fromLeaf, payload.GetToChain33Address(), payload.GetToEthAddress(), totalAmount, payload.Amount, payload.GetTokenId())
+	receipts, err := a.transferToNewInnerProcess(fromLeaf, payload.GetToChain33Address(), payload.GetToEthAddress(), amountPlusFee, payload.Amount, payload.GetTokenId())
 	if nil != err {
 		return nil, err
 	}
 
-	//toLeaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetToChain33Address(), payload.GetToEthAddress())
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress")
-	//}
-	//if toLeaf != nil {
-	//	return nil, errors.New("to account already exist")
-	//}
-	//
-	////1.操作from 账户
-	//fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub, a.statedb, fromLeaf, false)
-	//if nil != err {
-	//	return nil, errors.Wrapf(err, "applyL2AccountUpdate")
-	//}
-	//kvs = append(kvs, fromKVs...)
-	//
-	////1.操作to 账户
-	//lastAccountID, err := getLatestAccountID(a.statedb)
-	//if lastAccountID == zt.SystemDefaultAcctId {
-	//	return nil, errors.Wrapf(err, "getLatestAccountID")
-	//}
-	//accountIDNew := uint64(lastAccountID) + 1
-	//
-	//toKVs, _, receiptTo, err := applyL2AccountCreate(accountIDNew, operationInfo.TokenID, operationInfo.Amount, payload.GetToEthAddress(), payload.GetToChain33Address(), a.statedb, false)
-	//if nil != err {
-	//	return nil, errors.Wrapf(err, "applyL2AccountCreate")
-	//}
-	//kvs = append(kvs, toKVs...)
-	//
-	//transferToNewLog := &zt.TransferReceipt4L2{
-	//	From: receiptFrom,
-	//	To:   receiptTo,
-	//}
-	//l2Transferlog := &types.ReceiptLog{
-	//	Ty:  zt.TyTransferToNewLog,
-	//	Log: types.Encode(transferToNewLog),
-	//}
-	//logs = append(logs, l2Transferlog)
-	//
-	//receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-
-	feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -771,8 +779,9 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "GetLeafByAccountId")
 	}
-	if targetLeaf == nil {
-		return nil, errors.New("account not exist")
+	//如果targetId已经设置过pubkey，说明用户地址设置没错，由用户自己提款
+	if targetLeaf == nil || targetLeaf.PubKey != nil {
+		return nil, errors.Wrapf(types.ErrNotAllow, "target account=%d not exist or pubkey existed", payload.TargetId)
 	}
 
 	targetToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.TargetId, payload.TokenId)
@@ -826,7 +835,7 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(fee, payload.TokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -1130,7 +1139,7 @@ func checkPackValue(amount string, manMaxBitWidth int64) error {
 	return nil
 }
 
-func (a *Action) MakeFeeLog(amount string, tokenId uint64, sign *zt.ZkSignature) (*types.Receipt, error) {
+func (a *Action) MakeFeeLog(amount string, tokenId uint64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var err error
@@ -1212,7 +1221,6 @@ func GetFeeData(db dbm.KV, actionTy int32, tokenId uint64) (*zt.ZkFee, error) {
 	feeInfo := &zt.ZkFee{
 		TokenID: tokenId,
 	}
-
 	//从db读取
 	fee, err := getDbFeeData(db, actionTy, tokenId)
 	if err != nil {
@@ -1221,6 +1229,26 @@ func GetFeeData(db dbm.KV, actionTy int32, tokenId uint64) (*zt.ZkFee, error) {
 	feeInfo.Fee = fee
 
 	return feeInfo, nil
+}
+
+func GetAmountWithFee(db dbm.KV, actionTy int32, amount string, tokenId uint64) (amountPlusFee, fee string, err error) {
+	feeInfo, err := GetFeeData(db, actionTy, tokenId)
+	if err != nil {
+		return "", "", errors.Wrapf(err, "getFeeData")
+	}
+
+	//加上手续费
+	amountInt, ok := new(big.Int).SetString(amount, 10)
+	if !ok {
+		return "", "", errors.Wrapf(types.ErrInvalidParam, "decode amount=%s", amount)
+	}
+	fromFeeInt, ok := new(big.Int).SetString(feeInfo.Fee, 10)
+	if !ok {
+		return "", "", errors.Wrapf(types.ErrInvalidParam, "fromFee=%s", feeInfo.Fee)
+	}
+	totalFromAmount := new(big.Int).Add(amountInt, fromFeeInt)
+
+	return totalFromAmount.String(), fromFeeInt.String(), nil
 }
 
 func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
@@ -1417,7 +1445,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -1547,7 +1575,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -1608,27 +1636,6 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	feeAmount := feeInfo.Fee
 
 	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
-
-	//nftStatus, err := getNFTById(a.statedb, payload.NFTTokenId)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "getNFTById=%d", payload.NFTTokenId)
-	//}
-
-	//special := &zt.ZkTransferNFTWitnessInfo{
-	//	FromAccountId: payload.FromAccountId,
-	//	RecipientId:   payload.RecipientId,
-	//	NFTTokenId:    payload.NFTTokenId,
-	//	Amount:        new(big.Int).SetUint64(payload.Amount).String(),
-	//	Signature:     payload.Signature,
-	//	Fee:           feeInfo,
-	//}
-	//operationInfo := &zt.OperationInfo{
-	//	BlockHeight: uint64(a.height),
-	//	TxIndex:     uint32(a.index),
-	//	TxType:      zt.TyTransferNFTAction,
-	//
-	//	SpecialInfo: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferNFT{TransferNFT: special}},
-	//}
 
 	//1. calc fee
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.FromAccountId)
@@ -1692,7 +1699,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeAmount, feeTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
