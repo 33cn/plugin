@@ -207,7 +207,7 @@ type ZkFee struct {
 	unknownFields protoimpl.UnknownFields
 
 	FromFee string `protobuf:"bytes,1,opt,name=fromFee,proto3" json:"fromFee,omitempty"`
-	ToFee   string `protobuf:"bytes,2,opt,name=toFee,proto3" json:"toFee,omitempty"`      //一般都从from账户收Fee，可能特殊需求也收To的Fee
+	ToFee   string `protobuf:"bytes,2,opt,name=toFee,proto3" json:"toFee,omitempty"`      //一般都从from账户收Fee，可能特殊需求也收To的Fee,比如swap可能需要
 	TokenId uint64 `protobuf:"varint,3,opt,name=tokenId,proto3" json:"tokenId,omitempty"` //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
 }
 
