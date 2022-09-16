@@ -306,12 +306,12 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 		FromAccountId: zt.SystemTree2ContractAcctId,
 		ToAccountId:   payload.ToAccountId,
 	}
-	receipts, err := a.l2TransferProc(payload4transfer)
+	receipts, err := a.l2TransferProc(payload4transfer, zt.TyContractToTreeAction)
 	if nil != err {
 		return nil, err
 	}
 
-	amountPlusFee, _, err := GetAmountWithFee(a.statedb, zt.TyTransferAction, payload.Amount, tokenId)
+	amountPlusFee, _, err := GetAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId)
 	if nil != err {
 		return nil, err
 	}
@@ -354,13 +354,18 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 		return a.contractToTreeAcctIdProc(payload, tokenId)
 	}
 
+	amountPlusFee, _, err := GetAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId)
+	if nil != err {
+		return nil, err
+	}
+
 	//更新合约账户
-	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), payload.TokenSymbol, zt.Sub, payload.FromExec)
+	contractReceipt, err := a.UpdateContractAccount(amountPlusFee, payload.TokenSymbol, zt.Sub, payload.FromExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
 
-	receiptsTransfer, err := a.transferToNewProcess(zt.SystemTree2ContractAcctId, payload.ToLayer2Addr, payload.ToEthAddr, payload.Amount, payload.Amount, tokenId)
+	receiptsTransfer, err := a.transferToNewProcess(zt.SystemTree2ContractAcctId, payload.ToLayer2Addr, payload.ToEthAddr, amountPlusFee, payload.Amount, tokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "transfer2NewProc")
 	}
@@ -474,7 +479,7 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 	return &execReceipt, nil
 }
 
-func (a *Action) l2TransferProc(payload *zt.ZkTransfer) (*types.Receipt, error) {
+func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -486,7 +491,7 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
-	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, zt.TyTransferAction, payload.Amount, payload.TokenId)
+	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, actionTy, payload.Amount, payload.TokenId)
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +566,7 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
-	return a.l2TransferProc(payload)
+	return a.l2TransferProc(payload, zt.TyTransferAction)
 
 	//var logs []*types.ReceiptLog
 	//var kvs []*types.KeyValue
