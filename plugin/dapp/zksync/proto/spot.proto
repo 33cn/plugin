@@ -1,7 +1,7 @@
 syntax = "proto3";
 package types;
 import "witness.proto";
-option go_package = "../types";
+option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
 message SpotAction {
   oneof value {
