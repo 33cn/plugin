@@ -42,6 +42,13 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 }
 
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
+	defaultAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.SystemDefaultAcctId,
+		Chain33Addr: "3",
+		TokenHash:   []byte("0"),
+	}
+
 	//default system FeeAccount
 	feeAccount := &zt.Leaf{
 		EthAddress:  ethFeeAddr,
@@ -53,10 +60,17 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	NFTAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemNFTAccountId,
-		Chain33Addr: "0",
+		Chain33Addr: "1",
 		TokenHash:   []byte("0"),
 	}
-	return []*zt.Leaf{feeAccount, NFTAccount}
+
+	treeToContractAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.SystemTree2ContractAcctId,
+		Chain33Addr: "2",
+		TokenHash:   []byte("0"),
+	}
+	return []*zt.Leaf{defaultAccount, feeAccount, NFTAccount, treeToContractAccount}
 }
 
 //获取系统初始root，如果未设置fee账户，缺省采用配置文件，
@@ -96,32 +110,20 @@ func NewInitAccount(ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, error
 	}
 	var kvs []*types.KeyValue
 	initLeafAccounts := getInitAccountLeaf(ethFeeAddr, chain33FeeAddr)
-	leafFeeAccount := initLeafAccounts[0]
-	kv := &types.KeyValue{
-		Key:   GetAccountIdPrimaryKey(leafFeeAccount.AccountId),
-		Value: types.Encode(leafFeeAccount),
-	}
-	kvs = append(kvs, kv)
 
-	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leafFeeAccount.Chain33Addr, leafFeeAccount.EthAddress),
-		Value: types.Encode(leafFeeAccount),
-	}
-	kvs = append(kvs, kv)
+	for _, leaf := range initLeafAccounts {
+		kv := &types.KeyValue{
+			Key:   GetAccountIdPrimaryKey(leaf.AccountId),
+			Value: types.Encode(leaf),
+		}
+		kvs = append(kvs, kv)
 
-	//NFT account
-	leafNFTAccount := initLeafAccounts[1]
-	kv = &types.KeyValue{
-		Key:   GetAccountIdPrimaryKey(leafNFTAccount.AccountId),
-		Value: types.Encode(leafNFTAccount),
+		kv = &types.KeyValue{
+			Key:   GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),
+			Value: types.Encode(leaf),
+		}
+		kvs = append(kvs, kv)
 	}
-	kvs = append(kvs, kv)
-
-	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leafNFTAccount.Chain33Addr, leafNFTAccount.EthAddress),
-		Value: types.Encode(leafNFTAccount),
-	}
-	kvs = append(kvs, kv)
 
 	return kvs, nil
 }

@@ -283,7 +283,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "checkPackVal")
 	}
 
-	tokenId, err := GetTokenSymbolId(a.statedb, payload.TokenSymbol)
+	tokenId, err := GetTokenIdBySymbol(a.statedb, payload.TokenSymbol)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +409,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 
 	//更新合约账户
-	symbol, err := getTokenIdSymbol(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
+	symbol, err := getSymbolByTokenId(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
 	if err != nil {
 		return nil, err
 	}
@@ -567,86 +567,6 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	}
 
 	return a.l2TransferProc(payload, zt.TyTransferAction)
-
-	//var logs []*types.ReceiptLog
-	//var kvs []*types.KeyValue
-	//
-	//err := checkParam(payload.Amount)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "checkParam")
-	//}
-	//if !checkIsNormalToken(payload.TokenId) {
-	//	return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
-	//}
-	//
-	//feeInfo, err := GetFeeData(a.statedb, zt.TyTransferAction, payload.TokenId)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "getFeeData")
-	//}
-	////加上手续费
-	//amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	//feeInt, _ := new(big.Int).SetString(feeInfo.Fee, 10)
-	//totalAmount := new(big.Int).Add(amountInt, feeInt).String()
-	//
-	//fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
-	//}
-	//if fromLeaf == nil {
-	//	return nil, errors.New("account not exist")
-	//}
-	//err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "authVerification")
-	//}
-	//fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
-	//}
-	//err = checkAmount(fromToken, totalAmount)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "db.checkAmount")
-	//}
-	//
-	////1.操作from 账户
-	//fromKVs, _, receiptFrom, err := applyL2AccountUpdate(fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub, a.statedb, fromLeaf, false)
-	//if nil != err {
-	//	return nil, errors.Wrapf(err, "applyL2AccountUpdate")
-	//}
-	//kvs = append(kvs, fromKVs...)
-	//
-	////2.操作to 账户
-	//toLeaf, err := GetLeafByAccountId(a.statedb, payload.ToAccountId)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
-	//}
-	//if toLeaf == nil {
-	//	return nil, errors.New("account not exist")
-	//}
-	//
-	//toKVs, _, receiptTo, err := applyL2AccountUpdate(toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add, a.statedb, toLeaf, false)
-	//if nil != err {
-	//	return nil, errors.Wrapf(err, "applyL2AccountUpdate")
-	//}
-	//kvs = append(kvs, toKVs...)
-	//transferLog := &zt.TransferReceipt4L2{
-	//	From: receiptFrom,
-	//	To:   receiptTo,
-	//}
-	//l2Transferlog := &types.ReceiptLog{
-	//	Ty:  zt.TyTransferLog,
-	//	Log: types.Encode(transferLog),
-	//}
-	//logs = append(logs, l2Transferlog)
-	//receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	//
-	////2.操作交易费账户
-	//feeReceipt, err := a.MakeFeeLog(feeInfo.Fee, payload.TokenId, payload.Signature)
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "MakeFeeLog")
-	//}
-	//receipts = mergeReceipt(receipts, feeReceipt)
-	//return receipts, nil
 }
 
 func (a *Action) transferToNewProcess(accountIdFrom uint64, toChain33Address, toEthAddress, totalAmount, amount string, tokenID uint64) (*types.Receipt, error) {
@@ -1867,12 +1787,12 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	}
 
 	//首先检查symbol是否存在，symbol存在不允许修改
-	id, err := GetTokenSymbolId(a.statedb, payload.Symbol)
+	id, err := GetTokenIdBySymbol(a.statedb, payload.Symbol)
 	if !isNotFound(errors.Cause(err)) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%d", err, id)
 	}
 
-	lastSym, err := getTokenIdSymbol(a.statedb, payload.Id)
+	lastSym, err := getSymbolByTokenId(a.statedb, payload.Id)
 	if isNotFound(errors.Cause(err)) {
 		return makeSetTokenSymbolReceipt(payload.Id, "", payload.Symbol), nil
 	}
@@ -1882,11 +1802,11 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	return makeSetTokenSymbolReceipt(payload.Id, lastSym, payload.Symbol), nil
 }
 
-func getTokenIdSymbol(db dbm.KV, tokenId string) (string, error) {
+func getSymbolByTokenId(db dbm.KV, tokenId string) (string, error) {
 	key := GetTokenSymbolKey(tokenId)
 	r, err := db.Get(key)
 	if err != nil {
-		return "", errors.Wrapf(err, "getTokenIdSymbol.getDb")
+		return "", errors.Wrapf(err, "getSymbolByTokenId.getDb")
 	}
 	var symbol zt.ZkTokenSymbol
 	err = types.Decode(r, &symbol)
@@ -1896,14 +1816,14 @@ func getTokenIdSymbol(db dbm.KV, tokenId string) (string, error) {
 	return symbol.Symbol, nil
 }
 
-func GetTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
+func GetTokenIdBySymbol(db dbm.KV, symbol string) (uint64, error) {
 	if len(symbol) <= 0 {
 		return 0, errors.Wrapf(types.ErrInvalidParam, "symbol nil=%s", symbol)
 	}
 	key := GetTokenSymbolIdKey(symbol)
 	r, err := db.Get(key)
 	if err != nil {
-		return 0, errors.Wrapf(err, "getTokenIdSymbol.getDb")
+		return 0, errors.Wrapf(err, "GetTokenIdBySymbol.getDb")
 	}
 	var token types.ReqString
 	err = types.Decode(r, &token)

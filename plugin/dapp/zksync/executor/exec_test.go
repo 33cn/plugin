@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -319,17 +318,15 @@ manager=[
 #可把二层交易费提取到ETH的地址
 ethFeeAddr="832367164346888E248bd58b9A5f480299F1e88d"
 #二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址
-zkChain33FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
+layer2FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
 `
-	chain33TestCfg = types.NewChain33Config(strings.Replace(cfgstring4execTest, "Title=\"local\"", "Title=\"chain33\"", 1))
-	zksyncHandle   *zksync
-	dbHanleGlobal  db.DB
-	index          = 0
-	dbDir          = ""
+	chain33TestCfg    = types.NewChain33Config(strings.Replace(cfgstring4execTest, "Title=\"local\"", "Title=\"chain33\"", 1))
+	zksyncHandle      *zksync
+	dbHanleGlobal     db.DB
+	index             = 0
+	dbDir             = ""
 	firstUserAccoutID = zksyncTypes.SystemTree2ContractAcctId + 1
 )
-
-
 
 func initSetup() {
 	env := execEnv4perf{
@@ -444,8 +441,6 @@ func TestWithdraw(t *testing.T) {
 	assert.Nil(t, err)
 	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
-
-
 
 	//测试提币
 	receipt, localReceipt, err = withdraw(zksyncHandle, acc1privkey, accountID, tokenId, "200")
@@ -645,6 +640,11 @@ func TestTree2contract(t *testing.T) {
 	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
+	symbol := "ETH"
+	receipt4SetToken, _, err := setTokenSymbol(zksyncHandle, mpriKey, symbol, "0")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt4SetToken.Ty, int32(types.ExecOk))
+
 	//测试将L2账户余额转入到合约
 	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
 	assert.Nil(t, err)
@@ -660,7 +660,7 @@ func TestTree2contract(t *testing.T) {
 
 	//确认合约余额
 	zkQueryReq := &zksyncTypes.ZkQueryReq{
-		TokenSymbol:       strconv.Itoa(int(tokenId)),
+		TokenSymbol:       symbol,
 		Chain33WalletAddr: "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
 	}
 	msg, err := zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
@@ -711,6 +711,11 @@ func TestContract2Tree(t *testing.T) {
 	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
+	symbol := "ETH"
+	receipt4SetToken, _, err := setTokenSymbol(zksyncHandle, mpriKey, symbol, "0")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt4SetToken.Ty, int32(types.ExecOk))
+
 	//测试将L2账户余额转入到合约
 	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
 	assert.Nil(t, err)
@@ -726,7 +731,7 @@ func TestContract2Tree(t *testing.T) {
 
 	//确认合约余额
 	zkQueryReq := &zksyncTypes.ZkQueryReq{
-		TokenSymbol:       strconv.Itoa(int(tokenId)),
+		TokenSymbol:       symbol,
 		Chain33WalletAddr: "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
 	}
 	msg, err := zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
@@ -737,7 +742,7 @@ func TestContract2Tree(t *testing.T) {
 	fmt.Println("accountInfo =", accountInfo)
 
 	//测试将合约余额转回到L2账户余额
-	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, symbol, "10000000000")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
@@ -758,7 +763,8 @@ func TestContract2Tree(t *testing.T) {
 	fmt.Println("accountInfo =", accountInfo)
 }
 
-func TestProxyExit(t *testing.T) {
+//通过proxyExit模式进行提币时，需要确保未设置公钥，否则提币失败
+func TestProxyExitFaid(t *testing.T) {
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -824,6 +830,75 @@ func TestProxyExit(t *testing.T) {
 
 	//测试提币
 	receipt, localReceipt, err = proxyExit(zksyncHandle, acc1privkey, targetAccountID, proxyAccountID, tokenId)
+	assert.NotNil(t, err)
+}
+
+func TestProxyExit(t *testing.T) {
+	initSetup()
+	defer util.CloseTestDB(dbDir, dbHanleGlobal)
+
+	fmt.Println("Going to do TestSpot")
+
+	var driver secp256k1.Driver
+
+	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
+	assert.Nil(t, err)
+	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
+	assert.Nil(t, err)
+
+	queueId := uint64(0)
+	tokenId := uint64(0)
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	targetAccountID := uint64(4)
+	//确认balance
+	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), targetAccountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
+
+	//设置公钥
+	//acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
+	//assert.Nil(t, err)
+	//acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	//assert.Nil(t, err)
+	//err = setPubKey(zksyncHandle, acc1privkey, targetAccountID)
+	//assert.Nil(t, err)
+	//leaf.Chain33Addr=2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1
+	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
+
+	// 再次铸币
+	// zkAddr0: 12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d *** l2addr0: 27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97 *** key: 0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4
+	queueId = uint64(1)
+	tokenId = uint64(0)
+	receipt, localReceipt, err = deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97")
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+	assert.Greater(t, len(localReceipt.KV), 0)
+	proxyAccountID := uint64(5)
+	//确认balance
+	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), proxyAccountID, tokenId)
+	assert.Nil(t, err)
+	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyProxyExitAction], zksyncTypes.TyProxyExitAction)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+
+	//设置公钥
+	acc1privkeySli, err := chain33Common.FromHex("0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4")
+	assert.Nil(t, err)
+	acc1privkey, err := driver.PrivKeyFromBytes(acc1privkeySli)
+	assert.Nil(t, err)
+	err = setPubKey(zksyncHandle, acc1privkey, proxyAccountID)
+	assert.Nil(t, err)
+
+	//测试提币
+	receipt, localReceipt, err = proxyExit(zksyncHandle, acc1privkey, targetAccountID, proxyAccountID, tokenId)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
@@ -849,52 +924,6 @@ func TestProxyExit(t *testing.T) {
 	assert.Equal(t, acc4token1Balance.Balance, proxyExitFee)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
 }
-
-//func TestFullExit(t *testing.T) {
-//	initSetup()
-//	defer util.CloseTestDB(dbDir, dbHanleGlobal)
-//
-//	fmt.Println("Going to do TestSpot")
-//
-//	var driver secp256k1.Driver
-//
-//	//12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
-//	managerPrivateKeySli, err := chain33Common.FromHex("4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01")
-//	assert.Nil(t, err)
-//	mpriKey, err := driver.PrivKeyFromBytes(managerPrivateKeySli)
-//	assert.Nil(t, err)
-//
-//	queueId := uint64(0)
-//	tokenId := uint64(0)
-//	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
-//	assert.Nil(t, err)
-//	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-//	assert.Greater(t, len(localReceipt.KV), 0)
-//	accountID := uint64(firstUserAccoutID)
-//	//确认balance
-//	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
-//	assert.Nil(t, err)
-//	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
-//	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
-//
-//	//测试提币
-//	receipt, localReceipt, err = fullExit(zksyncHandle, mpriKey, accountID, tokenId, queueId+1)
-//	assert.Nil(t, err)
-//	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-//	assert.Greater(t, len(localReceipt.KV), 0)
-//	//确认balance
-//	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
-//	assert.Nil(t, err)
-//	assert.Equal(t, acc4token1Balance.Balance, "0")
-//	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
-//
-//	//检查交易费的账户余额
-//	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), zksyncTypes.SystemFeeAccountId, tokenId)
-//	assert.Nil(t, err)
-//	forceExitFee := "1000000"
-//	assert.Equal(t, acc4token1Balance.Balance, forceExitFee)
-//	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
-//}
 
 func TestMintNFT(t *testing.T) {
 	initSetup()
@@ -1433,8 +1462,8 @@ func withdraw(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID,
 func setTxFee(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId uint64, amount string, actionTy int32) (*types.Receipt, *types.LocalDBSet, error) {
 	//zksyncTypes.TyWithdrawAction
 	setFee := &zksyncTypes.ZkSetFee{
-		TokenId: tokenId,
-		Amount: amount,
+		TokenId:  tokenId,
+		Amount:   amount,
 		ActionTy: actionTy,
 	}
 
@@ -1466,7 +1495,6 @@ func setTxFee(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId ui
 
 	return receipt, nil, nil
 }
-
 
 func transfer(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccountId, toAccountId, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	transfer := &zksyncTypes.ZkTransfer{
@@ -1564,6 +1592,7 @@ func tree2contract(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 		TokenId:   tokenId,
 		Amount:    amount,
 		AccountId: accountID,
+		ToAcctId:  zksyncTypes.SystemTree2ContractAcctId,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1603,11 +1632,45 @@ func tree2contract(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 	return receipt, localDBSet, nil
 }
 
-func contract2tree(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accountID, tokenId uint64, amount string) (*types.Receipt, *types.LocalDBSet, error) {
+func setTokenSymbol(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, symbol, tokenID string) (*types.Receipt, *types.LocalDBSet, error) {
+	contract2tree := &zksyncTypes.ZkTokenSymbol{
+		Id:     tokenID,
+		Symbol: symbol,
+	}
+
+	action := &zksyncTypes.ZksyncAction{
+		Ty: zksyncTypes.TySetTokenSymbolAction,
+		Value: &zksyncTypes.ZksyncAction_SetTokenSymbol{
+			SetTokenSymbol: contract2tree,
+		},
+	}
+
+	tx := createChain33Tx(privateKey, action, zksyncTypes.Zksync, int64(1e8))
+	if err := types.Decode(tx.Payload, action); nil != err {
+		return nil, nil, err
+	}
+
+	t1 := time.Now()
+	receipt, err := zksyncHandle.Exec_SetTokenSymbol(action.GetSetTokenSymbol(), tx, index)
+	if nil != err {
+		return nil, nil, err
+	}
+
+	for _, kv := range receipt.KV {
+		_ = zksyncHandle.GetStateDB().Set(kv.GetKey(), kv.GetValue())
+	}
+	fmt.Println("exec contract2tree cost time = ", time.Since(t1))
+	index++
+	fmt.Println("contract2tree cost time = ", time.Since(t1))
+
+	return receipt, nil, nil
+}
+
+func contract2tree(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, toAccountID uint64, symbol, amount string) (*types.Receipt, *types.LocalDBSet, error) {
 	contract2tree := &zksyncTypes.ZkContractToTree{
-		TokenId:   tokenId,
-		Amount:    amount,
-		AccountId: accountID,
+		TokenSymbol: symbol,
+		Amount:      amount,
+		ToAccountId: toAccountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1649,9 +1712,9 @@ func contract2tree(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 
 func proxyExit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, targetAccountID, proxyAccountID, tokenId uint64) (*types.Receipt, *types.LocalDBSet, error) {
 	proxyExit := &zksyncTypes.ZkProxyExit{
-		TokenId:   tokenId,
-		ProxyId:proxyAccountID,
-		TargetId:targetAccountID,
+		TokenId:  tokenId,
+		ProxyId:  proxyAccountID,
+		TargetId: targetAccountID,
 	}
 
 	action := &zksyncTypes.ZksyncAction{
