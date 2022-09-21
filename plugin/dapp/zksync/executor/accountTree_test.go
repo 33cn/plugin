@@ -48,6 +48,10 @@ func TestAccountHash(t *testing.T) {
 func TestInitRoot(t *testing.T) {
 	ethFeeAddr := "832367164346888E248bd58b9A5f480299F1e88d"
 	chain33FeeAddr := "2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
-	root := getInitTreeRoot(nil, ethFeeAddr, chain33FeeAddr)
+
+	ethFeeAddrDecimal, _ := zt.HexAddr2Decimal(ethFeeAddr)
+	chain33FeeAddrDecimal, _ := zt.HexAddr2Decimal(chain33FeeAddr)
+	root := getInitTreeRoot(nil, ethFeeAddrDecimal, chain33FeeAddrDecimal)
+	//root 10504580268631993551496725490269484542796412497472171704511488082346545793961
 	t.Log("root", root)
 }

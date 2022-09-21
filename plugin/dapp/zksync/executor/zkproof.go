@@ -166,7 +166,10 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.ZkVerifyKey{Key: payload.Key}
+	newKey := &zt.ZkVerifyKey{
+		Key:          payload.Key,
+		ChainTitleId: chainId,
+	}
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
@@ -268,7 +271,8 @@ func (a *Action) verifyInitRoot(payload *zt.ZkCommitProof) error {
 
 	initRoot := getInitTreeRoot(a.api.GetConfig(), payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
 	if initRoot != payload.OldTreeRoot {
-		return errors.Wrapf(types.ErrInvalidParam, "calcInitRoot=%s, proof's oldRoot=%s", initRoot, payload.OldTreeRoot)
+		return errors.Wrapf(types.ErrInvalidParam, "calcInitRoot=%s, proof's oldRoot=%s, EthFeeAddrDecimal=%s, L2FeeAddrDecimal=%s",
+			initRoot, payload.OldTreeRoot, payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
 	}
 	return nil
 }

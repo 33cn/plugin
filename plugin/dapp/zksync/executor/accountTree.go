@@ -74,11 +74,10 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 }
 
 //获取系统初始root，如果未设置fee账户，缺省采用配置文件，
-func getInitTreeRoot(cfg *types.Chain33Config, ethAddr, chain33Addr string) string {
+func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, chain33AddrDecimal string) string {
 	var feeEth, fee33 string
-	if len(ethAddr) > 0 && len(chain33Addr) > 0 {
-		feeEth, _ = zt.HexAddr2Decimal(ethAddr)
-		fee33, _ = zt.HexAddr2Decimal(chain33Addr)
+	if len(ethAddrDecimal) > 0 && len(chain33AddrDecimal) > 0 {
+		feeEth, fee33 = ethAddrDecimal, chain33AddrDecimal
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
