@@ -1,13 +1,15 @@
 package rollup
 
+import rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
+
 // Config rollup 配置
 type Config struct {
-	ValidatorBlsKey string
-	CommitInterval  int32
+	SignTxKey      string
+	CommitBlsKey   string
+	CommitInterval int32
 }
 
 type validatorSignMsgSet struct {
-	msg   []byte
-	pubs  [][]byte
-	signs [][]byte
+	self   *rtypes.ValidatorSignMsg
+	others []*rtypes.ValidatorSignMsg
 }

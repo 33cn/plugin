@@ -4,61 +4,61 @@ import (
 	"bytes"
 	"sync"
 
-	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
 type batchCache struct {
-	lock sync.RWMutex
-
-	batchCache   map[int64]*rolluptypes.CommitBatch
-	signMsgCache map[int64]*validatorSignMsgSet
+	lock            sync.RWMutex
+	currCommitRound int64
+	batchCache      map[int64]*rtypes.CommitBatch
+	signMsgCache    map[int64]*validatorSignMsgSet
 }
 
-func newCache() *batchCache {
+func newCache(commitRound int64) *batchCache {
 
-	c := &batchCache{}
-	c.batchCache = make(map[int64]*rolluptypes.CommitBatch, 32)
+	c := &batchCache{currCommitRound: commitRound}
+	c.batchCache = make(map[int64]*rtypes.CommitBatch, 32)
 	c.signMsgCache = make(map[int64]*validatorSignMsgSet, 32)
 	return c
 }
 
-func (c *batchCache) addCommitBatch(batch *rolluptypes.CommitBatch) {
+func (c *batchCache) addCommitBatch(batch *rtypes.CommitBatch) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
 	c.batchCache[batch.CommitRound] = batch
 }
 
-func (c *batchCache) getCommitBatch(round int64) *rolluptypes.CommitBatch {
+func (c *batchCache) getCommitBatch(round int64) *rtypes.CommitBatch {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	return c.batchCache[round]
 }
 
-func (c *batchCache) addSignMsg(msg []byte, sign *rolluptypes.ValidatorSignMsg) {
-
+func (c *batchCache) addValidatorSign(isSelf bool, sign *rtypes.ValidatorSignMsg) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-
 	set, ok := c.signMsgCache[sign.CommitRound]
-
 	if !ok {
-		set = &validatorSignMsgSet{msg: msg}
+		set = &validatorSignMsgSet{others: make([]*rtypes.ValidatorSignMsg, 0, 8)}
 		c.signMsgCache[sign.CommitRound] = set
+	}
+	if isSelf {
+		set.self = sign
+		return
 	}
 
 	// 检测是否有重复
-	for _, pub := range set.pubs {
-		if bytes.Equal(sign.PubKey, pub) {
+	for _, other := range set.others {
+		if bytes.Equal(sign.PubKey, other.PubKey) {
 			return
 		}
 	}
-	set.pubs = append(set.pubs, sign.PubKey)
-	set.signs = append(set.signs, sign.Signature)
+	set.others = append(set.others, sign)
 }
 
-func (c *batchCache) getSignSet(round int64) *validatorSignMsgSet {
+func (c *batchCache) getLocalSignSet(round int64) *validatorSignMsgSet {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -66,26 +66,33 @@ func (c *batchCache) getSignSet(round int64) *validatorSignMsgSet {
 	return c.signMsgCache[round]
 }
 
-// remove already commit batch and sign
-func (c *batchCache) remove() {
+// clean already commit batch and sign
+func (c *batchCache) remove(commitRound int64) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
+	for i := c.currCommitRound; i <= commitRound; i++ {
+		delete(c.signMsgCache, i)
+		delete(c.batchCache, i)
+	}
+	c.currCommitRound = commitRound
 }
 
 //
 
-func (c *batchCache) getAggregateBatch(round int64, aggreFunc aggreSignFunc) *rolluptypes.CommitBatch {
+func (c *batchCache) getAggregateBatch(round int64, aggreSign aggreSignFunc) *rtypes.CommitBatch {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	signSet := c.signMsgCache[round]
-	pubs, aggreSign := aggreFunc(signSet)
+	pubs, aSign := aggreSign(signSet)
 	if pubs == nil {
 		return nil
 	}
 	batch := c.batchCache[round]
 
 	batch.ValidatorPubs = pubs
-	batch.AggregateValidatorSign = aggreSign
+	batch.AggregateValidatorSign = aSign
 	return batch
 }

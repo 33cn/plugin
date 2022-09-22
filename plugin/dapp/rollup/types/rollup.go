@@ -2,6 +2,7 @@ package types
 
 import (
 	"reflect"
+	"strings"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -94,4 +95,14 @@ func (r *rollupType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取合约log相关信息
 func (r *rollupType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
+}
+
+
+
+// FormatHexPubKey format
+func FormatHexPubKey(pubKey string) string{
+	if strings.HasPrefix(pubKey, "0x") {
+		return pubKey[2:]
+	}
+	return pubKey
 }

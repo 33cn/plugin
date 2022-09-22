@@ -1,6 +1,8 @@
 package rollup
 
 import (
+	"bytes"
+	"encoding/hex"
 	"sync"
 
 	"github.com/33cn/chain33/common"
@@ -14,20 +16,32 @@ type validator struct {
 	lock             sync.RWMutex
 	enable           bool
 	commitRoundIndex int32
-	privKey          crypto.PrivKey
-	validators       map[string]struct{}
+	blsKey           crypto.PrivKey
+	validators       map[string]int
 
 	blsDriver crypto.Crypto
 	status    *rolluptypes.RollupStatus
 }
 
-func (v *validator) init(cfg Config, vals []byte) {
+func (v *validator) init(cfg Config, valPubs []string, status *rolluptypes.RollupStatus) {
 
 	var err error
 	v.blsDriver, err = crypto.Load(bls.Name, -1)
 	if err != nil {
-		panic("load bls err" + err.Error())
+		panic("load bls driver err:" + err.Error())
 	}
+	privByte, err := common.FromHex(cfg.CommitBlsKey)
+	if err != nil {
+		panic("decode hex bls key err:" + err.Error())
+	}
+	key, err := v.blsDriver.PrivKeyFromBytes(privByte)
+	if err != nil {
+		panic("new bls priv key err:" + err.Error())
+	}
+
+	v.blsKey = key
+	v.updateValidators(valPubs)
+
 }
 
 // 获取本节点下一个提交轮数
@@ -36,7 +50,7 @@ func (v *validator) getNextCommitRound() int64 {
 	v.lock.RLock()
 	defer v.lock.RUnlock()
 
-	commitRound := v.status.CurrCommitRound
+	commitRound := v.status.GetCommitRound()
 	valCount := int64(len(v.validators))
 	for {
 		commitRound++
@@ -45,6 +59,14 @@ func (v *validator) getNextCommitRound() int64 {
 		}
 	}
 	return commitRound
+}
+
+func (v *validator) updateRollupStatus(status *rolluptypes.RollupStatus) {
+
+	v.lock.Lock()
+	defer v.lock.Unlock()
+
+	v.status = status
 }
 
 // 其他节点未提交相应round数据, 导致超时
@@ -56,7 +78,7 @@ func (v *validator) isRollupCommitTimeout() (currRound int64, timeout bool) {
 	now := types.Now().Unix()
 
 	if now-v.status.Timestamp >= rolluptypes.RollupCommitTimeout {
-		return v.status.CurrCommitRound, true
+		return v.status.GetCommitRound(), true
 	}
 
 	return 0, false
@@ -68,12 +90,25 @@ func (v *validator) getValidatorCount() int {
 	return len(v.validators)
 }
 
-func (v *validator) updateValidators(vals []byte) {
+func (v *validator) updateValidators(valPubs []string) {
 	v.lock.Lock()
 	defer v.lock.Unlock()
+
+	v.validators = make(map[string]int, len(valPubs))
+
+	for i, pub := range valPubs {
+		pub = rolluptypes.FormatHexPubKey(pub)
+		v.validators[pub] = i
+	}
+
+	blsPub := hex.EncodeToString(v.blsKey.PubKey().Bytes())
+	idx, ok := v.validators[blsPub]
+
+	v.enable = ok
+	v.commitRoundIndex = int32(idx)
 }
 
-func (v *validator) validateSignMsg(msg []byte, sign *rolluptypes.ValidatorSignMsg) bool {
+func (v *validator) validateSignMsg(sign *rolluptypes.ValidatorSignMsg) bool {
 
 	v.lock.RLock()
 	defer v.lock.RUnlock()
@@ -86,15 +121,16 @@ func (v *validator) validateSignMsg(msg []byte, sign *rolluptypes.ValidatorSignM
 	return true
 }
 
-func (v *validator) sign(round int64, batch *rolluptypes.BlockBatch) ([]byte, *rolluptypes.ValidatorSignMsg) {
+func (v *validator) sign(round int64, batch *rolluptypes.BlockBatch) *rolluptypes.ValidatorSignMsg {
 
 	msg := common.Sha256(types.Encode(batch))
 	sign := &rolluptypes.ValidatorSignMsg{}
-	sign.Signature = v.privKey.Sign(msg).Bytes()
-	sign.PubKey = v.privKey.PubKey().Bytes()
+	sign.Signature = v.blsKey.Sign(msg).Bytes()
+	sign.PubKey = v.blsKey.PubKey().Bytes()
 	sign.CommitRound = round
+	sign.MsgHash = msg
 
-	return msg, sign
+	return sign
 }
 
 type aggreSignFunc = func(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []byte)
@@ -102,25 +138,46 @@ type aggreSignFunc = func(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []
 func (v *validator) aggregateSign(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []byte) {
 
 	valCount := v.getValidatorCount()
-	// 2/3 共识
+	// 2/3 共识, 向上取整
 	minSignCount := valCount * 2 / 3
-	if len(set.signs) < minSignCount {
-		rlog.Debug("aggregateSign", "valCount", valCount, "signCount", len(set.signs))
+	if valCount%3 != 0 {
+		minSignCount++
+	}
+	if len(set.others)+1 < minSignCount {
+		rlog.Debug("aggregateSign", "commitRound", set.self.CommitRound,
+			"valCount", valCount, "signCount", len(set.others)+1)
 		return nil, nil
 	}
 
-	signs := make([]crypto.Signature, 0, minSignCount)
-	for _, sign := range set.signs[:minSignCount] {
-		s, _ := v.blsDriver.SignatureFromBytes(sign)
+	pubs = make([][]byte, 0, len(set.others)+1)
+	signs := make([]crypto.Signature, 0, len(set.others)+1)
+
+	s, _ := v.blsDriver.SignatureFromBytes(set.self.Signature)
+	signs = append(signs, s)
+	pubs = append(pubs, set.self.PubKey)
+	for i := 0; i < len(set.others); {
+		sign := set.others[i]
+		// 数据哈希不一致, 非法签名
+		if !bytes.Equal(sign.MsgHash, set.self.MsgHash) {
+
+			set.others = append(set.others[:i], set.others[i+1:]...)
+			rlog.Error("aggregateSign msgHash not equal", "commitRound", set.self.CommitRound,
+				"selfHash", hex.EncodeToString(set.self.MsgHash),
+				"otherHash", hex.EncodeToString(sign.MsgHash))
+			continue
+		}
+		s, _ = v.blsDriver.SignatureFromBytes(sign.GetSignature())
 		signs = append(signs, s)
+		pubs = append(pubs, sign.PubKey)
+		i++
 	}
 
 	blsAggre := v.blsDriver.(crypto.AggregateCrypto)
-	s, err := blsAggre.Aggregate(signs)
+	s, err := blsAggre.Aggregate(signs[:minSignCount])
 	if err != nil {
-		rlog.Error("aggregateSign", "aggre err", err)
+		rlog.Error("aggregateSign", "commitRound", set.self.CommitRound, "aggre err", err)
 		return nil, nil
 	}
 
-	return set.pubs[:minSignCount], s.Bytes()
+	return pubs[:minSignCount], s.Bytes()
 }

@@ -20,18 +20,12 @@ func (r *RollUp) SubMsg(msg *queue.Message) {
 
 		return
 	}
-	rlog.Debug("subMsg", "topic", data.Topic, "from", data.From)
+
 	if data.Topic != psValidatorSignTopic {
 		return
 	}
-	signMsg := &rolluptypes.ValidatorSignMsg{}
-	err := types.Decode(data.GetData(), signMsg)
-	if err != nil {
-		rlog.Error("decode", "topic", data.Topic, "err", err)
-		return
-	}
 
-	r.subChan <- signMsg
+	r.subChan <- data
 }
 
 func (r *RollUp) trySubTopic(topic string) {
@@ -66,6 +60,28 @@ func (r *RollUp) tryPubMsg(topic string, msg []byte) {
 func (r *RollUp) handleSubMsg() {
 
 	for {
+
+		select {
+
+		case <-r.ctx.Done():
+			return
+
+		case data := <-r.subChan:
+
+			signMsg := &rolluptypes.ValidatorSignMsg{}
+			err := types.Decode(data.GetData(), signMsg)
+			if err != nil {
+				rlog.Error("handleSubMsg", "from", data.From, "decode err", err)
+				break
+			}
+
+			if !r.val.validateSignMsg(signMsg) {
+				rlog.Error("handleSubMsg", "from", data.From, "decode err", err)
+				break
+			}
+
+			r.cache.addValidatorSign(false, signMsg)
+		}
 
 	}
 }

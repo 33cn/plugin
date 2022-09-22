@@ -51,8 +51,4 @@ func (r *rollup) GetDriverName() string {
 	return driverName
 }
 
-// CheckTx 实现自定义检验交易接口，供框架调用
-func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
-	// implement code
-	return nil
-}
+

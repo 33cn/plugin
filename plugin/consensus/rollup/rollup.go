@@ -2,11 +2,11 @@ package rollup
 
 import (
 	"context"
-	"sync"
+	"runtime"
 	"time"
 
 	"github.com/33cn/chain33/rpc/grpcclient"
-	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/system/consensus"
@@ -31,24 +31,18 @@ type RollUp struct {
 	nextBuildHeight int64
 	nextBuildRound  int64
 	cfg             Config
-	op              *optimistic
 
-	initDone        chan struct{}
-	nextCommitRound int64
+	initDone chan struct{}
 
-	currCommitter string
-
-	batchCache           sync.Map
-	signMsgCache         sync.Map
 	ctx                  context.Context
 	base                 *consensus.BaseClient
 	chainCfg             *types.Chain33Config
-	subChan              chan *rolluptypes.ValidatorSignMsg
+	subChan              chan *types.TopicData
 	minBuildRoundInCache int64
 	mainChainGrpc        types.Chain33Client
 	val                  *validator
 	cache                *batchCache
-	validatorUpdate chan struct{}
+	validatorUpdate      chan struct{}
 }
 
 // Init init
@@ -62,27 +56,36 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 
 	r.chainCfg = chainCfg
 	r.ctx = base.Context
-	r.op = &optimistic{}
 	r.initDone = make(chan struct{})
-	r.subChan = make(chan *rolluptypes.ValidatorSignMsg, 32)
+	r.subChan = make(chan *types.TopicData, 32)
 
 	var err error
 	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)
 	if err != nil {
-		panic(err)
+		panic("init main chain grpc client err:" + err.Error())
 	}
 
-	go r.fetchRollupState()
+	go r.initJob()
 	go r.startRollupRoutine()
 }
 
 func (r *RollUp) initJob() {
 
+	valPubs := r.getValidatorPubKeys()
+	status := r.getRollupStatus()
+	for len(valPubs) == 0 || status == nil {
+		rlog.Error("initJob", "status", status, "valPubs", valPubs)
+		time.Sleep(time.Second)
+		valPubs = r.getValidatorPubKeys()
+		status = r.getRollupStatus()
+	}
+	val := &validator{}
+	val.init(r.cfg, valPubs, status)
+	r.nextBuildRound = status.CommitRound + 1
+	r.nextBuildHeight = status.CommitBlockHeight + 1
+	r.cache = newCache(status.CommitRound)
+	r.trySubTopic(psValidatorSignTopic)
 	r.initDone <- struct{}{}
-}
-
-func (r *RollUp) fetchRollupState() {
-
 }
 
 func (r *RollUp) startRollupRoutine() {
@@ -94,6 +97,13 @@ func (r *RollUp) startRollupRoutine() {
 		go r.handleBuildBatch()
 		go r.handleCommitBatch()
 		go r.syncRollupState()
+
+		n := runtime.NumCPU()
+
+		for i := 0; i < n; i++ {
+
+			go r.handleSubMsg()
+		}
 	}
 }
 
@@ -116,19 +126,49 @@ func (r *RollUp) handleBuildBatch() {
 				"round", r.nextBuildRound, "msg", "wait more block")
 			continue
 		}
+		blkBatch := r.GetCommitBatch(blocks)
+		batch := &rtypes.CommitBatch{
+			ChainTitle:  r.chainCfg.GetTitle(),
+			CommitRound: r.nextBuildRound,
+			Batch:       blkBatch,
+		}
 
-		batch := r.op.GetCommitBatch(blocks)
 		r.nextBuildRound++
 		r.nextBuildHeight += int64(len(blocks))
-		msg, sign := r.val.sign(batch.GetCommitRound(), batch.GetBatch())
+		sign := r.val.sign(batch.GetCommitRound(), batch.GetBatch())
 
 		r.cache.addCommitBatch(batch)
-		r.cache.addSignMsg(msg, sign)
+		r.cache.addValidatorSign(true, sign)
 		r.tryPubMsg(psValidatorSignTopic, types.Encode(sign))
 	}
 }
 
 // 同步链上已提交的最新 blockHeight 和 commitRound, 维护batch缓存
 func (r *RollUp) syncRollupState() {
+
+	ticker := time.NewTicker(time.Minute)
+
+	for {
+
+		select {
+		case <-ticker.C:
+			valPubs := r.getValidatorPubKeys()
+			status := r.getRollupStatus()
+
+			if len(valPubs) > 0 {
+				r.val.updateValidators(valPubs)
+			}
+
+			if status != nil {
+				r.val.updateRollupStatus(status)
+				r.cache.remove(status.CommitRound)
+			}
+
+		case <-r.ctx.Done():
+			ticker.Stop()
+			return
+		}
+
+	}
 
 }
