@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/hex"
+
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
@@ -16,10 +17,10 @@ func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
 		return types.ErrActionNotSupport
 	}
 
-	if action.Ty == rtypes.TyCommitBatchAction {
+	if action.Ty == rtypes.TyCommitAction {
 
 		err = r.checkCommitBatch(action.GetCommitBatch())
-	}else {
+	} else {
 		err = types.ErrActionNotSupport
 	}
 	if err != nil {
@@ -28,9 +29,6 @@ func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
 	return err
 }
 
-
-
-func (r *rollup) checkCommitBatch(commit *rtypes.CommitBatch) error {
-
+func (r *rollup) checkCommitBatch(commit *rtypes.CheckPoint) error {
 
 }

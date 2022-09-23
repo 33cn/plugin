@@ -41,7 +41,7 @@ type RollUp struct {
 	minBuildRoundInCache int64
 	mainChainGrpc        types.Chain33Client
 	val                  *validator
-	cache                *batchCache
+	cache                *commitCache
 	validatorUpdate      chan struct{}
 }
 
@@ -83,7 +83,7 @@ func (r *RollUp) initJob() {
 	val.init(r.cfg, valPubs, status)
 	r.nextBuildRound = status.CommitRound + 1
 	r.nextBuildHeight = status.CommitBlockHeight + 1
-	r.cache = newCache(status.CommitRound)
+	r.cache = newCommitCache(status.CommitRound)
 	r.trySubTopic(psValidatorSignTopic)
 	r.initDone <- struct{}{}
 }
@@ -95,7 +95,7 @@ func (r *RollUp) startRollupRoutine() {
 	if r.val.enable {
 
 		go r.handleBuildBatch()
-		go r.handleCommitBatch()
+		go r.handleCommitCheckPoint()
 		go r.syncRollupState()
 
 		n := runtime.NumCPU()
@@ -126,8 +126,8 @@ func (r *RollUp) handleBuildBatch() {
 				"round", r.nextBuildRound, "msg", "wait more block")
 			continue
 		}
-		blkBatch := r.GetCommitBatch(blocks)
-		batch := &rtypes.CommitBatch{
+		blkBatch := r.buildBlockBatch(blocks)
+		batch := &rtypes.CheckPoint{
 			ChainTitle:  r.chainCfg.GetTitle(),
 			CommitRound: r.nextBuildRound,
 			Batch:       blkBatch,
@@ -137,9 +137,9 @@ func (r *RollUp) handleBuildBatch() {
 		r.nextBuildHeight += int64(len(blocks))
 		sign := r.val.sign(batch.GetCommitRound(), batch.GetBatch())
 
-		r.cache.addCommitBatch(batch)
+		r.cache.addCheckPoint(batch)
 		r.cache.addValidatorSign(true, sign)
-		r.tryPubMsg(psValidatorSignTopic, types.Encode(sign))
+		r.tryPubMsg(psValidatorSignTopic, types.Encode(sign), sign.CommitRound)
 	}
 }
 
@@ -161,7 +161,7 @@ func (r *RollUp) syncRollupState() {
 
 			if status != nil {
 				r.val.updateRollupStatus(status)
-				r.cache.remove(status.CommitRound)
+				r.cache.cleanHistory(status.CommitRound)
 			}
 
 		case <-r.ctx.Done():

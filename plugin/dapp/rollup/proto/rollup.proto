@@ -9,7 +9,7 @@ option go_package = "../types";
 message RollupAction {
     int32 ty = 1;
     oneof value {
-        CommitBatch commitBatch = 2;
+        CheckPoint commit = 2;
     }
 }
 
@@ -30,8 +30,8 @@ message ValidatorSignMsg {
     bytes msgHash = 4;
 }
 
-// CommitBatch
-message CommitBatch {
+// CheckPoint
+message CheckPoint {
     string     chainTitle                 = 1;
     int64      commitRound                = 2;
     BlockBatch batch                      = 3;

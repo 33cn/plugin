@@ -12,7 +12,7 @@ import (
  * 关键数据上链（statedb）并生成交易回执（log）
  */
 
-func (r *rollup) Exec_CommitBatch(commit *rolluptypes.CommitBatch, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transaction, index int) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 

@@ -112,12 +112,19 @@ func (v *validator) validateSignMsg(sign *rolluptypes.ValidatorSignMsg) bool {
 
 	v.lock.RLock()
 	defer v.lock.RUnlock()
-	// check round
+	pub := hex.EncodeToString(sign.PubKey)
 
-	// check pub key
+	_, ok := v.validators[pub]
+	if !ok {
+		rlog.Error("validateSignMsg invalid node", "round", sign.CommitRound, "pub", pub)
+		return false
+	}
 
-	// check bls sign
-
+	if err := v.blsDriver.Validate(sign.MsgHash, sign.PubKey, sign.Signature); err != nil {
+		rlog.Error("validateSignMsg invalid sign",
+			"round", sign.CommitRound, "pub", pub, "err", err)
+		return false
+	}
 	return true
 }
 

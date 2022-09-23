@@ -50,5 +50,3 @@ func GetName() string {
 func (r *rollup) GetDriverName() string {
 	return driverName
 }
-
-

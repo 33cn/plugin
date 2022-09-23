@@ -23,9 +23,9 @@ const (
 // action类型id和name，这些常量可以自定义修改
 const (
 	TyUnknowAction = iota + 100
-	TyCommitBatchAction
+	TyCommitAction
 
-	NameCommitBatchAction = "CommitBatch"
+	NameCommitAction = "Commit"
 )
 
 // log类型id值
@@ -43,7 +43,7 @@ var (
 	RollupX = "rollup"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameCommitBatchAction: TyCommitBatchAction,
+		NameCommitAction: TyCommitAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -97,10 +97,8 @@ func (r *rollupType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }
 
-
-
 // FormatHexPubKey format
-func FormatHexPubKey(pubKey string) string{
+func FormatHexPubKey(pubKey string) string {
 	if strings.HasPrefix(pubKey, "0x") {
 		return pubKey[2:]
 	}

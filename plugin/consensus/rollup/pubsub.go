@@ -42,7 +42,7 @@ func (r *RollUp) trySubTopic(topic string) {
 	}
 }
 
-func (r *RollUp) tryPubMsg(topic string, msg []byte) {
+func (r *RollUp) tryPubMsg(topic string, msg []byte, commitRound int64) {
 
 	data := &types.PublishTopicMsg{Topic: topic, Msg: msg}
 	tryCount := 0
@@ -52,7 +52,7 @@ func (r *RollUp) tryPubMsg(topic string, msg []byte) {
 		if err == nil || tryCount >= 3 {
 			break
 		}
-		rlog.Error("tryPubMsg", "topic", topic, "err", err)
+		rlog.Error("tryPubMsg", "topic", topic, "round", commitRound, "err", err)
 		time.Sleep(time.Second)
 	}
 }

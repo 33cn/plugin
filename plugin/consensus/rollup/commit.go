@@ -8,7 +8,7 @@ import (
 	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
-func (r *RollUp) GetCommitBatch(blocks []*types.Block) *rolluptypes.BlockBatch {
+func (r *RollUp) buildBlockBatch(blocks []*types.Block) *rolluptypes.BlockBatch {
 
 	batch := &rolluptypes.BlockBatch{}
 
@@ -40,7 +40,7 @@ func (r *RollUp) GetCommitBatch(blocks []*types.Block) *rolluptypes.BlockBatch {
 	aggreDriver := r.val.blsDriver.(crypto.AggregateCrypto)
 	aggreSign, err := aggreDriver.Aggregate(signs)
 	if err != nil {
-		rlog.Error("GetCommitBatch", "aggregate sign err", aggreSign)
+		rlog.Error("buildBlockBatch", "aggregate sign err", aggreSign)
 		return nil
 	}
 	batch.AggregateTxSign = aggreSign.Bytes()
@@ -48,7 +48,7 @@ func (r *RollUp) GetCommitBatch(blocks []*types.Block) *rolluptypes.BlockBatch {
 }
 
 // 提交共识
-func (r *RollUp) handleCommitBatch() {
+func (r *RollUp) handleCommitCheckPoint() {
 
 	ticker := time.NewTicker(time.Duration(r.cfg.CommitInterval) * time.Second)
 	nextCommitRound := r.val.getNextCommitRound()
@@ -62,9 +62,9 @@ func (r *RollUp) handleCommitBatch() {
 		//case <-
 		case <-ticker.C:
 
-			batch := r.cache.getAggregateBatch(nextCommitRound, r.val.aggregateSign)
+			cp := r.cache.getPreparedCheckPoint(nextCommitRound, r.val.aggregateSign)
 			// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
-			if batch == nil {
+			if cp == nil {
 				continue
 			}
 
@@ -77,9 +77,9 @@ func (r *RollUp) handleCommitBatch() {
 		currRound, timeout := r.val.isRollupCommitTimeout()
 		if timeout {
 
-			batch := r.cache.getAggregateBatch(currRound+1, r.val.aggregateSign)
+			cp := r.cache.getPreparedCheckPoint(currRound+1, r.val.aggregateSign)
 			// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
-			if batch == nil {
+			if cp == nil {
 				continue
 			}
 

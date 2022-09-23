@@ -10,7 +10,7 @@ import (
  * 非关键数据，本地存储(localDB), 用于辅助查询，效率高
  */
 
-func (r *rollup) ExecLocal_CommitBatch(payload *rolluptypes.CommitBatch, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rollup) ExecLocal_CommitBatch(payload *rolluptypes.CheckPoint, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	//implement code, add customize kv to dbSet...
 
