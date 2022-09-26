@@ -4,23 +4,21 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/db/table"
-	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
-	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"math/big"
-
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
-	"github.com/consensys/gnark-crypto/ecc"
-
-	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-
+	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
+	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
+	"hash"
+	"math/big"
 )
 
 func makeSetVerifyKeyReceipt(oldKey, newKey *zt.ZkVerifyKey) *types.Receipt {
@@ -159,10 +157,13 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 
 	oldKey, err := getVerifyKeyData(a.statedb, new(big.Int).SetUint64(chainId).String())
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.ZkVerifyKey{Key: payload.Key}
-
+		key := &zt.ZkVerifyKey{
+			Key:          payload.Key,
+			ChainTitleId: chainId,
+		}
 		return makeSetVerifyKeyReceipt(nil, key), nil
 	}
+
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
@@ -440,14 +441,20 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 	if err != nil {
 		return errors.Wrapf(err, "read public input")
 	}
-
 	//计算pubData hash 需要和commit的一致
+	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	commitPubDataHash := proofCircuit.PubDataCommitment.GetWitnessValue(ecc.BN254)
-	calcPubDataHash := calcPubDataCommitHash(proof.BlockStart, proof.BlockEnd, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
+	calcPubDataHash := calcPubDataCommitHash(mimcHash, proof.BlockStart, proof.BlockEnd, proof.ChainTitleId, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
 	if commitPubDataHash.String() != calcPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "pubData hash not match, PI=%s,calc=%s", commitPubDataHash.String(), calcPubDataHash)
 	}
 
+	//计算onChain pubData hash 需要和commit的一致
+	commitOnChainPubDataHash := proofCircuit.OnChainPubDataCommitment.GetWitnessValue(ecc.BN254)
+	calcOnChainPubDataHash := calcOnChainPubDataCommitHash(mimcHash, proof.ChainTitleId, proof.NewTreeRoot, proof.OnChainPubDatas)
+	if commitOnChainPubDataHash.String() != calcOnChainPubDataHash {
+		return errors.Wrapf(types.ErrInvalidParam, "onChain pubData hash not match, PI=%s,calc=%s", commitOnChainPubDataHash.String(), calcOnChainPubDataHash)
+	}
 	//验证证明
 	ok, err := zksnark.Verify(verifyKey, proof.Proof, proof.PublicInput)
 	if err != nil {
@@ -457,12 +464,9 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 		return errors.Wrapf(types.ErrInvalidParam, "proof verify fail")
 	}
 	return nil
-
 }
 
-func calcPubDataCommitHash(blockStart, blockEnd uint64, oldRoot, newRoot string, pubDatas []string) string {
-	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-
+func calcPubDataCommitHash(mimcHash hash.Hash, blockStart, blockEnd, chainTitleId uint64, oldRoot, newRoot string, pubDatas []string) string {
 	mimcHash.Reset()
 
 	var f fr.Element
@@ -478,6 +482,9 @@ func calcPubDataCommitHash(blockStart, blockEnd uint64, oldRoot, newRoot string,
 	t = f.SetString(newRoot).Bytes()
 	mimcHash.Write(t[:])
 
+	t = f.SetUint64(chainTitleId).Bytes()
+	mimcHash.Write(t[:])
+
 	for _, r := range pubDatas {
 		t = f.SetString(r).Bytes()
 		mimcHash.Write(t[:])
@@ -485,6 +492,28 @@ func calcPubDataCommitHash(blockStart, blockEnd uint64, oldRoot, newRoot string,
 	ret := mimcHash.Sum(nil)
 
 	return f.SetBytes(ret).String()
+}
+
+func calcOnChainPubDataCommitHash(mimcHash hash.Hash, chainTitleId uint64, newRoot string, pubDatas []string) string {
+	mimcHash.Reset()
+	var f fr.Element
+
+	t := f.SetString(newRoot).Bytes()
+	mimcHash.Write(t[:])
+	t = f.SetUint64(chainTitleId).Bytes()
+	mimcHash.Write(t[:])
+
+	sum := mimcHash.Sum(nil)
+
+	for _, p := range pubDatas {
+		mimcHash.Reset()
+		t = f.SetString(p).Bytes()
+		mimcHash.Write(sum)
+		mimcHash.Write(t[:])
+		sum = mimcHash.Sum(nil)
+	}
+
+	return f.SetBytes(sum).String()
 }
 
 //合约管理员或管理员设置在链上的管理员才可设置

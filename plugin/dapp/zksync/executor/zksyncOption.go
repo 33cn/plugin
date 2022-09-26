@@ -1099,7 +1099,15 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
-
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "decimal amount=%s", payload.Amount)
+	}
+	//contract2tree action涉及到合约的精度，fee不能小于最小精度1e10,也就是小数后8位
+	if payload.ActionTy == zt.TyContractToTreeAction && amountInt.Cmp(big.NewInt(1e10)) < 0 {
+		return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need big than 1e10")
+	}
+	//fee 压缩格式检查
 	err := checkPackValue(payload.Amount, zt.PacFeeManBitWidth)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkPackVal")

@@ -138,6 +138,11 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 
 // Query_GetLastCommitProof 获取最新proof信息
 func (z *zksync) Query_GetLastCommitProof(in *zt.ZkChainTitle) (types.Message, error) {
+	//平行链缺省是1
+	if z.GetAPI().GetConfig().IsPara() && in.GetChainTitleId() == 0 {
+		return getLastCommitProofData(z.GetStateDB(), zt.ZkParaChainInnerTitleId)
+	}
+	//主链需要注明不同的平行链titleId
 	if in.GetChainTitleId() <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id less or equal 0")
 	}
@@ -335,5 +340,3 @@ func (z *zksync) Query_GetQueueID(in *types.ReqNil) (types.Message, error) {
 	ethPriorityQueueID, err := getLastEthPriorityQueueID(z.GetStateDB(), 0)
 	return ethPriorityQueueID, err
 }
-
-

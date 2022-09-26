@@ -4719,6 +4719,85 @@ func (x *ZkQueryTxOperationReq) GetMaturity() uint32 {
 	return 0
 }
 
+type ZkExodusBatchProofReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	StartAccountId uint64 `protobuf:"varint,1,opt,name=startAccountId,proto3" json:"startAccountId,omitempty"`
+	EndAccountId   uint64 `protobuf:"varint,2,opt,name=endAccountId,proto3" json:"endAccountId,omitempty"`
+	TokenId        uint64 `protobuf:"varint,3,opt,name=tokenId,proto3" json:"tokenId,omitempty"`
+	RootHash       string `protobuf:"bytes,4,opt,name=rootHash,proto3" json:"rootHash,omitempty"`
+	ChainTitleId   uint64 `protobuf:"varint,5,opt,name=chainTitleId,proto3" json:"chainTitleId,omitempty"`
+}
+
+func (x *ZkExodusBatchProofReq) Reset() {
+	*x = ZkExodusBatchProofReq{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zksync_proto_msgTypes[62]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ZkExodusBatchProofReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZkExodusBatchProofReq) ProtoMessage() {}
+
+func (x *ZkExodusBatchProofReq) ProtoReflect() protoreflect.Message {
+	mi := &file_zksync_proto_msgTypes[62]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZkExodusBatchProofReq.ProtoReflect.Descriptor instead.
+func (*ZkExodusBatchProofReq) Descriptor() ([]byte, []int) {
+	return file_zksync_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *ZkExodusBatchProofReq) GetStartAccountId() uint64 {
+	if x != nil {
+		return x.StartAccountId
+	}
+	return 0
+}
+
+func (x *ZkExodusBatchProofReq) GetEndAccountId() uint64 {
+	if x != nil {
+		return x.EndAccountId
+	}
+	return 0
+}
+
+func (x *ZkExodusBatchProofReq) GetTokenId() uint64 {
+	if x != nil {
+		return x.TokenId
+	}
+	return 0
+}
+
+func (x *ZkExodusBatchProofReq) GetRootHash() string {
+	if x != nil {
+		return x.RootHash
+	}
+	return ""
+}
+
+func (x *ZkExodusBatchProofReq) GetChainTitleId() uint64 {
+	if x != nil {
+		return x.ChainTitleId
+	}
+	return 0
+}
+
 var File_zksync_proto protoreflect.FileDescriptor
 
 var file_zksync_proto_rawDesc = []byte{
@@ -5386,7 +5465,19 @@ var file_zksync_proto_rawDesc = []byte{
 	0x20, 0x0a, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x4f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x05,
 	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x4f, 0x66, 0x66, 0x73, 0x65,
 	0x74, 0x12, 0x1a, 0x0a, 0x08, 0x6d, 0x61, 0x74, 0x75, 0x72, 0x69, 0x74, 0x79, 0x18, 0x06, 0x20,
-	0x01, 0x28, 0x0d, 0x52, 0x08, 0x6d, 0x61, 0x74, 0x75, 0x72, 0x69, 0x74, 0x79, 0x32, 0x08, 0x0a,
+	0x01, 0x28, 0x0d, 0x52, 0x08, 0x6d, 0x61, 0x74, 0x75, 0x72, 0x69, 0x74, 0x79, 0x22, 0xbd, 0x01,
+	0x0a, 0x15, 0x5a, 0x6b, 0x45, 0x78, 0x6f, 0x64, 0x75, 0x73, 0x42, 0x61, 0x74, 0x63, 0x68, 0x50,
+	0x72, 0x6f, 0x6f, 0x66, 0x52, 0x65, 0x71, 0x12, 0x26, 0x0a, 0x0e, 0x73, 0x74, 0x61, 0x72, 0x74,
+	0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x0e, 0x73, 0x74, 0x61, 0x72, 0x74, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x64, 0x12,
+	0x22, 0x0a, 0x0c, 0x65, 0x6e, 0x64, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x64, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0c, 0x65, 0x6e, 0x64, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e,
+	0x74, 0x49, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x04, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x1a, 0x0a,
+	0x08, 0x72, 0x6f, 0x6f, 0x74, 0x48, 0x61, 0x73, 0x68, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x08, 0x72, 0x6f, 0x6f, 0x74, 0x48, 0x61, 0x73, 0x68, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x49, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x0c, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x49, 0x64, 0x32, 0x08, 0x0a,
 	0x06, 0x7a, 0x6b, 0x73, 0x79, 0x6e, 0x63, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79,
 	0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
@@ -5403,7 +5494,7 @@ func file_zksync_proto_rawDescGZIP() []byte {
 	return file_zksync_proto_rawDescData
 }
 
-var file_zksync_proto_msgTypes = make([]protoimpl.MessageInfo, 62)
+var file_zksync_proto_msgTypes = make([]protoimpl.MessageInfo, 63)
 var file_zksync_proto_goTypes = []interface{}{
 	(*ZksyncAction)(nil),               // 0: types.ZksyncAction
 	(*ZkTokenSymbol)(nil),              // 1: types.ZkTokenSymbol
@@ -5467,15 +5558,16 @@ var file_zksync_proto_goTypes = []interface{}{
 	(*HistoryAccountProofInfo)(nil),    // 59: types.HistoryAccountProofInfo
 	(*ZkReqExistenceProof)(nil),        // 60: types.ZkReqExistenceProof
 	(*ZkQueryTxOperationReq)(nil),      // 61: types.ZkQueryTxOperationReq
-	(*types.AssetsTransfer)(nil),       // 62: types.AssetsTransfer
-	(*types.AssetsWithdraw)(nil),       // 63: types.AssetsWithdraw
-	(*types.AssetsTransferToExec)(nil), // 64: types.AssetsTransferToExec
-	(*ZkPubKey)(nil),                   // 65: types.ZkPubKey
-	(*AccountProxyPubKeys)(nil),        // 66: types.AccountProxyPubKeys
-	(*ZkSignature)(nil),                // 67: types.ZkSignature
-	(*ZkFee)(nil),                      // 68: types.ZkFee
-	(*OperationInfo)(nil),              // 69: types.OperationInfo
-	(*types.KeyValue)(nil),             // 70: types.KeyValue
+	(*ZkExodusBatchProofReq)(nil),      // 62: types.ZkExodusBatchProofReq
+	(*types.AssetsTransfer)(nil),       // 63: types.AssetsTransfer
+	(*types.AssetsWithdraw)(nil),       // 64: types.AssetsWithdraw
+	(*types.AssetsTransferToExec)(nil), // 65: types.AssetsTransferToExec
+	(*ZkPubKey)(nil),                   // 66: types.ZkPubKey
+	(*AccountProxyPubKeys)(nil),        // 67: types.AccountProxyPubKeys
+	(*ZkSignature)(nil),                // 68: types.ZkSignature
+	(*ZkFee)(nil),                      // 69: types.ZkFee
+	(*OperationInfo)(nil),              // 70: types.OperationInfo
+	(*types.KeyValue)(nil),             // 71: types.KeyValue
 }
 var file_zksync_proto_depIdxs = []int32{
 	13, // 0: types.ZksyncAction.deposit:type_name -> types.ZkDeposit
@@ -5496,37 +5588,37 @@ var file_zksync_proto_depIdxs = []int32{
 	35, // 15: types.ZksyncAction.setVerifier:type_name -> types.ZkVerifier
 	37, // 16: types.ZksyncAction.setFee:type_name -> types.ZkSetFee
 	1,  // 17: types.ZksyncAction.setTokenSymbol:type_name -> types.ZkTokenSymbol
-	62, // 18: types.ZksyncAction.transfer:type_name -> types.AssetsTransfer
-	63, // 19: types.ZksyncAction.withdraw:type_name -> types.AssetsWithdraw
-	64, // 20: types.ZksyncAction.transferToExec:type_name -> types.AssetsTransferToExec
+	63, // 18: types.ZksyncAction.transfer:type_name -> types.AssetsTransfer
+	64, // 19: types.ZksyncAction.withdraw:type_name -> types.AssetsWithdraw
+	65, // 20: types.ZksyncAction.transferToExec:type_name -> types.AssetsTransferToExec
 	7,  // 21: types.AccountTree.subTrees:type_name -> types.SubTree
-	65, // 22: types.Leaf.pubKey:type_name -> types.ZkPubKey
-	66, // 23: types.Leaf.proxyPubKeys:type_name -> types.AccountProxyPubKeys
-	65, // 24: types.HistoryLeaf.pubKey:type_name -> types.ZkPubKey
+	66, // 22: types.Leaf.pubKey:type_name -> types.ZkPubKey
+	67, // 23: types.Leaf.proxyPubKeys:type_name -> types.AccountProxyPubKeys
+	66, // 24: types.HistoryLeaf.pubKey:type_name -> types.ZkPubKey
 	2,  // 25: types.HistoryLeaf.tokens:type_name -> types.TokenBalance
-	66, // 26: types.HistoryLeaf.proxyPubKeys:type_name -> types.AccountProxyPubKeys
+	67, // 26: types.HistoryLeaf.proxyPubKeys:type_name -> types.AccountProxyPubKeys
 	5,  // 27: types.ZkAccountTreeProof.account:type_name -> types.HistoryLeaf
 	8,  // 28: types.ZkAccountTreeProof.proof:type_name -> types.MerkleTreeProof
 	2,  // 29: types.ZkTokenTreeProof.token:type_name -> types.TokenBalance
 	8,  // 30: types.ZkTokenTreeProof.proof:type_name -> types.MerkleTreeProof
 	10, // 31: types.ZkEscapeProof.accountProof:type_name -> types.ZkAccountTreeProof
 	11, // 32: types.ZkEscapeProof.tokenProof:type_name -> types.ZkTokenTreeProof
-	67, // 33: types.ZkDeposit.signature:type_name -> types.ZkSignature
-	67, // 34: types.ZkWithdraw.signature:type_name -> types.ZkSignature
-	67, // 35: types.ZkContractToTree.signature:type_name -> types.ZkSignature
-	67, // 36: types.ZkTreeToContract.signature:type_name -> types.ZkSignature
-	67, // 37: types.ZkTransfer.signature:type_name -> types.ZkSignature
-	67, // 38: types.ZkTransferToNew.signature:type_name -> types.ZkSignature
-	67, // 39: types.ZkForceExit.signature:type_name -> types.ZkSignature
-	67, // 40: types.ZkProxyExit.signature:type_name -> types.ZkSignature
-	68, // 41: types.ZkProxyExit.fee:type_name -> types.ZkFee
-	65, // 42: types.ZkSetPubKey.pubKey:type_name -> types.ZkPubKey
-	67, // 43: types.ZkSetPubKey.signature:type_name -> types.ZkSignature
-	67, // 44: types.ZkFullExit.signature:type_name -> types.ZkSignature
-	67, // 45: types.ZkSwap.signature:type_name -> types.ZkSignature
-	67, // 46: types.ZkMintNFT.signature:type_name -> types.ZkSignature
-	67, // 47: types.ZkWithdrawNFT.signature:type_name -> types.ZkSignature
-	67, // 48: types.ZkTransferNFT.signature:type_name -> types.ZkSignature
+	68, // 33: types.ZkDeposit.signature:type_name -> types.ZkSignature
+	68, // 34: types.ZkWithdraw.signature:type_name -> types.ZkSignature
+	68, // 35: types.ZkContractToTree.signature:type_name -> types.ZkSignature
+	68, // 36: types.ZkTreeToContract.signature:type_name -> types.ZkSignature
+	68, // 37: types.ZkTransfer.signature:type_name -> types.ZkSignature
+	68, // 38: types.ZkTransferToNew.signature:type_name -> types.ZkSignature
+	68, // 39: types.ZkForceExit.signature:type_name -> types.ZkSignature
+	68, // 40: types.ZkProxyExit.signature:type_name -> types.ZkSignature
+	69, // 41: types.ZkProxyExit.fee:type_name -> types.ZkFee
+	66, // 42: types.ZkSetPubKey.pubKey:type_name -> types.ZkPubKey
+	68, // 43: types.ZkSetPubKey.signature:type_name -> types.ZkSignature
+	68, // 44: types.ZkFullExit.signature:type_name -> types.ZkSignature
+	68, // 45: types.ZkSwap.signature:type_name -> types.ZkSignature
+	68, // 46: types.ZkMintNFT.signature:type_name -> types.ZkSignature
+	68, // 47: types.ZkWithdrawNFT.signature:type_name -> types.ZkSignature
+	68, // 48: types.ZkTransferNFT.signature:type_name -> types.ZkSignature
 	28, // 49: types.ReceiptSetVerifyKey.prev:type_name -> types.ZkVerifyKey
 	28, // 50: types.ReceiptSetVerifyKey.current:type_name -> types.ZkVerifyKey
 	30, // 51: types.ZkCommitProof.cfgFeeAddrs:type_name -> types.ZkFeeAddrs
@@ -5539,14 +5631,14 @@ var file_zksync_proto_depIdxs = []int32{
 	2,  // 58: types.ZkReceiptLeaf.token:type_name -> types.TokenBalance
 	8,  // 59: types.ZkReceiptLeaf.treeProof:type_name -> types.MerkleTreeProof
 	8,  // 60: types.ZkReceiptLeaf.tokenProof:type_name -> types.MerkleTreeProof
-	69, // 61: types.ZkQueryResp.operationInfos:type_name -> types.OperationInfo
+	70, // 61: types.ZkQueryResp.operationInfos:type_name -> types.OperationInfo
 	4,  // 62: types.ZkQueryResp.leaves:type_name -> types.Leaf
 	2,  // 63: types.ZkQueryResp.tokenBalances:type_name -> types.TokenBalance
-	69, // 64: types.ZkReceiptLog.operationInfo:type_name -> types.OperationInfo
-	70, // 65: types.ZkReceiptLog.localKvs:type_name -> types.KeyValue
-	69, // 66: types.ZkQueryProofResp.operationInfos:type_name -> types.OperationInfo
+	70, // 64: types.ZkReceiptLog.operationInfo:type_name -> types.OperationInfo
+	71, // 65: types.ZkReceiptLog.localKvs:type_name -> types.KeyValue
+	70, // 66: types.ZkQueryProofResp.operationInfos:type_name -> types.OperationInfo
 	47, // 67: types.ZkOpNFTData.content:type_name -> types.ZkContentHash
-	65, // 68: types.ZkSetPubKeyData.pubKey:type_name -> types.ZkPubKey
+	66, // 68: types.ZkSetPubKeyData.pubKey:type_name -> types.ZkPubKey
 	5,  // 69: types.HistoryAccountProofInfo.leaves:type_name -> types.HistoryLeaf
 	70, // [70:70] is the sub-list for method output_type
 	70, // [70:70] is the sub-list for method input_type
@@ -6306,6 +6398,18 @@ func file_zksync_proto_init() {
 				return nil
 			}
 		}
+		file_zksync_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ZkExodusBatchProofReq); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_zksync_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*ZksyncAction_Deposit)(nil),
@@ -6336,7 +6440,7 @@ func file_zksync_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zksync_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   62,
+			NumMessages:   63,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

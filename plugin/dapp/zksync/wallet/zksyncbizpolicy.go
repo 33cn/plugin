@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/pkg/errors"
 	"sync"
 
 	"github.com/33cn/chain33/common"
@@ -117,11 +118,14 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		return
 	}
 
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(key.Bytes()))
-
+	seed, err := GetLayer2PrivateKeySeed(common.ToHex(key.Bytes()), "", "")
+	if err != nil {
+		return false, "", err
+	}
+	privateKey, err := eddsa.GenerateKey(bytes.NewReader(seed))
 	if err != nil {
 		bizlog.Error("SignTransaction", "eddsa.GenerateKey error", err)
-		return
+		return false, "", errors.Wrapf(err, "generatekey")
 	}
 
 	var msg *zt.ZkMsg
@@ -247,7 +251,8 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	}
 
 	tx.Payload = types.Encode(action)
-	tx.Sign(int32(policy.getWalletOperate().GetSignType()), key)
+	tx.Fee = 1000000
+	tx.Sign(types.EncodeSignID(types.SECP256K1, address.GetDefaultAddressID()), key)
 	signtxhex = hex.EncodeToString(types.Encode(tx))
 	return
 }

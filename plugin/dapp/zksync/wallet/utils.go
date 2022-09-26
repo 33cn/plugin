@@ -2,6 +2,10 @@ package wallet
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/system/crypto/secp256k1"
+	"github.com/pkg/errors"
 	"math/big"
 	"strings"
 
@@ -414,4 +418,39 @@ func GetMsgHash(msg *zt.ZkMsg) []byte {
 	hash.Write(StringToByte(msg.GetSecond()))
 	hash.Write(StringToByte(msg.GetThird()))
 	return hash.Sum(nil)
+}
+
+//GetLayer2PrivateKeySeed 通过用户secp256k1私钥对特定信息的签名的hash产生layer2的eddsa签名的私钥种子来产生用户layer2的私钥
+//在memtamask或钱包app可以不暴露用户私钥而只是内部签名的方式来产生layer2私钥，更加安全
+//refer to https://blogs.loopring.org/new-approach-to-generating-layer-2-account-keys-cn/
+func GetLayer2PrivateKeySeed(privateKey, exchangeAddr, nonce string) ([]byte, error) {
+	c, err := crypto.Load(secp256k1.Name, -1)
+	if err != nil {
+		return nil, errors.Wrap(err, "load secp256k1")
+	}
+	key, err := common.FromHex(privateKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "fromHex")
+	}
+	signKey, err := c.PrivKeyFromBytes(key)
+	if err != nil {
+		return nil, errors.Wrap(err, "privateFromByte")
+	}
+
+	if len(nonce) == 0 {
+		nonce = "1"
+	}
+	if len(exchangeAddr) == 0 {
+		//0x322* is generated random
+		exchangeAddr = "0x332c90e5488d37127d606f640ee7599bfb92274c"
+	}
+	//这段字符串是公开的，将来可以在metamask上签名的
+	rawMsg := fmt.Sprintf("sign this message to access superX exchange: %s with key nonce: %s", exchangeAddr, nonce)
+	var msg []byte
+	s := signKey.Sign([]byte(rawMsg))
+	//内部再加一串随机字符来产生私钥seed
+	salt := []byte("0xb8089c0a97d0ce2a0cb5773708bbcf1bc35c1920")
+	msg = append(msg, s.Bytes()...)
+	msg = append(msg, salt...)
+	return crypto.Sha256(msg), nil
 }

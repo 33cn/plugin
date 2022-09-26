@@ -489,4 +489,12 @@ message ZkQueryTxOperationReq {
   uint32 maturity = 6;//成熟度：最新高度-成熟度 = endBlockHeigh
 }
 
+message ZkExodusBatchProofReq {
+  uint64 startAccountId  = 1;
+  uint64 endAccountId = 2;
+  uint64 tokenId = 3;
+  string rootHash = 4;
+  uint64 chainTitleId = 5;
+}
+
 service zksync{}
