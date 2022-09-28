@@ -241,36 +241,96 @@ func TestBigInt(t *testing.T) {
 	t.Log("is equal", stringVal == "0")
 }
 
-func TestGetFeeInfo(t *testing.T) {
-	//_, err := getFeeInfo("", 1, nil)
-	//assert.NotNil(t, err)
-	//_, err = getFeeInfo("0", 1, nil)
-	//assert.Nil(t, err)
-	//
-	//setFee := &zt.ZkFee{
-	//	FromFee: "",
-	//	ToFee:   "",
-	//}
-	//_, err = getFeeInfo("0", 1, setFee)
-	//assert.NotNil(t, err)
-	//
-	//setFee.FromFee = "-100"
-	//fee, err := getFeeInfo("0", 1, setFee)
-	//assert.Nil(t, err)
-	//assert.Equal(t, fee.FromFee, "0")
-	//assert.Equal(t, fee.ToFee, "0")
-	//
-	//setFee.FromFee = "1"
-	//fee, err = getFeeInfo("0", 1, setFee)
-	//assert.Nil(t, err)
-	//assert.Equal(t, fee.FromFee, "1")
-	//assert.Equal(t, fee.ToFee, "0")
-	//
-	//setFee.ToFee = "-1"
-	//fee, err = getFeeInfo("0", 1, setFee)
-	//assert.Nil(t, err)
-	//assert.Equal(t, fee.FromFee, "1")
-	//assert.Equal(t, fee.ToFee, "0")
+func TestTransfer2ContractAmount(t *testing.T) {
+	amount := "100000000"
+	r, err := transferDecimalAmount(amount, 8, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, amount, r)
+
+	amount = "1234567"
+	r, err = transferDecimalAmount(amount, 6, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, amount+"00", r)
+
+	amount = "1000000000000000000"
+	r, err = transferDecimalAmount(amount, 18, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, "100000000", r)
+
+	//value 去除1e10出错
+	amount = "1000000001200000000"
+	_, err = transferDecimalAmount(amount, 18, 8)
+	assert.NotNil(t, err)
+
+	amount = "1000000120000000000"
+	r, err = transferDecimalAmount(amount, 18, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, "100000012", r)
+}
+
+func TestGetTreeSideAmount(t *testing.T) {
+	amount := "100000000"
+	totalAmount := "100100000"
+	feeAmount := "100"
+	sysDecimal := 8
+	tokenDecimal := 18
+	suffix := strings.Repeat("0", tokenDecimal-sysDecimal)
+	amountT, totalT, feeT, err := getTreeSideAmount(amount, totalAmount, feeAmount, sysDecimal, tokenDecimal)
+	assert.Nil(t, err)
+	assert.Equal(t, amount+suffix, amountT)
+	assert.Equal(t, totalAmount+suffix, totalT)
+	assert.Equal(t, feeAmount+suffix, feeT)
+
+	tokenDecimal = 6
+	diff := sysDecimal - tokenDecimal
+	amountT, totalT, feeT, err = getTreeSideAmount(amount, totalAmount, feeAmount, sysDecimal, tokenDecimal)
+	assert.Nil(t, err)
+	assert.Equal(t, amount[:len(amount)-diff], amountT)
+	assert.Equal(t, totalAmount[:len(totalAmount)-diff], totalT)
+	assert.Equal(t, feeAmount[:len(feeAmount)-diff], feeT)
+
+}
+
+func TestCheckPackValue(t *testing.T) {
+	amount := new(big.Int).Exp(big.NewInt(2), big.NewInt(35), nil)
+	err := checkPackValue(amount.String(), zt.PacAmountManBitWidth)
+	assert.Nil(t, err)
+
+	amount = new(big.Int).Add(amount, big.NewInt(1))
+	err = checkPackValue(amount.String(), zt.PacAmountManBitWidth)
+	assert.NotNil(t, err)
+
+	amount = new(big.Int).Exp(big.NewInt(2), big.NewInt(11), nil)
+	err = checkPackValue(amount.String(), zt.PacFeeManBitWidth)
+	assert.Nil(t, err)
+
+	amount = new(big.Int).Add(amount, big.NewInt(1))
+	err = checkPackValue(amount.String(), zt.PacFeeManBitWidth)
+	assert.NotNil(t, err)
+
+	amount = new(big.Int).Exp(big.NewInt(2), big.NewInt(10), nil)
+	err = checkPackValue(amount.String(), zt.PacFeeManBitWidth)
+	assert.Nil(t, err)
+
+}
+
+func TestCheckParam(t *testing.T) {
+	amount := "0"
+	err := checkParam(amount)
+	assert.NotNil(t, err)
+
+	amount = "100-1"
+	err = checkParam(amount)
+	assert.NotNil(t, err)
+
+	amount = "1ab100"
+	err = checkParam(amount)
+	assert.NotNil(t, err)
+
+	amount = "000"
+	err = checkParam(amount)
+	assert.NotNil(t, err)
+
 }
 
 func TestInitTreeRoot(t *testing.T) {
