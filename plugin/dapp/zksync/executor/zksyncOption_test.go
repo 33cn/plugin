@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/common/db"
 	"math/big"
 	"strings"
 	"testing"
@@ -32,7 +33,7 @@ func TestZksyncOption(t *testing.T) {
 	action := &Action{localDB: localdb, statedb: statedb, height: 1, index: 0, fromaddr: "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", api: api}
 	deposit := &zt.ZkDeposit{
 		TokenId:     1,
-		Amount:      "100000000",
+		Amount:      "10000000000000000000",
 		EthAddress:  "abcd68033A72978C1084E2d44D1Fa06DdC4A2d58",
 		Chain33Addr: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"),
 	}
@@ -53,7 +54,7 @@ func TestZksyncOption(t *testing.T) {
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
 	info, err := generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
-	leaf, err := GetLeafByAccountId(statedb, 2, info)
+	leaf, err := GetLeafByAccountId(statedb, 4, info)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, nil, leaf)
 	t.Log(leaf)
@@ -64,7 +65,7 @@ func TestZksyncOption(t *testing.T) {
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
 	setPubKey := &zt.ZkSetPubKey{
-		AccountId: 2,
+		AccountId: 4,
 		PubKey: &zt.ZkPubKey{
 			X: privateKey.PublicKey.A.X.String(),
 			Y: privateKey.PublicKey.A.Y.String(),
@@ -83,13 +84,19 @@ func TestZksyncOption(t *testing.T) {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
 
+	/*************************setFee*************************/
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyWithdrawAction)
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyTransferToNewAction)
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyTransferAction)
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyProxyExitAction)
+
 	/*************************withdraw*************************/
 	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	withdraw := &zt.ZkWithdraw{
-		AccountId: 2,
+		AccountId: 4,
 		TokenId:   1,
-		Amount:    "5000",
+		Amount:    "5000000000000000000",
 	}
 	msg := wallet.GetWithdrawMsg(withdraw)
 	privateKey, err = eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
@@ -120,17 +127,17 @@ func TestZksyncOption(t *testing.T) {
 	assert.NotEqual(t, nil, leaf)
 	t.Log(leaf)
 
-	token, err := GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err := GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "98995000", token.Balance)
+	assert.Equal(t, "4990000000000000000", token.Balance)
 
 	/*************************transferToNew*************************/
 	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
-		FromAccountId:    2,
+		FromAccountId:    4,
 		TokenId:          1,
-		Amount:           "5000",
+		Amount:           "100000000000000000",
 		ToEthAddress:     "abcd68033A72978C1084E2d44D1Fa06DdC4A2d59",
 		ToChain33Address: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aed"),
 	}
@@ -150,21 +157,21 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range zklog.LocalKvs {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "98890000", token.Balance)
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 3, 1, info)
+	assert.Equal(t, "4880000000000000000", token.Balance)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 5, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "5000", token.Balance)
+	assert.Equal(t, "100000000000000000", token.Balance)
 
 	/*************************transfer*************************/
 	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
-		FromAccountId: 2,
+		FromAccountId: 4,
 		TokenId:       1,
-		Amount:        "5000",
-		ToAccountId:   3,
+		Amount:        "100000000000000000",
+		ToAccountId:   5,
 	}
 	msg = wallet.GetTransferMsg(transfer)
 	signInfo, err = wallet.SignTx(msg, privateKey)
@@ -182,20 +189,20 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range zklog.LocalKvs {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "98785000", token.Balance)
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 3, 1, info)
+	assert.Equal(t, "4770000000000000000", token.Balance)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 5, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "10000", token.Balance)
+	assert.Equal(t, "200000000000000000", token.Balance)
 
 	/*************************forceQuit*************************/
 	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	proxyQuit := &zt.ZkProxyExit{
-		ProxyId:  2,
+		ProxyId:  4,
 		TokenId:  1,
-		TargetId: 3,
+		TargetId: 5,
 	}
 	msg = wallet.GetProxyExitMsg(proxyQuit)
 	signInfo, err = wallet.SignTx(msg, privateKey)
@@ -212,13 +219,37 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range zklog.LocalKvs {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "4760000000000000000", token.Balance)
+
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 5, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "0", token.Balance)
 
 	tree, err = getAccountTree(statedb, info)
 	assert.Equal(t, nil, err)
 	t.Log(tree)
+}
+
+func setfee(action *Action, t *testing.T ,statedb db.DB, localdb db.KVDB, zklog *zt.ZkReceiptLog, tokenId uint64, actionTy int32)  {
+	fee := &zt.ZkSetFee{
+		TokenId: tokenId,
+		Amount: "10000000000000000",
+		ActionTy: actionTy,
+	}
+
+	receipt, err := action.setFee(fee)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	err = types.Decode(receipt.Logs[0].GetLog(), zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
+	}
 }
 
 func TestEddsa(t *testing.T) {
@@ -675,5 +706,12 @@ manager=[
     "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
     "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 ]
+invalidTxHash=""
+invalidProofRootHash=""
+#运营方配置收交易费地址,要求16进制
+#可把二层交易费提取到ETH的地址,注意:真实场景需替换
+ethFeeAddr="0x832367164346888E248bd58b9A5f480299F1e88d"
+#二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址,真实场景需替换
+layer2FeeAddr="06140f1bf242cf182b6d1288f6d5d4d7f45aa0e7fdad7ffa99bffdfc2e66c770"
 
 `

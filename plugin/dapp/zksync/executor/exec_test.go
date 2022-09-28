@@ -1,8 +1,10 @@
 package executor
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"math/rand"
 	"strings"
 	"testing"
@@ -17,6 +19,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	evmcommon "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -95,7 +98,7 @@ type execEnv struct {
 func Test_All(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1) + configZksync)
 	Init(zt.Zksync, cfg, nil)
-	total := int64(100000)
+	total := int64(100000000000000000)
 	account0 := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -142,6 +145,8 @@ func Test_All(t *testing.T) {
 
 	test_Deposit(exec, stateDB, t)
 
+	//test_setPubkey(exec, stateDB, t)
+
 	reply2, err := exec.Query("GetAccountById", types.Encode(&zt.ZkQueryReq{AccountId: accountId4}))
 	fmt.Println(reply2, err)
 	reply, err = exec.Query("GetMaxAccountId", nil)
@@ -168,6 +173,74 @@ func checkBalance(exec dapp.Driver, accountId, tokenId uint64, balance string) b
 }
 
 func test_Deposit(exec dapp.Driver, stateDB dbm.KV, t *testing.T) {
+	param := &zt.ZkDeposit{
+		TokenId:            tokenId0,
+		Amount:             "8000000000000000000",
+		EthAddress:         ethTestAddr,
+		Chain33Addr:        l2addr0,
+		EthPriorityQueueId: queueId,
+	}
+
+	v := &zt.ZksyncAction_Deposit{Deposit: param}
+	deposit := &zt.ZksyncAction{Value: v, Ty: zt.TyDepositAction}
+
+	tx := &types.Transaction{Execer: []byte(zt.Zksync), Payload: types.Encode(deposit), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, managementKey)
+	assert.Nil(t, err)
+
+	receipt, err := exec.Exec(Tx1, 1)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	for _, kv := range receipt.KV {
+		_ = stateDB.Set(kv.Key, kv.Value)
+	}
+
+	equal := checkBalance(exec, accountId4, tokenId0, "8000000000000000000")
+	assert.True(t, equal)
+	queueId++
+}
+
+func test_setPubkey(exec dapp.Driver, stateDB dbm.KV, t *testing.T) {
+	//seed, err := wallet.GetLayer2PrivateKeySeed(key0, "", "")
+	//assert.Nil(t, err)
+	//privateKey, err := eddsa.GenerateKey(bytes.NewReader(seed))
+	//assert.Nil(t, err)
+
+	//privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
+	//assert.Equal(t, nil, err)
+	//
+	privateKey, err := eddsa.GenerateKey(bytes.NewReader(evmcommon.FromHex(key0)))
+	assert.Nil(t, err)
+
+	param := &zt.ZkSetPubKey{
+		AccountId: accountId4,
+		PubKeyTy:  0,
+		PubKey: &zt.ZkPubKey{
+			X: privateKey.PublicKey.A.X.String(),
+			Y: privateKey.PublicKey.A.Y.String(),
+		},
+	}
+
+	v := &zt.ZksyncAction_SetPubKey{SetPubKey: param}
+	payload := &zt.ZksyncAction{Value: v, Ty: zt.TySetPubKeyAction}
+
+	tx := &types.Transaction{Execer: []byte(zt.Zksync), Payload: types.Encode(payload), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, key0)
+	assert.Nil(t, err)
+
+	receipt, err := exec.Exec(Tx1, 2)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	for _, kv := range receipt.KV {
+		_ = stateDB.Set(kv.Key, kv.Value)
+	}
+}
+
+func test_withdraw(exec dapp.Driver, stateDB dbm.KV, t *testing.T) {
 	param := &zt.ZkDeposit{
 		TokenId:            tokenId0,
 		Amount:             "8000000000000000000",
@@ -243,7 +316,7 @@ func init() {
 	addrexec = address.ExecAddress("")
 	manageaddrexec = address.ExecAddress("manage")
 
-	//privkey = getprivkey(PrivKeyA)
+	//privkey = getprivkey(PrivKeyA)exec_test.g
 	//privkeySupper = getprivkey(PrivKeyA)
 }
 
