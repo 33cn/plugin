@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/plugin/plugin/dapp/zksync/commands/l2txs"
+	"math/big"
 	"os"
 	"strconv"
 	"strings"
@@ -150,7 +151,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -179,26 +180,32 @@ func treeToContractFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "treeToContract amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "treeToContract accountId")
+	cmd.Flags().Uint64P("accountId", "i", 0, "treeToContract accountId")
 	cmd.MarkFlagRequired("accountId")
+	cmd.Flags().StringP("exec", "x", "", "to contract exec, default nil to zksync self")
 }
 
 func treeToContract(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	exec, _ := cmd.Flags().GetString("exec")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
+
+	leafToContract := &zt.ZkTreeToContract{
+		TokenId:   tokenId,
+		Amount:    amount,
+		AccountId: accountId,
+		ToAcctId:  zt.SystemTree2ContractAcctId,
+		ToExec:    exec,
 	}
+
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
 		ActionName: "TreeToContract",
-		Payload:    payload,
+		Payload:    types.MustPBToJSON(leafToContract),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -215,32 +222,41 @@ func contractToTreeCmd() *cobra.Command {
 }
 
 func contractToTreeFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "contractToTree tokenId")
-	cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().StringP("tokenSymbol", "t", "", "token symbol asset")
+	cmd.MarkFlagRequired("tokenSymbol")
 	cmd.Flags().StringP("amount", "a", "0", "contractToTree amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "contractToTree accountId")
-	cmd.MarkFlagRequired("accountId")
-
+	cmd.Flags().Uint64P("accountId", "i", 0, "contractToTree to accountId")
+	cmd.Flags().StringP("ethAddr", "e", "", "to eth addr")
+	cmd.Flags().StringP("layer2Addr", "l", "", "to layer2 addr")
+	cmd.Flags().StringP("exec", "x", "", "from contract exec")
 }
 
 func contractToTree(cmd *cobra.Command, args []string) {
-	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	tokenSymbol, _ := cmd.Flags().GetString("tokenSymbol")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	ethAddr, _ := cmd.Flags().GetString("ethAddr")
+	layer2Addr, _ := cmd.Flags().GetString("layer2Addr")
+	exec, _ := cmd.Flags().GetString("exec")
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
+
+	contractToLeaf := &zt.ZkContractToTree{
+		TokenSymbol:  tokenSymbol,
+		Amount:       amount,
+		ToAccountId:  accountId,
+		ToEthAddr:    ethAddr,
+		ToLayer2Addr: layer2Addr,
+		FromExec:     exec,
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, zt.Zksync),
 		ActionName: "ContractToTree",
-		Payload:    payload,
+		Payload:    types.MustPBToJSON(contractToLeaf),
 	}
+
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
@@ -256,15 +272,14 @@ func transferCmd() *cobra.Command {
 }
 
 func transferFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "transfer tokenId")
+	cmd.Flags().Uint64P("tokenId", "i", 1, "transfer tokenId")
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transfer amount")
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "f", 0, "transfer fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("toAccountId", "o", 0, "transfer toAccountId")
+	cmd.Flags().Uint64P("toAccountId", "t", 0, "transfer toAccountId")
 	cmd.MarkFlagRequired("toAccountId")
-
 }
 
 func transfer(cmd *cobra.Command, args []string) {
@@ -275,7 +290,7 @@ func transfer(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId)
+	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", accountId, toAccountId)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -304,12 +319,21 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transferToNew amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "i", 0, "transferToNew fromAccountId")
+	cmd.Flags().Uint64P("accountId", "f", 0, "transferToNew fromAccountId")
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().StringP("ethAddress", "e", "", "transferToNew toEthAddress")
 	cmd.MarkFlagRequired("ethAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "transferToNew toChain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
+}
+
+func transferStr2Int(s string, base int) (*big.Int, error) {
+	s = zt.FilterHexPrefix(s)
+	v, ok := new(big.Int).SetString(s, base)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("transferStr2Int s=%s,base=%d", s, base))
+	}
+	return v, nil
 }
 
 func transferToNew(cmd *cobra.Command, args []string) {
@@ -319,9 +343,23 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	toEthAddress, _ := cmd.Flags().GetString("ethAddress")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
+	ethAddrBigInt, err := transferStr2Int(toEthAddress, 16)
+	if nil != err {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+		return
+	}
+	toEthAddress = ethAddrBigInt.Text(16) //没有前缀0x
+
+	chain33AddrBigInt, err := transferStr2Int(chain33Addr, 16)
+	if nil != err {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+		return
+	}
+	chain33Addr = chain33AddrBigInt.Text(16)
+
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, toEthAddress, chain33Addr, accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -359,7 +397,7 @@ func forceExit(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -409,7 +447,7 @@ func proxyExit(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", "", accountId, toId)
+	payload, err := wallet.CreateRawTx(zt.TyProxyExitAction, tokenId, "0", "", "", accountId, toId)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return

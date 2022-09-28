@@ -15,7 +15,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
-func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
+func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress string,
 	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
@@ -142,10 +142,10 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 
-	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.EthAddress), 16)
+	ethAddress := transferStr2Int(strings.ToLower(payload.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 16)
+	chain33Address := transferStr2Int(payload.Chain33Addr, 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.HashBitWidth)...)
 
 	copy(binaryData, pubData)
@@ -216,7 +216,7 @@ func GetContractToTreeMsg(payload *zt.ZkContractToTree) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyContractToTreeAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ToAccountId), zt.TokenBitWidth)...)
-	amount := transferStr2Int(payload.Amount, 10)
+	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 
 	copy(binaryData, pubData)
@@ -264,8 +264,7 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
 
-	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.ToEthAddress), 16)
-
+	ethAddress, _ := new(big.Int).SetString(payload.ToEthAddress, 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
 	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 16)

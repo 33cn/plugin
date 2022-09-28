@@ -409,7 +409,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 
 	//更新合约账户
-	symbol, err := getSymbolByTokenId(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
+	symbol, err := GetSymbolByTokenId(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
 	if err != nil {
 		return nil, err
 	}
@@ -1761,7 +1761,7 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 	return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
 }
 
-func makeSetTokenSymbolReceipt(id, oldVal, newVal string) *types.Receipt {
+func MakeSetTokenSymbolReceipt(id, oldVal, newVal string) *types.Receipt {
 	key := GetTokenSymbolKey(id)
 	keySym := GetTokenSymbolIdKey(newVal)
 	log := &zt.ReceiptSetTokenSymbol{
@@ -1800,17 +1800,17 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%d", err, id)
 	}
 
-	lastSym, err := getSymbolByTokenId(a.statedb, payload.Id)
+	lastSym, err := GetSymbolByTokenId(a.statedb, payload.Id)
 	if isNotFound(errors.Cause(err)) {
-		return makeSetTokenSymbolReceipt(payload.Id, "", payload.Symbol), nil
+		return MakeSetTokenSymbolReceipt(payload.Id, "", payload.Symbol), nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return makeSetTokenSymbolReceipt(payload.Id, lastSym, payload.Symbol), nil
+	return MakeSetTokenSymbolReceipt(payload.Id, lastSym, payload.Symbol), nil
 }
 
-func getSymbolByTokenId(db dbm.KV, tokenId string) (string, error) {
+func GetSymbolByTokenId(db dbm.KV, tokenId string) (string, error) {
 	key := GetTokenSymbolKey(tokenId)
 	r, err := db.Get(key)
 	if err != nil {

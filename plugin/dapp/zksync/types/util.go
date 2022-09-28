@@ -29,6 +29,7 @@ func Byte2Uint64(v []byte) uint64 {
 
 // HexAddr2Decimal 16进制地址转10进制
 func HexAddr2Decimal(addr string) (string, bool) {
+	addr = FilterHexPrefix(addr)
 	addrInt, ok := new(big.Int).SetString(strings.ToLower(addr), 16)
 	if !ok {
 		return "", false

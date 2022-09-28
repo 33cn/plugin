@@ -42,11 +42,12 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 }
 
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
+	zeroHash := zt.Str2Byte("0")
 	defaultAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemDefaultAcctId,
 		Chain33Addr: "3",
-		TokenHash:   []byte("0"),
+		TokenHash:   zeroHash,
 	}
 
 	//default system FeeAccount
@@ -54,21 +55,21 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 		EthAddress:  ethFeeAddr,
 		AccountId:   zt.SystemFeeAccountId,
 		Chain33Addr: chain33FeeAddr,
-		TokenHash:   []byte("0"),
+		TokenHash:   zeroHash,
 	}
 	//default NFT system account
 	NFTAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemNFTAccountId,
 		Chain33Addr: "1",
-		TokenHash:   []byte("0"),
+		TokenHash:   zeroHash,
 	}
 
 	treeToContractAccount := &zt.Leaf{
 		EthAddress:  "0",
 		AccountId:   zt.SystemTree2ContractAcctId,
 		Chain33Addr: "2",
-		TokenHash:   []byte("0"),
+		TokenHash:   zeroHash,
 	}
 	return []*zt.Leaf{defaultAccount, feeAccount, NFTAccount, treeToContractAccount}
 }
