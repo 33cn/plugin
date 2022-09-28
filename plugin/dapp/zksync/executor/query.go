@@ -559,26 +559,13 @@ func (z *zksync) Query_GetTokenSymbol(in *zt.ZkQueryReq) (types.Message, error) 
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	res := new(zt.ZkTokenSymbol)
 	//symbol非空，查询id
 	if len(in.TokenSymbol) > 0 {
-		id, err := getTokenSymbolId(z.GetStateDB(), in.TokenSymbol)
-		if err != nil {
-			return nil, err
-		}
-		res.Symbol = in.TokenSymbol
-		res.Id = new(big.Int).SetUint64(id).String()
-		return res, nil
+		return getTokenBySymbol(z.GetStateDB(), in.TokenSymbol)
 	}
 	//根据id查询symbol
 	idStr := new(big.Int).SetUint64(in.TokenId).String()
-	symbol, err := getTokenIdSymbol(z.GetStateDB(), idStr)
-	if err != nil {
-		return nil, err
-	}
-	res.Symbol = symbol
-	res.Id = idStr
-	return res, nil
+	return getTokenById(z.GetStateDB(), idStr)
 }
 
 // Query_GetPriorityOpInfo 根据priorityId获取operation信息

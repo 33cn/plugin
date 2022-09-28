@@ -351,12 +351,13 @@ message ReceiptSetFee {
 message ZkTokenSymbol {
   string id = 1;
   string symbol = 2;
+  uint32 decimal = 3; //精度
 }
 
 message ReceiptSetTokenSymbol {
-  string tokenId = 1;
-  string prevSymbol = 2;
-  string curSymbol = 3;
+  ZkTokenSymbol pre = 1;
+  ZkTokenSymbol cur = 2;
+
 }
 
 //zk relayer operators

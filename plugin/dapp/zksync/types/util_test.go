@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -42,12 +40,6 @@ func TestFindExponent(t *testing.T) {
 	//fmt.Println("s",s)
 	//fmt.Println("s.len",len(s),"exp",r,"s",s[0:len(s)-r])
 
-	//s = "11"
-	//exp := findExponent(s)
-	//val := s[0:len(s)-exp]
-	//fmt.Println("val",val,"ex",exp)
-	rt := math.BigPow(2, 35)
-	fmt.Println("rt", rt.Text(10))
 }
 
 func TestFindManExpPart(t *testing.T) {

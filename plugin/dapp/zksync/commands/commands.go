@@ -1584,6 +1584,8 @@ func setTokenSymbolFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("symbol", "s", "", "symbol")
 	cmd.MarkFlagRequired("symbol")
+	cmd.Flags().Uint32P("decimal", "d", 18, "token decimal")
+	cmd.MarkFlagRequired("decimal")
 
 }
 
@@ -1591,11 +1593,13 @@ func setTokenSymbol(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenId, _ := cmd.Flags().GetUint32("tokenId")
 	symbol, _ := cmd.Flags().GetString("symbol")
+	decimal, _ := cmd.Flags().GetUint32("decimal")
 	paraName, _ := cmd.Flags().GetString("paraName")
 
 	payload := &zt.ZkTokenSymbol{
-		Id:     strconv.Itoa(int(tokenId)),
-		Symbol: symbol,
+		Id:      strconv.Itoa(int(tokenId)),
+		Symbol:  symbol,
+		Decimal: decimal,
 	}
 
 	params := &rpctypes.CreateTxIn{

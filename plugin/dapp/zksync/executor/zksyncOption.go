@@ -439,7 +439,32 @@ func checkAmount(token *zt.TokenBalance, amount string) error {
 	return errors.New("balance not enough")
 }
 
-func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId uint64) (*types.Receipt, error) {
+//根据系统和token精度，计算合约转化为二层tree侧的amount，合约侧amount都是系统精度
+func getTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal int) (string, string, string, error) {
+	amountT, err := transferDecimalAmount(amount, sysDecimal, tokenDecimal)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", amount, tokenDecimal, sysDecimal)
+	}
+	totalAmountT, err := transferDecimalAmount(totalAmount, sysDecimal, tokenDecimal)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", totalAmount, tokenDecimal, sysDecimal)
+	}
+	feeAmountT, err := transferDecimalAmount(fee, sysDecimal, tokenDecimal)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", fee, tokenDecimal, sysDecimal)
+	}
+	err = checkPackValue(amountT, zt.PacAmountManBitWidth)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "checkPackVal amount=%s", amountT)
+	}
+	err = checkPackValue(feeAmountT, zt.PacFeeManBitWidth)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "checkPackVal fee=%s", feeAmountT)
+	}
+	return amountT, totalAmountT, feeAmountT, nil
+}
+
+func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, token *zt.ZkTokenSymbol) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 
 	info, err := getTreeUpdateInfo(a.statedb)
@@ -447,10 +472,22 @@ func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 
-	//加上手续费
-	totalFromAmount, fromFee, err := getAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId)
+	tokenId, ok := new(big.Int).SetString(token.Id, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "tokenId=%s", token.Id)
+	}
+
+	//以合约侧精度获取amount和fee
+	totalFromAmount, fromFee, err := getAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId.Uint64())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAmountWithFee")
+	}
+
+	//根据精度，转化到tree侧的amount
+	sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
+	amountTree, totalFromAmountTree, feeTree, err := getTreeSideAmount(payload.Amount, totalFromAmount.String(), fromFee.String(), sysDecimal, int(token.Decimal))
+	if err != nil {
+		return nil, errors.Wrap(err, "getTreeSideAmount")
 	}
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetToAccountId(), info)
@@ -468,12 +505,12 @@ func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 	//}
 
 	special := &zt.ZkContractToTreeWitnessInfo{
-		TokenId:   tokenId,
-		Amount:    payload.Amount,
+		TokenId:   tokenId.Uint64(),
+		Amount:    amountTree,
 		AccountId: payload.ToAccountId,
 		Signature: payload.Signature,
 		Fee: &zt.ZkFee{
-			FromFee: fromFee.String(),
+			FromFee: feeTree,
 		},
 	}
 
@@ -487,10 +524,10 @@ func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 	//更新合约账户, 扣除 amount+fee
 	contractReceipt, err := a.UpdateContractAccount(totalFromAmount.String(), payload.TokenSymbol, zt.Sub, payload.FromExec)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+		return nil, errors.Wrapf(err, "UpdateChainAccount")
 	}
 
-	kvs, localKvs, err := a.transferProc(zt.SystemTree2ContractAcctId, payload.ToAccountId, tokenId, totalFromAmount.String(), payload.Amount, info, operationInfo)
+	kvs, localKvs, err := a.transferProc(zt.SystemTree2ContractAcctId, payload.ToAccountId, tokenId.Uint64(), totalFromAmountTree, amountTree, info, operationInfo)
 	if err != nil {
 		return nil, errors.Wrapf(err, "transferProc")
 	}
@@ -503,7 +540,7 @@ func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(fromFee.String(), info, tokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeTree, info, tokenId.Uint64(), payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -513,7 +550,7 @@ func (a *Action) ContractToTreeAcctIdProc(payload *zt.ZkContractToTree, tokenId 
 }
 
 //contract2Tree 根据ethAddr、layer2Addr 自动创建新accountId
-func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uint64) (*types.Receipt, error) {
+func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.ZkTokenSymbol) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	if len(payload.GetToEthAddr()) <= 0 || len(payload.GetToLayer2Addr()) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "accountId=%d,ethAddr=%s or layer2Addr=%s nil",
@@ -543,7 +580,7 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 	//toAccount存在，走accountId流程, 因为contract2New 电路不验证签名
 	if toLeaf != nil {
 		payload.ToAccountId = toLeaf.AccountId
-		return a.ContractToTreeAcctIdProc(payload, tokenId)
+		return a.ContractToTreeAcctIdProc(payload, token)
 	}
 
 	//accountId 的地址需要和转入者对应，对转入者的保护，防止转到别人ID
@@ -551,21 +588,31 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 	//if err != nil {
 	//	return nil, errors.Wrapf(err, "authVerification")
 	//}
-	//加上手续费,fee调换一下
-	totalFromAmount, fromFee, err := getAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId)
+	tokenId, ok := new(big.Int).SetString(token.Id, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "tokenId=%s", token.Id)
+	}
+	totalFromAmount, fromFee, err := getAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId.Uint64())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAmountWithFee")
 	}
 
+	//根据精度，转化到tree侧的amount
+	sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
+	amountTree, totalFromAmountTree, feeTree, err := getTreeSideAmount(payload.Amount, totalFromAmount.String(), fromFee.String(), sysDecimal, int(token.Decimal))
+	if err != nil {
+		return nil, errors.Wrap(err, "getTreeSideAmount")
+	}
+
 	special := &zt.ZkContractToTreeNewWitnessInfo{
-		TokenId: tokenId,
-		Amount:  payload.Amount,
+		TokenId: tokenId.Uint64(),
+		Amount:  amountTree,
 		//ToAccountId: nil,
 		EthAddress: payload.ToEthAddr,
 		Layer2Addr: payload.ToLayer2Addr,
 		Signature:  payload.Signature,
 		Fee: &zt.ZkFee{
-			FromFee: fromFee.String(),
+			FromFee: feeTree,
 		},
 	}
 	operationInfo := &zt.OperationInfo{
@@ -582,7 +629,7 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
 
-	kvs, localKvs, err := a.transfer2NewProc(zt.SystemTree2ContractAcctId, tokenId, payload.ToEthAddr, payload.ToLayer2Addr, totalFromAmount.String(), payload.Amount, info, operationInfo)
+	kvs, localKvs, err := a.transfer2NewProc(zt.SystemTree2ContractAcctId, tokenId.Uint64(), payload.ToEthAddr, payload.ToLayer2Addr, totalFromAmountTree, amountTree, info, operationInfo)
 	if err != nil {
 		return nil, errors.Wrapf(err, "transfer2NewProc")
 	}
@@ -597,7 +644,7 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
-	feeReceipt, err := a.MakeFeeLog(fromFee.String(), info, tokenId, payload.Signature)
+	feeReceipt, err := a.MakeFeeLog(feeTree, info, tokenId.Uint64(), payload.Signature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "MakeFeeLog")
 	}
@@ -608,58 +655,75 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, tokenId uin
 
 //ContractToTree 用户从L2转入到合约账户的资产转回到L2，amount为实际到账金额，fee额外从用户账户扣除
 //也就是用户实际资产total>=amount+fee, 如果小于则提取不成功
+//contract2tree的输入amount和fee精度统一是chain33合约精度，比如1e8，在二层再根据具体token精度做适配
 func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, error) {
-	//保证精度是小数后8位，eth转换去掉10位
-	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "coin precision is not defual=%d", types.DefaultCoinPrecision)
-	}
-
-	//因为合约balance需要/1e10，因此要先圆整到精度
-	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
-	}
-	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
-
 	err := checkParam(payload.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	err = checkPackValue(payload.Amount, zt.PacAmountManBitWidth)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkPackVal")
-	}
 
-	tokenId, err := getTokenSymbolId(a.statedb, payload.TokenSymbol)
+	token, err := getTokenBySymbol(a.statedb, payload.TokenSymbol)
 	if err != nil {
 		return nil, err
 	}
+	if token != nil && token.Id == "" {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "symbol=%s id is invalid", payload.TokenSymbol)
+	}
+
+	//cfg decimal 系统启动时候做过检查，和0的个数一致，缺省1e8有8个0
 	//如果设置了toAccountId 直接转到id，否则根据ethAddr、layer2Addr创建新account
 	if payload.GetToAccountId() > 0 {
-		return a.ContractToTreeAcctIdProc(payload, tokenId)
+		return a.ContractToTreeAcctIdProc(payload, token)
 	}
 
-	return a.contractToTreeNewProc(payload, tokenId)
+	return a.contractToTreeNewProc(payload, token)
 }
 
+//from向to小数对齐，如果from>to, 需要裁减掉差别部分，且差别部分需要全0，如果from<to,差别部分需要补0
+func transferDecimalAmount(amount string, fromDecimal, toDecimal int) (string, error) {
+	//from=tokenDecimal大于to=sysDecimal场景，需要裁减差别部分, 比如 1e18 > 1e8,裁减1e10
+	if fromDecimal > toDecimal {
+		diff := fromDecimal - toDecimal
+		suffix := strings.Repeat("0", diff)
+		if !strings.HasSuffix(amount, suffix) {
+			return "", errors.Wrapf(types.ErrInvalidParam, "amount=%s not include suffix decimal=%d", amount, diff)
+		}
+		return amount[:len(amount)-diff], nil
+	}
+	//tokenDecimal <= 合约decimal场景，需要扩展，比如1e6 < 1e8,扩展"00"
+	diff := toDecimal - fromDecimal
+	suffix := strings.Repeat("0", diff)
+	return amount + suffix, nil
+
+}
+
+//TreeToContract amount需要和签名的一致，签名需要电路验证，amount需要包括精度位
 func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
-	//保证精度是小数后8位，eth转换去掉10位
-	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "coin precision is not defual=%d", types.DefaultCoinPrecision)
+	err := checkParam(payload.GetAmount())
+	if err != nil {
+		return nil, err
 	}
 
-	//因为合约balance需要/1e10，因此要先去掉精度
-	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	token, err := getTokenById(a.statedb, strconv.Itoa(int(payload.TokenId)))
+	if err != nil {
+		return nil, errors.Wrapf(err, "getTokenId=%d", payload.TokenId)
 	}
-	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
+
+	//cfg decimal 系统启动时候做过检查，和0的个数一致，缺省1e8有8个0
+	s := strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision()))
+	sysDecimal := strings.Count(s, "0")
+	contractAmount, err := transferDecimalAmount(payload.GetAmount(), int(token.Decimal), sysDecimal)
+	if err != nil {
+		return nil, errors.Wrapf(err, "transfer2ContractAmount,tokenDecimal=%d,sysDecimal=%d", token.Decimal, sysDecimal)
+	}
+
 	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
 	if payload.ToAcctId != zt.SystemTree2ContractAcctId {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "toAcctId not systemId=%d", zt.SystemTree2ContractAcctId)
 	}
 
-	//本质上是向另一个账户转账，底层重用了transfer电路(节省电路规模)
+	//本质上是向另一个账户转账，底层重用了transfer电路(节省电路规模)，
+	//二层的转账，amount需要和签过名的payload一致，电路需要验证
 	transfer := &zt.ZkTransfer{
 		TokenId:       payload.TokenId,
 		Amount:        payload.Amount,
@@ -672,32 +736,35 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "transfer")
 	}
 
-	//更新合约账户
-	symbol, err := getTokenIdSymbol(a.statedb, strconv.Itoa(int(payload.GetTokenId())))
-	if err != nil {
-		return nil, err
-	}
-	contractReceipt, err := a.UpdateContractAccount(payload.GetAmount(), symbol, zt.Add, payload.ToExec)
+	//更新合约账户,合约账户需要用符合chain33合约的精度的amount来更新
+	contractReceipt, err := a.UpdateContractAccount(contractAmount, token.Symbol, zt.Add, payload.ToExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "UpdateContractAccount")
 	}
 	return mergeReceipt(receipt, contractReceipt), nil
 }
 
-func makeSetTokenSymbolReceipt(id, oldVal, newVal string) *types.Receipt {
-	key := GetTokenSymbolKey(id)
-	keySym := GetTokenSymbolIdKey(newVal)
+func makeSetTokenSymbolReceipt(id string, oldVal, newVal *zt.ZkTokenSymbol) *types.Receipt {
+	var kvs []*types.KeyValue
+	keyId := GetTokenSymbolKey(id)
+	kvs = append(kvs, &types.KeyValue{Key: keyId, Value: types.Encode(newVal)})
+
+	keySym := GetTokenSymbolIdKey(newVal.Symbol)
+	kvs = append(kvs, &types.KeyValue{Key: keySym, Value: types.Encode(newVal)})
+
+	//如果是更新了symbol，需要把旧的symbol对应的id更新为""，旧的symbol可以再次被别的tokenId使用，不然会混乱
+	if oldVal != nil && oldVal.Symbol != newVal.Symbol {
+		oldSymVal := *oldVal
+		oldSymVal.Id = "" //置空
+		kvs = append(kvs, &types.KeyValue{Key: GetTokenSymbolIdKey(oldVal.Symbol), Value: types.Encode(&oldSymVal)})
+	}
 	log := &zt.ReceiptSetTokenSymbol{
-		TokenId:    id,
-		PrevSymbol: oldVal,
-		CurSymbol:  newVal,
+		Pre: oldVal,
+		Cur: newVal,
 	}
 	return &types.Receipt{
 		Ty: types.ExecOk,
-		KV: []*types.KeyValue{
-			{Key: key, Value: types.Encode(&zt.ZkTokenSymbol{Id: id, Symbol: newVal})},
-			{Key: keySym, Value: types.Encode(&types.ReqString{Data: id})},
-		},
+		KV: kvs,
 		Logs: []*types.ReceiptLog{
 			{Ty: zt.TyLogSetTokenSymbol, Log: types.Encode(log)},
 		},
@@ -706,6 +773,8 @@ func makeSetTokenSymbolReceipt(id, oldVal, newVal string) *types.Receipt {
 }
 
 //tokenId可以对应多个symbol，但一个symbol只能对应一个Id,比如Id=1,symbol=USTC,后改成USTD, USTC仍然会对应Id=1, 新的Id不能使用已存在的名字，防止重复混乱
+//比如token1已经设置为USDT,token2再设置为USDT是不允许的，这样如果曾经设过的(包括错的)symbol都是不允许再设置的
+//对于精度设置错了影响会更大，只有在SystemTree2ContractAcctId的当前token为0的时候才允许修改，也就意味着合约里面的资产按当前精度已经都提回到tree了，tree内的资产本身自带精度
 func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
@@ -716,56 +785,75 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	if len(payload.Id) <= 0 || len(payload.Symbol) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "id=%s or symbol=%s nil", payload.Id, payload.Symbol)
 	}
-
-	//首先检查symbol是否存在，symbol存在不允许修改
-	id, err := getTokenSymbolId(a.statedb, payload.Symbol)
-	if !isNotFound(errors.Cause(err)) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "error=%v or tokenSymbol exist id=%d", err, id)
+	idInt, ok := new(big.Int).SetString(payload.Id, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "id=%s", payload.Id)
 	}
 
-	lastSym, err := getTokenIdSymbol(a.statedb, payload.Id)
-	if isNotFound(errors.Cause(err)) {
-		return makeSetTokenSymbolReceipt(payload.Id, "", payload.Symbol), nil
-	}
-	if err != nil {
+	//首先检查symbol是否存在，不允许对已存在的symbol做修改，如果之前设置错了，也需要修改个新的名字设置
+	token, err := getTokenBySymbol(a.statedb, payload.Symbol)
+	if err != nil && !isNotFound(errors.Cause(err)) {
 		return nil, err
 	}
-	return makeSetTokenSymbolReceipt(payload.Id, lastSym, payload.Symbol), nil
+	//已有symbol未设置为invaild不允许更换id
+	if token != nil && token.Id != "" && token.Id != payload.Id {
+		return nil, errors.Wrapf(types.ErrNotAllow, "tokenSymbol=%s existed id=%s", payload.Symbol, token.Id)
+	}
 
+	//id初始设置或者重设symbol
+	lastSym, err := getTokenById(a.statedb, payload.Id)
+	if err != nil && !isNotFound(errors.Cause(err)) {
+		return nil, err
+	}
+	//id已经存在，已有id修改symbol或decimal需要SystemTree2ContractAcctId的当前token balance为0的时候,说明没有转出到chain33资产或者已经全部转回来了
+	if lastSym != nil && (lastSym.Symbol != payload.Symbol || lastSym.Decimal != payload.Decimal) {
+		balance, err := GetTokenByAccountIdAndTokenIdInDB(a.statedb, zt.SystemTree2ContractAcctId, idInt.Uint64())
+		if err != nil {
+			return nil, errors.Wrapf(err, "get systemContractAcctId=%d token=%s", zt.SystemTree2ContractAcctId, token.Id)
+		}
+		if balance != nil {
+			balanceInt, ok := new(big.Int).SetString(balance.Balance, 10)
+			if !ok {
+				return nil, errors.Wrapf(types.ErrInvalidParam, "systemContractAcctId=%d token=%s,balance=%s", zt.SystemTree2ContractAcctId, token.Id, balance.Balance)
+			}
+			//只有balance为0时候允许，说明已经从contract完全提取资产到tree
+			if balanceInt.Cmp(big.NewInt(0)) != 0 {
+				return nil, errors.Wrapf(types.ErrNotAllow, "systemContractAcctId=%d token=%s,balance=%s should be 0", zt.SystemTree2ContractAcctId, token.Id, balance.Balance)
+			}
+		}
+		//balance=nil or =0  ok
+	}
+	return makeSetTokenSymbolReceipt(payload.Id, lastSym, payload), nil
 }
 
-func getTokenIdSymbol(db dbm.KV, tokenId string) (string, error) {
+func getTokenById(db dbm.KV, tokenId string) (*zt.ZkTokenSymbol, error) {
 	key := GetTokenSymbolKey(tokenId)
 	r, err := db.Get(key)
 	if err != nil {
-		return "", errors.Wrapf(err, "getTokenIdSymbol.getDb")
+		return nil, errors.Wrapf(err, "getDb")
 	}
 	var symbol zt.ZkTokenSymbol
 	err = types.Decode(r, &symbol)
 	if err != nil {
-		return "", errors.Wrapf(err, "getTokenIdSymbol.decode")
+		return nil, errors.Wrapf(err, "decode")
 	}
-	return symbol.Symbol, nil
+	return &symbol, nil
 }
-func getTokenSymbolId(db dbm.KV, symbol string) (uint64, error) {
+func getTokenBySymbol(db dbm.KV, symbol string) (*zt.ZkTokenSymbol, error) {
 	if len(symbol) <= 0 {
-		return 0, errors.Wrapf(types.ErrInvalidParam, "symbol nil=%s", symbol)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "symbol nil=%s", symbol)
 	}
 	key := GetTokenSymbolIdKey(symbol)
 	r, err := db.Get(key)
 	if err != nil {
-		return 0, errors.Wrapf(err, "getTokenIdSymbol.getDb")
+		return nil, errors.Wrapf(err, "getDb")
 	}
-	var token types.ReqString
+	var token zt.ZkTokenSymbol
 	err = types.Decode(r, &token)
 	if err != nil {
-		return 0, errors.Wrapf(err, "getTokenIdSymbol.decode")
+		return nil, errors.Wrapf(err, "decode")
 	}
-	id, ok := new(big.Int).SetString(token.Data, 10)
-	if !ok {
-		return 0, errors.Wrapf(types.ErrInvalidParam, "token.data=%s", token.Data)
-	}
-	return id.Uint64(), nil
+	return &token, nil
 }
 
 //在设置了invalidTx后，平行链从0开始同步到无效交易则设置系统为exodus mode，此模式意味着此链即将停用，资产需要退出到ETH
@@ -852,33 +940,31 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 	if err != nil {
 		return nil, errors.Wrapf(err, "newZkSyncAccount")
 	}
-	change, ok := new(big.Int).SetString(amount, 10)
+	shortChange, ok := new(big.Int).SetString(amount, 10)
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "UpdateContractAccount amount=%s", amount)
 	}
-	//accountdb去除末尾10位小数
-	shortChange := new(big.Int).Div(change, big.NewInt(1e10)).Int64()
 	var execReceipt types.Receipt
 	if option == zt.Sub {
 		if len(execName) > 0 {
-			r, err := a.UpdateExecAccount(accountdb, shortChange, option, execName)
+			r, err := a.UpdateExecAccount(accountdb, shortChange.Int64(), option, execName)
 			if err != nil {
 				return nil, errors.Wrapf(err, "withdraw from exec=%s,val=%d", execName, shortChange)
 			}
 			mergeReceipt(&execReceipt, r)
 		}
 
-		r, err := accountdb.Burn(a.fromaddr, shortChange)
+		r, err := accountdb.Burn(a.fromaddr, shortChange.Int64())
 		return mergeReceipt(&execReceipt, r), err
 	}
 	//deposit
-	r, err := accountdb.Mint(a.fromaddr, shortChange)
+	r, err := accountdb.Mint(a.fromaddr, shortChange.Int64())
 	if err != nil {
 		return nil, errors.Wrapf(err, "deposit val=%d", shortChange)
 	}
 	mergeReceipt(&execReceipt, r)
 	if len(execName) > 0 {
-		r, err = a.UpdateExecAccount(accountdb, shortChange, option, execName)
+		r, err = a.UpdateExecAccount(accountdb, shortChange.Int64(), option, execName)
 		return mergeReceipt(&execReceipt, r), err
 	}
 	return &execReceipt, nil
@@ -1064,6 +1150,9 @@ func (a *Action) transfer(payload *zt.ZkTransfer, actionTy int32) (*types.Receip
 		LocalKvs:      localKvs,
 	}
 	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(zklog)}
+	if actionTy == zt.TyTreeToContractAction {
+		receiptLog.Ty = zt.TyTreeToContractLog
+	}
 	logs = append(logs, receiptLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -1762,12 +1851,15 @@ func authVerification(signPubKey *zt.ZkPubKey, leafPubKey *zt.ZkPubKey) error {
 
 //检查参数
 func checkParam(amount string) error {
-	if amount == "" || amount == "0" || strings.HasPrefix(amount, "-") {
+	if amount == "" || strings.HasPrefix(amount, "-") {
 		return types.ErrAmount
 	}
-	_, ok := new(big.Int).SetString(amount, 10)
+	v, ok := new(big.Int).SetString(amount, 10)
 	if !ok {
 		return errors.Wrapf(types.ErrInvalidParam, "decode amount=%s", amount)
+	}
+	if v.Cmp(big.NewInt(0)) == 0 {
+		return errors.Wrapf(types.ErrInvalidParam, "amount=%s is 0", amount)
 	}
 	return nil
 }
@@ -1940,9 +2032,9 @@ func checkPackValue(amount string, manMaxBitWidth int64) error {
 		return errors.Wrapf(types.ErrInvalidParam, "ZkTransferManExpPart,man=%s,amount=%s", manV, amount)
 	}
 
-	maxFeeV := new(big.Int).Exp(big.NewInt(2), big.NewInt(manMaxBitWidth), nil)
-	//manv <= maxFee
-	if maxFeeV.Cmp(manV) < 0 {
+	maxManV := new(big.Int).Exp(big.NewInt(2), big.NewInt(manMaxBitWidth), nil)
+	//manv <= maxMan
+	if maxManV.Cmp(manV) < 0 {
 		return errors.Wrapf(types.ErrNotAllow, "fee amount's manV=%s big than 2^%d", man, manMaxBitWidth)
 	}
 	return nil
@@ -1956,13 +2048,19 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, zt.ZkParaChainInnerTitleId, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
-	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "decimal amount=%s", payload.Amount)
-	}
-	//contract2tree action涉及到合约的精度，fee不能小于最小精度1e10,也就是小数后8位
-	if payload.ActionTy == zt.TyContractToTreeAction && amountInt.Cmp(big.NewInt(1e10)) < 0 {
-		return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need big than 1e10")
+
+	//跟其他action手续费以二层各token精度一致不同，contract2tree action的手续费统一以合约的精度处理，这样和合约侧amount精度一致，简化了合约侧的精度处理
+	if payload.ActionTy == zt.TyContractToTreeAction {
+		token, err := getTokenById(a.statedb, big.NewInt(int64(payload.TokenId)).String())
+		if err != nil {
+			return nil, errors.Wrapf(err, "getTokenId=%d", payload.TokenId)
+		}
+		sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
+		//比如token精度为6，sysDecimal=8, token的fee在sysDecimal下需要补2个0，也就是后缀需要至少有两个0，不然会丢失精度，在token精度大于sys精度时候没这问题
+		suffix := strings.Repeat("0", sysDecimal-int(token.Decimal))
+		if int(token.Decimal) < sysDecimal && !strings.HasSuffix(payload.Amount, suffix) {
+			return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need at least with suffix=%s", suffix)
+		}
 	}
 	//fee 压缩格式检查
 	err := checkPackValue(payload.Amount, zt.PacFeeManBitWidth)
