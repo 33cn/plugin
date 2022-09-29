@@ -2057,9 +2057,8 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 		}
 		sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
 		//比如token精度为6，sysDecimal=8, token的fee在sysDecimal下需要补2个0，也就是后缀需要至少有两个0，不然会丢失精度，在token精度大于sys精度时候没这问题
-		suffix := strings.Repeat("0", sysDecimal-int(token.Decimal))
-		if int(token.Decimal) < sysDecimal && !strings.HasSuffix(payload.Amount, suffix) {
-			return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need at least with suffix=%s", suffix)
+		if int(token.Decimal) < sysDecimal && !strings.HasSuffix(payload.Amount, strings.Repeat("0", sysDecimal-int(token.Decimal))) {
+			return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need at least with suffix=%s", strings.Repeat("0", sysDecimal-int(token.Decimal)))
 		}
 	}
 	//fee 压缩格式检查
