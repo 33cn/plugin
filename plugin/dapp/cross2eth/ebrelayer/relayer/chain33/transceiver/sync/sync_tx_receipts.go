@@ -97,6 +97,10 @@ func startHTTPService(url string, clientHost string) {
 				w.WriteHeader(200)
 				if len(r.Header["Content-Encoding"]) >= 1 && r.Header["Content-Encoding"][0] == "gzip" {
 					gr, err := gzip.NewReader(r.Body)
+					if err != nil {
+						log.Debug("Error while read serving JSON request: %v", err)
+						return
+					}
 					//body := make([]byte, r.ContentLength)
 					body, err := ioutil.ReadAll(gr)
 					//n, err := r.Body.Read(body)

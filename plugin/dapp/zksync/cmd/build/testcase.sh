@@ -312,10 +312,10 @@ function zksync_setVerifyKey() {
 
 function query_account_balance() {
     balance=$(${CLI} zksync query account balance id -a "${2}" -t "${1}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
-    if [[ "$balance" != "$3" ]]; then
+    if [[ $balance != "$3" ]]; then
         echo -e "${RED}$balance != ${3}${NOC}"
         exit 1
-    fi    
+    fi
 }
 
 function create_tx() {
@@ -347,7 +347,7 @@ function zksync_test() {
     zksync_asset_transfer
     zksync_proxyExit
     zksync_setVerifyKey
-#    create_tx
+    #    create_tx
 }
 
 function zksync() {

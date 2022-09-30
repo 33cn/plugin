@@ -6,13 +6,14 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpcTypes "github.com/33cn/chain33/rpc/types"
 	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"

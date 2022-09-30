@@ -1,9 +1,10 @@
 package wallet
 
 import (
+	"testing"
+
 	"github.com/33cn/chain33/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGetEddsaPriKeySeed(t *testing.T) {

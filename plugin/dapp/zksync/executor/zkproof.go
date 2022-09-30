@@ -3,6 +3,9 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"hash"
+	"math/big"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -10,8 +13,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc"
-	"hash"
-	"math/big"
 
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 

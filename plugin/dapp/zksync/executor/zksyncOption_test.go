@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/common/db"
 	"math/big"
 	"strings"
 	"testing"
+
+	"github.com/33cn/chain33/common/db"
 
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/types"
@@ -232,10 +233,10 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(tree)
 }
 
-func setfee(action *Action, t *testing.T ,statedb db.DB, localdb db.KVDB, zklog *zt.ZkReceiptLog, tokenId uint64, actionTy int32)  {
+func setfee(action *Action, t *testing.T, statedb db.DB, localdb db.KVDB, zklog *zt.ZkReceiptLog, tokenId uint64, actionTy int32) {
 	fee := &zt.ZkSetFee{
-		TokenId: tokenId,
-		Amount: "10000000000000000",
+		TokenId:  tokenId,
+		Amount:   "10000000000000000",
 		ActionTy: actionTy,
 	}
 
