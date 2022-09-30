@@ -405,11 +405,6 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 			lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
 	}
 
-	//if lastProof.ProofId+1 != newProof.ProofId {
-	//	return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastProofId=%d,newProofId=%d, lastBlockEnd=%d,newBlockStart=%d",
-	//		lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
-	//}
-
 	//tree root 需要衔接, 从proofId=1开始校验
 	if lastProof.ProofId > 0 && lastProof.NewTreeRoot != newProof.OldTreeRoot {
 		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
