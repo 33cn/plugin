@@ -594,9 +594,10 @@ func (client *Client) delTicket(ticketID string) {
 }
 
 // Miner ticket miner function
-func (client *Client) Miner(parent, block *types.Block) error {
+func (client *Client) Miner(block *types.Block) error {
 	//add miner address
-	ticket, priv, diff, modify, ticketID, err := client.searchTargetTicket(parent, block)
+	parentBlock := client.GetCurrentBlock()
+	ticket, priv, diff, modify, ticketID, err := client.searchTargetTicket(parentBlock, block)
 	if err != nil {
 		tlog.Error("Miner", "err", err)
 		lastBlock, err := client.RequestLastBlock()
@@ -610,7 +611,7 @@ func (client *Client) Miner(parent, block *types.Block) error {
 		return errors.New("ticket is nil")
 	}
 	newBlock := *block
-	err = client.addMinerTx(parent, &newBlock, diff, priv, ticket.TicketId, modify)
+	err = client.addMinerTx(parentBlock, &newBlock, diff, priv, ticket.TicketId, modify)
 	if err != nil {
 		return err
 	}
@@ -620,7 +621,7 @@ func (client *Client) Miner(parent, block *types.Block) error {
 		newBlock.Txs = types.TransactionSort(newBlock.Txs)
 	}
 
-	err = client.WriteBlock(parent.StateHash, &newBlock)
+	err = client.WriteBlock(parentBlock.StateHash, &newBlock)
 	if err != nil {
 		return err
 	}
@@ -717,7 +718,7 @@ func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.Priv
 	return tx
 }
 
-func (client *Client) createBlock() (*types.Block, *types.Block) {
+func (client *Client) createBlock() *types.Block {
 	cfg := client.GetAPI().GetConfig()
 	lastBlock := client.GetCurrentBlock()
 	var newblock types.Block
@@ -729,7 +730,7 @@ func (client *Client) createBlock() (*types.Block, *types.Block) {
 	}
 	txs := client.RequestTx(int(cfg.GetP(newblock.Height).MaxTxNumber)-1, nil)
 	client.AddTxsToBlock(&newblock, txs)
-	return &newblock, lastBlock
+	return &newblock
 }
 
 func (client *Client) updateBlock(block *types.Block, txHashList [][]byte) (txList [][]byte) {
@@ -780,9 +781,9 @@ func (client *Client) CreateBlock() {
 			time.Sleep(time.Second)
 			continue
 		}
-		block, lastBlock := client.createBlock()
+		block := client.createBlock()
 		txList := getTxHashes(block.Txs)
-		for err := client.Miner(lastBlock, block); err != nil; err = client.Miner(lastBlock, block) {
+		for err := client.Miner(block); err != nil; err = client.Miner(block) {
 			if err == queue.ErrIsQueueClosed {
 				break
 			}
