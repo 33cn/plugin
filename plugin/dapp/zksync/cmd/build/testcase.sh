@@ -26,13 +26,13 @@ queueId=0
 
 management_key="4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 
-ZKSYNC_ACCOUNT_5="5"
+ZKSYNC_ACCOUNT_4="4"
 account1="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
 accountKey1="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-ZKSYNC_ACCOUNT_6="6"
+ZKSYNC_ACCOUNT_5="5"
 account2="1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
 accountKey2="0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
-ZKSYNC_ACCOUNT_7="7"
+ZKSYNC_ACCOUNT_6="6"
 account3="1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
 accountKey3="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
 
@@ -145,33 +145,33 @@ function zksync_deposit() {
     hash=$(${CLI} send zksync l2 deposit -t "${TOKENID_0}" -a 8000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i ${queueId} -k "${management_key}")
     check_tx "${CLI}" "${hash}"
     queueId=$((queueId + 1))
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" 8000000000000000000
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_4}" 8000000000000000000
 
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR deposit amount 1000000000
     chain33Addr=$(${CLI} zksync l2 l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
     hash=$(${CLI} send zksync l2 deposit -t "${TOKENID_1}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i ${queueId} -k "${management_key}")
     check_tx "${CLI}" "${hash}"
     queueId=$((queueId + 1))
-    query_account_balance "${TOKENID_1}" "${ZKSYNC_ACCOUNT_6}" 1000000000
+    query_account_balance "${TOKENID_1}" "${ZKSYNC_ACCOUNT_5}" 1000000000
 }
 
 function zksync_setPubKey() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 setPubKey
-    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
+    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_4}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
-    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_6}" -k "${accountKey2}")
+    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_5}" -k "${accountKey2}")
     check_tx "${CLI}" "${hash}"
 }
 
 function zksync_withdraw() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 withdraw amount 100000000
-    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
-    hash=$(${CLI} send zksync l2 withdraw -t "${TOKENID_0}" -a 100000000 -i "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
+    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_4}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    hash=$(${CLI} send zksync l2 withdraw -t "${TOKENID_0}" -a 100000000 -i "${ZKSYNC_ACCOUNT_4}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
     balanceAf=$((balanceBf - 100000000))
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" ${balanceAf}
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_4}" ${balanceAf}
 }
 
 function zksync_set_symbol() {
@@ -183,13 +183,13 @@ function zksync_set_symbol() {
 function zksync_treeToContract() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 treeToContract amount 1000000000
-    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_4}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
     ${CLI} asset balance -a "${account1}" --asset_exec zksync --asset_symbol "${TOKENID_SYMBOL_0}"
 
-    hash=$(${CLI} send zksync l2 tree2contract -t "${TOKENID_0}" -a 2000000000000000000 --accountId "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
+    hash=$(${CLI} send zksync l2 tree2contract -t "${TOKENID_0}" -a 2000000000000000000 --accountId "${ZKSYNC_ACCOUNT_4}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
     balanceAf=$((balanceBf - 2000000000000000000))
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" ${balanceAf}
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_4}" ${balanceAf}
 
     balance=$(${CLI} asset balance -a "${account1}" --asset_exec zksync --asset_symbol "${TOKENID_SYMBOL_0}" | jq ".balance" | sed 's/\"//g')
     is_equal "${balance}" "2.0000"
@@ -199,12 +199,12 @@ function zksync_contractToTree() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 contractToTree to self amount 100000000
     balanceBfAsset=$(${CLI} asset balance -a "${account1}" --asset_exec zksync --asset_symbol "${TOKENID_SYMBOL_0}" | jq ".balance" | sed 's/\"//g')
-    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
-    hash=$(${CLI} send zksync l2 contract2tree -t "${TOKENID_SYMBOL_0}" -a 100000000000000000 --accountId "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
+    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_4}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    hash=$(${CLI} send zksync l2 contract2tree -t "${TOKENID_SYMBOL_0}" -a 100000000000000000 --accountId "${ZKSYNC_ACCOUNT_4}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
 
     balanceAf=$((balanceBf + 100000000000000000))
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" ${balanceAf}
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_4}" ${balanceAf}
     balance=$(${CLI} asset balance -a "${account1}" --asset_exec zksync --asset_symbol "${TOKENID_SYMBOL_0}" | jq ".balance" | sed 's/\"//g')
     balanceAf=$(echo "${balanceBfAsset} - 0.1" | bc)
     is_equal "${balance}" "${balanceAf}"
@@ -214,35 +214,35 @@ function zksync_transfer() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transfer to 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR amount 100000000
 
-    balanceBf5=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
-    balanceBf6=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_6}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    balanceBf5=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_4}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    balanceBf6=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
 
-    hash=$(${CLI} send zksync l2 transfer -i "${TOKENID_0}" -a 100000000 -f "${ZKSYNC_ACCOUNT_5}" -t "${ZKSYNC_ACCOUNT_6}" -k "${accountKey1}")
+    hash=$(${CLI} send zksync l2 transfer -i "${TOKENID_0}" -a 100000000 -f "${ZKSYNC_ACCOUNT_4}" -t "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
 
     balanceAf5=$((balanceBf5 - 100000000))
     balanceAf6=$((balanceBf6 + 100000000))
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" ${balanceAf5}
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_6}" ${balanceAf6}
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_4}" ${balanceAf5}
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" ${balanceAf6}
 }
 
 function zksync_transferToNew() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transferToNew to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k amount 100000000
 
-    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    balanceBf=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_4}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
     chain33Addr=$(${CLI} zksync l2 l2addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
-    hash=$(${CLI} send zksync l2 transfer2new -t "${TOKENID_0}" -a 100000000 -f "${ZKSYNC_ACCOUNT_5}" -e 12a0E25E62C1dBD32E505446062B26AECB65F027 -c "$chain33Addr" -k "${accountKey1}")
+    hash=$(${CLI} send zksync l2 transfer2new -t "${TOKENID_0}" -a 100000000 -f "${ZKSYNC_ACCOUNT_4}" -e 12a0E25E62C1dBD32E505446062B26AECB65F027 -c "$chain33Addr" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
 
     balanceAf=$((balanceBf - 100000000))
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" ${balanceAf}
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_7}" 100000000
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_4}" ${balanceAf}
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_6}" 100000000
 }
 
 function zksync_asset_transfer() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
-    hash=$(${CLI} send zksync l2 tree2contract -t "${TOKENID_0}" -a 3000000000000000000 --accountId "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
+    hash=$(${CLI} send zksync l2 tree2contract -t "${TOKENID_0}" -a 3000000000000000000 --accountId "${ZKSYNC_ACCOUNT_4}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
 
     # transfer
@@ -282,24 +282,24 @@ function zksync_asset_transfer() {
 function zksync_proxyExit() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 help 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR proxyExit
-    hash=$(${CLI} send zksync l2 proxyexit -a "${ZKSYNC_ACCOUNT_5}" -i "${TOKENID_0}" -t "${ZKSYNC_ACCOUNT_6}" -k "${accountKey1}")
+    hash=$(${CLI} send zksync l2 proxyexit -a "${ZKSYNC_ACCOUNT_4}" -i "${TOKENID_0}" -t "${ZKSYNC_ACCOUNT_5}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
 
-    balance=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_6}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_6}" 0
+    balance=$(${CLI} zksync query account balance id -a "${ZKSYNC_ACCOUNT_5}" -t "${TOKENID_0}" | jq ".tokenBalances[0].balance" | sed 's/\"//g')
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_5}" 0
 }
 
 function zksync_fullExit() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k setPubKey 不支持
-    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_7}" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_6}" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     check_tx "${CLI}" "${hash}"
 
-    hash=$(${CLI} send zksync l2 fullexit -t "${TOKENID_0}" -a "${ZKSYNC_ACCOUNT_7}" -i ${queueId} -k "${management_key}")
+    hash=$(${CLI} send zksync l2 fullexit -t "${TOKENID_0}" -a "${ZKSYNC_ACCOUNT_6}" -i ${queueId} -k "${management_key}")
     check_tx "${CLI}" "${hash}"
     queueId=$((queueId + 1))
 
-    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_7}" 0
+    query_account_balance "${TOKENID_0}" "${ZKSYNC_ACCOUNT_6}" 0
 }
 
 function zksync_setVerifyKey() {
