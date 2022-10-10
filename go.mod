@@ -47,4 +47,5 @@ require (
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
+	mvdan.cc/sh v2.6.4+incompatible // indirect
 )

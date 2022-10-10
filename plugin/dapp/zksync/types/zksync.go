@@ -1,10 +1,15 @@
 package types
 
 import (
+	"encoding/json"
 	"reflect"
+
+	"github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/types"
 )
+
+var ztlog = log15.New("module", Zksync)
 
 /*
  * 交易相关类型定义
@@ -19,37 +24,54 @@ const (
 	TyWithdrawAction       = 2  //eth取款
 	TyTransferAction       = 3  //转账
 	TyTransferToNewAction  = 4  //向新地址转账
-	TyForceExitAction      = 5  //强制退出
+	TyProxyExitAction      = 5  //强制退出
 	TySetPubKeyAction      = 6  //设置公钥
 	TyFullExitAction       = 7  //从L1完全退出
 	TySwapAction           = 8  //交换
 	TyContractToTreeAction = 9  //合约账户转入叶子
 	TyTreeToContractAction = 10 //叶子账户转入合约
 	TyFeeAction            = 11 //手续费
+	TyMintNFTAction        = 12
+	TyWithdrawNFTAction    = 13
+	TyTransferNFTAction    = 14
+
+	//纯特殊电路类型，非Zksync合约使用的action
+	TyContractToTreeNewAction = 30 //合约账户转入新的叶子
 
 	//非电路action
-	TySetVerifyKeyAction = 102 //设置电路验证key
-	TyCommitProofAction  = 103 //提交zk proof
-	TySetVerifierAction  = 104 //设置验证者
-	TySetFeeAction       = 105 //设置手续费
+	TySetVerifyKeyAction        = 102 //设置电路验证key
+	TyCommitProofAction         = 103 //提交zk proof
+	TySetVerifierAction         = 104 //设置验证者
+	TySetFeeAction              = 105 //设置手续费
+	TySetTokenSymbolAction      = 106 //设置token的symbol 以方便在合约使用
+	TyAssetTransferAction       = 107 //从tree转到zksync合约的资产账户之间转账
+	TyAssetTransferToExecAction = 108 //从tree转到zksync合约的资产转到执行器
+	TyAssetWithdrawAction       = 109 //从执行器提款到zksync合约账户
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
-	NameWithdrawAction       = "Withdraw"
+	NameWithdrawAction       = "ZkWithdraw"
 	NameContractToTreeAction = "ContractToTree"
 	NameTreeToContractAction = "TreeToContract"
-	NameTransferAction       = "Transfer"
+	NameTransferAction       = "ZkTransfer"
 	NameTransferToNewAction  = "TransferToNew"
-	NameForceExitAction      = "ForceExit"
+	NameProxyExitAction      = "ProxyExit"
 	NameSetPubKeyAction      = "SetPubKey"
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
 	NameFeeAction            = "Fee"
+	NameMintNFTAction        = "MintNFT"
+	NameWithdrawNFTACTION    = "WithdrawNFT"
+	NameTransferNFTAction    = "TransferNFT"
 
-	NameSetVerifyKeyAction = "SetVerifyKey"
-	NameCommitProofAction  = "CommitProof"
-	NameSetVerifierAction  = "SetVerifier"
-	NameSetFeeAction       = "SetFee"
+	NameSetVerifyKeyAction   = "SetVerifyKey"
+	NameCommitProofAction    = "CommitProof"
+	NameSetVerifierAction    = "SetVerifier"
+	NameSetFeeAction         = "SetFee"
+	NameSetTokenSymbolAction = "SetTokenSymbol"
+	NameAssetTransfer        = "Transfer"
+	NameAssetTransfer2Exec   = "TransferToExec"
+	NameAssetWithdraw        = "Withdraw"
 )
 
 // log类型id值
@@ -59,19 +81,27 @@ const (
 	TyWithdrawLog       = 102 //取款
 	TyTransferLog       = 103 //转账
 	TyTransferToNewLog  = 104 //向新地址转账
-	TyForceExitLog      = 105 //强制退出
+	TyProxyExitLog      = 105 //代理退出
 	TySetPubKeyLog      = 106 //设置公钥
 	TyFullExitLog       = 107 //从L1完全退出
 	TySwapLog           = 108 //交换
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
 	TyFeeLog            = 111 //手续费
+	TyMintNFTLog        = 112 //铸造NFT
+	TyWithdrawNFTLog    = 113 //L2提款NFT到L1
+	TyTransferNFTLog    = 114 //L2提款NFT到L1
 
+	/////非电路类型
 	TySetVerifyKeyLog       = 202 //设置电路验证key
 	TyCommitProofLog        = 203 //提交zk proof
 	TySetVerifierLog        = 204 //设置验证者
 	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
-	TySetFeeLog       = 206
+	TySetFeeLog             = 206
+	TyCommitProofRecordLog  = 207 //提交zk proof
+	TyLogSetTokenSymbol     = 210 //设置电路验证key
+	TyLogSetExodusMode      = 211 //系统设置exodus mode
+
 )
 
 const (
@@ -81,6 +111,10 @@ const (
 
 	Add = int32(0)
 	Sub = int32(1)
+
+	//tree最大归档数目
+	MaxTreeArchiveLevel = 5
+	MaxLeafArchiveSum   = 32 // =2^MaxTreeArchiveLevel
 )
 
 //Zksync 执行器名称定义
@@ -88,26 +122,37 @@ const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
+const ExecName = Zksync
+
+//配置的系统收交易费账户
+const ZkCfgEthFeeAddr = "ethFeeAddr"
+const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
+
+//配置的无效交易和无效证明，用于平行链zksync交易的回滚(假设proof和eth不一致，无法fix时候)
+const ZkCfgInvalidTx = "invalidTxHash"
+const ZkCfgInvalidProof = "invalidProofRootHash"
+
+//ZkParaChainInnerTitleId 平行链内部只有一个titleId，缺省为1，在主链上不同平行链有自己的titleId
+const ZkParaChainInnerTitleId = "1"
 
 //msg宽度
 const (
-	TxTypeBitWidth      = 8   //1byte
-	AccountBitWidth     = 32  //4byte
-	TokenBitWidth       = 16  //2byte
-	AmountBitWidth      = 128 //16byte
-	AddrBitWidth        = 160 //20byte
-	Chain33AddrBitWidth = 256 //20byte
-	PubKeyBitWidth      = 256 //32byte
-	FeeAmountBitWidth   = 72  //fee op凑满one chunk=128bit，最大10byte
+	TxTypeBitWidth    = 8  //1byte
+	AccountBitWidth   = 32 //4byte
+	TokenBitWidth     = 32 //4byte for support NFT id
+	NFTAmountBitWidth = 16
+	AmountBitWidth    = 128 //16byte
+	AddrBitWidth      = 160 //20byte
+	HashBitWidth      = 256 //32byte
+	PubKeyBitWidth    = 256 //32byte
 
 	PacAmountManBitWidth = 35 //amount mantissa part, 比如12340000,只取1234部分，0000用exponent表示
-	PacAmountExpBitWidth = 5  //amount exponent part
 	PacFeeManBitWidth    = 11 //fee mantissa part
-	PacFeeExpBitWidth    = 5  //fee exponent part
+	PacExpBitWidth       = 5  //amount and fee exponent part,支持31个0
 	MaxExponentVal       = 32 // 2**5 by exp bit width
 
-	ChunkBitWidth = 128               //one chunk 16 bytes
-	ChunkBytes    = ChunkBitWidth / 8 //16 bytes
+	ChunkBitWidth = 224               //one chunk 16 bytes
+	ChunkBytes    = ChunkBitWidth / 8 //28 bytes
 )
 
 const (
@@ -121,18 +166,55 @@ const (
 
 //不同type chunk数量
 const (
-	DepositChunks       = 5
-	Contract2TreeChunks = 3
-	Tree2ContractChunks = 3
-	TransferChunks      = 2
-	Transfer2NewChunks  = 5
-	WithdrawChunks      = 3
-	ForceExitChunks     = 3
-	FullExitChunks      = 3
-	SwapChunks          = 4
-	NoopChunks          = 1
-	ChangePubKeyChunks  = 5
-	FeeChunks           = 1
+	DepositChunks          = 3
+	Contract2TreeChunks    = 2
+	Contract2TreeNewChunks = 3
+	Tree2ContractChunks    = 2
+	TransferChunks         = 2
+	Transfer2NewChunks     = 3
+	WithdrawChunks         = 2
+	ProxyExitChunks        = 2
+	FullExitChunks         = 2
+	SwapChunks             = 4
+	NoopChunks             = 1
+	SetPubKeyChunks        = 3
+	FeeChunks              = 1
+	//MintNFTChunks, withrawNFT, transferNft, NFT chunks 不只是看pubdata长度，更要看需要几个chunk完成，这里chunks超出了pubdata的长度
+	MintNFTChunks     = 5
+	WithdrawNFTChunks = 6
+	TransferNFTChunks = 3
+)
+
+const (
+	//SystemDefaultAcctId 缺省备用账户
+	SystemDefaultAcctId = 0
+	//SystemFeeAccountId 此账户作为缺省收费账户
+	SystemFeeAccountId = 1
+	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
+	SystemNFTAccountId = 2
+	//SystemTree2ContractAcctId, 汇总从 tree2contract 跨链的资产总额
+	SystemTree2ContractAcctId = 3
+
+	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
+	SystemNFTTokenId = 256 //2^8,
+
+)
+
+//ERC protocol
+const (
+	ZKERC1155 = 1
+	ZKERC721  = 2
+)
+
+const (
+	NormalProxyPubKey = 1
+	SystemProxyPubKey = 2
+	SuperProxyPubKey  = 3
+)
+
+const (
+	ExodusPrepareMode = 1 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
+	ExodusClearMode   = 2 //逃生舱清算阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
 )
 
 var (
@@ -146,7 +228,7 @@ var (
 		NameTreeToContractAction: TyTreeToContractAction,
 		NameTransferAction:       TyTransferAction,
 		NameTransferToNewAction:  TyTransferToNewAction,
-		NameForceExitAction:      TyForceExitAction,
+		NameProxyExitAction:      TyProxyExitAction,
 		NameSetPubKeyAction:      TySetPubKeyAction,
 		NameFullExitAction:       TyFullExitAction,
 		NameSwapAction:           TySwapAction,
@@ -154,6 +236,22 @@ var (
 		NameCommitProofAction:    TyCommitProofAction,
 		NameSetVerifierAction:    TySetVerifierAction,
 		NameSetFeeAction:         TySetFeeAction,
+		NameMintNFTAction:        TyMintNFTAction,
+		NameWithdrawNFTACTION:    TyWithdrawNFTAction,
+		NameTransferNFTAction:    TyTransferNFTAction,
+		NameSetTokenSymbolAction: TySetTokenSymbolAction,
+		NameAssetTransfer:        TyAssetTransferAction,
+		NameAssetTransfer2Exec:   TyAssetTransferToExecAction,
+		NameAssetWithdraw:        TyAssetWithdrawAction,
+
+		// spot
+		NameLimitOrderAction:      TyLimitOrderAction,
+		NameRevokeOrderAction:     TyRevokeOrderAction,
+		NameNftOrderAction:        TyNftOrderAction,
+		NameNftTakerOrderAction:   TyNftTakerOrderAction,
+		NameNftOrder2Action:       TyNftOrder2Action,
+		NameNftTakerOrder2Action:  TyNftTakerOrder2Action,
+		NameAssetLimitOrderAction: TyAssetLimitOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -164,25 +262,37 @@ var (
 		TyTreeToContractLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
 		TyTransferLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
 		TyTransferToNewLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyForceExitLog"},
+		TyProxyExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyProxyExitLog"},
 		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
 		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
+		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
+		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
+		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
 		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TyCommitProofRecordLog:  {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecord"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
 		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
-	}
+		TyLogSetTokenSymbol:     {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
+		TyLogSetExodusMode:      {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
 
-	FeeMap = map[int64]string{
-		TyWithdrawAction:      "1000000",
-		TyTransferAction:      "100000",
-		TyTransferToNewAction: "100000",
-		TyForceExitAction:     "1000000",
-		TyFullExitAction:      "1000000",
-		TySwapAction:          "100000",
+		// spot
+		TyLimitOrderLog:    {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyRevokeOrderLog"},
+		TyExchangeBindLog:  {Ty: reflect.TypeOf(ReceiptDexBind{}), Name: "TyExchangeBindLog"},
+		TySpotTradeLog:     {Ty: reflect.TypeOf(ReceiptSpotTrade{}), Name: "TySpotTradeLog"},
+		TyNftOrderLog:      {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftOrderLog"},
+		TyNftTakerOrderLog: {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftTakerOrderLog"},
+
+		// dex account
+		TyDexAccountFrozen: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountFrozen"},
+		TyDexAccountActive: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountActive"},
+		TyDexAccountBurn:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountBurn"},
+		TyDexAccountMint:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountMint"},
 	}
 )
 
@@ -197,6 +307,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(Zksync, "Enable", 0)
+	SpotInitFork(cfg)
 }
 
 // InitExecutor defines register executor
@@ -230,4 +341,30 @@ func (e *ZksyncType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取合约log相关信息
 func (e *ZksyncType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
+}
+
+// CreateTx zksync 创建交易，系统构造缺省to地址为合约地址，对于transfer/transferToExec 的to地址需要特殊处理为paylaod的to地址，
+func (e *ZksyncType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+	tx, err := e.ExecTypeBase.CreateTx(action, msg)
+	if err != nil {
+		ztlog.Error("zksync CreateTx failed", "err", err, "action", action, "msg", string(msg))
+		return nil, err
+	}
+	cfg := e.GetConfig()
+	if !cfg.IsPara() {
+		var transfer ZksyncAction
+		err = types.Decode(tx.Payload, &transfer)
+		if err != nil {
+			ztlog.Error("zksync CreateTx failed", "decode payload err", err, "action", action, "msg", string(msg))
+			return nil, err
+		}
+		if action == "Transfer" {
+			tx.To = transfer.GetTransfer().To
+		} else if action == "Withdraw" {
+			tx.To = transfer.GetWithdraw().To
+		} else if action == "TransferToExec" {
+			tx.To = transfer.GetTransferToExec().To
+		}
+	}
+	return tx, nil
 }

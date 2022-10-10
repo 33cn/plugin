@@ -8,9 +8,10 @@ package executor
 import (
 	"bytes"
 	"fmt"
-	"github.com/33cn/chain33/common/address"
 	"math"
 	"strconv"
+
+	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"

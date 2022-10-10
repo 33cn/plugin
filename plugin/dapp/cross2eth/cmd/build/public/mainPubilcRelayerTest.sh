@@ -137,7 +137,7 @@ function updata_toml_start_bcd() {
         pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
         sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "${file}"
         sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "${file}"
-        if [[ "${name}" == "d" ]] ; then
+        if [[ ${name} == "d" ]]; then
             sed -i 's/^DelayedSendTime=.*/DelayedSendTime=180000/' "${file}"
         fi
 
