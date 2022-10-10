@@ -269,7 +269,7 @@ message ZkCommitProof {
   uint64 indexStart  = 2;
   uint64 blockEnd    = 3;
   uint64 indexEnd  = 4;
-  uint32 opIndex  = 5;
+  uint32 opIndex  = 5; //考虑到除了deposit外其他op都需要fee,而fee op不是单独产生是伴随op产生的，但是电路部分需要分开验证，这里的opIndex 区分op和对应fee op，在数据库索引
   string oldTreeRoot = 6;
   string newTreeRoot = 7;
   //proof serialized public input
