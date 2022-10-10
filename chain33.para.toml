@@ -183,6 +183,8 @@ enableMemVal=true
 tkCloseCacheLen=100000
 # 该参数针对平行链，如果平行链的ForkKvmvccmavl高度不为0,需要开启此功能,开启此功能需要从0开始执行区块
 enableEmptyBlockHandle=false
+# 保存区块相关数据时，同时保存kv
+enableSaveBlockKVs=true
 
 [wallet]
 minFee=100000
@@ -235,8 +237,15 @@ maxTreeLeaves=1024
 mixApprs=[]
 
 [exec.sub.zksync]
-#管理员列表
-managers=[]
+manager=[
+    "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+]
+#运营方配置收交易费地址,要求16进制
+#可把二层交易费提取到ETH的地址
+ethFeeAddr="832367164346888E248bd58b9A5f480299F1e88d"
+#二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址
+layer2FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -266,8 +275,15 @@ ForkCacheDriver=0
 ForkTicketFundAddrV1=-1 #fork6.3
 #主链和平行链都使用同一个fork高度
 ForkRootHash=7200000
+#地址key格式化, 主要针对eth地址
+ForkFormatAddressKey=0
+
+[fork.sub.none]
+ForkUseTimeDelay=0
+
 [fork.sub.coins]
 Enable=0
+ForkFriendExecer=0
 
 [fork.sub.coinsx]
 Enable=0
