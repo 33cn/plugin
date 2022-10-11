@@ -83,23 +83,19 @@ func ZkFindExponentPart(s string) (int, error) {
 		return 0, nil
 	}
 
-	a, ok := big.NewInt(0).SetString(s, 10)
-	if !ok {
-		return 0, errors.Wrapf(types.ErrInvalidParam, "s=%s not base10", s)
+	count := 0
+	for i := 0; i < len(s); i++ {
+		if string(s[len(s)-1-i]) != "0" {
+			break
+		}
+		count++
 	}
-
-	t := big.NewInt(0)
-	m := big.NewInt(0)
 
 	//最大不会超过（MaxExponentVal-1）,如果超过MaxExponentVal个0，只截取到MaxExponentVal-1个
-	var i int
-	for i = 0; i < MaxExponentVal; i++ {
-		a, m = t.DivMod(a, big.NewInt(10), m)
-		if m.Uint64() > 0 {
-			return i, nil
-		}
+	if count > MaxExponentVal-1 {
+		return MaxExponentVal - 1, nil
 	}
-	return MaxExponentVal - 1, nil
+	return count, nil
 }
 
 //ZkTransferManExpPart 获取s的man和exp部分，exp部分只统计0的个数，man部分为尾部去掉0部分
