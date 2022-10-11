@@ -310,7 +310,7 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, token *z
 
 	//根据精度，转化到tree侧的amount
 	sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
-	amountTree, _, _, err := getTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, int(token.Decimal))
+	amountTree, _, _, err := GetTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, int(token.Decimal))
 	if err != nil {
 		return nil, errors.Wrap(err, "getTreeSideAmount")
 	}
@@ -379,7 +379,7 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.Z
 
 	//根据精度，转化到tree侧的amount
 	sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
-	amountTree, amountPlusFeeTree, feeTree, err := getTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, int(token.Decimal))
+	amountTree, amountPlusFeeTree, feeTree, err := GetTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, int(token.Decimal))
 	if err != nil {
 		return nil, errors.Wrap(err, "getTreeSideAmount")
 	}
@@ -403,19 +403,6 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.Z
 //操作１. FromAccountId -----> SystemTree2ContractAcctId，执行ZkTransfer
 //操作2. UpdateContractAccount，在合约内部的铸币操作
 func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
-	//保证精度是小数后8位，eth转换去掉10位
-	if a.api.GetConfig().GetCoinPrecision() != types.DefaultCoinPrecision {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "coin precision is not defual=%d", types.DefaultCoinPrecision)
-	}
-	//因为chain33合约精度为1e8,而外部输入精度则为1e18, 单位为wei,需要统一转化为1e8
-	amount_len := len(payload.Amount)
-	if amount_len < 11 {
-		return nil, errors.New("Too Little value to do operation TreeToContract")
-	}
-
-	//转为精度，抹去最后的10位精度
-	payload.Amount = payload.Amount[:len(payload.Amount)-10] + zt.TenZeroStr
-
 	err := checkParam(payload.Amount)
 	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
 	if payload.ToAcctId != zt.SystemTree2ContractAcctId {
@@ -442,7 +429,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	//cfg decimal 系统启动时候做过检查，和0的个数一致，缺省1e8有8个0
 	s := strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision()))
 	sysDecimal := strings.Count(s, "0")
-	contractAmount, err := transferDecimalAmount(payload.GetAmount(), int(token.Decimal), sysDecimal)
+	contractAmount, err := TransferDecimalAmount(payload.GetAmount(), int(token.Decimal), sysDecimal)
 	if err != nil {
 		return nil, errors.Wrapf(err, "transfer2ContractAmount,tokenDecimal=%d,sysDecimal=%d", token.Decimal, sysDecimal)
 	}
@@ -1972,32 +1959,32 @@ func (a *Action) AssetTransferToExec(transfer *types.AssetsTransferToExec, tx *t
 }
 
 //根据系统和token精度，计算合约转化为二层tree侧的amount，合约侧amount都是系统精度
-func getTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal int) (string, string, string, error) {
-	amountT, err := transferDecimalAmount(amount, sysDecimal, tokenDecimal)
+func GetTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal int) (amount4Tree, totalAmount4Tree, feeAmount4Tree string, err error) {
+	amount4Tree, err = TransferDecimalAmount(amount, sysDecimal, tokenDecimal)
 	if err != nil {
 		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", amount, tokenDecimal, sysDecimal)
 	}
-	totalAmountT, err := transferDecimalAmount(totalAmount, sysDecimal, tokenDecimal)
+	totalAmount4Tree, err = TransferDecimalAmount(totalAmount, sysDecimal, tokenDecimal)
 	if err != nil {
 		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", totalAmount, tokenDecimal, sysDecimal)
 	}
-	feeAmountT, err := transferDecimalAmount(fee, sysDecimal, tokenDecimal)
+	feeAmount4Tree, err = TransferDecimalAmount(fee, sysDecimal, tokenDecimal)
 	if err != nil {
 		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", fee, tokenDecimal, sysDecimal)
 	}
-	err = checkPackValue(amountT, zt.PacAmountManBitWidth)
+	err = checkPackValue(amount4Tree, zt.PacAmountManBitWidth)
 	if err != nil {
-		return "", "", "", errors.Wrapf(err, "checkPackVal amount=%s", amountT)
+		return "", "", "", errors.Wrapf(err, "checkPackVal amount=%s", amount4Tree)
 	}
-	err = checkPackValue(feeAmountT, zt.PacFeeManBitWidth)
+	err = checkPackValue(feeAmount4Tree, zt.PacFeeManBitWidth)
 	if err != nil {
-		return "", "", "", errors.Wrapf(err, "checkPackVal fee=%s", feeAmountT)
+		return "", "", "", errors.Wrapf(err, "checkPackVal fee=%s", feeAmount4Tree)
 	}
-	return amountT, totalAmountT, feeAmountT, nil
+	return amount4Tree, totalAmount4Tree, feeAmount4Tree, nil
 }
 
 //from向to小数对齐，如果from>to, 需要裁减掉差别部分，且差别部分需要全0，如果from<to,差别部分需要补0
-func transferDecimalAmount(amount string, fromDecimal, toDecimal int) (string, error) {
+func TransferDecimalAmount(amount string, fromDecimal, toDecimal int) (string, error) {
 	//from=tokenDecimal大于to=sysDecimal场景，需要裁减差别部分, 比如 1e18 > 1e8,裁减1e10
 	if fromDecimal > toDecimal {
 		diff := fromDecimal - toDecimal

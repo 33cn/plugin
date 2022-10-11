@@ -128,8 +128,6 @@ const ZkCfgInvalidProof = "invalidProofRootHash"
 //ZkParaChainInnerTitleId 平行链内部只有一个titleId，缺省为1，在主链上不同平行链有自己的titleId
 const ZkParaChainInnerTitleId = "1"
 
-const TenZeroStr = "0000000000" //10个０的字符串
-
 //msg宽度
 const (
 	TxTypeBitWidth    = 8  //1byte
