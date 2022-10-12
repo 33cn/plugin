@@ -35,6 +35,7 @@ type RollUp struct {
 	initDone chan struct{}
 
 	ctx                  context.Context
+	cancel               context.CancelFunc
 	base                 *consensus.BaseClient
 	chainCfg             *types.Chain33Config
 	subChan              chan *types.TopicData
@@ -55,7 +56,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	types.MustDecode(subCfg, r.cfg)
 
 	r.chainCfg = chainCfg
-	r.ctx = base.Context
+	r.ctx, r.cancel = context.WithCancel(base.Context)
 	r.initDone = make(chan struct{})
 	r.subChan = make(chan *types.TopicData, 32)
 
@@ -73,7 +74,7 @@ func (r *RollUp) initJob() {
 
 	valPubs := r.getValidatorPubKeys()
 	status := r.getRollupStatus()
-	for len(valPubs) == 0 || status == nil {
+	for len(valPubs.GetBlsPubs()) == 0 || status == nil {
 		rlog.Error("initJob", "status", status, "valPubs", valPubs)
 		time.Sleep(time.Second)
 		valPubs = r.getValidatorPubKeys()
@@ -93,7 +94,7 @@ func (r *RollUp) startRollupRoutine() {
 	<-r.initDone
 
 	if r.val.enable {
-
+		go r.handleExit()
 		go r.handleBuildBatch()
 		go r.handleCommitCheckPoint()
 		go r.syncRollupState()
@@ -107,9 +108,25 @@ func (r *RollUp) startRollupRoutine() {
 	}
 }
 
+func (r *RollUp) handleExit() {
+
+	for {
+
+		select {
+		case <-r.ctx.Done():
+			return
+		case <-r.val.exit:
+			r.cancel()
+			rlog.Info("rollup exit")
+			return
+		}
+	}
+}
+
 func (r *RollUp) handleBuildBatch() {
 
 	ticker := time.NewTicker(time.Second * 10)
+	defer ticker.Stop()
 	var blocks []*types.Block
 	for {
 
@@ -117,7 +134,6 @@ func (r *RollUp) handleBuildBatch() {
 		case <-ticker.C:
 			blocks = r.getNextBatchBlocks(r.nextBuildHeight)
 		case <-r.ctx.Done():
-			ticker.Stop()
 			return
 		}
 		// 区块内未达到最低批量数量, 需要继续等待
@@ -155,7 +171,7 @@ func (r *RollUp) syncRollupState() {
 			valPubs := r.getValidatorPubKeys()
 			status := r.getRollupStatus()
 
-			if len(valPubs) > 0 {
+			if len(valPubs.GetBlsPubs()) > 0 {
 				r.val.updateValidators(valPubs)
 			}
 

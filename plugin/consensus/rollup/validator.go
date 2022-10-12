@@ -9,7 +9,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/crypto/bls"
-	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
 type validator struct {
@@ -17,14 +17,22 @@ type validator struct {
 	enable           bool
 	commitRoundIndex int32
 	blsKey           crypto.PrivKey
+	commitAddr       string
 	validators       map[string]int
-
-	blsDriver crypto.Crypto
-	status    *rolluptypes.RollupStatus
+	valPubHash       []byte
+	timeout          bool
+	blsDriver        crypto.Crypto
+	status           *rtypes.RollupStatus
+	exit             chan struct{}
 }
 
-func (v *validator) init(cfg Config, valPubs []string, status *rolluptypes.RollupStatus) {
+func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtypes.RollupStatus) {
 
+	if cfg.CommitInterval <= 0 {
+		cfg.CommitInterval = 30
+	}
+
+	v.exit = make(chan struct{})
 	var err error
 	v.blsDriver, err = crypto.Load(bls.Name, -1)
 	if err != nil {
@@ -41,47 +49,42 @@ func (v *validator) init(cfg Config, valPubs []string, status *rolluptypes.Rollu
 
 	v.blsKey = key
 	v.updateValidators(valPubs)
+	v.updateRollupStatus(status)
 
 }
 
-// 获取本节点下一个提交轮数
-func (v *validator) getNextCommitRound() int64 {
+func (v *validator) isMyCommitTurn() (int64, bool) {
 
 	v.lock.RLock()
 	defer v.lock.RUnlock()
 
-	commitRound := v.status.GetCommitRound()
-	valCount := int64(len(v.validators))
-	for {
-		commitRound++
-		if int32(commitRound%valCount) == v.commitRoundIndex {
-			break
-		}
+	nextCommitRound := v.status.GetCommitRound() + 1
+	roundIdx := int32(nextCommitRound % int64(len(v.validators)))
+
+	if v.commitRoundIndex == roundIdx {
+		return nextCommitRound, true
 	}
-	return commitRound
+
+	waitTime := types.Now().Unix() - v.status.Timestamp
+	// 达到一半超时, 即触发由上一个提交者代理提交
+	if waitTime >= rtypes.RollupCommitTimeout/2 && v.status.CommitAddr == v.commitAddr {
+		return nextCommitRound, true
+	}
+
+	// 超时情况, 任意其他节点代理提交
+	if waitTime >= rtypes.RollupCommitTimeout {
+		return nextCommitRound, true
+	}
+
+	return -1, false
 }
 
-func (v *validator) updateRollupStatus(status *rolluptypes.RollupStatus) {
+func (v *validator) updateRollupStatus(status *rtypes.RollupStatus) {
 
 	v.lock.Lock()
 	defer v.lock.Unlock()
 
 	v.status = status
-}
-
-// 其他节点未提交相应round数据, 导致超时
-func (v *validator) isRollupCommitTimeout() (currRound int64, timeout bool) {
-
-	v.lock.RLock()
-	defer v.lock.RUnlock()
-
-	now := types.Now().Unix()
-
-	if now-v.status.Timestamp >= rolluptypes.RollupCommitTimeout {
-		return v.status.GetCommitRound(), true
-	}
-
-	return 0, false
 }
 
 func (v *validator) getValidatorCount() int {
@@ -90,14 +93,21 @@ func (v *validator) getValidatorCount() int {
 	return len(v.validators)
 }
 
-func (v *validator) updateValidators(valPubs []string) {
+func (v *validator) updateValidators(valPubs *rtypes.ValidatorPubs) {
 	v.lock.Lock()
 	defer v.lock.Unlock()
 
-	v.validators = make(map[string]int, len(valPubs))
+	hash := common.Sha256(types.Encode(valPubs))
+	// 数据没有变更, 直接返回
+	if bytes.Equal(v.valPubHash, hash) {
+		return
+	}
+	// 更新验证节点
+	v.valPubHash = hash
+	v.validators = make(map[string]int, len(valPubs.GetBlsPubs()))
 
-	for i, pub := range valPubs {
-		pub = rolluptypes.FormatHexPubKey(pub)
+	for i, pub := range valPubs.GetBlsPubs() {
+		pub = rtypes.FormatHexPubKey(pub)
 		v.validators[pub] = i
 	}
 
@@ -106,9 +116,12 @@ func (v *validator) updateValidators(valPubs []string) {
 
 	v.enable = ok
 	v.commitRoundIndex = int32(idx)
+	if !v.enable {
+		close(v.exit)
+	}
 }
 
-func (v *validator) validateSignMsg(sign *rolluptypes.ValidatorSignMsg) bool {
+func (v *validator) validateSignMsg(sign *rtypes.ValidatorSignMsg) bool {
 
 	v.lock.RLock()
 	defer v.lock.RUnlock()
@@ -128,10 +141,10 @@ func (v *validator) validateSignMsg(sign *rolluptypes.ValidatorSignMsg) bool {
 	return true
 }
 
-func (v *validator) sign(round int64, batch *rolluptypes.BlockBatch) *rolluptypes.ValidatorSignMsg {
+func (v *validator) sign(round int64, batch *rtypes.BlockBatch) *rtypes.ValidatorSignMsg {
 
 	msg := common.Sha256(types.Encode(batch))
-	sign := &rolluptypes.ValidatorSignMsg{}
+	sign := &rtypes.ValidatorSignMsg{}
 	sign.Signature = v.blsKey.Sign(msg).Bytes()
 	sign.PubKey = v.blsKey.PubKey().Bytes()
 	sign.CommitRound = round

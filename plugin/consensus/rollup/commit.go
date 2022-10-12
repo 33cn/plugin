@@ -51,17 +51,19 @@ func (r *RollUp) buildBlockBatch(blocks []*types.Block) *rolluptypes.BlockBatch 
 func (r *RollUp) handleCommitCheckPoint() {
 
 	ticker := time.NewTicker(time.Duration(r.cfg.CommitInterval) * time.Second)
-	nextCommitRound := r.val.getNextCommitRound()
+	defer ticker.Stop()
 	for {
 
 		select {
 
 		case <-r.ctx.Done():
-			ticker.Stop()
 			return
-		//case <-
 		case <-ticker.C:
 
+			nextCommitRound, ok := r.val.isMyCommitTurn()
+			if !ok {
+				continue
+			}
 			cp := r.cache.getPreparedCheckPoint(nextCommitRound, r.val.aggregateSign)
 			// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
 			if cp == nil {
@@ -69,19 +71,6 @@ func (r *RollUp) handleCommitCheckPoint() {
 			}
 
 			// build commit tx
-
-			nextCommitRound += int64(r.val.getValidatorCount())
-		}
-
-		// 其他节点未提交导致超时
-		currRound, timeout := r.val.isRollupCommitTimeout()
-		if timeout {
-
-			cp := r.cache.getPreparedCheckPoint(currRound+1, r.val.aggregateSign)
-			// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
-			if cp == nil {
-				continue
-			}
 
 		}
 

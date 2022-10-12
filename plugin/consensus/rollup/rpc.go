@@ -5,7 +5,7 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
-func (r *RollUp) getValidatorPubKeys() []string {
+func (r *RollUp) getValidatorPubKeys() *rtypes.ValidatorPubs {
 
 	req := &rtypes.ChainTitle{Value: r.chainCfg.GetTitle()}
 
@@ -27,7 +27,8 @@ func (r *RollUp) getValidatorPubKeys() []string {
 		rlog.Error("getValidatorPubKeys", "decode err", err)
 		return nil
 	}
-	return res.GetBlsPubs()
+
+	return res
 }
 
 func (r *RollUp) getRollupStatus() *rtypes.RollupStatus {
