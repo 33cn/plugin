@@ -1,10 +1,14 @@
 package types
 
 import (
+	"encoding/json"
+	"github.com/33cn/chain33/common/log/log15"
 	"reflect"
 
 	"github.com/33cn/chain33/types"
 )
+
+var ztlog = log15.New("module", Zksync)
 
 /*
  * 交易相关类型定义
@@ -109,6 +113,9 @@ const (
 
 	Add = int32(0)
 	Sub = int32(1)
+
+	MaxDecimalAllow = 18
+	MinDecimalAllow = 4
 )
 
 //Zksync 执行器名称定义
@@ -265,15 +272,17 @@ var (
 	}
 
 	FeeMap = map[int64]string{
-		TyWithdrawAction:      "1000000",
-		TyTransferAction:      "100000",
-		TyTransferToNewAction: "100000",
-		TyProxyExitAction:     "1000000",
-		TyFullExitAction:      "1000000",
-		TySwapAction:          "100000",
-		TyMintNFTAction:       "100",
-		TyWithdrawNFTAction:   "100",
-		TyTransferNFTAction:   "100",
+		TyWithdrawAction:       "1000000",
+		TyTransferAction:       "100000",
+		TyTransferToNewAction:  "100000",
+		TyProxyExitAction:      "1000000",
+		TyFullExitAction:       "1000000",
+		TySwapAction:           "100000",
+		TyContractToTreeAction: "10000",
+		TyTreeToContractAction: "10000",
+		TyMintNFTAction:        "100",
+		TyWithdrawNFTAction:    "100",
+		TyTransferNFTAction:    "100",
 	}
 )
 
@@ -321,4 +330,30 @@ func (e *ZksyncType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取合约log相关信息
 func (e *ZksyncType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
+}
+
+// CreateTx zksync 创建交易，系统构造缺省to地址为合约地址，对于transfer/transferToExec 的to地址需要特殊处理为paylaod的to地址，
+func (e *ZksyncType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+	tx, err := e.ExecTypeBase.CreateTx(action, msg)
+	if err != nil {
+		ztlog.Error("zksync CreateTx failed", "err", err, "action", action, "msg", string(msg))
+		return nil, err
+	}
+	cfg := e.GetConfig()
+	if !cfg.IsPara() {
+		var transfer ZksyncAction
+		err = types.Decode(tx.Payload, &transfer)
+		if err != nil {
+			ztlog.Error("zksync CreateTx failed", "decode payload err", err, "action", action, "msg", string(msg))
+			return nil, err
+		}
+		if action == "Transfer" {
+			tx.To = transfer.GetTransfer().To
+		} else if action == "Withdraw" {
+			tx.To = transfer.GetWithdraw().To
+		} else if action == "TransferToExec" {
+			tx.To = transfer.GetTransferToExec().To
+		}
+	}
+	return tx, nil
 }

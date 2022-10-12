@@ -641,9 +641,17 @@ func TestTree2contract(t *testing.T) {
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
 	symbol := "ETH"
-	receipt4SetToken, _, err := setTokenSymbol(zksyncHandle, mpriKey, symbol, "0")
+	receipt4SetToken, _, err := setTokenSymbol(zksyncHandle, mpriKey, symbol, "0", 18)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt4SetToken.Ty, int32(types.ExecOk))
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyContractToTreeAction], zksyncTypes.TyContractToTreeAction)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyTreeToContractAction], zksyncTypes.TyTreeToContractAction)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 
 	//测试将L2账户余额转入到合约
 	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
@@ -690,7 +698,7 @@ func TestContract2Tree(t *testing.T) {
 	queueId := uint64(0)
 	tokenId := uint64(0)
 
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "10000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
@@ -698,7 +706,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	assert.Equal(t, acc4token1Balance.Balance, "1000000000000")
+	assert.Equal(t, acc4token1Balance.Balance, "10000000000000")
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
 
 	//设置公钥
@@ -712,21 +720,33 @@ func TestContract2Tree(t *testing.T) {
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
 	symbol := "ETH"
-	receipt4SetToken, _, err := setTokenSymbol(zksyncHandle, mpriKey, symbol, "0")
+	receipt4SetToken, _, err := setTokenSymbol(zksyncHandle, mpriKey, symbol, "0", 18)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt4SetToken.Ty, int32(types.ExecOk))
 
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyContractToTreeAction], zksyncTypes.TyContractToTreeAction)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyTreeToContractAction], zksyncTypes.TyTreeToContractAction)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyTransferAction], zksyncTypes.TyTransferAction)
+	assert.Nil(t, err)
+	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
+
 	//测试将L2账户余额转入到合约
-	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
+	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "1000000000000")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", 1000000000000-10000000000)
+	balance := fmt.Sprintf("%d", 10000000000000-1000000000000-100000)
 	fmt.Println("Balance is", balance)
-	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, balance, acc4token1Balance.Balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
 
 	//确认合约余额
@@ -738,11 +758,11 @@ func TestContract2Tree(t *testing.T) {
 	assert.Nil(t, err)
 	accountInfo, ok := msg.(*types.Account)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, int64(1), accountInfo.Balance)
+	assert.Equal(t, int64(100), accountInfo.Balance)
 	fmt.Println("accountInfo =", accountInfo)
 
 	//测试将合约余额转回到L2账户余额
-	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, symbol, "10000000000")
+	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, symbol, "90")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
@@ -750,7 +770,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认L2账户balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance = fmt.Sprintf("%d", 1000000000000)
+	balance = fmt.Sprintf("%d", 10000000000000-1000000000000-100000+int64(90*1e10))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 
@@ -759,7 +779,7 @@ func TestContract2Tree(t *testing.T) {
 	assert.Nil(t, err)
 	accountInfo, ok = msg.(*types.Account)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, int64(0), accountInfo.Balance)
+	assert.Equal(t, int64(10), accountInfo.Balance)
 	fmt.Println("accountInfo =", accountInfo)
 }
 
@@ -1632,10 +1652,11 @@ func tree2contract(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, accou
 	return receipt, localDBSet, nil
 }
 
-func setTokenSymbol(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, symbol, tokenID string) (*types.Receipt, *types.LocalDBSet, error) {
+func setTokenSymbol(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, symbol, tokenID string, decimal uint32) (*types.Receipt, *types.LocalDBSet, error) {
 	contract2tree := &zksyncTypes.ZkTokenSymbol{
-		Id:     tokenID,
-		Symbol: symbol,
+		Id:      tokenID,
+		Symbol:  symbol,
+		Decimal: decimal,
 	}
 
 	action := &zksyncTypes.ZksyncAction{

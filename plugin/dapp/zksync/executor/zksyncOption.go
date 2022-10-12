@@ -303,16 +303,15 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, token *z
 	tokenIdBigint, _ := new(big.Int).SetString(token.Id, 10)
 	tokenId := tokenIdBigint.Uint64()
 
-	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId)
-	if nil != err {
-		return nil, err
-	}
-
 	//根据精度，转化到tree侧的amount
 	sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
-	amountTree, _, _, err := GetTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, int(token.Decimal))
+	amountTree, err := TransferDecimalAmount(payload.Amount, sysDecimal, int(token.Decimal))
 	if err != nil {
 		return nil, errors.Wrap(err, "getTreeSideAmount")
+	}
+	err = checkPackValue(amountTree, zt.PacAmountManBitWidth)
+	if err != nil {
+		return nil, errors.Wrap(err, "checkPackValue")
 	}
 
 	payload4transfer := &zt.ZkTransfer{
@@ -327,7 +326,7 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, token *z
 	}
 
 	//更新合约账户
-	contractReceipt, err := a.UpdateContractAccount(amountPlusFee, payload.TokenSymbol, zt.Sub, payload.FromExec)
+	contractReceipt, err := a.UpdateContractAccount(payload.Amount, payload.TokenSymbol, zt.Sub, payload.FromExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
@@ -1833,6 +1832,10 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	idInt, ok := new(big.Int).SetString(payload.Id, 10)
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "id=%s", payload.Id)
+	}
+
+	if payload.Decimal > zt.MaxDecimalAllow || payload.Decimal < zt.MinDecimalAllow {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "Decimal=%d", payload.Decimal)
 	}
 
 	//首先检查symbol是否存在，symbol存在不允许修改
