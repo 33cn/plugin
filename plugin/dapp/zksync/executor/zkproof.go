@@ -3,6 +3,9 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"hash"
+	"math/big"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -17,8 +20,6 @@ import (
 	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
-	"hash"
-	"math/big"
 )
 
 func makeSetVerifyKeyReceipt(oldKey, newKey *zt.ZkVerifyKey) *types.Receipt {

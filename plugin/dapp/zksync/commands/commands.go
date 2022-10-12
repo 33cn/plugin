@@ -5,12 +5,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/system/dapp/commands"
-	"github.com/33cn/plugin/plugin/dapp/zksync/commands/l2txs"
 	"math/big"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/chain33/system/dapp/commands"
+	"github.com/33cn/plugin/plugin/dapp/zksync/commands/l2txs"
 
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"

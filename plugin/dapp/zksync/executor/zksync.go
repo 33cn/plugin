@@ -108,7 +108,10 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	default:
 		return nil
 	}
-
+	if signature == nil {
+		zlog.Error("checkTx.signature is nil", "ty", action.GetTy())
+		return types.ErrInvalidParam
+	}
 	pubKey := eddsa.PublicKey{}
 	pubKey.A.X.SetString(signature.PubKey.X)
 	pubKey.A.Y.SetString(signature.PubKey.Y)

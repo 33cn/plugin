@@ -2,12 +2,13 @@ package executor
 
 import (
 	"fmt"
+	"testing"
+
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 //go test -test.bench BenchmarkTransfer -test.run BenchmarkTransfer -test.cpuprofile cpu.profile

@@ -172,7 +172,7 @@ func recvWithTimeout(t *testing.T, ch chan interface{}, testCase string) interfa
 	select {
 	case data := <-ch:
 		return data
-	case <-time.After(time.Second * 10):
+	case <-time.After(time.Second * 20):
 		t.Error(testCase, "waitChanTimeout")
 		t.FailNow()
 	}

@@ -2,13 +2,14 @@ package l2txs
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/33cn/chain33/types"
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
-	"strconv"
-	"strings"
 )
 
 func nftManyCmd() *cobra.Command {

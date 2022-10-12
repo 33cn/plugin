@@ -2,9 +2,10 @@ package types
 
 import (
 	"encoding/hex"
-	"github.com/pkg/errors"
 	"math/big"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"

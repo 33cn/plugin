@@ -2,12 +2,13 @@ package wallet
 
 import (
 	"fmt"
+	"math/big"
+	"strings"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/pkg/errors"
-	"math/big"
-	"strings"
 
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"

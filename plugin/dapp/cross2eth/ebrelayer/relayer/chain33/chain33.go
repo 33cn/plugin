@@ -295,10 +295,11 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 	txHashStr := common.ToHex(chain33TxHash)
 	relayerLog.Info("handleBurnLockWithdrawEvent", "Received tx with hash", txHashStr)
 
-	if chain33Relayer.checkTxProcessed(txHashStr) {
-		relayerLog.Info("handleBurnLockWithdrawEvent", "Tx has been already Processed with hash:", txHashStr)
-		return nil
-	}
+	// 删除已发送校验, 如果ethereum端发生交易后没有打包, 可重新再发生
+	//if chain33Relayer.checkTxProcessed(txHashStr) {
+	//	relayerLog.Info("handleBurnLockWithdrawEvent", "Tx has been already Processed with hash:", txHashStr)
+	//	return nil
+	//}
 
 	// Parse the witnessed event's data into a new Chain33Msg
 	chain33Msg, err := events.ParseBurnLock4chain33(evmEventType, data, chain33Relayer.bridgeBankAbi, chain33TxHash)

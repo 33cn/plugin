@@ -3,6 +3,10 @@ package l2txs
 import (
 	"bytes"
 	"encoding/hex"
+	"math/rand"
+	"strings"
+	"time"
+
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	chain33Crypto "github.com/33cn/chain33/common/crypto"
@@ -14,9 +18,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/golang/protobuf/proto"
-	"math/rand"
-	"strings"
-	"time"
 )
 
 func createChain33Tx(privateKeyStr, execer string, action proto.Message) (*types.Transaction, error) {
@@ -29,7 +30,7 @@ func createChain33Tx(privateKeyStr, execer string, action proto.Message) (*types
 	if nil != err {
 		return nil, err
 	}
-	
+
 	fee := int64(1e7)
 	toAddr := address.ExecAddress(execer)
 	tx := &types.Transaction{Execer: []byte(execer), Payload: types.Encode(action), Fee: fee, To: toAddr}

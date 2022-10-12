@@ -1,10 +1,11 @@
 package executor
 
 import (
+	"testing"
+
 	"github.com/33cn/chain33/util"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestHistoryProof(t *testing.T) {
@@ -172,10 +173,10 @@ func TestHistoryProof(t *testing.T) {
 	//ethFeeAddr := "832367164346888E248bd58b9A5f480299F1e88d"
 	//chain33FeeAddr := "2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
 	req := &zt.ZkReqExistenceProof{
-		AccountId:3,
-		TokenId:1,
-		RootHash:rootHash,
-		ChainTitleId:1,
+		AccountId:    3,
+		TokenId:      1,
+		RootHash:     rootHash,
+		ChainTitleId: 1,
 	}
 	proof, err := getAccountProofInHistory(localdb, req)
 	assert.Equal(t, nil, err)

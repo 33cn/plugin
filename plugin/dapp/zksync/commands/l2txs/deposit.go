@@ -2,9 +2,10 @@ package l2txs
 
 import (
 	"fmt"
+	"strings"
+
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 func sendDepositTxCmd() *cobra.Command {

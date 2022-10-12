@@ -5,6 +5,7 @@
 package relayd
 
 import (
+	_ "github.com/33cn/chain33/system/address"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 

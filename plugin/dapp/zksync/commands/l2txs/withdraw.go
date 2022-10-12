@@ -2,10 +2,11 @@ package l2txs
 
 import (
 	"fmt"
-	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/spf13/cobra"
 	"strconv"
 	"strings"
+
+	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/spf13/cobra"
 )
 
 func sendWithdrawTxCmd() *cobra.Command {

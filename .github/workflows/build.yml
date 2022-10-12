@@ -23,11 +23,10 @@ jobs:
           export PATH=${PATH}:`go env GOPATH`/bin
           echo $GOPATH
           echo $PATH
-          go get -u golang.org/x/tools/cmd/goimports
-          go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
-          go get -u mvdan.cc/sh/cmd/shfmt
-          go get -u mvdan.cc/sh/cmd/gosh
-          go mod tidy
+          go install golang.org/x/tools/cmd/goimports@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
+          go install mvdan.cc/sh/cmd/shfmt@latest
+          go install mvdan.cc/sh/cmd/gosh@latest
 
       - name: Lint
         run: |
@@ -106,3 +105,23 @@ jobs:
         run: |
           make docker-compose
           make docker-compose-down
+
+  test-arch-386:
+    name: Test GOARCH 386
+    runs-on: ubuntu-latest
+    env:
+      GOARCH: 386
+      CGO_ENABLED: 1
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.16
+      - run: sudo apt install gcc-multilib
+
+      - name: Build
+        run: make build
+
+      - name: Run unit tests
+        run: go test ./... -covermode=atomic

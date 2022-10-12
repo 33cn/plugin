@@ -16,12 +16,12 @@ func Test_Upgrade(t *testing.T) {
 	assert.NotNil(t, localdb)
 
 	// test empty db
-	kvset, err := callUpgradeLocalDBV2(localdb)
+	_, err := callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
 
 	// test again
 	setVersion(localdb, 1)
-	kvset, err = callUpgradeLocalDBV2(localdb)
+	_, err = callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
 
 	// test with data
@@ -56,7 +56,7 @@ func Test_Upgrade(t *testing.T) {
 
 	// 初次升级
 	setVersion(localdb, 1)
-	kvset, err = callUpgradeLocalDBV2(localdb)
+	kvset, err := callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
 	assert.NotNil(t, kvset)
 
