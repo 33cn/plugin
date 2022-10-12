@@ -80,7 +80,7 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 		status.CommitRound = roundInfo.CommitRound
 		status.CommitBlockHeight = roundInfo.LastBlockHeight
 		status.CommitBlockHash = roundInfo.LastBlockHash
-
+		status.CommitAddr = tx.From()
 		encodeVal = types.Encode(status)
 		receipt.KV = append(receipt.KV, &types.KeyValue{
 			Key:   formatRollupStatusKey(commit.GetChainTitle()),

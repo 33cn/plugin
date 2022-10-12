@@ -19,15 +19,14 @@ message BlockBatch {
     repeated bytes txList          = 2;
     repeated bytes pubKeyList      = 3;
     bytes          aggregateTxSign = 4;
-    bytes txAddrIDList = 5;
-
+    bytes          txAddrIDList    = 5;
 }
 
 message ValidatorSignMsg {
     int64 commitRound = 1;
     bytes pubKey      = 2;
     bytes signature   = 3;
-    bytes msgHash = 4;
+    bytes msgHash     = 4;
 }
 
 // CheckPoint
@@ -45,6 +44,7 @@ message RollupStatus {
     int64  commitRound       = 2;
     int64  commitBlockHeight = 3;
     string commitBlockHash   = 4;
+    string commitAddr        = 5;
 }
 
 message CommitRoundInfo {
