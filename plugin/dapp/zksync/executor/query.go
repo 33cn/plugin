@@ -2,13 +2,11 @@ package executor
 
 import (
 	"fmt"
-	"math/big"
-	"strconv"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
+	"math/big"
 )
 
 // Query_GetAccountTree 获取当前的树
@@ -164,19 +162,6 @@ func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, e
 		return nil, types.ErrInvalidParam
 	}
 	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
-}
-
-//Query_GetExistenceProof 获取指定tree root上某accountId,tokenId对应的存在证明
-func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Message, error) {
-	if len(in.GetRootHash()) <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "roothash is nil")
-	}
-
-	if in.GetChainTitleId() <= 0 {
-		chainTitleId, _ := strconv.Atoi(zt.ZkParaChainInnerTitleId)
-		in.ChainTitleId = uint64(chainTitleId)
-	}
-	return getAccountProofInHistory(z.GetLocalDB(), in)
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
