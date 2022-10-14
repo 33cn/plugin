@@ -303,30 +303,34 @@ func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, token *z
 	tokenIdBigint, _ := new(big.Int).SetString(token.Id, 10)
 	tokenId := tokenIdBigint.Uint64()
 
-	//根据精度，转化到tree侧的amount
-	sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
-	amountTree, err := TransferDecimalAmount(payload.Amount, sysDecimal, int(token.Decimal))
-	if err != nil {
-		return nil, errors.Wrap(err, "getTreeSideAmount")
-	}
-	err = checkPackValue(amountTree, zt.PacAmountManBitWidth)
-	if err != nil {
-		return nil, errors.Wrap(err, "checkPackValue")
-	}
+	////根据精度，转化到tree侧的amount
+	//sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
+	//amountTree, err := TransferDecimalAmount(payload.Amount, sysDecimal, int(token.Decimal))
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "getTreeSideAmount")
+	//}
+	//err = checkPackValue(amountTree, zt.PacAmountManBitWidth)
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "checkPackValue")
+	//}
 
 	payload4transfer := &zt.ZkTransfer{
 		TokenId:       tokenId,
-		Amount:        amountTree,
+		Amount:        payload.Amount,
 		FromAccountId: zt.SystemTree2ContractAcctId,
 		ToAccountId:   payload.ToAccountId,
 	}
-	receipts, err := a.l2TransferProc(payload4transfer, zt.TyContractToTreeAction)
+	receipts, err := a.l2TransferProc(payload4transfer, zt.TyContractToTreeAction, int(token.Decimal))
 	if nil != err {
 		return nil, err
 	}
 
+	amountPlusFee, _, err := GetAmountWithFee(a.statedb, zt.TyContractToTreeAction, payload.Amount, tokenId)
+	if err != nil {
+		return nil, err
+	}
 	//更新合约账户
-	contractReceipt, err := a.UpdateContractAccount(payload.Amount, payload.TokenSymbol, zt.Sub, payload.FromExec)
+	contractReceipt, err := a.UpdateContractAccount(amountPlusFee, payload.TokenSymbol, zt.Sub, payload.FromExec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
@@ -496,7 +500,7 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 	return &execReceipt, nil
 }
 
-func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32) (*types.Receipt, error) {
+func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal int) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -516,6 +520,16 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32) (*types.
 	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, actionTy, payload.Amount, payload.TokenId)
 	if err != nil {
 		return nil, err
+	}
+	if actionTy == zt.TyContractToTreeAction {
+		sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
+		amountTree, amountPlusFeeTree, feeTree, err := GetTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, decimal)
+		if err != nil {
+			return nil, errors.Wrap(err, "getTreeSideAmount")
+		}
+		amountPlusFee = amountPlusFeeTree
+		fee = feeTree
+		payload.Amount = amountTree
 	}
 
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
@@ -588,7 +602,8 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
-	return a.l2TransferProc(payload, zt.TyTransferAction)
+	//此处的decimal无用
+	return a.l2TransferProc(payload, zt.TyTransferAction, 18)
 }
 
 func (a *Action) transferToNewProcess(accountIdFrom uint64, toChain33Address, toEthAddress, totalAmount, amount string, tokenID uint64) (*types.Receipt, error) {

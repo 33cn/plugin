@@ -65,7 +65,7 @@ func NewMainChainClient(paraRemoteGrpcClient string) chain33Ty.Chain33Client {
 	return grpcClient
 }
 
-func FetchL2BlockCmd() *cobra.Command {
+func fetchL2BlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fetch",
 		Short: "fetch a L2 block specified by height ",

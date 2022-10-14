@@ -32,6 +32,7 @@ func SendChain33L2TxCmd() *cobra.Command {
 		proxyManyExitCmd(),
 		nftManyCmd(),
 		setManyPubKeyCmd(),
+		fetchL2BlockCmd(),
 	)
 
 	return cmd
