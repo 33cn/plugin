@@ -43,7 +43,7 @@ type RollUp struct {
 	mainChainGrpc        types.Chain33Client
 	val                  *validator
 	cache                *commitCache
-	validatorUpdate      chan struct{}
+	lastFeeRate          int64
 }
 
 // Init init
@@ -59,6 +59,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	r.ctx, r.cancel = context.WithCancel(base.Context)
 	r.initDone = make(chan struct{})
 	r.subChan = make(chan *types.TopicData, 32)
+	r.lastFeeRate = 100000
 
 	var err error
 	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)
@@ -162,7 +163,7 @@ func (r *RollUp) handleBuildBatch() {
 // 同步链上已提交的最新 blockHeight 和 commitRound, 维护batch缓存
 func (r *RollUp) syncRollupState() {
 
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(time.Duration(r.cfg.CommitInterval) * time.Second)
 
 	for {
 

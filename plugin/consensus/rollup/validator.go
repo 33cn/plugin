@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"sync"
 
+	"github.com/33cn/chain33/system/crypto/secp256k1"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
@@ -17,6 +19,7 @@ type validator struct {
 	enable           bool
 	commitRoundIndex int32
 	blsKey           crypto.PrivKey
+	signTxKey        crypto.PrivKey
 	commitAddr       string
 	validators       map[string]int
 	valPubHash       []byte
@@ -26,6 +29,27 @@ type validator struct {
 	exit             chan struct{}
 }
 
+func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
+
+	if privKey == "" {
+		panic("Rollup empty validator privKey")
+	}
+	driver, err := crypto.Load(cryptoName, -1)
+	if err != nil {
+		panic("RollUp load crypto driver err:" + err.Error())
+	}
+	privByte, err := common.FromHex(privKey)
+	if err != nil {
+		panic("RollUp decode hex key err:" + err.Error())
+	}
+	key, err := driver.PrivKeyFromBytes(privByte)
+	if err != nil {
+		panic("RollUp priv key from bytes err:" + err.Error())
+	}
+
+	return driver, key
+}
+
 func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtypes.RollupStatus) {
 
 	if cfg.CommitInterval <= 0 {
@@ -33,21 +57,8 @@ func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtyp
 	}
 
 	v.exit = make(chan struct{})
-	var err error
-	v.blsDriver, err = crypto.Load(bls.Name, -1)
-	if err != nil {
-		panic("load bls driver err:" + err.Error())
-	}
-	privByte, err := common.FromHex(cfg.CommitBlsKey)
-	if err != nil {
-		panic("decode hex bls key err:" + err.Error())
-	}
-	key, err := v.blsDriver.PrivKeyFromBytes(privByte)
-	if err != nil {
-		panic("new bls priv key err:" + err.Error())
-	}
-
-	v.blsKey = key
+	v.blsDriver, v.blsKey = getPrivKey(bls.Name, cfg.CommitBlsKey)
+	_, v.signTxKey = getPrivKey(secp256k1.Name, cfg.SignTxKey)
 	v.updateValidators(valPubs)
 	v.updateRollupStatus(status)
 
