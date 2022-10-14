@@ -34,7 +34,6 @@ const (
 	defaultGenesisBlockTime int64 = 1514533390
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
 	minerPrivateKey                      = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
-	defaultGenesisAmount           int64 = 1e8
 	poolMainBlockMsec              int64 = 5000
 	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
 	defaultSearchMatchedBlockDepth int32 = 10000
@@ -101,8 +100,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
-	if subcfg.GenesisAmount <= 0 {
-		subcfg.GenesisAmount = defaultGenesisAmount
+	//支持创世精度为0
+	if subcfg.GenesisAmount < 0 {
+		panic(fmt.Sprintf("genesis amount <0"))
 	}
 
 	if subcfg.WriteBlockMsec <= 0 {
@@ -392,6 +392,7 @@ func checkMinerTx(current *types.BlockDetail) error {
 
 	//判断exec 是否成功
 	if current.Receipts[0].Ty != types.ExecOk {
+		plog.Error("checkMinerTx", "receiptTy", current.Receipts[0].Ty)
 		return paracross.ErrParaMinerExecErr
 	}
 	return nil
