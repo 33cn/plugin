@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"testing"
 
 	chain33Common "github.com/33cn/chain33/common"
@@ -10,15 +11,6 @@ import (
 	"github.com/33cn/chain33/util"
 	"github.com/stretchr/testify/assert"
 )
-
-//go test -test.bench BenchmarkTransfer -test.run BenchmarkTransfer -test.cpuprofile cpu.profile
-//8:exec transfer cost time =  271.798µs
-//23:exec transfer cost time =  208.146µs
-//34:exec transfer cost time =  262.244µs
-//45:exec transfer cost time =  258.756µs
-//56:exec transfer cost time =  251.523µs
-//67:exec transfer cost time =  244.553µs
-//78:exec transfer cost time =  281.948µs
 
 func BenchmarkTransfer(b *testing.B) {
 	initSetup()
@@ -40,12 +32,12 @@ func BenchmarkTransfer(b *testing.B) {
 	assert.Nil(b, err)
 	assert.Equal(b, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(b, len(localReceipt.KV), 0)
-	accountID := uint64(3)
+	accountID := uint64(4)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(b, err)
 	assert.Equal(b, acc4token1Balance.Balance, "1000000000000")
-	assert.Equal(b, acc4token1Balance.TokenId, uint64(1))
+	assert.Equal(b, acc4token1Balance.TokenId, tokenId)
 
 	//设置公钥
 	acc1privkeySli, err := chain33Common.FromHex("0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4")
@@ -54,6 +46,14 @@ func BenchmarkTransfer(b *testing.B) {
 	assert.Nil(b, err)
 	err = setPubKey(zksyncHandle, acc1privkey, accountID)
 	assert.Nil(b, err)
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyTransferAction], zksyncTypes.TyTransferAction)
+	assert.Nil(b, err)
+	assert.Equal(b, receipt.Ty, int32(types.ExecOk))
+
+	receipt, _, err = setTxFee(zksyncHandle, mpriKey, tokenId, zksyncTypes.FeeMap[zksyncTypes.TyTransferToNewAction], zksyncTypes.TyTransferToNewAction)
+	assert.Nil(b, err)
+	assert.Equal(b, receipt.Ty, int32(types.ExecOk))
 
 	//测试向新账户进行转币操作
 	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
@@ -74,11 +74,11 @@ func BenchmarkTransfer(b *testing.B) {
 	//确认发送者的balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(b, err)
-	tranferFee := 100000
-	balance := fmt.Sprintf("%d", 1000000000000-200*2-tranferFee*2)
+	tranferFee := 100000 * 2
+	balance := fmt.Sprintf("%d", 1000000000000-200*2-tranferFee)
 	fmt.Println("Balance is", balance)
-	assert.Equal(b, acc4token1Balance.Balance, balance)
-	assert.Equal(b, acc4token1Balance.TokenId, uint64(1))
+	assert.Equal(b, balance, acc4token1Balance.Balance)
+	assert.Equal(b, acc4token1Balance.TokenId, tokenId)
 
 	//确认接收者的balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), toAccountId, tokenId)
@@ -86,6 +86,5 @@ func BenchmarkTransfer(b *testing.B) {
 	toBalance := fmt.Sprintf("%d", 200*2)
 	fmt.Println("Balance is", toBalance)
 	assert.Equal(b, acc4token1Balance.Balance, toBalance)
-	assert.Equal(b, acc4token1Balance.TokenId, uint64(1))
-
+	assert.Equal(b, acc4token1Balance.TokenId, tokenId)
 }
