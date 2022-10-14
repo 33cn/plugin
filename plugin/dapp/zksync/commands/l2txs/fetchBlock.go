@@ -57,8 +57,6 @@ func NewMainChainClient(paraRemoteGrpcClient string) chain33Ty.Chain33Client {
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(paraChainGrpcRecSize)),
 		grpc.WithKeepaliveParams(kp))
 	if err != nil {
-		//log.Error("NewMainChainClient", "err", err)
-		panic("NewMainChainClient")
 		return nil
 	}
 	grpcClient := chain33Ty.NewChain33Client(conn)
