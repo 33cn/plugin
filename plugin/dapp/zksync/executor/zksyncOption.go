@@ -407,6 +407,9 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.Z
 //操作2. UpdateContractAccount，在合约内部的铸币操作
 func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
 	err := checkParam(payload.Amount)
+	if nil != err {
+		return nil, err
+	}
 	//增加systemTree2ContractId 是为了验证签名，同时防止重放攻击，也可以和transfer重用电路
 	if payload.ToAcctId != zt.SystemTree2ContractAcctId {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "toAcctId not systemId=%d", zt.SystemTree2ContractAcctId)
