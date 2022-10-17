@@ -931,7 +931,7 @@ func TestProxyExit(t *testing.T) {
 	//因为未设置交易费，所以余额不变动
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), proxyAccountID, tokenId)
 	assert.Nil(t, err)
-	balance := 1000000000000 - 1000000
+	balance := int64(1000000000000) - int64(1000000)
 	balanceActual, _ := big.NewInt(0).SetString(acc4token1Balance.Balance, 10)
 
 	assert.Equal(t, uint64(balance), balanceActual.Uint64())
