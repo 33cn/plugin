@@ -698,7 +698,7 @@ func TestContract2Tree(t *testing.T) {
 	queueId := uint64(0)
 	tokenId := uint64(0)
 
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "10000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "2000000000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
@@ -706,7 +706,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	assert.Equal(t, acc4token1Balance.Balance, "10000000000000")
+	assert.Equal(t, acc4token1Balance.Balance, "2000000000000000000")
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
 
 	//设置公钥
@@ -736,15 +736,15 @@ func TestContract2Tree(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 
-	//测试将L2账户余额转入到合约
-	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "1000000000000")
+	//测试将L2账户余额转入到合约 1 00 0000 0000 0000 0000
+	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "1000000000000000000")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 	assert.Greater(t, len(localReceipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", 10000000000000-1000000000000-100000)
+	balance := fmt.Sprintf("%d", 2000000000000000000-1000000000000000000-100000)
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, balance, acc4token1Balance.Balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -758,7 +758,7 @@ func TestContract2Tree(t *testing.T) {
 	assert.Nil(t, err)
 	accountInfo, ok := msg.(*types.Account)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, int64(100), accountInfo.Balance)
+	assert.Equal(t, int64(100000000), accountInfo.Balance)
 	fmt.Println("accountInfo =", accountInfo)
 
 	//测试将合约余额转回到L2账户余额
@@ -770,16 +770,16 @@ func TestContract2Tree(t *testing.T) {
 	//确认L2账户balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance = fmt.Sprintf("%d", 10000000000000-1000000000000-100000+int64(90*1e10))
+	balance = fmt.Sprintf("%d", 2000000000000000000-1000000000000000000-100000+int64(90*1e10))
 	fmt.Println("Balance is", balance)
-	assert.Equal(t, acc4token1Balance.Balance, balance)
+	assert.Equal(t, balance, acc4token1Balance.Balance)
 
 	//确认L1账户余额
 	msg, err = zksyncHandle.Query_GetZkContractAccount(zkQueryReq)
 	assert.Nil(t, err)
 	accountInfo, ok = msg.(*types.Account)
 	assert.Equal(t, ok, true)
-	assert.Equal(t, int64(10), accountInfo.Balance)
+	assert.Equal(t, int64(100000000-90-10000), accountInfo.Balance)
 	fmt.Println("accountInfo =", accountInfo)
 }
 
