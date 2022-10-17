@@ -451,7 +451,7 @@ func TestWithdraw(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	withdrawFee := 1000000
-	balance := fmt.Sprintf("%d", 1000000000000-200-withdrawFee)
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(200)-int64(withdrawFee))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, balance, acc4token1Balance.Balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -520,7 +520,7 @@ func TestTransfer(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	tranferFee := 100000
-	balance := fmt.Sprintf("%d", 1000000000000-200*2-tranferFee*2)
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(200*2)-int64(tranferFee*2))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -585,7 +585,7 @@ func TestTransfer2New(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	tranferFee := 100000
-	balance := fmt.Sprintf("%d", 1000000000000-200-tranferFee)
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(200)-int64(tranferFee))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -661,7 +661,7 @@ func TestTree2contract(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", 1000000000000-10000000000)
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(10000000000))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -744,7 +744,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", 2000000000000000000-1000000000000000000-100000)
+	balance := fmt.Sprintf("%d", int64(2000000000000000000)-int64(1000000000000000000)-int64(100000))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, balance, acc4token1Balance.Balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -770,7 +770,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认L2账户balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance = fmt.Sprintf("%d", 2000000000000000000-1000000000000000000-100000+int64(90*1e10))
+	balance = fmt.Sprintf("%d", int64(2000000000000000000)-int64(1000000000000000000)-int64(100000)+int64(90*1e10))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, balance, acc4token1Balance.Balance)
 
@@ -994,7 +994,7 @@ func TestMintNFT(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	mintFee := 100
-	balance := fmt.Sprintf("%d", 1000000000000-mintFee)
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(mintFee))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -1075,7 +1075,7 @@ func TestMintNFT(t *testing.T) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
 	mintFee = 100
-	balance = fmt.Sprintf("%d", 1000000000000-mintFee)
+	balance = fmt.Sprintf("%d", int64(1000000000000)-int64(mintFee))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))

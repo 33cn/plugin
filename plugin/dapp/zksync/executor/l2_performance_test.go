@@ -75,7 +75,7 @@ func BenchmarkTransfer(b *testing.B) {
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(b, err)
 	tranferFee := 100000 * 2
-	balance := fmt.Sprintf("%d", 1000000000000-200*2-tranferFee)
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(200*2)-int64(tranferFee))
 	fmt.Println("Balance is", balance)
 	assert.Equal(b, balance, acc4token1Balance.Balance)
 	assert.Equal(b, acc4token1Balance.TokenId, tokenId)
