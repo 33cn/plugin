@@ -53,6 +53,8 @@ chunkblockNum=100
 enableFetchP2pstore=true
 # 使能假设已删除已归档数据后,获取数据情况
 enableIfDelLocalChunk=false
+# 使能保存block kvs
+enableSaveBlockKVs=true
 
 [p2p]
 # p2p类型

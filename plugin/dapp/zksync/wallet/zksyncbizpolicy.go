@@ -106,17 +106,17 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	bytesVal, err := common.FromHex(req.GetTxHex())
 	if err != nil {
 		bizlog.Error("SignTransaction", "common.FromHex error", err)
-		return false, "", errors.Wrapf(err, "fromHex")
+		return
 	}
 	tx := new(types.Transaction)
 	if err = types.Decode(bytesVal, tx); err != nil {
 		bizlog.Error("SignTransaction", "Decode Transaction error", err)
-		return false, "", errors.Wrapf(err, "decode")
+		return
 	}
 
 	action := new(zt.ZksyncAction)
 	if err = types.Decode(tx.Payload, action); err != nil {
-		return false, "", errors.Wrapf(err, "decode Payload")
+		return
 	}
 
 	seed, err := GetLayer2PrivateKeySeed(common.ToHex(key.Bytes()), "", "")
@@ -138,7 +138,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "deposit")
+			return
 		}
 		deposit.Signature = signInfo
 	case zt.TyWithdrawAction:
@@ -147,7 +147,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "withdraw")
+			return
 		}
 		withDraw.Signature = signInfo
 	case zt.TyContractToTreeAction:
@@ -156,7 +156,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "contract2tree")
+			return
 		}
 		contractToLeaf.Signature = signInfo
 	case zt.TyTreeToContractAction:
@@ -165,7 +165,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "tree2contract")
+			return
 		}
 		leafToContract.Signature = signInfo
 	case zt.TyTransferAction:
@@ -174,7 +174,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "transfer")
+			return
 		}
 		transfer.Signature = signInfo
 	case zt.TyTransferToNewAction:
@@ -183,18 +183,18 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "transfer2new")
+			return
 		}
 		transferToNew.Signature = signInfo
 	case zt.TyProxyExitAction:
-		proxyQuit := action.GetProxyExit()
-		msg = GetProxyExitMsg(proxyQuit)
+		forceQuit := action.GetProxyExit()
+		msg = GetProxyExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "proxy")
+			return
 		}
-		proxyQuit.Signature = signInfo
+		forceQuit.Signature = signInfo
 	case zt.TySetPubKeyAction:
 		setPubKey := action.GetSetPubKey()
 		//如果是添加公钥的操作，则默认设置这里生成的公钥
@@ -210,7 +210,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "setPubKey")
+			return
 		}
 		setPubKey.Signature = signInfo
 	case zt.TyFullExitAction:
@@ -219,7 +219,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "full exit")
+			return
 		}
 		forceQuit.Signature = signInfo
 	case zt.TyMintNFTAction:
@@ -228,7 +228,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "mint nft")
+			return
 		}
 		nft.Signature = signInfo
 	case zt.TyTransferNFTAction:
@@ -237,7 +237,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "transfer nft")
+			return
 		}
 		nft.Signature = signInfo
 	case zt.TyWithdrawNFTAction:
@@ -246,65 +246,9 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "withdraw nft")
+			return
 		}
 		nft.Signature = signInfo
-
-		// spot tx
-	case zt.TyLimitOrderAction:
-		limitOrder := action.GetLimitOrder()
-		msg = GetLimitOrderMsg(limitOrder)
-		signInfo, err = SignTx(msg, privateKey)
-		if err != nil {
-			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "limit order")
-		}
-		limitOrder.Order.Signature = signInfo
-	case zt.TyAssetLimitOrderAction:
-		order := action.GetAssetLimitOrder()
-		msg = GetAssetLimitOrderMsg(order)
-		signInfo, err = SignTx(msg, privateKey)
-		if err != nil {
-			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "asset limit order")
-		}
-		order.Order.Signature = signInfo
-	case zt.TyNftOrderAction:
-		nftOrder := action.GetNftOrder()
-		msg = GetNftOrderMsg(nftOrder)
-		signInfo, err = SignTx(msg, privateKey)
-		if err != nil {
-			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "nft order")
-		}
-		nftOrder.Order.Signature = signInfo
-	case zt.TyNftTakerOrderAction:
-		nftTakerOrder := action.GetNftTakerOrder()
-		msg = GetNftTakerOrderMsg(nftTakerOrder)
-		signInfo, err = SignTx(msg, privateKey)
-		if err != nil {
-			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "nft taker order")
-		}
-		nftTakerOrder.Order.Signature = signInfo
-	case zt.TyNftOrder2Action:
-		nftOrder := action.GetNftOrder2()
-		msg = GetNftOrder2Msg(nftOrder)
-		signInfo, err = SignTx(msg, privateKey)
-		if err != nil {
-			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "nft order2")
-		}
-		nftOrder.Order.Signature = signInfo
-	case zt.TyNftTakerOrder2Action:
-		nftTakerOrder := action.GetNftTakerOrder2()
-		msg = GetNftTakerOrder2Msg(nftTakerOrder)
-		signInfo, err = SignTx(msg, privateKey)
-		if err != nil {
-			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
-			return false, "", errors.Wrapf(err, "nft taker order2")
-		}
-		nftTakerOrder.Order.Signature = signInfo
 	}
 
 	tx.Payload = types.Encode(action)

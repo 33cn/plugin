@@ -175,8 +175,8 @@ function zksync_setPubKey() {
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 setPubKey
     hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_4}" -k "${accountKey1}")
     check_tx "${CLI}" "${hash}"
-#    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_5}" -k "${accountKey2}")
-#    check_tx "${CLI}" "${hash}"
+    #    hash=$(${CLI} send zksync l2 setpubkey -a "${ZKSYNC_ACCOUNT_5}" -k "${accountKey2}")
+    #    check_tx "${CLI}" "${hash}"
 }
 
 function zksync_withdraw() {
@@ -346,7 +346,6 @@ function create_tx() {
         queueId=$((queueId + 1))
     done
 }
-
 
 function zkrelayer_set_fee() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
