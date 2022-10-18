@@ -7,14 +7,26 @@ import "./MultiToken.sol";
 
 contract Token is IERC20 {
     using SafeMath for uint256;
-
     mapping (address => mapping (address => uint256)) private _allowances;
+    uint256 private _totalSupply;
+    string private _name;
+    string private _symbol;
+
+
+
+    constructor(string memory name_, uint256 supply_){
+        _name=name_;
+        _symbol=name_;
+        _totalSupply=supply_;
+
+    }
+
 
     /**
      * @dev Returns the name of the token
      */
     function name() public view returns (string memory) {
-        return MultiToken.name();
+        return _name;
     }
 
     /**
@@ -22,7 +34,7 @@ contract Token is IERC20 {
      * name.
      */
     function symbol() public view returns (string memory) {
-        return MultiToken.symbol();
+        return _symbol;
     }
 
     /**
@@ -36,7 +48,7 @@ contract Token is IERC20 {
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public view override returns (uint256) {
-        return MultiToken.totalSupply();
+        return _totalSupply;
     }
 
     /**
@@ -163,7 +175,7 @@ contract Token is IERC20 {
      * - `to` cannot be the zero address.
      * - `from` must have a balance of at least `amount`.
      */
-    function _transfer(address from, address to, uint256 amount) internal {
+    function _transfer(address from, address to, uint256 amount)  internal {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 

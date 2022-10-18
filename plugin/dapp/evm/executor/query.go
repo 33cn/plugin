@@ -81,6 +81,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	}
 
 	msg.SetGasLimit(evmtypes.MaxGasLimit)
+	fmt.Println("Query_EstimateGas,gasLimit:---->", msg.GasLimit())
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		return nil, err

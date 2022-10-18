@@ -81,7 +81,12 @@ type EVMStateDB interface {
 
 	// GetBlockHeight 返回当前区块高度
 	GetBlockHeight() int64
-
+	//GetAccount return contract address info
+	GetAccount(addr string) *ContractAccount
 	// GetConfig 获取系统配置
 	GetConfig() *types.Chain33Config
+	// EVM 转移Token
+	TransferToToken(from, recipient, symbol string, amount int64) (bool, error)
+	//返回Token 合约下symbol 的余额
+	TokenBalance(from common.Address, execer string, symbol string) (int64, error)
 }

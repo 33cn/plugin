@@ -18,11 +18,10 @@
 
     1. 用户在链上发行原生 TOKEN：ABC
     2. 配置自定义的预编译合约地址与原生token 的绑定关系
-       [exec.sub.evm.preCompile.token.ABC]
-       preCompileAddress="0x0000000000000000000000000000000000200001"
-       symbol="ABC"
-       supply=10000000000000
-       
-    3. 用户通过plugin/dapp/evm/contracts/token/Token.sol 发布合约，得到合约地址
+       [exec.sub.evm.preCompile]
+        #管理员地址0x...十六进制地址，必须通过superManager下的地址来发发布合约，否则无法进行交易转账
+       superManager=[""]
+
+    3. 用户通过plugin/dapp/evm/contracts/token/Token.sol 发布合约，确保合约构造函数中币种名称和发行量与原生token 保持一致，得到合约地址
     4. 合约地址导入第三方工具进行操作，比如：metamask 
 

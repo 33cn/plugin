@@ -487,6 +487,18 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 
 }
 
+func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbol string) (int64, error) {
+	tokenAccount, err := account.NewAccountDB(mdb.GetConfig(), execer, tokensymbol, mdb.StateDB)
+	if err != nil {
+		return 0, err
+	}
+	acc := tokenAccount.LoadAccount(caller.String())
+	if acc == nil {
+		return 0, nil
+	}
+	return acc.Balance, nil
+}
+
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)

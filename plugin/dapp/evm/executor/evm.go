@@ -6,7 +6,6 @@ package executor
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"os"
@@ -35,7 +34,7 @@ type subConfig struct {
 	// AddressDriver address driver name, support btc/eth
 	AddressDriver string `json:"addressDriver"`
 	// PreCompileAddr key: preContractorAddress  value: real contract information
-	PreCompile map[string]map[string]interface{} `json:"preCompile,omitempty"`
+	PreCompile runtime.TokenContract `json:"preCompile,omitempty"`
 }
 
 func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
@@ -59,37 +58,7 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
 	}
 	common.InitEvmAddressTypeOnce(driver)
-	for dapp, dinfo := range subCfg.PreCompile { //配置token 与预编译合约的地址关系
-		if dapp == "dex" {
-			//TODO
-		} else if dapp == "token" {
-			for tokenName, value := range dinfo {
-				marshalBytes, _ := json.Marshal(value)
-				var tokenInfo runtime.TokenContract
-				types.MustDecode(marshalBytes, &tokenInfo)
-				info := &tokenInfo
-				log.Info("initEvmSubConfig", "precompile tokenName:", tokenName)
-				if _, ok := runtime.PrecompiledContractsBerlin[common.HexToAddress(info.PreCompileAddress)]; ok {
-					panic("can't use system  precompile address")
-				}
-				_, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]
-				if ok {
-					panic("dump precompile contract address")
-				}
-				if tokenName != info.Symbol {
-					log.Error("token symbol miss match")
-					continue
-				}
-
-				if _, ok := runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)]; !ok {
-					runtime.CustomizePrecompiledContracts[common.HexToAddress(info.PreCompileAddress)] = runtime.NewTokenCall(info)
-				} else {
-					panic(fmt.Errorf("dup precompile address:%v", info.PreCompileAddress))
-				}
-			}
-		}
-
-	}
+	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TokenPrecompileAddr)] = runtime.NewTokenPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
 
 }
 

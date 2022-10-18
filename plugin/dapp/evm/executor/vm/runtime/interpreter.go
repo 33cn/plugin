@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/33cn/chain33/common/log/log15"
@@ -206,6 +207,9 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			cost += dynamicCost // total cost, for debug tracing
 			if err != nil || !contract.UseGas(dynamicCost) {
 				log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
+					"CallerAddress=", contract.CallerAddress.String(),
+					"caller=", contract.caller.Address().String())
+				fmt.Println("Run:outOfGas op=", op.String(), "contract addr=", contract.self.Address().String(),
 					"CallerAddress=", contract.CallerAddress.String(),
 					"caller=", contract.caller.Address().String())
 				return nil, ErrOutOfGas

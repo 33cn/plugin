@@ -223,12 +223,15 @@ ethMapFromExecutor="paracross"
 ethMapFromSymbol="coins.bty"
 
 [exec.sub.evm.preCompile]
-[exec.sub.evm.preCompile.token]
+# 激活合token-erc20 的合约管理地址，必须配置管理员地址
+superManager=[""]
+
 # token 名称
-[exec.sub.evm.preCompile.token.ABC]
-preCompileAddress="0x0000000000000000000000000000000000200001"
-symbol="ABC"
-supply=10000000000000
+#[exec.sub.evm.preCompile.token.ABC]
+#preCompileAddress="0x0000000000000000000000000000000000200001"
+#symbol="ABC"
+#supply=10000000000000
+
 
 [exec.sub.mix]
 #私对私的交易费,交易比较大，需要多的手续费

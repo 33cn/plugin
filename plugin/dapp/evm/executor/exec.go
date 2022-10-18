@@ -49,7 +49,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	cfg := evm.GetAPI().GetConfig()
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
-	env.SetStatDB(evm.mStateDB)
+	//env.SetStatDB(evm.mStateDB)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),

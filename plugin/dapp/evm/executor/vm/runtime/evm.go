@@ -92,7 +92,6 @@ type Context struct {
 type EVM struct {
 	// Context 链相关的一些辅助属性和操作方法
 	Context
-	MStateDB *state.MemoryStateDB
 	// EVMStateDB 状态数据操作入口
 	StateDB state.EVMStateDB
 	// 当前调用深度
@@ -133,10 +132,6 @@ func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config, cfg *types.C
 
 	evm.Interpreter = NewInterpreter(evm, vmConfig)
 	return evm
-}
-
-func (evm *EVM) SetStatDB(db *state.MemoryStateDB) {
-	evm.MStateDB = db
 }
 
 // GasTable 返回不同操作消耗的Gas定价表

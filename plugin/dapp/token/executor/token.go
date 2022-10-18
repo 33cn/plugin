@@ -15,6 +15,7 @@ token执行器支持token的创建，
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -79,11 +80,17 @@ func (t *token) GetDriverName() string {
 }
 
 func (t *token) IsFriend(myexec, writekey []byte, othertx *types.Transaction) bool {
+	fmt.Println("")
 	cfg := t.GetAPI().GetConfig()
 	if cfg.IsDappFork(t.GetHeight(), t.GetDriverName(), tokenty.ForkTokenEvm) {
 		for _, friendExec := range subCfg.FriendExecer {
 			if cfg.ExecName(friendExec) == string(othertx.Execer) {
 				if bytes.HasPrefix(writekey, []byte("mavl-token-")) {
+					//TODO check tokenSymbol
+					/*if friendExec == "evm" {
+						keyTokenSymbol := strings.Split(string(writekey), "=")[2]
+
+					}*/
 					return true
 				}
 			}
