@@ -3,6 +3,7 @@ package l2txs
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/33cn/chain33/rpc/grpcclient"
 
@@ -36,6 +37,7 @@ var (
 		zt.TyCommitProofAction:    zt.NameCommitProofAction,
 		zt.TySetVerifierAction:    zt.NameSetVerifierAction,
 		zt.TySetFeeAction:         zt.NameSetFeeAction,
+		zt.TySetTokenSymbolAction: zt.NameSetTokenSymbolAction,
 		zt.TyMintNFTAction:        zt.NameMintNFTAction,
 		zt.TyWithdrawNFTAction:    zt.NameWithdrawNFTACTION,
 		zt.TyTransferNFTAction:    zt.NameTransferNFTAction,
@@ -63,6 +65,8 @@ func NewMainChainClient(paraRemoteGrpcClient string) chain33Ty.Chain33Client {
 	return grpcClient
 }
 
+//该命令用于从区块链获取包含l2交易的区块
+//./chain33-cli zksync sendl2 fetch -s 800 -e 6015 -p . --rpc_laddr 172.18.0.6:8902
 func fetchL2BlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fetch",
@@ -97,6 +101,9 @@ func fetchL2Block(cmd *cobra.Command, args []string) {
 
 	grpClient := NewMainChainClient(grpcLaddr)
 
+	descriptionFileName := path + fmt.Sprintf("/l2_blocks_%d_to_%d_description.txt", start, end)
+	description := ""
+	blocks := "L2 txs existed on blocks: "
 	for height := start; height <= end; height++ {
 		blockSeq, err := grpClient.GetBlockBySeq(context.Background(), &types.Int64{Data: height})
 		if nil != err {
@@ -108,7 +115,7 @@ func fetchL2Block(cmd *cobra.Command, args []string) {
 		}
 
 		for _, tx := range blockSeq.Detail.Block.Txs {
-			if string(tx.Execer) != "zksync" {
+			if !strings.HasSuffix(string(tx.Execer), "zksync") {
 				continue
 			}
 			var action zt.ZksyncAction
@@ -138,23 +145,25 @@ func fetchL2Block(cmd *cobra.Command, args []string) {
 				txCntMap[zt.TyContractToTreeAction] = txCntMap[zt.TyContractToTreeAction] + 1
 			case zt.TyTreeToContractAction:
 				txCntMap[zt.TyTreeToContractAction] = txCntMap[zt.TyTreeToContractAction] + 1
-			case zt.TyFeeAction:
-				txCntMap[zt.TyFeeAction] = txCntMap[zt.TyFeeAction] + 1
 			case zt.TyMintNFTAction:
 				txCntMap[zt.TyMintNFTAction] = txCntMap[zt.TyMintNFTAction] + 1
 			case zt.TyWithdrawNFTAction:
 				txCntMap[zt.TyWithdrawNFTAction] = txCntMap[zt.TyWithdrawNFTAction] + 1
 			case zt.TyTransferNFTAction:
 				txCntMap[zt.TyTransferNFTAction] = txCntMap[zt.TyTransferNFTAction] + 1
+			case zt.TySetFeeAction:
+				txCntMap[zt.TySetFeeAction] = txCntMap[zt.TySetFeeAction] + 1
+			case zt.TySetTokenSymbolAction:
+				txCntMap[zt.TySetTokenSymbolAction] = txCntMap[zt.TySetTokenSymbolAction] + 1
 			}
 		}
 
-		fileName := path + fmt.Sprintf("/block_%d_", height)
 		existL2Tx := false
-		for i := 0; i < zt.TyTransferNFTAction; i++ {
+		for i := 0; i <= zt.TyAssetWithdrawAction; i++ {
 			if txCntMap[i] != 0 {
 				name := L2ActionType2nameMap[i]
-				fileName += fmt.Sprintf("%s_%d", name, txCntMap[i])
+				//fileName += fmt.Sprintf("%s_%d", name, txCntMap[i])
+				description += fmt.Sprintf("%s_%d", name, txCntMap[i])
 				existL2Tx = true
 			}
 		}
@@ -162,10 +171,15 @@ func fetchL2Block(cmd *cobra.Command, args []string) {
 			fmt.Println("No L2 txs in block with height", height)
 			continue
 		}
-		fileName += ".data"
+		description += fmt.Sprintf("_on_block_%d", blockSeq.Detail.Block.Height)
+		blocks += fmt.Sprintf("%d,", blockSeq.Detail.Block.Height)
+		fileName := path + fmt.Sprintf("/block_%d.data", height)
 		data := types.Encode(blockSeq)
 		writeToFile(fileName, data)
+		description += "\n"
 	}
+	description += "\n" + blocks
+	writeToFile(descriptionFileName, []byte(description))
 }
 
 func writeToFile(fileName string, data []byte) {
