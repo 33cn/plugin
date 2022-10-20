@@ -20,6 +20,7 @@ message BlockBatch {
     repeated bytes pubKeyList      = 3;
     bytes          aggregateTxSign = 4;
     bytes          txAddrIDList    = 5;
+    bytes          crossTxRootHash = 6;
 }
 
 message ValidatorSignMsg {
@@ -45,6 +46,7 @@ message RollupStatus {
     int64  commitBlockHeight = 3;
     string commitBlockHash   = 4;
     string commitAddr        = 5;
+    bytes  crossTxRootHash   = 6;
 }
 
 message CommitRoundInfo {
