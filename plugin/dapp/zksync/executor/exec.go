@@ -38,7 +38,7 @@ func (z *zksync) Exec_ZkTransfer(payload *zt.ZkTransfer, tx *types.Transaction, 
 	if err := isExodusClearMode(z.GetStateDB()); err != nil {
 		return nil, err
 	}
-	return action.ZkTransfer(payload)
+	return action.ZkTransfer(payload, zt.TyTransferAction)
 }
 
 func (z *zksync) Exec_TransferToNew(payload *zt.ZkTransferToNew, tx *types.Transaction, index int) (*types.Receipt, error) {
