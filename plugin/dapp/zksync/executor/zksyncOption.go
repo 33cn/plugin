@@ -422,7 +422,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 		ToAccountId:   zt.SystemTree2ContractAcctId,
 		Signature:     payload.Signature,
 	}
-	receiptTranfer, err := a.ZkTransfer(para)
+	receiptTranfer, err := a.ZkTransfer(para, zt.TyTreeToContractAction)
 	if nil != err {
 		return nil, err
 	}
@@ -592,7 +592,7 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 	return receipts, nil
 }
 
-func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
+func (a *Action) ZkTransfer(payload *zt.ZkTransfer, actionTy int32) (*types.Receipt, error) {
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
@@ -606,7 +606,7 @@ func (a *Action) ZkTransfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	}
 
 	//此处的decimal无用
-	return a.l2TransferProc(payload, zt.TyTransferAction, 18)
+	return a.l2TransferProc(payload, actionTy, 18)
 }
 
 func (a *Action) transferToNewProcess(accountIdFrom uint64, toChain33Address, toEthAddress, totalAmount, amount string, tokenID uint64) (*types.Receipt, error) {

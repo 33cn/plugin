@@ -661,7 +661,7 @@ func TestTree2contract(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(10000000000))
+	balance := fmt.Sprintf("%d", int64(1000000000000)-int64(10000000000)-int64(10000))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, acc4token1Balance.Balance, balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -744,7 +744,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance := fmt.Sprintf("%d", int64(2000000000000000000)-int64(1000000000000000000)-int64(100000))
+	balance := fmt.Sprintf("%d", int64(2000000000000000000)-int64(1000000000000000000)-int64(10000))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, balance, acc4token1Balance.Balance)
 	assert.Equal(t, acc4token1Balance.TokenId, uint64(0))
@@ -770,7 +770,7 @@ func TestContract2Tree(t *testing.T) {
 	//确认L2账户balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
-	balance = fmt.Sprintf("%d", int64(2000000000000000000)-int64(1000000000000000000)-int64(100000)+int64(90*1e10))
+	balance = fmt.Sprintf("%d", int64(2000000000000000000)-int64(1000000000000000000)-int64(10000)+int64(90*1e10))
 	fmt.Println("Balance is", balance)
 	assert.Equal(t, balance, acc4token1Balance.Balance)
 
