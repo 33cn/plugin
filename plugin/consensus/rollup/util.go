@@ -53,3 +53,7 @@ func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {
 	}
 	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
 }
+
+func shortHash(hash []byte) string {
+	return types.CalcTxShortHash(hash)
+}

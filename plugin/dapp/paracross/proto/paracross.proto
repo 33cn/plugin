@@ -200,6 +200,17 @@ message CrossAssetTransfer {
     string note         = 5;
 }
 
+message crossTxIndex {
+    int64 blockHeight = 1;
+    int32 filterIndex = 2;
+}
+
+message commitRollupCrossTx {
+
+    int64    commitRound            = 1;
+    repeated crossTxIndex txIndices = 2;
+}
+
 message ParacrossAction {
     oneof value {
         ParacrossCommitAction commit          = 1;
