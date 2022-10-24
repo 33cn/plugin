@@ -181,24 +181,14 @@ func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 }
 
 func GetTreeToContractMsg(payload *zt.ZkTreeToContract) *zt.ZkMsg {
-	var pubData []uint
-
-	binaryData := make([]uint, zt.MsgWidth)
-
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTreeToContractAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
-	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
-
-	copy(binaryData, pubData)
-
-	return &zt.ZkMsg{
-		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
-		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	transfer := &zt.ZkTransfer{
+		TokenId:       payload.TokenId,
+		Amount:        payload.Amount,
+		FromAccountId: payload.AccountId,
+		ToAccountId:   zt.SystemTree2ContractAcctId,
 	}
-
+	//签名直接使用transfer的签名
+	return GetTransferMsg(transfer)
 }
 
 func transferStr2Int(s string, base int) *big.Int {
