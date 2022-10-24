@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"

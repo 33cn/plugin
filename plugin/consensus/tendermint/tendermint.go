@@ -239,7 +239,9 @@ func (client *Client) GenesisState() *State {
 // Close TODO:may need optimize
 func (client *Client) Close() {
 	client.BaseClient.Close()
-	client.node.Stop()
+	if client.node != nil {
+		client.node.Stop()
+	}
 	client.stopC <- struct{}{}
 	tendermintlog.Info("consensus tendermint closed")
 }
@@ -640,15 +642,22 @@ func (client *Client) LoadProposalBlock(height int64) *tmtypes.TendermintBlock {
 // Query_IsHealthy query whether consensus is sync
 func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) {
 	isHealthy := false
-	if client.IsCaughtUp() && client.GetCurrentHeight() <= client.csState.GetRoundState().Height+1 {
-		isHealthy = true
+	if client.IsCaughtUp() {
+		rs := client.csState.QueryRoundState()
+		if rs != nil && client.GetCurrentHeight() <= rs.Height+1 {
+			isHealthy = true
+		}
 	}
 	return &tmtypes.IsHealthy{IsHealthy: isHealthy}, nil
 }
 
 // Query_NodeInfo query validator node info
 func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
-	vals := client.csState.GetRoundState().Validators.Validators
+	rs := client.csState.QueryRoundState()
+	if rs == nil {
+		return nil, ttypes.ErrConsensusQuery
+	}
+	vals := rs.Validators.Validators
 	nodes := make([]*tmtypes.ValNodeInfo, 0)
 	for _, val := range vals {
 		if val == nil {

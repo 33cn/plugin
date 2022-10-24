@@ -15,8 +15,8 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common/commands"
 	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/spf13/cobra"
 )

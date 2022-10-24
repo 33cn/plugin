@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -45,11 +46,13 @@ func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte,
 		}
 
 	}
+	fmt.Println("---------->Run.Interpreter.Run,contract.CallerAddress", contract.CallerAddress, "contract.caller:", contract.caller.Address().String(), "readonly:", readOnly)
 	// 在此处打印下自定义合约的错误信息
 	ret, err = evm.Interpreter.Run(contract, input, readOnly)
 	if err != nil {
 		log.Error("error occurs while run evm contract", "error info", err)
 	}
+	//fmt.Println("run--->contract-->gas", contract.Gas)
 	return ret, err
 }
 
@@ -181,6 +184,8 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+	fmt.Println("-------------+++++++++++++++++++++++++++>>Call,caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas)
+
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
@@ -239,9 +244,10 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		if len(code) == 0 {
 			ret, err = nil, nil // gas is unchanged
 		} else {
+			addrCopy := addr
 			// 创建新的合约对象，包含双方地址以及合约代码，可用Gas信息
-			contract := NewContract(caller, to, value, gas)
-			contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
+			contract := NewContract(caller, AccountRef(addrCopy), value, gas)
+			contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy.String()), evm.StateDB.GetCode(addrCopy.String()))
 			start := types.Now()
 			// 调试模式下启用跟踪
 			if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
@@ -251,8 +257,9 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 					evm.VMConfig.Tracer.CaptureEnd(ret, gas-contract.Gas, types.Since(start), err)
 				}()
 			}
-
+			fmt.Println("---------->Call.Run,contract", contract.caller.Address(), "input:", common.Bytes2Hex(input), "readonly:", false)
 			ret, err = run(evm, contract, input, false)
+			fmt.Println("Call:剩余的Gas:", contract.Gas)
 			gas = contract.Gas
 		}
 	}
@@ -271,6 +278,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 // 执行逻辑同Call方法，但是有以下几点不同：
 // 在创建合约对象时，合约对象的上下文地址（合约对象的self属性）被设置为caller的地址
 func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, leftOverGas uint64, err error) {
+	fmt.Println("-------------+++++++++++++++++++++++++++>CallCode,caller", caller.Address(), "addr", addr)
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, gas, err
@@ -299,6 +307,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		// 正常从合约地址加载合约代码
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		ret, err = run(evm, contract, input, false)
+		fmt.Println("CallCode:run.Gas:", contract.Gas)
 		gas = contract.Gas
 
 	}
@@ -316,6 +325,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 // 不支持向合约转账
 // 和CallCode不同的是，它会把合约的外部调用地址设置成caller的caller
 func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []byte, gas uint64) (ret []byte, leftOverGas uint64, err error) {
+	fmt.Println("-------------+++++++++++++++++++>DelegateCall,caller:", caller.Address(), "addr:", addr, "input:", common.Bytes2Hex(input))
 	pass, err := evm.preCheck(caller, 0)
 	if !pass {
 		return nil, gas, err
@@ -340,12 +350,14 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	} else {
 		// 同外部合约的创建和修改逻辑，在每次调用时，需要创建并初始化一个新的合约内存对象
 		// 需要注意，这里不同的是，需要设置合约的委托调用模式（会进行一些属性设置）
+		fmt.Println("------------->DelegateCall,DelegateCall:", caller.Address(), "addr:", addr)
 		contract := NewContract(caller, to, 0, gas).AsDelegate()
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
-
+		fmt.Println("------------->DelegateCall,contract,CallerAddress", contract.CallerAddress, "caller:", contract.caller.Address())
 		// 其它逻辑同StaticCall
 		ret, err = run(evm, contract, input, false)
-
+		gas = contract.Gas
+		fmt.Println("------------->DelegateCall,:run.ret:", ret)
 	}
 
 	if err != nil {
@@ -361,6 +373,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 // 不支持向合约转账
 // 在合约逻辑中，可以指定其它的合约地址以及输入参数进行合约调用，但是，这种情况下禁止修改MemoryStateDB中的任何数据，否则执行会出错
 func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte, gas uint64) (ret []byte, leftOverGas uint64, err error) {
+	fmt.Println("-------------+++++++++++++++++++>StaticCall")
 	addrecrecover := common.BytesToAddress(common.RightPadBytes([]byte{1}, 20))
 	log.Info("StaticCall", "input", common.Bytes2Hex(input),
 		"addr slice", common.Bytes2Hex(addr.Bytes()),
@@ -432,8 +445,10 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		// 执行合约指令时如果出错，需要进行回滚，并且扣除剩余的Gas
 		ret, err = run(evm, contract, input, false)
+		//add by lbz
+		gas = contract.Gas
 	}
-
+	fmt.Println("StaticCall:run.Gas:", contract.Gas)
 	// 同外部合约的创建和修改逻辑，在每次调用时，需要创建并初始化一个新的合约内存对象
 	if err != nil {
 		// 合约执行出错时进行回滚

@@ -3,12 +3,16 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/33cn/chain33/client/mocks"
-	"github.com/33cn/chain33/types"
-	"github.com/stretchr/testify/mock"
+	"fmt"
 	"math/big"
 	"strings"
 	"testing"
+
+	"github.com/33cn/chain33/common/db"
+
+	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -30,7 +34,7 @@ func TestZksyncOption(t *testing.T) {
 	action := &Action{localDB: localdb, statedb: statedb, height: 1, index: 0, fromaddr: "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", api: api}
 	deposit := &zt.ZkDeposit{
 		TokenId:     1,
-		Amount:      "100000000",
+		Amount:      "10000000000000000000",
 		EthAddress:  "abcd68033A72978C1084E2d44D1Fa06DdC4A2d58",
 		Chain33Addr: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"),
 	}
@@ -48,20 +52,21 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	assert.Equal(t, nil, err)
-	info, err := generateTreeUpdateInfo(statedb)
+	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
+	info, err := generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
-	leaf, err := GetLeafByAccountId(statedb, 2, info)
+	leaf, err := GetLeafByAccountId(statedb, 4, info)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, nil, leaf)
 	t.Log(leaf)
 
 	/*************************setPubKey*************************/
-	_, err = generateTreeUpdateInfo(statedb)
+	_, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
 	setPubKey := &zt.ZkSetPubKey{
-		AccountId: 2,
+		AccountId: 4,
 		PubKey: &zt.ZkPubKey{
 			X: privateKey.PublicKey.A.X.String(),
 			Y: privateKey.PublicKey.A.Y.String(),
@@ -80,13 +85,19 @@ func TestZksyncOption(t *testing.T) {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
 
+	/*************************setFee*************************/
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyWithdrawAction)
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyTransferToNewAction)
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyTransferAction)
+	setfee(action, t, statedb, localdb, &zklog, 1, zt.TyProxyExitAction)
+
 	/*************************withdraw*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	withdraw := &zt.ZkWithdraw{
-		AccountId: 2,
+		AccountId: 4,
 		TokenId:   1,
-		Amount:    "5000",
+		Amount:    "5000000000000000000",
 	}
 	msg := wallet.GetWithdrawMsg(withdraw)
 	privateKey, err = eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
@@ -96,7 +107,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	withdraw.Signature = signInfo
-	receipt, err = action.Withdraw(withdraw)
+	receipt, err = action.ZkWithdraw(withdraw)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
@@ -117,17 +128,17 @@ func TestZksyncOption(t *testing.T) {
 	assert.NotEqual(t, nil, leaf)
 	t.Log(leaf)
 
-	token, err := GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err := GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "98995000", token.Balance)
+	assert.Equal(t, "4990000000000000000", token.Balance)
 
 	/*************************transferToNew*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
-		FromAccountId:    2,
+		FromAccountId:    4,
 		TokenId:          1,
-		Amount:           "5000",
+		Amount:           "100000000000000000",
 		ToEthAddress:     "abcd68033A72978C1084E2d44D1Fa06DdC4A2d59",
 		ToChain33Address: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aed"),
 	}
@@ -147,28 +158,28 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range zklog.LocalKvs {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "98890000", token.Balance)
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 3, 1, info)
+	assert.Equal(t, "4880000000000000000", token.Balance)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 5, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "5000", token.Balance)
+	assert.Equal(t, "100000000000000000", token.Balance)
 
 	/*************************transfer*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
-		FromAccountId: 2,
+		FromAccountId: 4,
 		TokenId:       1,
-		Amount:        "5000",
-		ToAccountId:   3,
+		Amount:        "100000000000000000",
+		ToAccountId:   5,
 	}
 	msg = wallet.GetTransferMsg(transfer)
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
 	transfer.Signature = signInfo
 
-	receipt, err = action.Transfer(transfer)
+	receipt, err = action.ZkTransfer(transfer)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
@@ -179,25 +190,26 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range zklog.LocalKvs {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "98785000", token.Balance)
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 3, 1, info)
+	assert.Equal(t, "4770000000000000000", token.Balance)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 5, 1, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "10000", token.Balance)
+	assert.Equal(t, "200000000000000000", token.Balance)
 
 	/*************************forceQuit*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
-	forceQuit := &zt.ZkForceExit{
-		AccountId: 2,
-		TokenId:   1,
+	proxyQuit := &zt.ZkProxyExit{
+		ProxyId:  4,
+		TokenId:  1,
+		TargetId: 5,
 	}
-	msg = wallet.GetForceExitMsg(forceQuit)
+	msg = wallet.GetProxyExitMsg(proxyQuit)
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
-	forceQuit.Signature = signInfo
-	receipt, err = action.ForceExit(forceQuit)
+	proxyQuit.Signature = signInfo
+	receipt, err = action.ProxyExit(proxyQuit)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
@@ -208,13 +220,37 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range zklog.LocalKvs {
 		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 4, 1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "4760000000000000000", token.Balance)
+
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 5, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "0", token.Balance)
 
 	tree, err = getAccountTree(statedb, info)
 	assert.Equal(t, nil, err)
 	t.Log(tree)
+}
+
+func setfee(action *Action, t *testing.T, statedb db.DB, localdb db.KVDB, zklog *zt.ZkReceiptLog, tokenId uint64, actionTy int32) {
+	fee := &zt.ZkSetFee{
+		TokenId:  tokenId,
+		Amount:   "10000000000000000",
+		ActionTy: actionTy,
+	}
+
+	receipt, err := action.setFee(fee)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	err = types.Decode(receipt.Logs[0].GetLog(), zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
+	}
 }
 
 func TestEddsa(t *testing.T) {
@@ -228,7 +264,7 @@ func TestEddsa(t *testing.T) {
 }
 
 func TestBigInt(t *testing.T) {
-	byteVal :=  big.NewInt(0).Bytes()
+	byteVal := big.NewInt(0).Bytes()
 	stringVal := hex.EncodeToString(byteVal)
 	t.Log("bigInt 0 byteVal", byteVal)
 	t.Log("bigInt 0 stringVal", stringVal)
@@ -237,7 +273,120 @@ func TestBigInt(t *testing.T) {
 	t.Log("is equal", stringVal == "0")
 }
 
+func TestTransfer2ContractAmount(t *testing.T) {
+	amount := "100000000"
+	r, err := transferDecimalAmount(amount, 8, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, amount, r)
 
+	amount = "1234567"
+	r, err = transferDecimalAmount(amount, 6, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, amount+"00", r)
+
+	amount = "1000000000000000000"
+	r, err = transferDecimalAmount(amount, 18, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, "100000000", r)
+
+	//value 去除1e10出错
+	amount = "1000000001200000000"
+	_, err = transferDecimalAmount(amount, 18, 8)
+	assert.NotNil(t, err)
+
+	amount = "1000000120000000000"
+	r, err = transferDecimalAmount(amount, 18, 8)
+	assert.Nil(t, err)
+	assert.Equal(t, "100000012", r)
+}
+
+func TestGetTreeSideAmount(t *testing.T) {
+	amount := "100000000"
+	totalAmount := "100100000"
+	feeAmount := "100"
+	sysDecimal := 8
+	tokenDecimal := 18
+	suffix := strings.Repeat("0", tokenDecimal-sysDecimal)
+	amountT, totalT, feeT, err := getTreeSideAmount(amount, totalAmount, feeAmount, sysDecimal, tokenDecimal)
+	assert.Nil(t, err)
+	assert.Equal(t, amount+suffix, amountT)
+	assert.Equal(t, totalAmount+suffix, totalT)
+	assert.Equal(t, feeAmount+suffix, feeT)
+
+	tokenDecimal = 6
+	diff := sysDecimal - tokenDecimal
+	amountT, totalT, feeT, err = getTreeSideAmount(amount, totalAmount, feeAmount, sysDecimal, tokenDecimal)
+	assert.Nil(t, err)
+	assert.Equal(t, amount[:len(amount)-diff], amountT)
+	assert.Equal(t, totalAmount[:len(totalAmount)-diff], totalT)
+	assert.Equal(t, feeAmount[:len(feeAmount)-diff], feeT)
+
+}
+
+func TestCheckPackValue(t *testing.T) {
+	amount := new(big.Int).Exp(big.NewInt(2), big.NewInt(35), nil)
+	err := checkPackValue(amount.String(), zt.PacAmountManBitWidth)
+	assert.Nil(t, err)
+
+	amount = new(big.Int).Add(amount, big.NewInt(1))
+	err = checkPackValue(amount.String(), zt.PacAmountManBitWidth)
+	assert.NotNil(t, err)
+
+	amount = new(big.Int).Exp(big.NewInt(2), big.NewInt(11), nil)
+	err = checkPackValue(amount.String(), zt.PacFeeManBitWidth)
+	assert.Nil(t, err)
+
+	amount = new(big.Int).Add(amount, big.NewInt(1))
+	err = checkPackValue(amount.String(), zt.PacFeeManBitWidth)
+	assert.NotNil(t, err)
+
+	amount = new(big.Int).Exp(big.NewInt(2), big.NewInt(10), nil)
+	err = checkPackValue(amount.String(), zt.PacFeeManBitWidth)
+	assert.Nil(t, err)
+
+}
+
+func TestCheckParam(t *testing.T) {
+	amount := "0"
+	err := checkParam(amount)
+	assert.NotNil(t, err)
+
+	amount = "100-1"
+	err = checkParam(amount)
+	assert.NotNil(t, err)
+
+	amount = "1ab100"
+	err = checkParam(amount)
+	assert.NotNil(t, err)
+
+	amount = "000"
+	err = checkParam(amount)
+	assert.NotNil(t, err)
+
+}
+
+func TestInitTreeRoot(t *testing.T) {
+	eth, _ := zt.HexAddr2Decimal("832367164346888E248bd58b9A5f480299F1e88d")
+	chain33, _ := zt.HexAddr2Decimal("2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a")
+	leafs := getInitAccountLeaf(eth, chain33)
+	merkleTree := getNewTree()
+	for _, l := range leafs {
+		merkleTree.Push(getLeafHash(l))
+	}
+	tree := &zt.AccountTree{
+		Index:           2,
+		TotalIndex:      2,
+		MaxCurrentIndex: zt.MaxLeafArchiveSum,
+		SubTrees:        make([]*zt.SubTree, 0),
+	}
+	for _, subtree := range merkleTree.GetAllSubTrees() {
+		tree.SubTrees = append(tree.SubTrees, &zt.SubTree{
+			RootHash: subtree.GetSum(),
+			Height:   int32(subtree.GetHeight()),
+		})
+	}
+	fmt.Println("len", len(tree.SubTrees), "dec", zt.Byte2Str(tree.SubTrees[len(tree.SubTrees)-1].RootHash))
+}
 
 var cfgstring = `
 Title="chain33"
@@ -618,5 +767,12 @@ manager=[
     "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
     "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 ]
+invalidTxHash=""
+invalidProofRootHash=""
+#运营方配置收交易费地址,要求16进制
+#可把二层交易费提取到ETH的地址,注意:真实场景需替换
+ethFeeAddr="0x832367164346888E248bd58b9A5f480299F1e88d"
+#二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址,真实场景需替换
+layer2FeeAddr="06140f1bf242cf182b6d1288f6d5d4d7f45aa0e7fdad7ffa99bffdfc2e66c770"
 
 `

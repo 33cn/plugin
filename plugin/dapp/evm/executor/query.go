@@ -8,11 +8,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	log "github.com/33cn/chain33/common/log/log15"
+	"math"
 	"math/big"
 	"strings"
 	"sync/atomic"
-
-	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 
@@ -21,6 +21,7 @@ import (
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmCommon "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
@@ -81,7 +82,8 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	}
 
 	msg.SetGasLimit(evmtypes.MaxGasLimit)
-	fmt.Println("Query_EstimateGas,gasLimit:---->", msg.GasLimit())
+	//msg.SetGasLimit(197154 + 1000)
+	//fmt.Println("Query_EstimateGas,gasLimit:---->", msg.GasLimit())
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		return nil, err
@@ -94,9 +96,60 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	if callData == nil {
 		return nil, errors.New("nil receipt")
 	}
+	fmt.Println("Query_EstimateGas,UsedGas:", callData.UsedGas)
 	result := &evmtypes.EstimateEVMGasResp{}
 	result.Gas = callData.UsedGas
+	var isContractCreation bool = strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
+	var data []byte
+	if msg.To().String() == "" {
+		isContractCreation = true
+		data = msg.Data()
+	} else { //合约操作
+		data = msg.Para()
+	}
+	//加上固有消费的gas
+	gas, _ := intrinsicGas(data, isContractCreation, true, true)
+	fmt.Println("Query_EstimateGas----->固定的gas:", gas, "isContractCreation：", isContractCreation)
+	result.Gas += gas
 	return result, nil
+}
+
+// IntrinsicGas computes the 'intrinsic gas' for a message with the given data.
+func intrinsicGas(data []byte, isContractCreation bool, isHomestead, isEIP2028 bool) (uint64, error) {
+	// Set the starting gas for the raw transaction
+	var gas uint64
+	if isContractCreation && isHomestead {
+		gas = params.TxGasContractCreation
+	} else {
+		gas = params.TxGas
+	}
+	// Bump the required gas by the amount of transactional data
+	if len(data) > 0 {
+		// Zero and non-zero bytes are priced differently
+		var nz uint64
+		for _, byt := range data {
+			if byt != 0 {
+				nz++
+			}
+		}
+		// Make sure we don't exceed uint64 for all data combinations
+		nonZeroGas := params.TxDataNonZeroGasFrontier
+		if isEIP2028 {
+			nonZeroGas = params.TxDataNonZeroGasEIP2028
+		}
+		if (math.MaxUint64-gas)/nonZeroGas < nz {
+			return 0, model.ErrGasUintOverflow
+		}
+		gas += nz * nonZeroGas
+
+		z := uint64(len(data)) - nz
+		if (math.MaxUint64-gas)/params.TxDataZeroGas < z {
+			return 0, model.ErrGasUintOverflow
+		}
+		gas += z * params.TxDataZeroGas
+	}
+
+	return gas, nil
 }
 
 // 从日志中查找调用结果

@@ -49,7 +49,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	cfg := evm.GetAPI().GetConfig()
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
-	//env.SetStatDB(evm.mStateDB)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
@@ -113,6 +112,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	} else {
 		callPara := msg.Para()
 		log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
+		fmt.Println("---------->innerExec env.Call")
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), callPara, context.GasLimit, msg.Value())
 	}
 	// 打印合约中生成的日志
@@ -123,7 +123,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	if isCreate {
 		logMsg = "create contract details:"
 	}
-	log.Debug(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "return data", common.Bytes2Hex(ret))
+	fmt.Println("++++++++++++innerExec------->exec.call----->usedGas,核算用掉的Gas:", usedGas, "leftOverGas,剩余的gas:", leftOverGas, "初始Gas:", msg.GasLimit())
+	log.Info(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "return data", common.Bytes2Hex(ret))
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
 		var visiableOut []byte
@@ -145,6 +146,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	usedFee, overflow := common.SafeMul(usedGas, uint64(msg.GasPrice()))
 	// 费用消耗溢出，执行失败
 	if overflow || usedFee > txFee {
+		fmt.Println("++++++++++++++++++>>>>>>>usedFee:", usedFee, "txFee:", txFee)
 		// 如果操作没有回滚，则在这里处理
 		if curVer != nil && snapshot >= curVer.GetID() && curVer.GetID() > -1 {
 			evm.mStateDB.RevertToSnapshot(snapshot)

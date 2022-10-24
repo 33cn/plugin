@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -23,6 +24,24 @@ func GetTokenPrimaryKey(accountId uint64, tokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d%s%022d", KeyPrefixStateDB+"token-", accountId, "-", tokenId))
 }
 
+//GetTokenSymbolKey tokenId 对应symbol
+func GetTokenSymbolKey(tokenId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenId-"+tokenId))
+}
+
+//GetTokenSymbolIdKey token symbol 对应id
+func GetTokenSymbolIdKey(symbol string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenSym-"+symbol))
+}
+
+func GetNFTIdPrimaryKey(nftTokenId uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"nftTokenId-", nftTokenId))
+}
+
+func GetNFTHashPrimaryKey(nftHash string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"nftHash-"+nftHash))
+}
+
 func GetRootIndexPrimaryKey(rootIndex uint64) []byte {
 	return []byte(fmt.Sprintf("%s%016d", KeyPrefixStateDB+"rootIndex-", rootIndex))
 }
@@ -35,42 +54,51 @@ func getHeightKey(height int64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
 }
 
-func getVerifyKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"verifyKey"))
+func getVerifyKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-verifyKey"))
 }
 
-func getVerifier() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
+func getVerifier(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-"+zt.ZkVerifierKey))
 }
 
-func getLastCommitProofKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"commitProof"))
+func getProofIdKey(chainTitleId string, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+chainTitleId+"-ProofId", id))
 }
 
-func getHeightCommitProofKey(blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"proofHeight", blockHeight))
+func getLastProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastProofId"))
 }
 
-func getValidatorsKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"validators"))
+func getMaxRecordProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-maxRecordProofId"))
 }
 
-func getEthPriorityQueueKey(chainID uint32) []byte {
-	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
+func getLastOnChainProofIdKey(chainTitleId string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastOnChainProofId"))
 }
 
-func getProofIdCommitProofKey(proofId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d", proofId))
+func getEthPriorityQueueKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"priorityQueue"))
 }
 
-func getRootCommitProofKey(root string) []byte {
-	return []byte(fmt.Sprintf("%s", root))
+func getExodusModeKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"exodusMode"))
+}
+
+func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
+	return []byte(fmt.Sprintf("%s%02d-%03d", KeyPrefixStateDB+"fee-", actionTy, tokenId))
+}
+
+//特意把title放后面，方便按id=1搜索所有的chain
+func getProofIdCommitProofKey(chainTitleId string, proofId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitleId))
+}
+
+func getRootCommitProofKey(chainTitleId, root string) []byte {
+	return []byte(fmt.Sprintf("%s-%s", chainTitleId, root))
 }
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d.%16d", proofId, accountId))
-}
-
-func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d.%16d", actionTy, tokenId))
 }

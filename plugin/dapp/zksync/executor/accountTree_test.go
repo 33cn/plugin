@@ -3,8 +3,9 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"testing"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	"github.com/33cn/chain33/util"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
@@ -16,10 +17,13 @@ import (
 func TestAccountTree(t *testing.T) {
 	dir, statedb, localdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, statedb)
-	info, err := generateTreeUpdateInfo(statedb)
+
+	ethAddress1, _ := zt.HexAddr2Decimal("bbcd68033A72978C1084E2d44D1Fa06DdC4A2d5")
+	chain33Addr1, _ := zt.HexAddr2Decimal(getChain33Addr("1266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
+	info, err := generateTreeUpdateInfo(statedb, localdb, ethAddress1, chain33Addr1)
 	assert.Equal(t, nil, err)
-	ethAddress := zt.HexAddr2Decimal("abcd68033A72978C1084E2d44D1Fa06DdC4A2d58")
-	chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
+	ethAddress, _ := zt.HexAddr2Decimal("abcd68033A72978C1084E2d44D1Fa06DdC4A2d58")
+	chain33Addr, _ := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
 	_, localKvs, err := AddNewLeaf(statedb, localdb, info, ethAddress, 1, "1000", chain33Addr)
 	assert.Equal(t, nil, err)
 	tree, err := getAccountTree(statedb, info)
@@ -31,7 +35,7 @@ func TestAccountTree(t *testing.T) {
 
 	tree, err = getAccountTree(statedb, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(2), tree.GetTotalIndex())
+	assert.Equal(t, uint64(5), tree.GetTotalIndex())
 
 	_, localKvs, err = UpdateLeaf(statedb, localdb, info, 2, 2, "1000", zt.Add)
 	assert.Equal(t, nil, err)
@@ -72,4 +76,15 @@ func TestAccountHash(t *testing.T) {
 	var f fr.Element
 	f.SetBytes(hash)
 	t.Log("hash", f.String())
+}
+
+func TestInitRoot(t *testing.T) {
+	ethFeeAddr := "0xb845B5820AB1Cb0Bbb64c23e4129351305941a11"
+	chain33FeeAddr := "2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
+	ethAddr, ok := zt.HexAddr2Decimal(ethFeeAddr)
+	assert.True(t, ok)
+	chainAddr, ok := zt.HexAddr2Decimal(chain33FeeAddr)
+	assert.True(t, ok)
+	root := getInitTreeRoot(nil, ethAddr, chainAddr)
+	t.Log("root", root)
 }

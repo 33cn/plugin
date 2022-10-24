@@ -80,11 +80,12 @@ func (in *Interpreter) enforceRestrictions(op OpCode, operation *operation, stac
 // 需要注意的是，如果返回执行出错，依然会扣除剩余的Gas
 // （除非返回的是ErrExecutionReverted，这种情况下会保留剩余的Gas）
 func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error) {
+	fmt.Println("---------->Interpreter.Run,contract.CallerAddress", contract.CallerAddress, "contract.Caller", contract.caller.Address().String(), "readonly:", readOnly)
 	//TODO 切换为最新的管理方式,合约涉及转账报错？
 	// 每次递归调用，深度加1
 	in.evm.depth++
 	defer func() { in.evm.depth-- }()
-
+	fmt.Println("---------->Interpreter.Run,depth:", in.evm.depth)
 	// Make sure the readOnly is only set if we aren't in readOnly yet.
 	// This makes also sure that the readOnly flag isn't removed for child calls.
 	if readOnly && !in.readOnly {
@@ -143,7 +144,8 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			}
 		}()
 	}
-	// 遍历合约代码中的指令执行，知道遇到特殊指令（停止、自毁、暂停、恢复、返回）
+	var need uint64
+	// 遍历合约代码中的指令执行，直到遇到特殊指令（停止、自毁、暂停、恢复、返回）
 	steps := 0
 	for {
 		steps++
@@ -157,10 +159,15 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 
 		// 从合约代码中获取具体操作指令
 		op = contract.GetOp(pc)
+
 		operation := in.cfg.JumpTable[op]
 		if operation == nil {
+			fmt.Println("---------->Interpreter.Run can't found operation:%s", op)
 			log15.Error("can't found operation:%s", op)
 			return nil, &ErrInvalidOpCode{opcode: op}
+		}
+		if op.String() == "DELEGATECALL" {
+			fmt.Println("---------->Interpreter.Run.DELEGATECALL step:", steps)
 		}
 		// Validate stack
 		if sLen := stack.len(); sLen < operation.minStack {
@@ -170,18 +177,28 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		}
 		// 检查写约束
 		if err := in.enforceRestrictions(op, operation, stack); err != nil {
+			fmt.Println("---------->Interpreter.Run enforceRestrictions,检查写约束:%v", err)
 			return nil, err
 		}
 
 		// Static portion of gas
 		cost = operation.constantGas // For tracing
+
 		if !contract.UseGas(operation.constantGas) {
+			need += cost
+			fmt.Println("---------->Interpreter.Run.UseGas,cost:------>++++++++++++++++++++++++out of gas",
+				operation.constantGas, "contract.Gas:", contract.Gas, "need:", need, "\ncontractor.CallerAddress", contract.CallerAddress.String(),
+				"caller:", contract.caller.Address(), "op:", op.String(), "op info", operation)
 			log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 				"CallerAddress=", contract.CallerAddress.String(),
 				"caller=", contract.caller.Address().String())
+			//------bz test
 			return nil, ErrOutOfGas
+			//-----end bz test
 		}
-
+		//if contract.Gas < 1000 {
+		//fmt.Println("---------->剩余的Gas:", contract.Gas, "CallerAddress=", contract.CallerAddress.String(), "caller=", contract.caller.Address().String())
+		//}
 		var memorySize uint64
 		// 计算需要开辟的内存空间
 		// Memory check needs to be done prior to evaluating the dynamic gas portion,
@@ -206,12 +223,13 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
 			cost += dynamicCost // total cost, for debug tracing
 			if err != nil || !contract.UseGas(dynamicCost) {
+
 				log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 					"CallerAddress=", contract.CallerAddress.String(),
 					"caller=", contract.caller.Address().String())
 				fmt.Println("Run:outOfGas op=", op.String(), "contract addr=", contract.self.Address().String(),
 					"CallerAddress=", contract.CallerAddress.String(),
-					"caller=", contract.caller.Address().String())
+					"caller=", contract.caller.Address().String(), "dynamicCost", dynamicCost)
 				return nil, ErrOutOfGas
 			}
 		}
@@ -233,6 +251,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 
 		switch {
 		case err != nil:
+			fmt.Println("---------->Interpreter.Run.operation.execute ,err:", err.Error())
 			return nil, err
 		case operation.reverts:
 			return res, model.ErrExecutionReverted

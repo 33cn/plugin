@@ -5,45 +5,29 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/pkg/errors"
 )
 
-func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
-	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
+func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress string,
+	chain33Addr string, accountId uint64, toAccountId uint64, fromFee, toFee string) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
-	case zt.TyDepositAction:
-		deposit := &zt.ZkDeposit{
-			TokenId:     tokenId,
-			Amount:      amount,
-			EthAddress:  ethAddress,
-			Chain33Addr: chain33Addr,
-		}
-		payload = types.MustPBToJSON(deposit)
 	case zt.TyWithdrawAction:
+
 		withdraw := &zt.ZkWithdraw{
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(withdraw)
-	case zt.TyContractToTreeAction:
-		contractToLeaf := &zt.ZkContractToTree{
-			TokenId:   tokenId,
-			Amount:    amount,
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(contractToLeaf)
-	case zt.TyTreeToContractAction:
-		leafToContract := &zt.ZkTreeToContract{
-			TokenId:   tokenId,
-			Amount:    amount,
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(leafToContract)
+
 	case zt.TyTransferAction:
 		transfer := &zt.ZkTransfer{
 			TokenId:       tokenId,
@@ -61,28 +45,20 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			ToChain33Address: chain33Addr,
 		}
 		payload = types.MustPBToJSON(transferToNew)
-	case zt.TyForceExitAction:
-		forceExit := &zt.ZkForceExit{
-			TokenId:   tokenId,
-			AccountId: accountId,
+	case zt.TyProxyExitAction:
+		proxyExit := &zt.ZkProxyExit{
+			TokenId:  tokenId,
+			ProxyId:  accountId,
+			TargetId: toAccountId,
 		}
-		payload = types.MustPBToJSON(forceExit)
-	case zt.TySetPubKeyAction:
-		setPubKey := &zt.ZkSetPubKey{
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(setPubKey)
-	case zt.TyFullExitAction:
-		fullExit := &zt.ZkFullExit{
-			TokenId:   tokenId,
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(fullExit)
+		payload = types.MustPBToJSON(proxyExit)
+
 	case zt.TySetVerifierAction:
-		fullExit := &zt.ZkVerifier{
-			Verifiers:   strings.Split(chain33Addr, ","),
+		verifier := &zt.ZkVerifier{
+			Verifiers: strings.Split(chain33Addr, ","),
 		}
-		payload = types.MustPBToJSON(fullExit)
+		payload = types.MustPBToJSON(verifier)
+
 	default:
 		return nil, types.ErrNotSupport
 	}
@@ -126,7 +102,6 @@ func StringToByte(s string) []byte {
 	return byteArray[:]
 }
 
-
 func ChunkStringToByte(s string) []byte {
 	f := new(fr.Element).SetString(s)
 	chunk := f.Bytes()
@@ -149,7 +124,7 @@ func Byte2Bit(data []byte) []uint {
 
 func Bit2Byte(bits []uint) []byte {
 	data := make([]byte, 0)
-	for i := 0; i < len(bits) / 8; i++ {
+	for i := 0; i < len(bits)/8; i++ {
 		num := uint(0)
 		for j, v := range bits[8*i : 8*(i+1)] {
 			num = num + (v << uint(7-j))
@@ -159,6 +134,15 @@ func Bit2Byte(bits []uint) []byte {
 	return data
 }
 
+func transferStr2Int(s string, base int) *big.Int {
+	s = zt.FilterHexPrefix(s)
+	v, ok := new(big.Int).SetString(s, base)
+	if !ok {
+		panic(fmt.Sprintf("transferStr2Int s=%s,base=%d", s, base))
+	}
+	return v
+}
+
 func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	var pubData []uint
 
@@ -166,14 +150,14 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyDepositAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	amount := transferStr2Int(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 
-	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.EthAddress), 16)
+	ethAddress := transferStr2Int(strings.ToLower(payload.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.Chain33AddrBitWidth)...)
+	chain33Address := transferStr2Int(payload.Chain33Addr, 16)
+	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.HashBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -192,7 +176,7 @@ func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyWithdrawAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	amount := transferStr2Int(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
@@ -207,23 +191,33 @@ func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 }
 
 func GetTreeToContractMsg(payload *zt.ZkTreeToContract) *zt.ZkMsg {
-	var pubData []uint
-
-	binaryData := make([]uint, zt.MsgWidth)
-
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTreeToContractAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
-	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
-
-	copy(binaryData, pubData)
-
-	return &zt.ZkMsg{
-		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
-		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	transfer := &zt.ZkTransfer{
+		TokenId:       payload.TokenId,
+		Amount:        payload.Amount,
+		FromAccountId: payload.AccountId,
+		ToAccountId:   zt.SystemTree2ContractAcctId,
 	}
+	//签名直接使用transfer的签名
+	return GetTransferMsg(transfer)
+	//var pubData []uint
+	//
+	//binaryData := make([]uint, zt.MsgWidth)
+	//
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTreeToContractAction), zt.TxTypeBitWidth)...)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.SystemTree2ContractAcctId), zt.AccountBitWidth)...)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
+	//amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	//pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
+	//
+	//
+	//copy(binaryData, pubData)
+	//
+	//return &zt.ZkMsg{
+	//	First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+	//	Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+	//	Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	//}
 
 }
 
@@ -233,10 +227,9 @@ func GetContractToTreeMsg(payload *zt.ZkContractToTree) *zt.ZkMsg {
 	binaryData := make([]uint, zt.MsgWidth)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyContractToTreeAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ToAccountId), zt.TokenBitWidth)...)
+	amount := transferStr2Int(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -255,7 +248,7 @@ func GetTransferMsg(payload *zt.ZkTransfer) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	amount := transferStr2Int(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
@@ -278,17 +271,17 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferToNewAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	amount, _ := new(big.Int).SetString(payload.Amount, 10)
+	amount := transferStr2Int(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
 
-	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.ToEthAddress), 16)
+	ethAddress := transferStr2Int(strings.ToLower(payload.ToEthAddress), 16)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.Chain33AddrBitWidth)...)
+	chain33Address := transferStr2Int(payload.ToChain33Address, 16)
+	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.HashBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -300,14 +293,15 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 }
 
-func GetForceExitMsg(payload *zt.ZkForceExit) *zt.ZkMsg {
+func GetProxyExitMsg(payload *zt.ZkProxyExit) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyForceExitAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyProxyExitAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ProxyId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TargetId), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -326,10 +320,11 @@ func GetSetPubKeyMsg(payload *zt.ZkSetPubKey) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TySetPubKeyAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.PubKeyTy), zt.TxTypeBitWidth)...)
 
-	pubKeyX, _ := new(big.Int).SetString(payload.PubKey.X, 10)
+	pubKeyX := transferStr2Int(payload.PubKey.X, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(pubKeyX, zt.PubKeyBitWidth)...)
-	pubKeyY, _ := new(big.Int).SetString(payload.PubKey.Y, 10)
+	pubKeyY := transferStr2Int(payload.PubKey.Y, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(pubKeyY, zt.PubKeyBitWidth)...)
 
 	copy(binaryData, pubData)
@@ -361,10 +356,113 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 
 }
 
+func GetMintNFTMsg(payload *zt.ZkMintNFT) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	part1, part2, _, err := zt.SplitNFTContent(payload.ContentHash)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("split content hash=%s wrong", payload.ContentHash))
+		panic(err)
+	}
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyMintNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ErcProtocol), zt.TxTypeBitWidth)...)
+	//nft amount 需要和其他token amount 宽度一致
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(part1, zt.HashBitWidth/2)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(part2, zt.HashBitWidth/2)...)
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
+func GetTransferNFTMsg(payload *zt.ZkTransferNFT) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
+func GetWithdrawNFTMsg(payload *zt.ZkWithdrawNFT) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyWithdrawNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
 func GetMsgHash(msg *zt.ZkMsg) []byte {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(StringToByte(msg.GetFirst()))
 	hash.Write(StringToByte(msg.GetSecond()))
 	hash.Write(StringToByte(msg.GetThird()))
 	return hash.Sum(nil)
+}
+
+//GetLayer2PrivateKeySeed 通过用户secp256k1私钥对特定信息的签名的hash产生layer2的eddsa签名的私钥种子来产生用户layer2的私钥
+//在memtamask或钱包app可以不暴露用户私钥而只是内部签名的方式来产生layer2私钥，更加安全
+//refer to https://blogs.loopring.org/new-approach-to-generating-layer-2-account-keys-cn/
+func GetLayer2PrivateKeySeed(privateKey, exchangeAddr, nonce string) ([]byte, error) {
+	c, err := crypto.Load(secp256k1.Name, -1)
+	if err != nil {
+		return nil, errors.Wrap(err, "load secp256k1")
+	}
+	key, err := common.FromHex(privateKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "fromHex")
+	}
+	signKey, err := c.PrivKeyFromBytes(key)
+	if err != nil {
+		return nil, errors.Wrap(err, "privateFromByte")
+	}
+
+	if len(nonce) == 0 {
+		nonce = "1"
+	}
+	if len(exchangeAddr) == 0 {
+		//0x322* is generated random
+		exchangeAddr = "0x332c90e5488d37127d606f640ee7599bfb92274c"
+	}
+	//这段字符串是公开的，将来可以在metamask上签名的
+	rawMsg := fmt.Sprintf("sign this message to access superX exchange: %s with key nonce: %s", exchangeAddr, nonce)
+	var msg []byte
+	s := signKey.Sign([]byte(rawMsg))
+	//内部再加一串随机字符来产生私钥seed
+	salt := []byte("0xb8089c0a97d0ce2a0cb5773708bbcf1bc35c1920")
+	msg = append(msg, s.Bytes()...)
+	msg = append(msg, salt...)
+	return crypto.Sha256(msg), nil
 }

@@ -7,8 +7,9 @@ package para
 import (
 	"context"
 	"encoding/hex"
-	"github.com/33cn/chain33/common/address"
 	"time"
+
+	"github.com/33cn/chain33/common/address"
 
 	"strings"
 
@@ -730,7 +731,7 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	//3,如果形如xxoxx的块排列，x代表commit空块，o代表实际的块，即只要不全部是commit块，也要全部打包一起发出去
 	//如果=0 意味着全部是paracross commit tx，延迟发送
 	if needSentTxs == 0 && len(ret) < int(types.MaxTxGroupSize) {
-		plog.Debug("para commitmsg all self-consensus commit tx,send delay", "start", start, "end", end)
+		plog.Info("para commit tx are all self-consensus tx,postpone send ", "start", start, "end", end)
 		return nil, nil
 	}
 

@@ -212,6 +212,10 @@ friendExecer=["evm"]
 [exec.sub.paracross]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
 paraConsensusStopBlocks=30000
+#是否关闭自共识,缺省开启自共识校验
+closeSelfConsensus=false
+#平行链在构建区块时候配置丢弃tx list
+discardTxs=[""]
 
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
@@ -248,7 +252,24 @@ mixApprs=[]
 
 [exec.sub.zksync]
 #管理员列表
-managers=[]
+manager=[
+    "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
+    "0x991fb09dc31a44b3177673f330c582ac2ea168e0"
+]
+#配置的无效交易和无效证明，用于平行链zksync交易的回滚(平行链从0开始重新同步)
+#无效proof为包含无效交易的proof,是没有被提交到eth的proof，且包含了需要上链的交易比如withdraw,deposit的proof
+#没有包含需要上链的交易的proof是可以保留的，直到第一个包含需要上链tx的proof
+#无效交易则是proof里面第一个需要上链的tx(withdraw,deposit),在其之前的tx有效，其后的交易只有contract2tree有效
+#在平行链回滚结束后(如果有平行链自共识可以closeSelfConsensus=true关闭),用户可以把合约的资产通过contract2tree存回到L2
+#全部结束后确定最后的L2 treeroot，通过向eth提交exodus proof把资产提取到用户自己的eth账户
+invalidTxHash=""
+invalidProofRootHash=""
+#运营方配置收交易费地址,要求16进制
+#可把二层交易费提取到ETH的地址,注意:真实场景需替换
+ethFeeAddr="0x832367164346888E248bd58b9A5f480299F1e88d"
+#二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址,真实场景需替换
+layer2FeeAddr="2930ef48b2d018955359a77fe58a68be0c536480c57ee5a84f6c96e3ff4fa7dc"
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换

@@ -24,6 +24,7 @@ var (
 )
 
 var driverName = zt.Zksync
+var historyProof zt.HistoryAccountProofInfo
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -72,8 +73,8 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		signature = action.GetDeposit().GetSignature()
 		msg = wallet.GetDepositMsg(action.GetDeposit())
 	case zt.TyWithdrawAction:
-		signature = action.GetWithdraw().GetSignature()
-		msg = wallet.GetWithdrawMsg(action.GetWithdraw())
+		signature = action.GetZkWithdraw().GetSignature()
+		msg = wallet.GetWithdrawMsg(action.GetZkWithdraw())
 	case zt.TyContractToTreeAction:
 		signature = action.GetContractToTree().GetSignature()
 		msg = wallet.GetContractToTreeMsg(action.GetContractToTree())
@@ -81,24 +82,36 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		signature = action.GetTreeToContract().GetSignature()
 		msg = wallet.GetTreeToContractMsg(action.GetTreeToContract())
 	case zt.TyTransferAction:
-		signature = action.GetTransfer().GetSignature()
-		msg = wallet.GetTransferMsg(action.GetTransfer())
+		signature = action.GetZkTransfer().GetSignature()
+		msg = wallet.GetTransferMsg(action.GetZkTransfer())
 	case zt.TyTransferToNewAction:
 		signature = action.GetTransferToNew().GetSignature()
 		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())
-	case zt.TyForceExitAction:
-		signature = action.GetForceExit().GetSignature()
-		msg = wallet.GetForceExitMsg(action.GetForceExit())
+	case zt.TyProxyExitAction:
+		signature = action.GetProxyExit().GetSignature()
+		msg = wallet.GetProxyExitMsg(action.GetProxyExit())
 	case zt.TySetPubKeyAction:
 		signature = action.GetSetPubKey().GetSignature()
 		msg = wallet.GetSetPubKeyMsg(action.GetSetPubKey())
 	case zt.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
+	case zt.TyMintNFTAction:
+		signature = action.GetMintNFT().GetSignature()
+		msg = wallet.GetMintNFTMsg(action.GetMintNFT())
+	case zt.TyWithdrawNFTAction:
+		signature = action.GetWithdrawNFT().GetSignature()
+		msg = wallet.GetWithdrawNFTMsg(action.GetWithdrawNFT())
+	case zt.TyTransferNFTAction:
+		signature = action.GetTransferNFT().GetSignature()
+		msg = wallet.GetTransferNFTMsg(action.GetTransferNFT())
 	default:
 		return nil
 	}
-
+	if signature == nil {
+		zlog.Error("checkTx.signature is nil", "ty", action.GetTy())
+		return types.ErrInvalidParam
+	}
 	pubKey := eddsa.PublicKey{}
 	pubKey.A.X.SetString(signature.PubKey.X)
 	pubKey.A.Y.SetString(signature.PubKey.Y)
