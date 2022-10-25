@@ -2,8 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/33cn/chain33/common/log/log15"
 	"reflect"
+
+	"github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/types"
 )
