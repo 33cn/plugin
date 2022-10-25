@@ -2,8 +2,9 @@ package executor
 
 import (
 	"fmt"
-	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"testing"
+
+	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
