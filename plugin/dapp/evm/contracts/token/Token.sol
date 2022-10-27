@@ -1,9 +1,10 @@
+//DO NOT EDIT.
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./MultiToken.sol";
+import "./PreToken.sol";
 
 contract Token is IERC20 {
     using SafeMath for uint256;
@@ -11,16 +12,12 @@ contract Token is IERC20 {
     uint256 private _totalSupply;
     string private _name;
     string private _symbol;
-
-
-
     constructor(string memory name_, uint256 supply_){
         _name=name_;
         _symbol=name_;
         _totalSupply=supply_;
 
     }
-
 
     /**
      * @dev Returns the name of the token
@@ -41,7 +38,7 @@ contract Token is IERC20 {
      * @dev Returns the number of decimals used to get its user representation.
      */
     function decimals() public view returns (uint8) {
-        return MultiToken.decimals();
+        return PreToken.decimals();
     }
 
     /**
@@ -55,7 +52,7 @@ contract Token is IERC20 {
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view override returns (uint256) {
-        return MultiToken.balanceOf(account);
+        return PreToken.balanceOf(account);
     }
 
     /**
@@ -179,7 +176,7 @@ contract Token is IERC20 {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 
-        MultiToken.transfer(from, to, amount);
+        PreToken.transfer(from, to, amount);
 
         emit Transfer(from, to, amount);
     }

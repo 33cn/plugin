@@ -50,9 +50,14 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
+	//
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
+	//coins转账，para数据作为备注交易
+	isTransferNote := strings.Compare(msg.To().String(), EvmAddress) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
+	//isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 		"data size:", len(msg.Data()), "readOnly", readOnly)
+
 	var (
 		ret             []byte
 		vmerr           error
@@ -63,9 +68,15 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		contractAddrStr string
 	)
 
-	if isTransferOnly {
+	if isTransferOnly || isTransferNote {
 		caller := msg.From()
-		receiver := common.BytesToAddress(msg.Para())
+		var receiver common.Address
+		if isTransferNote { //payload 数据作为备注信息，evm 不执行
+			receiver = common.BytesToAddress(msg.To().Bytes())
+		} else {
+			receiver = common.BytesToAddress(msg.Para())
+		}
+
 		if !evm.mStateDB.CanTransfer(caller.String(), msg.Value()) {
 			log.Error("innerExec", "Not enough balance to be transferred from", caller.String(), "amout", msg.Value())
 			return nil, types.ErrNoBalance
