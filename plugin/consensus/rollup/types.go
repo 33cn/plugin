@@ -1,7 +1,7 @@
 package rollup
 
 import (
-	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
@@ -18,7 +18,6 @@ type validatorSignMsgSet struct {
 }
 
 type crossTxInfo struct {
-	txList             []*types.Transaction
-	validatorSyncCount int32
-	packedTxCount      int32
+	txIndex        *pt.CrossTxIndex
+	enterTimestamp int64
 }

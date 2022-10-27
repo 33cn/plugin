@@ -105,10 +105,10 @@ func (r *RollUp) commitCheckPoint(cp *rtypes.CheckPoint) error {
 
 	tx.Sign(types.EncodeSignID(secp256k1.ID, address.GetDefaultAddressID()), r.val.signTxKey)
 
-	err = r.sendTx(tx)
+	err = r.sendTx2MainChain(tx)
 
 	if err != nil {
-		return errors.Wrap(err, "sendTx")
+		return errors.Wrap(err, "sendTx2MainChain")
 	}
 
 	return nil

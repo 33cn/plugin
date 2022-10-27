@@ -83,11 +83,20 @@ func (r *RollUp) getProperFeeRate() int64 {
 	return r.lastFeeRate
 }
 
-func (r *RollUp) sendTx(tx *types.Transaction) error {
+func (r *RollUp) sendTx2MainChain(tx *types.Transaction) error {
 
 	reply, err := r.mainChainGrpc.SendTransaction(r.ctx, tx)
 	if err == nil && !reply.GetIsOk() {
 		err = errors.New(string(reply.GetMsg()))
 	}
 	return err
+}
+
+func (r *RollUp) getMainChainBlkHeight() {
+
+}
+
+func (r *RollUp) fetchCrossTx() {
+
+	reply, err := r.mainChainGrpc.GetParaTxByTitle()
 }
