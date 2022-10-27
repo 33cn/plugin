@@ -3,24 +3,22 @@ package runtime
 import (
 	"errors"
 	"fmt"
+	"math/big"
+	"strings"
+	"sync"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	token "github.com/33cn/plugin/plugin/dapp/evm/contracts/token/generated"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"math/big"
-	"strings"
-	"sync"
 )
 
 //TOKEN 预编译地址
 const TokenPrecompileAddr = "0x0000000000000000000000000000000000200001"
 const (
-	balanceOf   = "70a08231"
-	decimals    = "313ce567"
-	symbol      = "95d89b41"
-	name        = "06fdde03"
-	totalSupply = "18160ddd"
-	transfer    = "beabacc8"
+	balanceOf = "70a08231"
+	decimals  = "313ce567"
+	transfer  = "beabacc8"
 	//transfer(address,address,uint256)
 )
 
@@ -79,6 +77,7 @@ func (t *tokenPrecompile) checkCreator(evm *EVM, caller ContractRef) bool {
 	return false
 }
 
+//setTokenSymbol 把token下币种的名称缓存起来
 func (t *tokenPrecompile) setTokenSymbol(evm *EVM, caller ContractRef) {
 	t.cacheLock.Lock()
 	defer t.cacheLock.Unlock()
@@ -115,7 +114,6 @@ func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppli
 	action := common.Bytes2Hex(input[:4])[2:]
 	t.setTokenSymbol(evm, caller)
 	switch action {
-
 	case transfer:
 		if len(input) < 100 {
 			err = errors.New("input size too low")
@@ -153,7 +151,7 @@ func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppli
 		return
 	}
 
-	err = fmt.Errorf("no support method:%v", action)
+	err = fmt.Errorf("not support method:%v", action)
 	return
 
 }
@@ -163,6 +161,8 @@ func (t *tokenPrecompile) encode(k string, v interface{}) ([]byte, error) {
 }
 
 func (t *tokenPrecompile) callTransfer(evm *EVM, caller, to, contract common.Address, amount int64) (ok bool, err error) {
+	t.cacheLock.Lock()
+	defer t.cacheLock.Unlock()
 	if amount == 0 {
 		ok = true
 		return
@@ -173,6 +173,8 @@ func (t *tokenPrecompile) callTransfer(evm *EVM, caller, to, contract common.Add
 }
 
 func (t *tokenPrecompile) callBalanceOf(evm *EVM, caller, contract common.Address) (int64, error) {
+	t.cacheLock.Lock()
+	defer t.cacheLock.Unlock()
 	tokenName := t.contractInfo[strings.ToLower(contract.String())]
 	return evm.StateDB.TokenBalance(caller, tokenExecer, tokenName)
 

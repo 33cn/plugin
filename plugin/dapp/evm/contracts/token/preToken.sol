@@ -1,8 +1,9 @@
+//DO NOT EDIT.
 pragma solidity ^0.8.0;
 
-library MultiToken {
+library PreToken {
     /*
-    * 自定义预编译合约地址
+    * 自定义预编译合约地址,PRECOMPILE 不可修改
     */
     address constant private PRECOMPILE = address(0x0000000000000000000000000000000000200001);
     function decimals() internal view returns (uint8) {
