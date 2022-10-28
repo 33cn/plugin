@@ -56,6 +56,9 @@ func (h *crossTxHandler) addMainChainCrossTx(mainHeight int64, filterTxs []*type
 // 从缓存中删除平行链已打包执行的跨链交易, 返回跨链交易在主链区块的索引信息
 func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) []*pt.CrossTxIndex {
 
+	if len(hashList) <= 0 {
+		return nil
+	}
 	h.lock.Lock()
 	defer h.lock.Unlock()
 	idxList := make([]*pt.CrossTxIndex, 0, len(hashList))
