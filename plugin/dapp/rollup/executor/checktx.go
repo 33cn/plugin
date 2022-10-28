@@ -19,7 +19,7 @@ func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
 
 	if action.Ty == rtypes.TyCommitAction {
 
-		err = r.checkCommitBatch(action.GetCommitBatch())
+		err = r.checkCommit(action.GetCommit())
 	} else {
 		err = types.ErrActionNotSupport
 	}
@@ -29,6 +29,7 @@ func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
 	return err
 }
 
-func (r *rollup) checkCommitBatch(commit *rtypes.CheckPoint) error {
+func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 
+	return nil
 }

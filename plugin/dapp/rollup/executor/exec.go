@@ -43,6 +43,8 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 		ParentBlockHash: parentHash,
 		LastBlockHash:   calcBlockHash(headers[len(headers)-1]),
 		LastBlockHeight: headers[len(headers)-1].Height,
+		CrossTxCheckHash: common.ToHex(commit.GetBatch().GetCrossTxCheckHash()),
+		CrossTxResults: common.ToHex(commit.GetBatch().GetCrossTxResults()),
 	}
 
 	encodeVal := types.Encode(roundInfo)
@@ -81,6 +83,7 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 		status.CommitBlockHeight = roundInfo.LastBlockHeight
 		status.CommitBlockHash = roundInfo.LastBlockHash
 		status.CommitAddr = tx.From()
+		status.CrossTxSyncedHeight = commit.CrossTxSyncedHeight
 		encodeVal = types.Encode(status)
 		receipt.KV = append(receipt.KV, &types.KeyValue{
 			Key:   formatRollupStatusKey(commit.GetChainTitle()),

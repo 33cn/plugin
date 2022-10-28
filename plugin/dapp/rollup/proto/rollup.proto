@@ -21,6 +21,7 @@ message BlockBatch {
     bytes          aggregateTxSign  = 4;
     bytes          txAddrIDList     = 5;
     bytes          crossTxCheckHash = 6;
+    bytes          crossTxResults   = 7;
 }
 
 message ValidatorSignMsg {
@@ -50,7 +51,6 @@ message RollupStatus {
     string commitAddr        = 5;
     // main chain block height
     int64 crossTxSyncedHeight = 6;
-    bytes crossTxCheckHash    = 7;
 }
 
 message CommitRoundInfo {
@@ -58,8 +58,10 @@ message CommitRoundInfo {
     int64 commitRound     = 1;
     int64 lastBlockHeight = 2;
     // 第一个区块的父哈希
-    string parentBlockHash = 3;
-    string lastBlockHash   = 4;
+    string parentBlockHash  = 3;
+    string lastBlockHash    = 4;
+    string crossTxCheckHash = 5;
+    string crossTxResults   = 6;
 }
 
 message Req {

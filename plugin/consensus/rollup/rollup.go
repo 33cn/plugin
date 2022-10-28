@@ -131,22 +131,22 @@ func (r *RollUp) handleBuildBatch() {
 
 	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()
-	var blocks []*types.Block
+	var blockDetails []*types.BlockDetail
 	for {
 
 		select {
 		case <-ticker.C:
-			blocks = r.getNextBatchBlocks(r.nextBuildHeight)
+			blockDetails = r.getNextBatchBlocks(r.nextBuildHeight)
 		case <-r.ctx.Done():
 			return
 		}
 		// 区块内未达到最低批量数量, 需要继续等待
-		if blocks == nil {
+		if blockDetails == nil {
 			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
 				"round", r.nextBuildRound, "msg", "wait more block")
 			continue
 		}
-		blkBatch, crossInfo := r.buildCommitData(blocks)
+		blkBatch, crossInfo := r.buildCommitData(blockDetails)
 		cp := &rtypes.CheckPoint{
 			ChainTitle:          r.chainCfg.GetTitle(),
 			CommitRound:         r.nextBuildRound,
@@ -161,7 +161,7 @@ func (r *RollUp) handleBuildBatch() {
 		}
 
 		r.nextBuildRound++
-		r.nextBuildHeight += int64(len(blocks))
+		r.nextBuildHeight += int64(len(blockDetails))
 		sign := r.val.sign(cp.GetCommitRound(), cp.GetBatch())
 
 		r.cache.addCommitInfo(commit)

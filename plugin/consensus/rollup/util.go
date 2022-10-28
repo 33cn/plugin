@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.Block {
+func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.BlockDetail {
 
 	req := &types.ReqBlocks{
 		Start: startHeight,
@@ -22,21 +22,16 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.Block {
 		return nil
 	}
 
-	blocks := make([]*types.Block, 0, minCommitTxCount)
 	txCount := 0
-	for _, detail := range details.GetItems() {
-		blocks = append(blocks, detail.GetBlock())
+	for i, detail := range details.GetItems() {
+
 		txCount += len(detail.GetBlock().GetTxs())
 		if txCount >= minCommitTxCount {
-			break
+			return details.GetItems()[:i]
 		}
 	}
 
-	if txCount < minCommitTxCount {
-		return nil
-	}
-
-	return blocks
+	return nil
 }
 
 func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {

@@ -2,6 +2,7 @@ package rollup
 
 import (
 	"bytes"
+	"math/big"
 	"time"
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -15,10 +16,10 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
-func (r *RollUp) buildCommitData(blocks []*types.Block) (*rtypes.BlockBatch, *pt.CommitRollupCrossTx) {
+func (r *RollUp) buildCommitData(details []*types.BlockDetail) (*rtypes.BlockBatch, *pt.CommitRollupCrossTx) {
 
 	batch := &rtypes.BlockBatch{}
-	batch.BlockHeaders = make([]*types.Header, 0, len(blocks))
+	batch.BlockHeaders = make([]*types.Header, 0, len(details))
 	batch.TxList = make([][]byte, 0, minCommitTxCount)
 	batch.PubKeyList = make([][]byte, 0, minCommitTxCount)
 	batch.TxAddrIDList = make([]byte, 0, minCommitTxCount)
@@ -27,15 +28,19 @@ func (r *RollUp) buildCommitData(blocks []*types.Block) (*rtypes.BlockBatch, *pt
 
 	crossInfo := &pt.CommitRollupCrossTx{}
 	crossTxHashes := make([][]byte, 0, 8)
-	for _, block := range blocks {
+	crossTxRst := big.NewInt(0)
+	for _, detail := range details {
 
-		header := block.GetHeader(r.chainCfg)
+		header := detail.Block.GetHeader(r.chainCfg)
 		header.Hash = nil
 		batch.BlockHeaders = append(batch.BlockHeaders, header)
-		for _, tx := range block.Txs {
+		for i, tx := range detail.Block.Txs {
 
 			// 过滤跨链交易
 			if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+				if detail.Receipts[i].Ty == types.ExecOk {
+					crossTxRst.SetBit(crossTxRst, len(crossTxHashes), 1)
+				}
 				crossTxHashes = append(crossTxHashes, tx.Hash())
 			}
 
@@ -58,7 +63,10 @@ func (r *RollUp) buildCommitData(blocks []*types.Block) (*rtypes.BlockBatch, *pt
 		return nil, nil
 	}
 	batch.AggregateTxSign = aggreSign.Bytes()
-	batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
+	if len(crossTxHashes) > 0 {
+		batch.CrossTxResults = crossTxRst.Bytes()
+		batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
+	}
 	crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
 	return batch, crossInfo
 }
