@@ -43,6 +43,7 @@ type RollUp struct {
 	mainChainGrpc        types.Chain33Client
 	val                  *validator
 	cache                *commitCache
+	cross                *crossTxHandler
 	lastFeeRate          int64
 }
 
@@ -60,6 +61,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	r.initDone = make(chan struct{})
 	r.subChan = make(chan *types.TopicData, 32)
 	r.lastFeeRate = 100000
+	r.cross = &crossTxHandler{}
 
 	var err error
 	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)
@@ -86,6 +88,7 @@ func (r *RollUp) initJob() {
 	r.nextBuildRound = status.CommitRound + 1
 	r.nextBuildHeight = status.CommitBlockHeight + 1
 	r.cache = newCommitCache(status.CommitRound)
+	r.cross.init(r, status)
 	r.trySubTopic(psValidatorSignTopic)
 	r.initDone <- struct{}{}
 }
@@ -97,7 +100,7 @@ func (r *RollUp) startRollupRoutine() {
 	if r.val.enable {
 		go r.handleExit()
 		go r.handleBuildBatch()
-		go r.handleCommitCheckPoint()
+		go r.handleCommit()
 		go r.syncRollupState()
 
 		n := runtime.NumCPU()
@@ -143,18 +146,25 @@ func (r *RollUp) handleBuildBatch() {
 				"round", r.nextBuildRound, "msg", "wait more block")
 			continue
 		}
-		blkBatch := r.buildBlockBatch(blocks)
-		batch := &rtypes.CheckPoint{
-			ChainTitle:  r.chainCfg.GetTitle(),
-			CommitRound: r.nextBuildRound,
-			Batch:       blkBatch,
+		blkBatch, crossInfo := r.buildCommitData(blocks)
+		cp := &rtypes.CheckPoint{
+			ChainTitle:          r.chainCfg.GetTitle(),
+			CommitRound:         r.nextBuildRound,
+			Batch:               blkBatch,
+			CrossTxSyncedHeight: r.cross.refreshSyncedHeight(),
+		}
+
+		crossInfo.CommitRound = r.nextBuildRound
+		commit := &commitInfo{
+			cp:      cp,
+			crossTx: crossInfo,
 		}
 
 		r.nextBuildRound++
 		r.nextBuildHeight += int64(len(blocks))
-		sign := r.val.sign(batch.GetCommitRound(), batch.GetBatch())
+		sign := r.val.sign(cp.GetCommitRound(), cp.GetBatch())
 
-		r.cache.addCheckPoint(batch)
+		r.cache.addCommitInfo(commit)
 		r.cache.addValidatorSign(true, sign)
 		r.tryPubMsg(psValidatorSignTopic, types.Encode(sign), sign.CommitRound)
 	}

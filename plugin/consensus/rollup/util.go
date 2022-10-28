@@ -3,6 +3,8 @@ package rollup
 import (
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/paracross/executor"
+
 	"github.com/33cn/chain33/types"
 	"github.com/pkg/errors"
 )
@@ -56,4 +58,17 @@ func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {
 
 func shortHash(hash []byte) string {
 	return types.CalcTxShortHash(hash)
+}
+
+func filterParaTx(cfg *types.Chain33Config, detail *types.ParaTxDetail) []*types.Transaction {
+	return executor.FilterTxsForPara(cfg, detail)
+}
+
+func filterParaCrossTx(txs []*types.Transaction) []*types.Transaction {
+	return executor.FilterParaCrossTxs(txs)
+}
+
+func calcCrossTxCheckHash(hashList [][]byte) []byte {
+
+	return executor.CalcTxHashsHash(hashList)
 }

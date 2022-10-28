@@ -57,6 +57,12 @@ const (
 	TyLogParaSupervisionNodeStatusUpdate     = 682
 )
 
+// action name
+const (
+	// NameCommitCrossTxAction action name
+	NameCommitCrossTxAction = "CommitRollupCrossTx"
+)
+
 // action type
 const (
 	// ParacrossActionCommit paracross consensus commit action
@@ -73,6 +79,8 @@ const (
 	ParacrossActionParaBindMiner
 	// ParacrossActionSupervisionNodeConfig
 	ParacrossActionSupervisionNodeConfig
+	TyCommitRollupCrossTx
+
 )
 
 const (

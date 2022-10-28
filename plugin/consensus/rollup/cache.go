@@ -15,30 +15,30 @@ const (
 type commitCache struct {
 	lock          sync.RWMutex
 	minCacheRound int64
-	cpList        map[int64]*rtypes.CheckPoint
+	commitList    map[int64]*commitInfo
 	signList      map[int64]*validatorSignMsgSet
 }
 
 func newCommitCache(currRound int64) *commitCache {
 
 	c := &commitCache{minCacheRound: currRound}
-	c.cpList = make(map[int64]*rtypes.CheckPoint, 32)
+	c.commitList = make(map[int64]*commitInfo, 32)
 	c.signList = make(map[int64]*validatorSignMsgSet, 32)
 	return c
 }
 
-func (c *commitCache) addCheckPoint(batch *rtypes.CheckPoint) {
+func (c *commitCache) addCommitInfo(info *commitInfo) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.cpList[batch.CommitRound] = batch
+	c.commitList[info.cp.CommitRound] = info
 }
 
 func (c *commitCache) getCheckPoint(round int64) *rtypes.CheckPoint {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	return c.cpList[round]
+	return c.commitList[round].cp
 }
 
 func (c *commitCache) addValidatorSign(isSelf bool, sign *rtypes.ValidatorSignMsg) {
@@ -71,7 +71,7 @@ func (c *commitCache) cleanHistory(currRound int64) {
 	maxDelRound := currRound - historyCacheCount
 	for i := c.minCacheRound; i <= maxDelRound; i++ {
 		delete(c.signList, i)
-		delete(c.cpList, i)
+		delete(c.commitList, i)
 	}
 
 	if maxDelRound >= c.minCacheRound {
@@ -81,7 +81,7 @@ func (c *commitCache) cleanHistory(currRound int64) {
 
 //
 
-func (c *commitCache) getPreparedCheckPoint(round int64, aggreSign aggreSignFunc) *rtypes.CheckPoint {
+func (c *commitCache) getPreparedCommit(round int64, aggreSign aggreSignFunc) *commitInfo {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -91,9 +91,9 @@ func (c *commitCache) getPreparedCheckPoint(round int64, aggreSign aggreSignFunc
 	if pubs == nil {
 		return nil
 	}
-	cp := c.cpList[round]
+	info := c.commitList[round]
 
-	cp.ValidatorPubs = pubs
-	cp.AggregateValidatorSign = aSign
-	return cp
+	info.cp.ValidatorPubs = pubs
+	info.cp.AggregateValidatorSign = aSign
+	return info
 }

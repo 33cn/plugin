@@ -92,11 +92,12 @@ func (r *RollUp) sendTx2MainChain(tx *types.Transaction) error {
 	return err
 }
 
-func (r *RollUp) getMainChainBlkHeight() {
+func (r *RollUp) fetchCrossTx(start, end int64) (*types.ParaTxDetails, error) {
 
-}
-
-func (r *RollUp) fetchCrossTx() {
-
-	reply, err := r.mainChainGrpc.GetParaTxByTitle()
+	req := &types.ReqParaTxByTitle{
+		Start: start,
+		End:   end,
+		Title: r.chainCfg.GetTitle(),
+	}
+	return r.mainChainGrpc.GetParaTxByTitle(r.ctx, req)
 }
