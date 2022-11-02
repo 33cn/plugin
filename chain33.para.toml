@@ -356,6 +356,8 @@ ForkParaRootHash=0
 ForkParaAutonomySuperGroup=-1
 #平行链支持自由注册，主链上申请者或超级管理员或社区任其一即可注册，平行链默认开启
 ForkParaFreeRegister=0
+#主链paracross合约fork后执行自己的checkTx检查，代替drivebase的检查
+ForkParaCheckTx=0
 
 [fork.sub.evm]
 Enable=0
