@@ -655,23 +655,23 @@ func (_IERC20 *IERC20Filterer) ParseTransfer(log types.Log) (*IERC20Transfer, er
 	return event, nil
 }
 
-// MultiTokenMetaData contains all meta data concerning the MultiToken contract.
-var MultiTokenMetaData = &bind.MetaData{
+// PreTokenMetaData contains all meta data concerning the PreToken contract.
+var PreTokenMetaData = &bind.MetaData{
 	ABI: "[]",
-	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122016c1e2b2a4f0820c53b3e449bd530de2c8a512308f52e7f917f30dc9fc25ab4e64736f6c63430008000033",
+	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122098848159558c0a6afc3331bfcd514125acfcfb93c1febb1946c2fc2d41afdf1e64736f6c63430008000033",
 }
 
-// MultiTokenABI is the input ABI used to generate the binding from.
-// Deprecated: Use MultiTokenMetaData.ABI instead.
-var MultiTokenABI = MultiTokenMetaData.ABI
+// PreTokenABI is the input ABI used to generate the binding from.
+// Deprecated: Use PreTokenMetaData.ABI instead.
+var PreTokenABI = PreTokenMetaData.ABI
 
-// MultiTokenBin is the compiled bytecode used for deploying new contracts.
-// Deprecated: Use MultiTokenMetaData.Bin instead.
-var MultiTokenBin = MultiTokenMetaData.Bin
+// PreTokenBin is the compiled bytecode used for deploying new contracts.
+// Deprecated: Use PreTokenMetaData.Bin instead.
+var PreTokenBin = PreTokenMetaData.Bin
 
-// DeployMultiToken deploys a new Ethereum contract, binding an instance of MultiToken to it.
-func DeployMultiToken(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *MultiToken, error) {
-	parsed, err := MultiTokenMetaData.GetAbi()
+// DeployPreToken deploys a new Ethereum contract, binding an instance of PreToken to it.
+func DeployPreToken(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *PreToken, error) {
+	parsed, err := PreTokenMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -679,111 +679,111 @@ func DeployMultiToken(auth *bind.TransactOpts, backend bind.ContractBackend) (co
 		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(MultiTokenBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(PreTokenBin), backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	return address, tx, &MultiToken{MultiTokenCaller: MultiTokenCaller{contract: contract}, MultiTokenTransactor: MultiTokenTransactor{contract: contract}, MultiTokenFilterer: MultiTokenFilterer{contract: contract}}, nil
+	return address, tx, &PreToken{PreTokenCaller: PreTokenCaller{contract: contract}, PreTokenTransactor: PreTokenTransactor{contract: contract}, PreTokenFilterer: PreTokenFilterer{contract: contract}}, nil
 }
 
-// MultiToken is an auto generated Go binding around an Ethereum contract.
-type MultiToken struct {
-	MultiTokenCaller     // Read-only binding to the contract
-	MultiTokenTransactor // Write-only binding to the contract
-	MultiTokenFilterer   // Log filterer for contract events
+// PreToken is an auto generated Go binding around an Ethereum contract.
+type PreToken struct {
+	PreTokenCaller     // Read-only binding to the contract
+	PreTokenTransactor // Write-only binding to the contract
+	PreTokenFilterer   // Log filterer for contract events
 }
 
-// MultiTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
-type MultiTokenCaller struct {
+// PreTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
+type PreTokenCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// MultiTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type MultiTokenTransactor struct {
+// PreTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type PreTokenTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// MultiTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type MultiTokenFilterer struct {
+// PreTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type PreTokenFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// MultiTokenSession is an auto generated Go binding around an Ethereum contract,
+// PreTokenSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type MultiTokenSession struct {
-	Contract     *MultiToken       // Generic contract binding to set the session for
+type PreTokenSession struct {
+	Contract     *PreToken         // Generic contract binding to set the session for
 	CallOpts     bind.CallOpts     // Call options to use throughout this session
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// MultiTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// PreTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type MultiTokenCallerSession struct {
-	Contract *MultiTokenCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts     // Call options to use throughout this session
+type PreTokenCallerSession struct {
+	Contract *PreTokenCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts   // Call options to use throughout this session
 }
 
-// MultiTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// PreTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type MultiTokenTransactorSession struct {
-	Contract     *MultiTokenTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts     // Transaction auth options to use throughout this session
+type PreTokenTransactorSession struct {
+	Contract     *PreTokenTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts   // Transaction auth options to use throughout this session
 }
 
-// MultiTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
-type MultiTokenRaw struct {
-	Contract *MultiToken // Generic contract binding to access the raw methods on
+// PreTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
+type PreTokenRaw struct {
+	Contract *PreToken // Generic contract binding to access the raw methods on
 }
 
-// MultiTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type MultiTokenCallerRaw struct {
-	Contract *MultiTokenCaller // Generic read-only contract binding to access the raw methods on
+// PreTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type PreTokenCallerRaw struct {
+	Contract *PreTokenCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// MultiTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type MultiTokenTransactorRaw struct {
-	Contract *MultiTokenTransactor // Generic write-only contract binding to access the raw methods on
+// PreTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type PreTokenTransactorRaw struct {
+	Contract *PreTokenTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewMultiToken creates a new instance of MultiToken, bound to a specific deployed contract.
-func NewMultiToken(address common.Address, backend bind.ContractBackend) (*MultiToken, error) {
-	contract, err := bindMultiToken(address, backend, backend, backend)
+// NewPreToken creates a new instance of PreToken, bound to a specific deployed contract.
+func NewPreToken(address common.Address, backend bind.ContractBackend) (*PreToken, error) {
+	contract, err := bindPreToken(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &MultiToken{MultiTokenCaller: MultiTokenCaller{contract: contract}, MultiTokenTransactor: MultiTokenTransactor{contract: contract}, MultiTokenFilterer: MultiTokenFilterer{contract: contract}}, nil
+	return &PreToken{PreTokenCaller: PreTokenCaller{contract: contract}, PreTokenTransactor: PreTokenTransactor{contract: contract}, PreTokenFilterer: PreTokenFilterer{contract: contract}}, nil
 }
 
-// NewMultiTokenCaller creates a new read-only instance of MultiToken, bound to a specific deployed contract.
-func NewMultiTokenCaller(address common.Address, caller bind.ContractCaller) (*MultiTokenCaller, error) {
-	contract, err := bindMultiToken(address, caller, nil, nil)
+// NewPreTokenCaller creates a new read-only instance of PreToken, bound to a specific deployed contract.
+func NewPreTokenCaller(address common.Address, caller bind.ContractCaller) (*PreTokenCaller, error) {
+	contract, err := bindPreToken(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &MultiTokenCaller{contract: contract}, nil
+	return &PreTokenCaller{contract: contract}, nil
 }
 
-// NewMultiTokenTransactor creates a new write-only instance of MultiToken, bound to a specific deployed contract.
-func NewMultiTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*MultiTokenTransactor, error) {
-	contract, err := bindMultiToken(address, nil, transactor, nil)
+// NewPreTokenTransactor creates a new write-only instance of PreToken, bound to a specific deployed contract.
+func NewPreTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*PreTokenTransactor, error) {
+	contract, err := bindPreToken(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &MultiTokenTransactor{contract: contract}, nil
+	return &PreTokenTransactor{contract: contract}, nil
 }
 
-// NewMultiTokenFilterer creates a new log filterer instance of MultiToken, bound to a specific deployed contract.
-func NewMultiTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*MultiTokenFilterer, error) {
-	contract, err := bindMultiToken(address, nil, nil, filterer)
+// NewPreTokenFilterer creates a new log filterer instance of PreToken, bound to a specific deployed contract.
+func NewPreTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*PreTokenFilterer, error) {
+	contract, err := bindPreToken(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &MultiTokenFilterer{contract: contract}, nil
+	return &PreTokenFilterer{contract: contract}, nil
 }
 
-// bindMultiToken binds a generic wrapper to an already deployed contract.
-func bindMultiToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(MultiTokenABI))
+// bindPreToken binds a generic wrapper to an already deployed contract.
+func bindPreToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(PreTokenABI))
 	if err != nil {
 		return nil, err
 	}
@@ -794,44 +794,44 @@ func bindMultiToken(address common.Address, caller bind.ContractCaller, transact
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_MultiToken *MultiTokenRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _MultiToken.Contract.MultiTokenCaller.contract.Call(opts, result, method, params...)
+func (_PreToken *PreTokenRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _PreToken.Contract.PreTokenCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_MultiToken *MultiTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _MultiToken.Contract.MultiTokenTransactor.contract.Transfer(opts)
+func (_PreToken *PreTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _PreToken.Contract.PreTokenTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_MultiToken *MultiTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _MultiToken.Contract.MultiTokenTransactor.contract.Transact(opts, method, params...)
+func (_PreToken *PreTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _PreToken.Contract.PreTokenTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_MultiToken *MultiTokenCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _MultiToken.Contract.contract.Call(opts, result, method, params...)
+func (_PreToken *PreTokenCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _PreToken.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_MultiToken *MultiTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _MultiToken.Contract.contract.Transfer(opts)
+func (_PreToken *PreTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _PreToken.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_MultiToken *MultiTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _MultiToken.Contract.contract.Transact(opts, method, params...)
+func (_PreToken *PreTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _PreToken.Contract.contract.Transact(opts, method, params...)
 }
 
 // SafeMathMetaData contains all meta data concerning the SafeMath contract.
 var SafeMathMetaData = &bind.MetaData{
 	ABI: "[]",
-	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220cdfd520c6ee943bf73eef8fdc2777a1d0bb235b52b55d2fc84c70f5c7094de4d64736f6c63430008000033",
+	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122029671f449f796127b593c225881c469550754c0b2a35e7f2220368912f1eaca364736f6c63430008000033",
 }
 
 // SafeMathABI is the input ABI used to generate the binding from.
@@ -1003,7 +1003,7 @@ func (_SafeMath *SafeMathTransactorRaw) Transact(opts *bind.TransactOpts, method
 
 // TokenMetaData contains all meta data concerning the Token contract.
 var TokenMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name_\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"supply_\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 	Sigs: map[string]string{
 		"dd62ed3e": "allowance(address,address)",
 		"095ea7b3": "approve(address,uint256)",
@@ -1017,7 +1017,7 @@ var TokenMetaData = &bind.MetaData{
 		"a9059cbb": "transfer(address,uint256)",
 		"23b872dd": "transferFrom(address,address,uint256)",
 	},
-	Bin: "0x608060405234801561001057600080fd5b50610caf806100206000396000f3fe608060405234801561001057600080fd5b50600436106100a95760003560e01c80633950935111610071578063395093511461012957806370a082311461013c57806395d89b411461014f578063a457c2d714610157578063a9059cbb1461016a578063dd62ed3e1461017d576100a9565b806306fdde03146100ae578063095ea7b3146100cc57806318160ddd146100ec57806323b872dd14610101578063313ce56714610114575b600080fd5b6100b6610190565b6040516100c39190610a3f565b60405180910390f35b6100df6100da3660046108db565b61019f565b6040516100c39190610a34565b6100f46101b7565b6040516100c39190610bfc565b6100df61010f3660046108a0565b6101c1565b61011c6101e5565b6040516100c39190610c05565b6100df6101373660046108db565b6101ef565b6100f461014a36600461084d565b61022c565b6100b661023f565b6100df6101653660046108db565b610249565b6100df6101783660046108db565b6102a4565b6100f461018b36600461086e565b6102b2565b606061019a6102db565b905090565b6000336101ad81858561038c565b5060019392505050565b600061019a61043e565b6000336101cf8582856104e7565b6101da858585610531565b506001949350505050565b600061019a6105cb565b336000818152602081815260408083206001600160a01b03871684529091528120549091906101ad9082908690610227908790610c13565b61038c565b600061023782610674565b90505b919050565b606061019a61073d565b336000818152602081815260408083206001600160a01b0387168452909152812054909190838110156102975760405162461bcd60e51b815260040161028e90610bb7565b60405180910390fd5b6101da828686840361038c565b6000336101ad818585610531565b6001600160a01b0391821660009081526020818152604080832093909416825291909152205490565b60408051600481526024810182526020810180516001600160e01b03166306fdde0360e01b17905290516060916000918291622000019161031c91906109e0565b600060405180830381855afa9150503d8060008114610357576040519150601f19603f3d011682016040523d82523d6000602084013e61035c565b606091505b50915091506000821415610371573d60208201fd5b808060200190518101906103859190610904565b9250505090565b6001600160a01b0383166103b25760405162461bcd60e51b815260040161028e90610b73565b6001600160a01b0382166103d85760405162461bcd60e51b815260040161028e90610ab5565b6001600160a01b038084166000818152602081815260408083209487168084529490915290819020849055517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b92590610431908590610bfc565b60405180910390a3505050565b60408051600481526024810182526020810180516001600160e01b03166318160ddd60e01b179052905160009182918291622000019161047e91906109e0565b600060405180830381855afa9150503d80600081146104b9576040519150601f19603f3d011682016040523d82523d6000602084013e6104be565b606091505b509150915060008214156104d3573d60208201fd5b8080602001905181019061038591906109a7565b60006104f384846102b2565b9050600019811461052b578181101561051e5760405162461bcd60e51b815260040161028e90610af7565b61052b848484840361038c565b50505050565b6001600160a01b0383166105575760405162461bcd60e51b815260040161028e90610b2e565b6001600160a01b03821661057d5760405162461bcd60e51b815260040161028e90610a72565b61058883838361077e565b816001600160a01b0316836001600160a01b03167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516104319190610bfc565b60408051600481526024810182526020810180516001600160e01b031663313ce56760e01b179052905160009182918291622000019161060b91906109e0565b600060405180830381855afa9150503d8060008114610646576040519150601f19603f3d011682016040523d82523d6000602084013e61064b565b606091505b50915091506000821415610660573d60208201fd5b8080602001905181019061038591906109bf565b6000806000622000016001600160a01b03168460405160240161069791906109fc565b60408051601f198184030181529181526020820180516001600160e01b03166370a0823160e01b179052516106cc91906109e0565b600060405180830381855afa9150503d8060008114610707576040519150601f19603f3d011682016040523d82523d6000602084013e61070c565b606091505b50915091506000821415610721573d60208201fd5b8080602001905181019061073591906109a7565b949350505050565b60408051600481526024810182526020810180516001600160e01b03166395d89b4160e01b17905290516060916000918291622000019161031c91906109e0565b600080622000016001600160a01b03168585856040516024016107a393929190610a10565b60408051601f198184030181529181526020820180516001600160e01b03166317d5759960e31b179052516107d891906109e0565b6000604051808303816000865af19150503d8060008114610815576040519150601f19603f3d011682016040523d82523d6000602084013e61081a565b606091505b5091509150600082141561082f573d60208201fd5b5050505050565b80356001600160a01b038116811461023a57600080fd5b60006020828403121561085e578081fd5b61086782610836565b9392505050565b60008060408385031215610880578081fd5b61088983610836565b915061089760208401610836565b90509250929050565b6000806000606084860312156108b4578081fd5b6108bd84610836565b92506108cb60208501610836565b9150604084013590509250925092565b600080604083850312156108ed578182fd5b6108f683610836565b946020939093013593505050565b600060208284031215610915578081fd5b815167ffffffffffffffff8082111561092c578283fd5b818401915084601f83011261093f578283fd5b81518181111561095157610951610c63565b604051601f8201601f19168101602001838111828210171561097557610975610c63565b60405281815283820160200187101561098c578485fd5b61099d826020830160208701610c37565b9695505050505050565b6000602082840312156109b8578081fd5b5051919050565b6000602082840312156109d0578081fd5b815160ff81168114610867578182fd5b600082516109f2818460208701610c37565b9190910192915050565b6001600160a01b0391909116815260200190565b6001600160a01b039384168152919092166020820152604081019190915260600190565b901515815260200190565b6000602082528251806020840152610a5e816040850160208701610c37565b601f01601f19169190910160400192915050565b60208082526023908201527f45524332303a207472616e7366657220746f20746865207a65726f206164647260408201526265737360e81b606082015260800190565b60208082526022908201527f45524332303a20617070726f766520746f20746865207a65726f206164647265604082015261737360f01b606082015260800190565b6020808252601d908201527f45524332303a20696e73756666696369656e7420616c6c6f77616e6365000000604082015260600190565b60208082526025908201527f45524332303a207472616e736665722066726f6d20746865207a65726f206164604082015264647265737360d81b606082015260800190565b60208082526024908201527f45524332303a20617070726f76652066726f6d20746865207a65726f206164646040820152637265737360e01b606082015260800190565b60208082526025908201527f45524332303a2064656372656173656420616c6c6f77616e63652062656c6f77604082015264207a65726f60d81b606082015260800190565b90815260200190565b60ff91909116815260200190565b60008219821115610c3257634e487b7160e01b81526011600452602481fd5b500190565b60005b83811015610c52578181015183820152602001610c3a565b8381111561052b5750506000910152565b634e487b7160e01b600052604160045260246000fdfea26469706673582212201d1e99dc1b38c48919c2c6df2c383907b98c16fd01f342a9f195a2955a246fd364736f6c63430008000033",
+	Bin: "0x60806040523480156200001157600080fd5b5060405162000d7038038062000d70833981016040819052620000349162000110565b8151620000499060029060208501906200006a565b5081516200005f9060039060208501906200006a565b50600155506200023a565b8280546200007890620001e7565b90600052602060002090601f0160209004810192826200009c5760008555620000e7565b82601f10620000b757805160ff1916838001178555620000e7565b82800160010185558215620000e7579182015b82811115620000e7578251825591602001919060010190620000ca565b50620000f5929150620000f9565b5090565b5b80821115620000f55760008155600101620000fa565b6000806040838503121562000123578182fd5b82516001600160401b03808211156200013a578384fd5b818501915085601f8301126200014e578384fd5b81518181111562000163576200016362000224565b6040516020601f8301601f19168201810184811183821017156200018b576200018b62000224565b6040528282528483018101891015620001a2578687fd5b8693505b82841015620001c55784840181015182850182015292830192620001a6565b82841115620001d657868184840101525b969096015195979596505050505050565b600281046001821680620001fc57607f821691505b602082108114156200021e57634e487b7160e01b600052602260045260246000fd5b50919050565b634e487b7160e01b600052604160045260246000fd5b610b26806200024a6000396000f3fe608060405234801561001057600080fd5b50600436106100a95760003560e01c80633950935111610071578063395093511461012957806370a082311461013c57806395d89b411461014f578063a457c2d714610157578063a9059cbb1461016a578063dd62ed3e1461017d576100a9565b806306fdde03146100ae578063095ea7b3146100cc57806318160ddd146100ec57806323b872dd14610101578063313ce56714610114575b600080fd5b6100b6610190565b6040516100c39190610891565b60405180910390f35b6100df6100da3660046107d0565b610222565b6040516100c39190610886565b6100f461023a565b6040516100c39190610a4e565b6100df61010f366004610795565b610240565b61011c610264565b6040516100c39190610a57565b6100df6101373660046107d0565b610273565b6100f461014a366004610742565b6102b0565b6100b66102c3565b6100df6101653660046107d0565b6102d2565b6100df6101783660046107d0565b61032d565b6100f461018b366004610763565b61033b565b60606002805461019f90610ab5565b80601f01602080910402602001604051908101604052809291908181526020018280546101cb90610ab5565b80156102185780601f106101ed57610100808354040283529160200191610218565b820191906000526020600020905b8154815290600101906020018083116101fb57829003601f168201915b5050505050905090565b600033610230818585610364565b5060019392505050565b60015490565b60003361024e858285610416565b610259858585610460565b506001949350505050565b600061026e6104fa565b905090565b336000818152602081815260408083206001600160a01b038716845290915281205490919061023090829086906102ab908790610a65565b610364565b60006102bb826105aa565b90505b919050565b60606003805461019f90610ab5565b336000818152602081815260408083206001600160a01b0387168452909152812054909190838110156103205760405162461bcd60e51b815260040161031790610a09565b60405180910390fd5b6102598286868403610364565b600033610230818585610460565b6001600160a01b0391821660009081526020818152604080832093909416825291909152205490565b6001600160a01b03831661038a5760405162461bcd60e51b8152600401610317906109c5565b6001600160a01b0382166103b05760405162461bcd60e51b815260040161031790610907565b6001600160a01b038084166000818152602081815260408083209487168084529490915290819020849055517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b92590610409908590610a4e565b60405180910390a3505050565b6000610422848461033b565b9050600019811461045a578181101561044d5760405162461bcd60e51b815260040161031790610949565b61045a8484848403610364565b50505050565b6001600160a01b0383166104865760405162461bcd60e51b815260040161031790610980565b6001600160a01b0382166104ac5760405162461bcd60e51b8152600401610317906108c4565b6104b7838383610673565b816001600160a01b0316836001600160a01b03167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516104099190610a4e565b60408051600481526024810182526020810180516001600160e01b031663313ce56760e01b179052905160009182918291622000019161053a9190610832565b600060405180830381855afa9150503d8060008114610575576040519150601f19603f3d011682016040523d82523d6000602084013e61057a565b606091505b5091509150600082141561058f573d60208201fd5b808060200190518101906105a39190610811565b9250505090565b6000806000622000016001600160a01b0316846040516024016105cd919061084e565b60408051601f198184030181529181526020820180516001600160e01b03166370a0823160e01b179052516106029190610832565b600060405180830381855afa9150503d806000811461063d576040519150601f19603f3d011682016040523d82523d6000602084013e610642565b606091505b50915091506000821415610657573d60208201fd5b8080602001905181019061066b91906107f9565b949350505050565b600080622000016001600160a01b031685858560405160240161069893929190610862565b60408051601f198184030181529181526020820180516001600160e01b03166317d5759960e31b179052516106cd9190610832565b6000604051808303816000865af19150503d806000811461070a576040519150601f19603f3d011682016040523d82523d6000602084013e61070f565b606091505b50915091506000821415610724573d60208201fd5b5050505050565b80356001600160a01b03811681146102be57600080fd5b600060208284031215610753578081fd5b61075c8261072b565b9392505050565b60008060408385031215610775578081fd5b61077e8361072b565b915061078c6020840161072b565b90509250929050565b6000806000606084860312156107a9578081fd5b6107b28461072b565b92506107c06020850161072b565b9150604084013590509250925092565b600080604083850312156107e2578182fd5b6107eb8361072b565b946020939093013593505050565b60006020828403121561080a578081fd5b5051919050565b600060208284031215610822578081fd5b815160ff8116811461075c578182fd5b60008251610844818460208701610a89565b9190910192915050565b6001600160a01b0391909116815260200190565b6001600160a01b039384168152919092166020820152604081019190915260600190565b901515815260200190565b60006020825282518060208401526108b0816040850160208701610a89565b601f01601f19169190910160400192915050565b60208082526023908201527f45524332303a207472616e7366657220746f20746865207a65726f206164647260408201526265737360e81b606082015260800190565b60208082526022908201527f45524332303a20617070726f766520746f20746865207a65726f206164647265604082015261737360f01b606082015260800190565b6020808252601d908201527f45524332303a20696e73756666696369656e7420616c6c6f77616e6365000000604082015260600190565b60208082526025908201527f45524332303a207472616e736665722066726f6d20746865207a65726f206164604082015264647265737360d81b606082015260800190565b60208082526024908201527f45524332303a20617070726f76652066726f6d20746865207a65726f206164646040820152637265737360e01b606082015260800190565b60208082526025908201527f45524332303a2064656372656173656420616c6c6f77616e63652062656c6f77604082015264207a65726f60d81b606082015260800190565b90815260200190565b60ff91909116815260200190565b60008219821115610a8457634e487b7160e01b81526011600452602481fd5b500190565b60005b83811015610aa4578181015183820152602001610a8c565b8381111561045a5750506000910152565b600281046001821680610ac957607f821691505b60208210811415610aea57634e487b7160e01b600052602260045260246000fd5b5091905056fea26469706673582212205b7b97d4742f38b3fcb860d0e54dcf9aa5e1355c5bf31680c2470e039ae609df64736f6c63430008000033",
 }
 
 // TokenABI is the input ABI used to generate the binding from.
@@ -1033,7 +1033,7 @@ var TokenFuncSigs = TokenMetaData.Sigs
 var TokenBin = TokenMetaData.Bin
 
 // DeployToken deploys a new Ethereum contract, binding an instance of Token to it.
-func DeployToken(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Token, error) {
+func DeployToken(auth *bind.TransactOpts, backend bind.ContractBackend, name_ string, supply_ *big.Int) (common.Address, *types.Transaction, *Token, error) {
 	parsed, err := TokenMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -1042,7 +1042,7 @@ func DeployToken(auth *bind.TransactOpts, backend bind.ContractBackend) (common.
 		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(TokenBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(TokenBin), backend, name_, supply_)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

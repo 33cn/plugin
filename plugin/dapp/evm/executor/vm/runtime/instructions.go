@@ -360,7 +360,6 @@ func opReturnDataCopy(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error
 func opExtCodeSize(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	slot := callContext.stack.peek()
 	address := common.Uint256ToAddress(slot)
-	fmt.Println("opExtCodeSize------->", address.String(), "GetCodeSize:", uint64(evm.StateDB.GetCodeSize(address.String())))
 	slot.SetUint64(uint64(evm.StateDB.GetCodeSize(address.String())))
 	return nil, nil
 }
@@ -725,11 +724,10 @@ func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	toAddr := common.Uint256ToAddress(&addr)
 	// Get the arguments from the memory.
 	args := callContext.memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
-	log15.Info("evm contract opCall", "toAddr", toAddr.String(), "value:", value.Uint64(), "input len", len(args), "input", common.Bytes2Hex(args))
+	log15.Info("evm contract opCall", "toAddr", toAddr.String(), "value:", value.Uint64(), "input  len", len(args))
 	if !value.IsZero() {
 		gas += params.CallStipend
 	}
-	fmt.Println("++++++++++++++++++++>1.opCall---,callContext.contract", callContext.contract.Gas, "gas:", gas)
 	// 注意，这里的处理比较特殊，出错情况下0压栈，正确情况下1压栈
 	ret, _, returnGas, err := evm.Call(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
@@ -742,10 +740,8 @@ func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	if err == nil || err == model.ErrExecutionReverted {
 		callContext.memory.Set(retOffset.Uint64(), retSize.Uint64(), ret)
 	}
-	fmt.Println("++++++++++++++++++++>2.opCall---,callContext.contract.Gas:", callContext.contract.Gas, " evm.callGasTemp:", evm.callGasTemp)
 	//剩余的Gas再返还给合约对象
 	callContext.contract.Gas += returnGas
-	fmt.Println("++++++++++++++++++++>3.opCall--->returnGas:", returnGas, "callContext.contract.Gas:", callContext.contract.Gas)
 	return ret, nil
 }
 
