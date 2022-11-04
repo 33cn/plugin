@@ -1,9 +1,11 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/crypto"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/bls"
 	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
@@ -19,10 +21,13 @@ var (
 
 var driverName = rolluptypes.RollupX
 
+var blsDriver crypto.Crypto
+
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newRollup, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
+	blsDriver, _ = crypto.Load(bls.Name, -1)
 }
 
 // InitExecType Init Exec Type

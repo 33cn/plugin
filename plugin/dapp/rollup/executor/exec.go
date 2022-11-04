@@ -21,7 +21,7 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 	if err != nil {
 		elog.Error("Exec_CommitBatch", "title", commit.GetChainTitle(),
 			"round", commitRound, "get status err", err)
-		return nil, errGetRollupStatus
+		return nil, ErrGetRollupStatus
 	}
 
 	parentHash := common.ToHex(commit.GetBatch().GetBlockHeaders()[0].ParentHash)
@@ -34,17 +34,17 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 		elog.Error("Exec_CommitBatch", "title", commit.GetChainTitle(),
 			"round", commitRound, "currLastHash", status.CommitBlockHash,
 			"parentHash", parentHash)
-		return nil, errParentHashNotEqual
+		return nil, ErrParentHashNotEqual
 	}
 
 	headers := commit.GetBatch().GetBlockHeaders()
 	roundInfo := &rolluptypes.CommitRoundInfo{
-		CommitRound:     commitRound,
-		ParentBlockHash: parentHash,
-		LastBlockHash:   calcBlockHash(headers[len(headers)-1]),
-		LastBlockHeight: headers[len(headers)-1].Height,
+		CommitRound:      commitRound,
+		ParentBlockHash:  parentHash,
+		LastBlockHash:    calcBlockHash(headers[len(headers)-1]),
+		LastBlockHeight:  headers[len(headers)-1].Height,
 		CrossTxCheckHash: common.ToHex(commit.GetBatch().GetCrossTxCheckHash()),
-		CrossTxResults: common.ToHex(commit.GetBatch().GetCrossTxResults()),
+		CrossTxResults:   common.ToHex(commit.GetBatch().GetCrossTxResults()),
 	}
 
 	encodeVal := types.Encode(roundInfo)

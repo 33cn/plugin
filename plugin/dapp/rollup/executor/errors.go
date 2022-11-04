@@ -3,7 +3,12 @@ package executor
 import "errors"
 
 var (
-	errGetRollupStatus = errors.New("errGetRollupStatus")
+	ErrGetRollupStatus = errors.New("ErrGetRollupStatus")
 
-	errParentHashNotEqual = errors.New("errParentHashNotEqual")
+	ErrInvalidCommitRound   = errors.New("ErrInvalidCommitRound")
+	ErrGetValPubs           = errors.New("ErrGetValPubs")
+	ErrInvalidValidator     = errors.New("ErrInvalidValidator")
+	ErrParentHashNotEqual   = errors.New("ErrParentHashNotEqual")
+	ErrInvalidValidatorSign = errors.New("ErrInvalidValidatorSign")
+	ErrInvalidBlsPub        = errors.New("ErrInvalidBlsPub")
 )
