@@ -1,11 +1,22 @@
 package executor
 
 import (
-	"encoding/hex"
-
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
+
+func (z *zksync) execAutoLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	if receiptData.Ty != types.ExecOk {
+		return nil, types.ErrInvalidParam
+	}
+	set, err := z.execLocalZksync(tx, receiptData, index)
+	if err != nil {
+		return set, err
+	}
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = z.AddRollbackKV(tx, tx.Execer, set.KV)
+	return dbSet, nil
+}
 
 func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	infoTable := NewZksyncInfoTable(z.GetLocalDB())
@@ -20,26 +31,36 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyContractToTreeLog,
 			zt.TyTransferLog,
 			zt.TyTransferToNewLog,
-			zt.TySetPubKeyLog,
+			//zt.TySetPubKeyLog,
 			zt.TyProxyExitLog,
 			zt.TyFullExitLog,
 			zt.TySwapLog,
 			zt.TyMintNFTLog,
-			zt.TyTransferNFTLog,
 			zt.TyWithdrawNFTLog,
 			zt.TyFeeLog:
-			var zklog zt.ZkReceiptLog
-			err := types.Decode(log.GetLog(), &zklog)
+			var receipt zt.AccountTokenBalanceReceipt
+			err := types.Decode(log.GetLog(), &receipt)
 			if err != nil {
 				return nil, err
 			}
-			zklog.OperationInfo.TxHash = hex.EncodeToString(tx.Hash())
-			err = infoTable.Replace(zklog.OperationInfo)
+			err = infoTable.Replace(&receipt)
 			if err != nil {
 				return nil, err
 			}
-			dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
-
+		case zt.TyTransferNFTLog:
+			var receipt zt.TransferReceipt4L2
+			err := types.Decode(log.GetLog(), &receipt)
+			if err != nil {
+				return nil, err
+			}
+			err = infoTable.Replace(receipt.From)
+			if err != nil {
+				return nil, err
+			}
+			err = infoTable.Replace(receipt.To)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	kvs, err := infoTable.Save()

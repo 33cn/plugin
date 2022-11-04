@@ -74,8 +74,8 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",
-	Primary: "height_index_opIndex",
-	Index:   []string{"height", "txHash", "priorityId"},
+	Primary: "account_token_id",
+	Index:   []string{"accountID", "tokenID"},
 }
 
 // NewZksyncInfoTable ...
@@ -90,44 +90,35 @@ func NewZksyncInfoTable(kvdb db.KV) *table.Table {
 
 // AccountTreeRow table meta 结构
 type ZksyncInfoRow struct {
-	*zt.OperationInfo
+	*zt.AccountTokenBalanceReceipt
 }
 
 func NewZksyncInfoRow() *ZksyncInfoRow {
-	return &ZksyncInfoRow{OperationInfo: &zt.OperationInfo{}}
+	return &ZksyncInfoRow{AccountTokenBalanceReceipt: &zt.AccountTokenBalanceReceipt{}}
 }
 
 //CreateRow 新建数据行
 func (r *ZksyncInfoRow) CreateRow() *table.Row {
-	return &table.Row{Data: &zt.OperationInfo{}}
+	return &table.Row{Data: &zt.AccountTokenBalanceReceipt{}}
 }
 
 //SetPayload 设置数据
 func (r *ZksyncInfoRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*zt.OperationInfo); ok {
-		r.OperationInfo = txdata
+	if txdata, ok := data.(*zt.AccountTokenBalanceReceipt); ok {
+		r.AccountTokenBalanceReceipt = txdata
 		return nil
 	}
 	return types.ErrTypeAsset
 }
 
-func (r *ZksyncInfoRow) getPriorityId() string {
-	if r.TxType == zt.TyDepositAction || r.TxType == zt.TyFullExitAction {
-		return new(big.Int).SetInt64(r.GetEthPriorityId()).String()
-	}
-	return "-1"
-}
-
 //Get 按照indexName 查询 indexValue
 func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
-	if key == "height_index_opIndex" {
-		return []byte(fmt.Sprintf("%016d.%016d.%016d", r.GetBlockHeight(), r.GetTxIndex(), r.GetOpIndex())), nil
-	} else if key == "height" {
-		return []byte(fmt.Sprintf("%016d", r.GetBlockHeight())), nil
-	} else if key == "txHash" {
-		return []byte(fmt.Sprintf("%s", r.GetTxHash())), nil
-	} else if key == "priorityId" {
-		return []byte(fmt.Sprintf("%s", r.getPriorityId())), nil
+	if key == "account_token_id" {
+		return []byte(fmt.Sprintf("%016d.%016d", r.GetAccountId(), r.GetTokenId())), nil
+	} else if key == "accountID" {
+		return []byte(fmt.Sprintf("%016d", r.GetAccountId())), nil
+	} else if key == "tokenID" {
+		return []byte(fmt.Sprintf("%016d", r.GetTokenId())), nil
 	}
 	return nil, types.ErrNotFound
 }

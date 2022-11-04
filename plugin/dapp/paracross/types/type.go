@@ -34,6 +34,8 @@ var (
 	ForkParaAutonomySuperGroup = "ForkParaAutonomySuperGroup"
 	//ForkParaFreeRegister 分叉之后平行链自由注册
 	ForkParaFreeRegister = "ForkParaFreeRegister"
+	//ForkParaCheckTx 分叉之前平行链缺省继承driverBase的checkTx,分叉后自己检查tx，因为transfer2Exec需要忽略tx.to==tx.Exec的限制,只影响主链
+	ForkParaCheckTx = "ForkParaCheckTx"
 
 	//只在平行链开启的分叉
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
@@ -73,6 +75,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 0)
 	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 0)
 	cfg.RegisterDappFork(ParaX, ForkParaFreeRegister, 0)
+	cfg.RegisterDappFork(ParaX, ForkParaCheckTx, 0)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)

@@ -28,13 +28,6 @@ func Byte2Uint64(v []byte) uint64 {
 	return new(big.Int).SetBytes(v).Uint64()
 }
 
-func FilterHexPrefix(s string) string {
-	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
-		return s[2:]
-	}
-	return s
-}
-
 // HexAddr2Decimal 16进制地址转10进制
 func HexAddr2Decimal(addr string) (string, bool) {
 	addr = FilterHexPrefix(addr)
@@ -150,5 +143,11 @@ func GetOpChunkNum(opType uint32) (int, error) {
 	default:
 		return 0, errors.Wrapf(types.ErrInvalidParam, "operation tx type=%d not support", opType)
 	}
+}
 
+func FilterHexPrefix(s string) string {
+	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
+		return s[2:]
+	}
+	return s
 }

@@ -183,6 +183,8 @@ enableMemVal=true
 tkCloseCacheLen=100000
 # 该参数针对平行链，如果平行链的ForkKvmvccmavl高度不为0,需要开启此功能,开启此功能需要从0开始执行区块
 enableEmptyBlockHandle=false
+# 保存区块相关数据时，同时保存kv
+enableSaveBlockKVs=true
 
 [wallet]
 minFee=100000
@@ -270,6 +272,8 @@ invalidProofRootHash=""
 ethFeeAddr="0x832367164346888E248bd58b9A5f480299F1e88d"
 #二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址,真实场景需替换
 layer2FeeAddr="2930ef48b2d018955359a77fe58a68be0c536480c57ee5a84f6c96e3ff4fa7dc"
+
+
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -366,6 +370,8 @@ ForkParaRootHash=0
 ForkParaAutonomySuperGroup=-1
 #平行链支持自由注册，主链上申请者或超级管理员或社区任其一即可注册，平行链默认开启
 ForkParaFreeRegister=0
+#主链paracross合约fork后执行自己的checkTx检查，代替drivebase的检查
+ForkParaCheckTx=0
 
 [fork.sub.evm]
 Enable=0

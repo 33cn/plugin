@@ -24,7 +24,7 @@ const (
 	TyWithdrawAction       = 2  //eth取款
 	TyTransferAction       = 3  //转账
 	TyTransferToNewAction  = 4  //向新地址转账
-	TyProxyExitAction      = 5  //强制退出
+	TyProxyExitAction      = 5  //代理退出
 	TySetPubKeyAction      = 6  //设置公钥
 	TyFullExitAction       = 7  //从L1完全退出
 	TySwapAction           = 8  //交换
@@ -55,7 +55,7 @@ const (
 	NameTreeToContractAction = "TreeToContract"
 	NameTransferAction       = "ZkTransfer"
 	NameTransferToNewAction  = "TransferToNew"
-	NameProxyExitAction      = "ProxyExit"
+	NameForceExitAction      = "ProxyExit"
 	NameSetPubKeyAction      = "SetPubKey"
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
@@ -63,6 +63,8 @@ const (
 	NameMintNFTAction        = "MintNFT"
 	NameWithdrawNFTACTION    = "WithdrawNFT"
 	NameTransferNFTAction    = "TransferNFT"
+
+	NameContractToTreeNewAction = "ContractToTreeNew"
 
 	NameSetVerifyKeyAction   = "SetVerifyKey"
 	NameCommitProofAction    = "CommitProof"
@@ -81,7 +83,7 @@ const (
 	TyWithdrawLog       = 102 //取款
 	TyTransferLog       = 103 //转账
 	TyTransferToNewLog  = 104 //向新地址转账
-	TyProxyExitLog      = 105 //代理退出
+	TyProxyExitLog      = 105 //强制退出
 	TySetPubKeyLog      = 106 //设置公钥
 	TyFullExitLog       = 107 //从L1完全退出
 	TySwapLog           = 108 //交换
@@ -91,17 +93,18 @@ const (
 	TyMintNFTLog        = 112 //铸造NFT
 	TyWithdrawNFTLog    = 113 //L2提款NFT到L1
 	TyTransferNFTLog    = 114 //L2提款NFT到L1
+	TyMintNFT2SystemLog = 115 //向系统账户铸造NFT,且其token ID为全局nft token id，因为其余额设置为token hash,所以使用不同的log标志
 
-	/////非电路类型
-	TySetVerifyKeyLog       = 202 //设置电路验证key
-	TyCommitProofLog        = 203 //提交zk proof
-	TySetVerifierLog        = 204 //设置验证者
-	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
-	TySetFeeLog             = 206
-	TyCommitProofRecordLog  = 207 //提交zk proof
-	TyLogSetTokenSymbol     = 210 //设置电路验证key
-	TyLogSetExodusMode      = 211 //系统设置exodus mode
-
+	TySetVerifyKeyLog          = 202 //设置电路验证key
+	TyCommitProofLog           = 203 //提交zk proof
+	TySetVerifierLog           = 204 //设置验证者
+	TySetEthPriorityQueueId    = 205 //设置 eth上 priority queue id;
+	TySetFeeLog                = 206
+	TyCommitProofRecordLog     = 207 //提交zk proof
+	TyLogContractAssetDeposit  = 208 //tree资产存储到contract
+	TyLogContractAssetWithdraw = 209 //contract 资产withdraw到tree
+	TyLogSetTokenSymbol        = 210 //设置电路验证key
+	TyLogSetExodusMode         = 211 //系统设置exodus mode
 )
 
 const (
@@ -112,9 +115,8 @@ const (
 	Add = int32(0)
 	Sub = int32(1)
 
-	//tree最大归档数目
-	MaxTreeArchiveLevel = 5
-	MaxLeafArchiveSum   = 32 // =2^MaxTreeArchiveLevel
+	MaxDecimalAllow = 18
+	MinDecimalAllow = 4
 )
 
 //Zksync 执行器名称定义
@@ -122,7 +124,6 @@ const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
-const ExecName = Zksync
 
 //配置的系统收交易费账户
 const ZkCfgEthFeeAddr = "ethFeeAddr"
@@ -194,7 +195,6 @@ const (
 	SystemNFTAccountId = 2
 	//SystemTree2ContractAcctId, 汇总从 tree2contract 跨链的资产总额
 	SystemTree2ContractAcctId = 3
-
 	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
 	SystemNFTTokenId = 256 //2^8,
 
@@ -218,7 +218,6 @@ const (
 )
 
 var (
-
 	//定义actionMap
 	actionMap = map[string]int32{
 		//NameNoopAction:           TyNoopAction,
@@ -228,7 +227,7 @@ var (
 		NameTreeToContractAction: TyTreeToContractAction,
 		NameTransferAction:       TyTransferAction,
 		NameTransferToNewAction:  TyTransferToNewAction,
-		NameProxyExitAction:      TyProxyExitAction,
+		NameForceExitAction:      TyProxyExitAction,
 		NameSetPubKeyAction:      TySetPubKeyAction,
 		NameFullExitAction:       TyFullExitAction,
 		NameSwapAction:           TySwapAction,
@@ -243,56 +242,48 @@ var (
 		NameAssetTransfer:        TyAssetTransferAction,
 		NameAssetTransfer2Exec:   TyAssetTransferToExecAction,
 		NameAssetWithdraw:        TyAssetWithdrawAction,
-
-		// spot
-		NameLimitOrderAction:      TyLimitOrderAction,
-		NameRevokeOrderAction:     TyRevokeOrderAction,
-		NameNftOrderAction:        TyNftOrderAction,
-		NameNftTakerOrderAction:   TyNftTakerOrderAction,
-		NameNftOrder2Action:       TyNftOrder2Action,
-		NameNftTakerOrder2Action:  TyNftTakerOrder2Action,
-		NameAssetLimitOrderAction: TyAssetLimitOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
-		TyWithdrawLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
-		TyTransferLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyProxyExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyProxyExitLog"},
-		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
-		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
-		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
-		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
-		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
-		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
-		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
-		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
-		TyCommitProofRecordLog:  {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecord"},
-		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
-		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
-		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
-		TyLogSetTokenSymbol:     {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
-		TyLogSetExodusMode:      {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
+		TyDepositLog:               {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositLog"},
+		TyWithdrawLog:              {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawLog"},
+		TyContractToTreeLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyTreeToContractLog"},
+		TyTransferLog:              {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:         {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferToNewLog"},
+		TyProxyExitLog:             {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyForceExitLog"},
+		TySetPubKeyLog:             {Ty: reflect.TypeOf(SetPubKeyReceipt{}), Name: "TySetPubKeyLog"},
+		TyFullExitLog:              {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyFullExitLog"},
+		TySwapLog:                  {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TySwapLog"},
+		TyFeeLog:                   {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyFeeLog"},
+		TyMintNFTLog:               {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyMintNFTLog"},
+		TyWithdrawNFTLog:           {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawNFTLog"},
+		TyTransferNFTLog:           {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferNFTLog"},
+		TySetVerifyKeyLog:          {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProofLog:           {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TySetVerifierLog:           {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		TySetEthPriorityQueueId:    {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		TySetFeeLog:                {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
+		TyCommitProofRecordLog:     {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecordLog"},
+		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
+		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
+		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
+		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
+	}
 
-		// spot
-		TyLimitOrderLog:    {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
-		TyMarketOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyMarketOrderLog"},
-		TyRevokeOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyRevokeOrderLog"},
-		TyExchangeBindLog:  {Ty: reflect.TypeOf(ReceiptDexBind{}), Name: "TyExchangeBindLog"},
-		TySpotTradeLog:     {Ty: reflect.TypeOf(ReceiptSpotTrade{}), Name: "TySpotTradeLog"},
-		TyNftOrderLog:      {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftOrderLog"},
-		TyNftTakerOrderLog: {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftTakerOrderLog"},
-
-		// dex account
-		TyDexAccountFrozen: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountFrozen"},
-		TyDexAccountActive: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountActive"},
-		TyDexAccountBurn:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountBurn"},
-		TyDexAccountMint:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountMint"},
+	FeeMap = map[int64]string{
+		TyWithdrawAction:       "1000000",
+		TyTransferAction:       "100000",
+		TyTransferToNewAction:  "100000",
+		TyProxyExitAction:      "1000000",
+		TyFullExitAction:       "1000000",
+		TySwapAction:           "100000",
+		TyContractToTreeAction: "10000",
+		TyTreeToContractAction: "10000",
+		TyMintNFTAction:        "100",
+		TyWithdrawNFTAction:    "100",
+		TyTransferNFTAction:    "100",
 	}
 )
 
@@ -307,7 +298,6 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(Zksync, "Enable", 0)
-	SpotInitFork(cfg)
 }
 
 // InitExecutor defines register executor
