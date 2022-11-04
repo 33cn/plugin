@@ -16,7 +16,7 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
-func (r *RollUp) buildCommitData(details []*types.BlockDetail) (*rtypes.BlockBatch, *pt.CommitRollupCrossTx) {
+func (r *RollUp) buildCommitData(details []*types.BlockDetail) (*rtypes.BlockBatch, *pt.CommitRollup) {
 
 	batch := &rtypes.BlockBatch{}
 	batch.BlockHeaders = make([]*types.Header, 0, len(details))
@@ -26,7 +26,7 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail) (*rtypes.BlockBat
 	signs := make([]crypto.Signature, 0, minCommitTxCount)
 	blsDriver := r.val.blsDriver
 
-	crossInfo := &pt.CommitRollupCrossTx{}
+	crossInfo := &pt.CommitRollup{}
 	crossTxHashes := make([][]byte, 0, 8)
 	crossTxRst := big.NewInt(0)
 	for _, detail := range details {
@@ -120,7 +120,7 @@ func (r *RollUp) commit2MainChain(info *commitInfo) error {
 	tx.Sign(types.EncodeSignID(secp256k1.ID, address.GetDefaultAddressID()), r.val.signTxKey)
 	// 提交跨链交易, 构建交易组
 	if len(info.crossTx.TxIndices) > 0 {
-		tx2, err := r.createTx(pt.ParaX, pt.NameCommitCrossTxAction, types.Encode(info.crossTx))
+		tx2, err := r.createTx(pt.ParaX, pt.NameCommitRollupAction, types.Encode(info.crossTx))
 		if err != nil {
 			return errors.New("ErrCreateCommitCrossTx")
 		}

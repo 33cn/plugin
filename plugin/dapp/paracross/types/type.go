@@ -154,6 +154,7 @@ func (p *ParacrossType) GetTypeMap() map[string]int32 {
 		"SelfStageConfig":       ParacrossActionSelfStageConfig,
 		"ParaBindMiner":         ParacrossActionParaBindMiner,
 		"SupervisionNodeConfig": ParacrossActionSupervisionNodeConfig,
+		NameCommitRollupAction:  TyCommitRollup,
 	}
 }
 

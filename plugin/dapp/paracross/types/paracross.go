@@ -59,8 +59,8 @@ const (
 
 // action name
 const (
-	// NameCommitCrossTxAction action name
-	NameCommitCrossTxAction = "CommitRollupCrossTx"
+	// NameCommitRollupAction action name
+	NameCommitRollupAction = "CommitRollupTx"
 )
 
 // action type
@@ -79,7 +79,7 @@ const (
 	ParacrossActionParaBindMiner
 	// ParacrossActionSupervisionNodeConfig
 	ParacrossActionSupervisionNodeConfig
-	TyCommitRollupCrossTx
+	TyCommitRollup
 
 )
 

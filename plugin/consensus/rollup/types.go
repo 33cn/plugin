@@ -21,7 +21,7 @@ type validatorSignMsgSet struct {
 
 type commitInfo struct {
 	cp      *rtypes.CheckPoint
-	crossTx *pt.CommitRollupCrossTx
+	crossTx *pt.CommitRollup
 }
 
 type crossTxInfo struct {
