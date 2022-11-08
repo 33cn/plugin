@@ -530,16 +530,17 @@ func (x *CommitRoundInfo) GetCrossTxResults() string {
 	return ""
 }
 
-type Req struct {
+type ReqGetCommitRound struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ChainTitle string `protobuf:"bytes,1,opt,name=chainTitle,proto3" json:"chainTitle,omitempty"`
+	CommitRound int64  `protobuf:"varint,1,opt,name=commitRound,proto3" json:"commitRound,omitempty"`
+	ChainTitle  string `protobuf:"bytes,2,opt,name=chainTitle,proto3" json:"chainTitle,omitempty"`
 }
 
-func (x *Req) Reset() {
-	*x = Req{}
+func (x *ReqGetCommitRound) Reset() {
+	*x = ReqGetCommitRound{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_rollup_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -547,13 +548,13 @@ func (x *Req) Reset() {
 	}
 }
 
-func (x *Req) String() string {
+func (x *ReqGetCommitRound) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Req) ProtoMessage() {}
+func (*ReqGetCommitRound) ProtoMessage() {}
 
-func (x *Req) ProtoReflect() protoreflect.Message {
+func (x *ReqGetCommitRound) ProtoReflect() protoreflect.Message {
 	mi := &file_rollup_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -565,12 +566,19 @@ func (x *Req) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Req.ProtoReflect.Descriptor instead.
-func (*Req) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReqGetCommitRound.ProtoReflect.Descriptor instead.
+func (*ReqGetCommitRound) Descriptor() ([]byte, []int) {
 	return file_rollup_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *Req) GetChainTitle() string {
+func (x *ReqGetCommitRound) GetCommitRound() int64 {
+	if x != nil {
+		return x.CommitRound
+	}
+	return 0
+}
+
+func (x *ReqGetCommitRound) GetChainTitle() string {
 	if x != nil {
 		return x.ChainTitle
 	}
@@ -756,8 +764,11 @@ var file_rollup_proto_rawDesc = []byte{
 	0x10, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x48, 0x61, 0x73,
 	0x68, 0x12, 0x26, 0x0a, 0x0e, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x52, 0x65, 0x73, 0x75,
 	0x6c, 0x74, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x63, 0x72, 0x6f, 0x73, 0x73,
-	0x54, 0x78, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x25, 0x0a, 0x03, 0x52, 0x65, 0x71,
-	0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x18, 0x01,
+	0x54, 0x78, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x55, 0x0a, 0x11, 0x52, 0x65, 0x71,
+	0x47, 0x65, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x12, 0x20,
+	0x0a, 0x0b, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x03, 0x52, 0x0b, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x52, 0x6f, 0x75, 0x6e, 0x64,
+	0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x18, 0x02,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65,
 	0x22, 0x22, 0x0a, 0x0a, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x14,
 	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76,
@@ -782,16 +793,16 @@ func file_rollup_proto_rawDescGZIP() []byte {
 
 var file_rollup_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_rollup_proto_goTypes = []interface{}{
-	(*RollupAction)(nil),     // 0: types.RollupAction
-	(*BlockBatch)(nil),       // 1: types.BlockBatch
-	(*ValidatorSignMsg)(nil), // 2: types.ValidatorSignMsg
-	(*CheckPoint)(nil),       // 3: types.CheckPoint
-	(*RollupStatus)(nil),     // 4: types.RollupStatus
-	(*CommitRoundInfo)(nil),  // 5: types.CommitRoundInfo
-	(*Req)(nil),              // 6: types.Req
-	(*ChainTitle)(nil),       // 7: types.chainTitle
-	(*ValidatorPubs)(nil),    // 8: types.ValidatorPubs
-	(*types.Header)(nil),     // 9: types.Header
+	(*RollupAction)(nil),      // 0: types.RollupAction
+	(*BlockBatch)(nil),        // 1: types.BlockBatch
+	(*ValidatorSignMsg)(nil),  // 2: types.ValidatorSignMsg
+	(*CheckPoint)(nil),        // 3: types.CheckPoint
+	(*RollupStatus)(nil),      // 4: types.RollupStatus
+	(*CommitRoundInfo)(nil),   // 5: types.CommitRoundInfo
+	(*ReqGetCommitRound)(nil), // 6: types.ReqGetCommitRound
+	(*ChainTitle)(nil),        // 7: types.chainTitle
+	(*ValidatorPubs)(nil),     // 8: types.ValidatorPubs
+	(*types.Header)(nil),      // 9: types.Header
 }
 var file_rollup_proto_depIdxs = []int32{
 	3, // 0: types.RollupAction.commit:type_name -> types.CheckPoint
@@ -883,7 +894,7 @@ func file_rollup_proto_init() {
 			}
 		}
 		file_rollup_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Req); i {
+			switch v := v.(*ReqGetCommitRound); i {
 			case 0:
 				return &v.state
 			case 1:

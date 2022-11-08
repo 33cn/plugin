@@ -64,8 +64,9 @@ message CommitRoundInfo {
     string crossTxResults   = 6;
 }
 
-message Req {
-    string chainTitle = 1;
+message ReqGetCommitRound {
+    int64  commitRound = 1;
+    string chainTitle  = 2;
 }
 
 message chainTitle {

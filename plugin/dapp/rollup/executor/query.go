@@ -23,3 +23,12 @@ func (r *rollup) Query_GetRollupStatus(title *rtypes.ChainTitle) (types.Message,
 	}
 	return r.getRollupStatus(title.GetValue())
 }
+
+func (r *rollup) Query_GetCommitRoundInfo(req *rtypes.ReqGetCommitRound) (types.Message, error) {
+
+	if req.GetChainTitle() == "" {
+		return nil, errors.Wrap(types.ErrInvalidParam, "emptyTitle")
+	}
+
+	return r.getRoundInfo(req.GetChainTitle(), req.GetCommitRound())
+}
