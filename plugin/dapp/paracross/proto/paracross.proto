@@ -207,8 +207,9 @@ message crossTxIndex {
 
 message CommitRollup {
 
-    int64    commitRound            = 1;
-    repeated crossTxIndex txIndices = 2;
+    string   chainTitle             = 1;
+    int64    commitRound            = 2;
+    repeated crossTxIndex txIndices = 3;
 }
 
 message ParacrossAction {

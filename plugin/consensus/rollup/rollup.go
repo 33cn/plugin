@@ -153,7 +153,7 @@ func (r *RollUp) handleBuildBatch() {
 			Batch:               blkBatch,
 			CrossTxSyncedHeight: r.cross.refreshSyncedHeight(),
 		}
-
+		crossInfo.ChainTitle = r.chainCfg.GetTitle()
 		crossInfo.CommitRound = r.nextBuildRound
 		commit := &commitInfo{
 			cp:      cp,
