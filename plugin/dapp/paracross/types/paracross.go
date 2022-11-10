@@ -55,6 +55,7 @@ const (
 	TyLogParaSupervisionNodeConfig           = 680
 	TyLogParaSupervisionNodeGroupAddrsUpdate = 681
 	TyLogParaSupervisionNodeStatusUpdate     = 682
+	TyLogParaCommitRollup = 683
 )
 
 // action name

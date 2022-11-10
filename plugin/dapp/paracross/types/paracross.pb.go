@@ -1997,6 +1997,85 @@ func (x *CommitRollup) GetTxIndices() []*CrossTxIndex {
 	return nil
 }
 
+type CommitRollupLog struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	CommitRound      int64    `protobuf:"varint,1,opt,name=commitRound,proto3" json:"commitRound,omitempty"`
+	ChainTitle       string   `protobuf:"bytes,2,opt,name=chainTitle,proto3" json:"chainTitle,omitempty"`
+	CrossTxResults   string   `protobuf:"bytes,3,opt,name=crossTxResults,proto3" json:"crossTxResults,omitempty"`
+	CrossTxCheckHash string   `protobuf:"bytes,4,opt,name=crossTxCheckHash,proto3" json:"crossTxCheckHash,omitempty"`
+	CrossTxHashes    []string `protobuf:"bytes,5,rep,name=crossTxHashes,proto3" json:"crossTxHashes,omitempty"`
+}
+
+func (x *CommitRollupLog) Reset() {
+	*x = CommitRollupLog{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_paracross_proto_msgTypes[28]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CommitRollupLog) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitRollupLog) ProtoMessage() {}
+
+func (x *CommitRollupLog) ProtoReflect() protoreflect.Message {
+	mi := &file_paracross_proto_msgTypes[28]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitRollupLog.ProtoReflect.Descriptor instead.
+func (*CommitRollupLog) Descriptor() ([]byte, []int) {
+	return file_paracross_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *CommitRollupLog) GetCommitRound() int64 {
+	if x != nil {
+		return x.CommitRound
+	}
+	return 0
+}
+
+func (x *CommitRollupLog) GetChainTitle() string {
+	if x != nil {
+		return x.ChainTitle
+	}
+	return ""
+}
+
+func (x *CommitRollupLog) GetCrossTxResults() string {
+	if x != nil {
+		return x.CrossTxResults
+	}
+	return ""
+}
+
+func (x *CommitRollupLog) GetCrossTxCheckHash() string {
+	if x != nil {
+		return x.CrossTxCheckHash
+	}
+	return ""
+}
+
+func (x *CommitRollupLog) GetCrossTxHashes() []string {
+	if x != nil {
+		return x.CrossTxHashes
+	}
+	return nil
+}
+
 type ParacrossAction struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2024,7 +2103,7 @@ type ParacrossAction struct {
 func (x *ParacrossAction) Reset() {
 	*x = ParacrossAction{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[28]
+		mi := &file_paracross_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2037,7 +2116,7 @@ func (x *ParacrossAction) String() string {
 func (*ParacrossAction) ProtoMessage() {}
 
 func (x *ParacrossAction) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[28]
+	mi := &file_paracross_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2050,7 +2129,7 @@ func (x *ParacrossAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParacrossAction.ProtoReflect.Descriptor instead.
 func (*ParacrossAction) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{28}
+	return file_paracross_proto_rawDescGZIP(), []int{29}
 }
 
 func (m *ParacrossAction) GetValue() isParacrossAction_Value {
@@ -2268,7 +2347,7 @@ type ReceiptParacrossCommit struct {
 func (x *ReceiptParacrossCommit) Reset() {
 	*x = ReceiptParacrossCommit{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[29]
+		mi := &file_paracross_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2281,7 +2360,7 @@ func (x *ReceiptParacrossCommit) String() string {
 func (*ReceiptParacrossCommit) ProtoMessage() {}
 
 func (x *ReceiptParacrossCommit) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[29]
+	mi := &file_paracross_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2294,7 +2373,7 @@ func (x *ReceiptParacrossCommit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReceiptParacrossCommit.ProtoReflect.Descriptor instead.
 func (*ReceiptParacrossCommit) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{29}
+	return file_paracross_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ReceiptParacrossCommit) GetAddr() string {
@@ -2336,7 +2415,7 @@ type ReceiptParacrossMiner struct {
 func (x *ReceiptParacrossMiner) Reset() {
 	*x = ReceiptParacrossMiner{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[30]
+		mi := &file_paracross_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2349,7 +2428,7 @@ func (x *ReceiptParacrossMiner) String() string {
 func (*ReceiptParacrossMiner) ProtoMessage() {}
 
 func (x *ReceiptParacrossMiner) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[30]
+	mi := &file_paracross_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2362,7 +2441,7 @@ func (x *ReceiptParacrossMiner) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReceiptParacrossMiner.ProtoReflect.Descriptor instead.
 func (*ReceiptParacrossMiner) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{30}
+	return file_paracross_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ReceiptParacrossMiner) GetStatus() *ParacrossNodeStatus {
@@ -2400,7 +2479,7 @@ type ReceiptParacrossDone struct {
 func (x *ReceiptParacrossDone) Reset() {
 	*x = ReceiptParacrossDone{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[31]
+		mi := &file_paracross_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2413,7 +2492,7 @@ func (x *ReceiptParacrossDone) String() string {
 func (*ReceiptParacrossDone) ProtoMessage() {}
 
 func (x *ReceiptParacrossDone) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[31]
+	mi := &file_paracross_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2426,7 +2505,7 @@ func (x *ReceiptParacrossDone) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReceiptParacrossDone.ProtoReflect.Descriptor instead.
 func (*ReceiptParacrossDone) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{31}
+	return file_paracross_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ReceiptParacrossDone) GetTotalNodes() int32 {
@@ -2567,7 +2646,7 @@ type ReceiptParacrossRecord struct {
 func (x *ReceiptParacrossRecord) Reset() {
 	*x = ReceiptParacrossRecord{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[32]
+		mi := &file_paracross_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2580,7 +2659,7 @@ func (x *ReceiptParacrossRecord) String() string {
 func (*ReceiptParacrossRecord) ProtoMessage() {}
 
 func (x *ReceiptParacrossRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[32]
+	mi := &file_paracross_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2593,7 +2672,7 @@ func (x *ReceiptParacrossRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReceiptParacrossRecord.ProtoReflect.Descriptor instead.
 func (*ReceiptParacrossRecord) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{32}
+	return file_paracross_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ReceiptParacrossRecord) GetAddr() string {
@@ -2623,7 +2702,7 @@ type ParacrossTx struct {
 func (x *ParacrossTx) Reset() {
 	*x = ParacrossTx{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[33]
+		mi := &file_paracross_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2636,7 +2715,7 @@ func (x *ParacrossTx) String() string {
 func (*ParacrossTx) ProtoMessage() {}
 
 func (x *ParacrossTx) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[33]
+	mi := &file_paracross_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2649,7 +2728,7 @@ func (x *ParacrossTx) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParacrossTx.ProtoReflect.Descriptor instead.
 func (*ParacrossTx) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{33}
+	return file_paracross_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ParacrossTx) GetTxHash() string {
@@ -2672,7 +2751,7 @@ type ReqParacrossTitleHeight struct {
 func (x *ReqParacrossTitleHeight) Reset() {
 	*x = ReqParacrossTitleHeight{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[34]
+		mi := &file_paracross_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2685,7 +2764,7 @@ func (x *ReqParacrossTitleHeight) String() string {
 func (*ReqParacrossTitleHeight) ProtoMessage() {}
 
 func (x *ReqParacrossTitleHeight) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[34]
+	mi := &file_paracross_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2698,7 +2777,7 @@ func (x *ReqParacrossTitleHeight) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReqParacrossTitleHeight.ProtoReflect.Descriptor instead.
 func (*ReqParacrossTitleHeight) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{34}
+	return file_paracross_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ReqParacrossTitleHeight) GetTitle() string {
@@ -2735,7 +2814,7 @@ type RespParacrossDone struct {
 func (x *RespParacrossDone) Reset() {
 	*x = RespParacrossDone{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[35]
+		mi := &file_paracross_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2748,7 +2827,7 @@ func (x *RespParacrossDone) String() string {
 func (*RespParacrossDone) ProtoMessage() {}
 
 func (x *RespParacrossDone) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[35]
+	mi := &file_paracross_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2761,7 +2840,7 @@ func (x *RespParacrossDone) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespParacrossDone.ProtoReflect.Descriptor instead.
 func (*RespParacrossDone) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{35}
+	return file_paracross_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *RespParacrossDone) GetTotalNodes() int32 {
@@ -2838,7 +2917,7 @@ type RespParacrossTitles struct {
 func (x *RespParacrossTitles) Reset() {
 	*x = RespParacrossTitles{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[36]
+		mi := &file_paracross_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2851,7 +2930,7 @@ func (x *RespParacrossTitles) String() string {
 func (*RespParacrossTitles) ProtoMessage() {}
 
 func (x *RespParacrossTitles) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[36]
+	mi := &file_paracross_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2864,7 +2943,7 @@ func (x *RespParacrossTitles) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespParacrossTitles.ProtoReflect.Descriptor instead.
 func (*RespParacrossTitles) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{36}
+	return file_paracross_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *RespParacrossTitles) GetTitles() []*RespParacrossDone {
@@ -2886,7 +2965,7 @@ type ReqParacrossTitleHash struct {
 func (x *ReqParacrossTitleHash) Reset() {
 	*x = ReqParacrossTitleHash{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[37]
+		mi := &file_paracross_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2899,7 +2978,7 @@ func (x *ReqParacrossTitleHash) String() string {
 func (*ReqParacrossTitleHash) ProtoMessage() {}
 
 func (x *ReqParacrossTitleHash) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[37]
+	mi := &file_paracross_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2912,7 +2991,7 @@ func (x *ReqParacrossTitleHash) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReqParacrossTitleHash.ProtoReflect.Descriptor instead.
 func (*ReqParacrossTitleHash) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{37}
+	return file_paracross_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ReqParacrossTitleHash) GetTitle() string {
@@ -2956,7 +3035,7 @@ type ParacrossAsset struct {
 func (x *ParacrossAsset) Reset() {
 	*x = ParacrossAsset{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_paracross_proto_msgTypes[38]
+		mi := &file_paracross_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2969,7 +3048,7 @@ func (x *ParacrossAsset) String() string {
 func (*ParacrossAsset) ProtoMessage() {}
 
 func (x *ParacrossAsset) ProtoReflect() protoreflect.Message {
-	mi := &file_paracross_proto_msgTypes[38]
+	mi := &file_paracross_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2982,7 +3061,7 @@ func (x *ParacrossAsset) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParacrossAsset.ProtoReflect.Descriptor instead.
 func (*ParacrossAsset) Descriptor() ([]byte, []int) {
-	return file_paracross_proto_rawDescGZIP(), []int{38}
+	return file_paracross_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ParacrossAsset) GetFrom() string {
@@ -3342,7 +3421,20 @@ var file_paracross_proto_rawDesc = []byte{
 	0x6e, 0x64, 0x12, 0x31, 0x0a, 0x09, 0x74, 0x78, 0x49, 0x6e, 0x64, 0x69, 0x63, 0x65, 0x73, 0x18,
 	0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x63, 0x72,
 	0x6f, 0x73, 0x73, 0x54, 0x78, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x09, 0x74, 0x78, 0x49, 0x6e,
-	0x64, 0x69, 0x63, 0x65, 0x73, 0x22, 0xac, 0x07, 0x0a, 0x0f, 0x50, 0x61, 0x72, 0x61, 0x63, 0x72,
+	0x64, 0x69, 0x63, 0x65, 0x73, 0x22, 0xcd, 0x01, 0x0a, 0x0f, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74,
+	0x52, 0x6f, 0x6c, 0x6c, 0x75, 0x70, 0x4c, 0x6f, 0x67, 0x12, 0x20, 0x0a, 0x0b, 0x63, 0x6f, 0x6d,
+	0x6d, 0x69, 0x74, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b,
+	0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0a, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x26, 0x0a, 0x0e, 0x63,
+	0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0e, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x52, 0x65, 0x73, 0x75,
+	0x6c, 0x74, 0x73, 0x12, 0x2a, 0x0a, 0x10, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x43, 0x68,
+	0x65, 0x63, 0x6b, 0x48, 0x61, 0x73, 0x68, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x63,
+	0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x48, 0x61, 0x73, 0x68, 0x12,
+	0x24, 0x0a, 0x0d, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x48, 0x61, 0x73, 0x68, 0x65, 0x73,
+	0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x54, 0x78, 0x48,
+	0x61, 0x73, 0x68, 0x65, 0x73, 0x22, 0xac, 0x07, 0x0a, 0x0f, 0x50, 0x61, 0x72, 0x61, 0x63, 0x72,
 	0x6f, 0x73, 0x73, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x36, 0x0a, 0x06, 0x63, 0x6f, 0x6d,
 	0x6d, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x74, 0x79, 0x70, 0x65,
 	0x73, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x63, 0x72, 0x6f, 0x73, 0x73, 0x43, 0x6f, 0x6d, 0x6d, 0x69,
@@ -3543,7 +3635,7 @@ func file_paracross_proto_rawDescGZIP() []byte {
 	return file_paracross_proto_rawDescData
 }
 
-var file_paracross_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
+var file_paracross_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_paracross_proto_goTypes = []interface{}{
 	(*ParacrossStatusDetails)(nil),       // 0: types.ParacrossStatusDetails
 	(*ParacrossStatusBlockDetails)(nil),  // 1: types.ParacrossStatusBlockDetails
@@ -3573,26 +3665,27 @@ var file_paracross_proto_goTypes = []interface{}{
 	(*CrossAssetTransfer)(nil),           // 25: types.CrossAssetTransfer
 	(*CrossTxIndex)(nil),                 // 26: types.crossTxIndex
 	(*CommitRollup)(nil),                 // 27: types.CommitRollup
-	(*ParacrossAction)(nil),              // 28: types.ParacrossAction
-	(*ReceiptParacrossCommit)(nil),       // 29: types.ReceiptParacrossCommit
-	(*ReceiptParacrossMiner)(nil),        // 30: types.ReceiptParacrossMiner
-	(*ReceiptParacrossDone)(nil),         // 31: types.ReceiptParacrossDone
-	(*ReceiptParacrossRecord)(nil),       // 32: types.ReceiptParacrossRecord
-	(*ParacrossTx)(nil),                  // 33: types.ParacrossTx
-	(*ReqParacrossTitleHeight)(nil),      // 34: types.ReqParacrossTitleHeight
-	(*RespParacrossDone)(nil),            // 35: types.RespParacrossDone
-	(*RespParacrossTitles)(nil),          // 36: types.RespParacrossTitles
-	(*ReqParacrossTitleHash)(nil),        // 37: types.ReqParacrossTitleHash
-	(*ParacrossAsset)(nil),               // 38: types.ParacrossAsset
-	(*ParaNodeVoteDetail)(nil),           // 39: types.ParaNodeVoteDetail
-	(*types.AssetsTransfer)(nil),         // 40: types.AssetsTransfer
-	(*types.AssetsWithdraw)(nil),         // 41: types.AssetsWithdraw
-	(*types.AssetsTransferToExec)(nil),   // 42: types.AssetsTransferToExec
-	(*ParaNodeAddrConfig)(nil),           // 43: types.ParaNodeAddrConfig
-	(*ParaNodeGroupConfig)(nil),          // 44: types.ParaNodeGroupConfig
-	(*ParaBindMinerCmd)(nil),             // 45: types.ParaBindMinerCmd
-	(*types.ReqNil)(nil),                 // 46: types.ReqNil
-	(*types.IsCaughtUp)(nil),             // 47: types.IsCaughtUp
+	(*CommitRollupLog)(nil),              // 28: types.CommitRollupLog
+	(*ParacrossAction)(nil),              // 29: types.ParacrossAction
+	(*ReceiptParacrossCommit)(nil),       // 30: types.ReceiptParacrossCommit
+	(*ReceiptParacrossMiner)(nil),        // 31: types.ReceiptParacrossMiner
+	(*ReceiptParacrossDone)(nil),         // 32: types.ReceiptParacrossDone
+	(*ReceiptParacrossRecord)(nil),       // 33: types.ReceiptParacrossRecord
+	(*ParacrossTx)(nil),                  // 34: types.ParacrossTx
+	(*ReqParacrossTitleHeight)(nil),      // 35: types.ReqParacrossTitleHeight
+	(*RespParacrossDone)(nil),            // 36: types.RespParacrossDone
+	(*RespParacrossTitles)(nil),          // 37: types.RespParacrossTitles
+	(*ReqParacrossTitleHash)(nil),        // 38: types.ReqParacrossTitleHash
+	(*ParacrossAsset)(nil),               // 39: types.ParacrossAsset
+	(*ParaNodeVoteDetail)(nil),           // 40: types.ParaNodeVoteDetail
+	(*types.AssetsTransfer)(nil),         // 41: types.AssetsTransfer
+	(*types.AssetsWithdraw)(nil),         // 42: types.AssetsWithdraw
+	(*types.AssetsTransferToExec)(nil),   // 43: types.AssetsTransferToExec
+	(*ParaNodeAddrConfig)(nil),           // 44: types.ParaNodeAddrConfig
+	(*ParaNodeGroupConfig)(nil),          // 45: types.ParaNodeGroupConfig
+	(*ParaBindMinerCmd)(nil),             // 46: types.ParaBindMinerCmd
+	(*types.ReqNil)(nil),                 // 47: types.ReqNil
+	(*types.IsCaughtUp)(nil),             // 48: types.IsCaughtUp
 }
 var file_paracross_proto_depIdxs = []int32{
 	0,  // 0: types.ParacrossHeightStatus.details:type_name -> types.ParacrossStatusDetails
@@ -3601,7 +3694,7 @@ var file_paracross_proto_depIdxs = []int32{
 	6,  // 3: types.ParaBlock2MainInfo.items:type_name -> types.ParaBlock2MainMap
 	10, // 4: types.SelfConsensStages.items:type_name -> types.SelfConsensStage
 	10, // 5: types.SelfConsensStageInfo.stage:type_name -> types.SelfConsensStage
-	39, // 6: types.SelfConsensStageInfo.votes:type_name -> types.ParaNodeVoteDetail
+	40, // 6: types.SelfConsensStageInfo.votes:type_name -> types.ParaNodeVoteDetail
 	11, // 7: types.LocalSelfConsStageInfo.stage:type_name -> types.SelfConsensStageInfo
 	10, // 8: types.ParaStageConfig.stage:type_name -> types.SelfConsensStage
 	13, // 9: types.ParaStageConfig.vote:type_name -> types.ConfigVoteInfo
@@ -3618,26 +3711,26 @@ var file_paracross_proto_depIdxs = []int32{
 	26, // 20: types.CommitRollup.txIndices:type_name -> types.crossTxIndex
 	22, // 21: types.ParacrossAction.commit:type_name -> types.ParacrossCommitAction
 	23, // 22: types.ParacrossAction.miner:type_name -> types.ParacrossMinerAction
-	40, // 23: types.ParacrossAction.assetTransfer:type_name -> types.AssetsTransfer
-	41, // 24: types.ParacrossAction.assetWithdraw:type_name -> types.AssetsWithdraw
-	40, // 25: types.ParacrossAction.transfer:type_name -> types.AssetsTransfer
-	41, // 26: types.ParacrossAction.withdraw:type_name -> types.AssetsWithdraw
-	42, // 27: types.ParacrossAction.transferToExec:type_name -> types.AssetsTransferToExec
-	43, // 28: types.ParacrossAction.nodeConfig:type_name -> types.ParaNodeAddrConfig
-	44, // 29: types.ParacrossAction.nodeGroupConfig:type_name -> types.ParaNodeGroupConfig
+	41, // 23: types.ParacrossAction.assetTransfer:type_name -> types.AssetsTransfer
+	42, // 24: types.ParacrossAction.assetWithdraw:type_name -> types.AssetsWithdraw
+	41, // 25: types.ParacrossAction.transfer:type_name -> types.AssetsTransfer
+	42, // 26: types.ParacrossAction.withdraw:type_name -> types.AssetsWithdraw
+	43, // 27: types.ParacrossAction.transferToExec:type_name -> types.AssetsTransferToExec
+	44, // 28: types.ParacrossAction.nodeConfig:type_name -> types.ParaNodeAddrConfig
+	45, // 29: types.ParacrossAction.nodeGroupConfig:type_name -> types.ParaNodeGroupConfig
 	15, // 30: types.ParacrossAction.selfStageConfig:type_name -> types.ParaStageConfig
 	25, // 31: types.ParacrossAction.crossAssetTransfer:type_name -> types.CrossAssetTransfer
-	45, // 32: types.ParacrossAction.paraBindMiner:type_name -> types.ParaBindMinerCmd
-	44, // 33: types.ParacrossAction.supervisionNodeConfig:type_name -> types.ParaNodeGroupConfig
+	46, // 32: types.ParacrossAction.paraBindMiner:type_name -> types.ParaBindMinerCmd
+	45, // 33: types.ParacrossAction.supervisionNodeConfig:type_name -> types.ParaNodeGroupConfig
 	27, // 34: types.ParacrossAction.commitRollup:type_name -> types.CommitRollup
 	8,  // 35: types.ReceiptParacrossCommit.status:type_name -> types.ParacrossNodeStatus
 	2,  // 36: types.ReceiptParacrossCommit.prev:type_name -> types.ParacrossHeightStatus
 	2,  // 37: types.ReceiptParacrossCommit.current:type_name -> types.ParacrossHeightStatus
 	8,  // 38: types.ReceiptParacrossMiner.status:type_name -> types.ParacrossNodeStatus
 	8,  // 39: types.ReceiptParacrossRecord.status:type_name -> types.ParacrossNodeStatus
-	35, // 40: types.RespParacrossTitles.titles:type_name -> types.RespParacrossDone
-	46, // 41: types.paracross.IsSync:input_type -> types.ReqNil
-	47, // 42: types.paracross.IsSync:output_type -> types.IsCaughtUp
+	36, // 40: types.RespParacrossTitles.titles:type_name -> types.RespParacrossDone
+	47, // 41: types.paracross.IsSync:input_type -> types.ReqNil
+	48, // 42: types.paracross.IsSync:output_type -> types.IsCaughtUp
 	42, // [42:43] is the sub-list for method output_type
 	41, // [41:42] is the sub-list for method input_type
 	41, // [41:41] is the sub-list for extension type_name
@@ -3990,7 +4083,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ParacrossAction); i {
+			switch v := v.(*CommitRollupLog); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4002,7 +4095,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReceiptParacrossCommit); i {
+			switch v := v.(*ParacrossAction); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4014,7 +4107,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReceiptParacrossMiner); i {
+			switch v := v.(*ReceiptParacrossCommit); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4026,7 +4119,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReceiptParacrossDone); i {
+			switch v := v.(*ReceiptParacrossMiner); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4038,7 +4131,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReceiptParacrossRecord); i {
+			switch v := v.(*ReceiptParacrossDone); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4050,7 +4143,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ParacrossTx); i {
+			switch v := v.(*ReceiptParacrossRecord); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4062,7 +4155,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReqParacrossTitleHeight); i {
+			switch v := v.(*ParacrossTx); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4074,7 +4167,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RespParacrossDone); i {
+			switch v := v.(*ReqParacrossTitleHeight); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4086,7 +4179,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RespParacrossTitles); i {
+			switch v := v.(*RespParacrossDone); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4098,7 +4191,7 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReqParacrossTitleHash); i {
+			switch v := v.(*RespParacrossTitles); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4110,6 +4203,18 @@ func file_paracross_proto_init() {
 			}
 		}
 		file_paracross_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReqParacrossTitleHash); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_paracross_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ParacrossAsset); i {
 			case 0:
 				return &v.state
@@ -4127,7 +4232,7 @@ func file_paracross_proto_init() {
 		(*ParaStageConfig_Vote)(nil),
 		(*ParaStageConfig_Cancel)(nil),
 	}
-	file_paracross_proto_msgTypes[28].OneofWrappers = []interface{}{
+	file_paracross_proto_msgTypes[29].OneofWrappers = []interface{}{
 		(*ParacrossAction_Commit)(nil),
 		(*ParacrossAction_Miner)(nil),
 		(*ParacrossAction_AssetTransfer)(nil),
@@ -4149,7 +4254,7 @@ func file_paracross_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_paracross_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   39,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

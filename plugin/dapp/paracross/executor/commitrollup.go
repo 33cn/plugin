@@ -1,7 +1,11 @@
 package executor
 
 import (
+	"encoding/hex"
 	"errors"
+
+	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -10,24 +14,67 @@ import (
 )
 
 //Exec_CommitRollup exec commit rollup
-func (e *Paracross) Exec_CommitRollup(payload *pt.CommitRollup, tx *types.Transaction, index int) (*types.Receipt, error) {
-	a := newAction(e, tx)
-	return a.commitRollup(payload)
+func (p *Paracross) Exec_CommitRollup(commit *pt.CommitRollup, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(p, tx)
+	return a.commitRollup(commit)
+}
+
+//当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
+func (p *Paracross) setAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
+
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = p.AddRollbackKV(tx, tx.Execer, kv)
+	return dbSet
 }
 
 //ExecLocal_CommitRollup exec local commit rollup
-func (e *Paracross) ExecLocal_CommitRollup(payload *pt.CommitRollup, tx *types.Transaction,
+func (p *Paracross) ExecLocal_CommitRollup(commit *pt.CommitRollup, tx *types.Transaction,
 	receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 
-	set := &types.LocalDBSet{}
-	return set, nil
+	dbSet := &types.LocalDBSet{}
+
+	rollupLog := &pt.CommitRollupLog{}
+	err := types.Decode(receiptData.Logs[0].Log, rollupLog)
+	if err != nil {
+		clog.Error("ExecLocal_CommitRollup", "commitRound", commit.GetCommitRound(),
+			"txHash", hex.EncodeToString(tx.Hash()), "decode err", err)
+		return nil, types.ErrDecode
+	}
+
+	crossTxHashes, crossTxs, err := getRollupCrossTxs(p.GetAPI(), commit.GetTxIndices())
+
+	if err != nil {
+		clog.Error("ExecLocal_CommitRollup", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
+		return nil, ErrGetRollupCrossTx
+	}
+	crossTxResults, _ := common.FromHex(rollupLog.CrossTxResults)
+	for i, crossTx := range crossTxs {
+		execOK := util.BitMapBit(crossTxResults, uint32(i))
+		paraHeight := commit.GetTxIndices()[i].BlockHeight
+		set, err := p.updateLocalParaTx(commit.GetChainTitle(), paraHeight, crossTx, execOK, false)
+		if err != nil {
+			clog.Error("ExecLocal_CommitRollup", "title", commit.GetChainTitle(), "height", paraHeight,
+				"txIndex", i, "txHash", hex.EncodeToString(crossTxHashes[i]),
+				"execOK", execOK, "err", err)
+			return nil, err
+		}
+
+		dbSet.KV = append(dbSet.KV, set.KV...)
+	}
+
+	return p.setAutoRollBack(tx, dbSet.KV), nil
 }
 
 //ExecDelLocal_CommitRollup exec local commit rollup
-func (e *Paracross) ExecDelLocal_CommitRollup(payload *pt.CommitRollup, tx *types.Transaction,
-	receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	set := &types.LocalDBSet{}
-	return set, nil
+func (p *Paracross) ExecDelLocal_CommitRollup(_ *pt.CommitRollup, tx *types.Transaction,
+	_ *types.ReceiptData, _ int) (*types.LocalDBSet, error) {
+	kvs, err := p.DelRollbackKV(tx, tx.Execer)
+	if err != nil {
+		return nil, err
+	}
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = append(dbSet.KV, kvs...)
+	return dbSet, nil
 }
 
 func (a *action) getRollupStatus(title string) (*rtypes.RollupStatus, error) {
@@ -64,7 +111,7 @@ func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
 	if a.api.GetConfig().IsPara() {
 		return nil, ErrInvalidChain
 	}
-
+	receipt := &types.Receipt{Ty: types.ExecOk}
 	status, err := a.getRollupStatus(commit.GetChainTitle())
 
 	if err != nil || status.CommitRound != commit.GetCommitRound() {
@@ -74,13 +121,13 @@ func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
 		return nil, ErrInvalidCommitRound
 	}
 
-	commitRound, err := a.getRollupCommitRound(commit.GetChainTitle(), commit.GetCommitRound())
+	roundInfo, err := a.getRollupCommitRound(commit.GetChainTitle(), commit.GetCommitRound())
 	if err != nil {
 		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(), "getRollupCommitRound err", err)
 		return nil, ErrGetRollupCommitRound
 	}
 
-	crossTxHashes, crossTxs, err := a.getRollupCrossTxs(commit.GetTxIndices())
+	crossTxHashes, crossTxs, err := getRollupCrossTxs(a.api, commit.GetTxIndices())
 
 	if err != nil {
 		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
@@ -89,9 +136,9 @@ func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
 
 	checkHash := common.ToHex(CalcTxHashsHash(crossTxHashes))
 
-	if commitRound.CrossTxCheckHash != checkHash {
+	if roundInfo.CrossTxCheckHash != checkHash {
 		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(),
-			"calcHash", checkHash, "commitHash", commitRound.CrossTxCheckHash)
+			"calcHash", checkHash, "commitHash", roundInfo.CrossTxCheckHash)
 
 		for i, hash := range crossTxHashes {
 			clog.Error("commitRollup cross tx info", "index", commit.GetTxIndices()[i].String(), "txhash", common.ToHex(hash))
@@ -99,24 +146,40 @@ func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
 		return nil, ErrCrossTxCheckHash
 	}
 
-	crossTxResults, _ := common.FromHex(commitRound.CrossTxResults)
+	crossTxResults, _ := common.FromHex(roundInfo.CrossTxResults)
 
-	receipt, err := a.execCrossTxs(commit.GetChainTitle(), commit.GetCommitRound(), crossTxs, crossTxResults)
+	rollupLog := &pt.CommitRollupLog{
+		CommitRound:      commit.GetCommitRound(),
+		ChainTitle:       commit.GetChainTitle(),
+		CrossTxCheckHash: checkHash,
+		CrossTxResults:   roundInfo.CrossTxResults,
+		CrossTxHashes:    make([]string, 0, len(crossTxs)),
+	}
+	for _, tx := range crossTxs {
+		rollupLog.CrossTxHashes = append(rollupLog.CrossTxHashes, hex.EncodeToString(tx.Hash()))
+	}
+
+	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
+		Ty:  pt.TyLogParaCommitRollup,
+		Log: types.Encode(rollupLog),
+	})
+
+	rep, err := a.execCrossTxs(commit.GetChainTitle(), commit.GetCommitRound(), crossTxs, crossTxResults)
 	if err != nil {
 
 		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(), "execCrossTxs err", err)
 		return nil, err
 	}
-	receipt.Ty = types.ExecOk
-	return receipt, nil
+
+	return mergeReceipt(receipt, rep), nil
 }
 
-func (a *action) getRollupCrossTxs(idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
+func getRollupCrossTxs(api client.QueueProtocolAPI, idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
 
 	blkCrossTxCache := make(map[int64][]*types.Transaction, len(idxArr)/2)
 	crossTxs := make([]*types.Transaction, 0, len(idxArr))
 	crossTxHashes := make([][]byte, 0, len(idxArr))
-	cfg := a.api.GetConfig()
+	cfg := api.GetConfig()
 	for _, txIdx := range idxArr {
 
 		// first get from cache
@@ -124,12 +187,12 @@ func (a *action) getRollupCrossTxs(idxArr []*pt.CrossTxIndex) ([][]byte, []*type
 		if !ok {
 
 			// get block from blockchain
-			detail, err := getBlockByHeight(a.api, txIdx.BlockHeight)
+			detail, err := getBlockByHeight(api, txIdx.BlockHeight)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			blkCrossTxs = FilterParaCrossTxs(FilterTxsForPara(a.api.GetConfig(), detail.FilterParaTxsByTitle(cfg, cfg.GetTitle())))
+			blkCrossTxs = FilterParaCrossTxs(FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, cfg.GetTitle())))
 			blkCrossTxCache[txIdx.BlockHeight] = blkCrossTxs
 		}
 
@@ -140,5 +203,4 @@ func (a *action) getRollupCrossTxs(idxArr []*pt.CrossTxIndex) ([][]byte, []*type
 	}
 
 	return crossTxHashes, crossTxs, nil
-
 }
