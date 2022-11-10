@@ -1499,15 +1499,6 @@ func getCrossTxs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([
 	return paraCrossTxs, rst, nil
 }
 
-func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
-	txs, crossRst, err := getCrossTxs(api, status)
-	var crossTxHashs [][]byte
-	for _, tx := range txs {
-		crossTxHashs = append(crossTxHashs, tx.Hash())
-	}
-	return crossTxHashs, crossRst, err
-}
-
 func (a *action) execCrossTxs(title string, height int64, crossTxs []*types.Transaction, crossTxResult []byte) (*types.Receipt, error) {
 	var receipt types.Receipt
 

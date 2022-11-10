@@ -88,12 +88,12 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 	}
 
 	commit := payload.GetCommit()
-	crossTxHashs, crossTxResult, err := getCrossTxHashs(c.GetAPI(), commit.Status)
+	crossTxs, crossTxResults, err := getCrossTxs(c.GetAPI(), commit.Status)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.udpateLocalParaTxs(commit.Status.Title, commit.Status.Height, crossTxHashs, crossTxResult, isDel)
+	return c.updateLocalParaTxs(commit.Status.Title, commit.Status.Height, crossTxs, crossTxResults, isDel)
 
 }
 
@@ -108,86 +108,96 @@ func (c *Paracross) saveLocalParaTxsFork(commitDone *pt.ReceiptParacrossDone, is
 		TxResult:        commitDone.TxResult,
 	}
 
-	crossTxHashs, crossTxResult, err := getCrossTxHashs(c.GetAPI(), status)
+	crossTxs, crossTxResults, err := getCrossTxs(c.GetAPI(), status)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.udpateLocalParaTxs(commitDone.Title, commitDone.Height, crossTxHashs, crossTxResult, isDel)
+	return c.updateLocalParaTxs(commitDone.Title, commitDone.Height, crossTxs, crossTxResults, isDel)
 
 }
 
-func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, crossTxHashs [][]byte, crossTxResult []byte, isDel bool) (*types.LocalDBSet, error) {
-	var set types.LocalDBSet
+func (c *Paracross) updateLocalParaTxs(paraTitle string, paraHeight int64, crossTxs []*types.Transaction,
+	crossTxResults []byte, isDel bool) (*types.LocalDBSet, error) {
 
-	if len(crossTxHashs) == 0 {
-		return &set, nil
+	dbSet := &types.LocalDBSet{}
+	if len(crossTxs) == 0 {
+		return dbSet, nil
 	}
 
-	for i := 0; i < len(crossTxHashs); i++ {
-		success := util.BitMapBit(crossTxResult, uint32(i))
+	for i, tx := range crossTxs {
 
-		paraTx, err := GetTx(c.GetAPI(), crossTxHashs[i])
+		execOK := util.BitMapBit(crossTxResults, uint32(i))
+		set, err := c.updateLocalParaTx(paraTitle, paraHeight, tx, execOK, isDel)
 		if err != nil {
-			clog.Crit("paracross.Commit Load Tx failed", "para title", paraTitle,
-				"para height", paraHeight, "para tx index", i, "error", err, "txHash",
-				hex.EncodeToString(crossTxHashs[i]))
+			clog.Error("updateLocalParaTxs", "paraTitle", paraTitle,
+				"paraHeight", paraHeight, "txIndex", i, "txHash", hex.EncodeToString(tx.Hash()),
+				"execOK", execOK, "isDel", isDel, "err", err)
 			return nil, err
 		}
 
-		var payload pt.ParacrossAction
-		err = types.Decode(paraTx.Tx.Payload, &payload)
+		dbSet.KV = append(dbSet.KV, set.KV...)
+	}
+
+	return dbSet, nil
+}
+
+func (c *Paracross) updateLocalParaTx(paraTitle string, paraHeight int64,
+	crossTx *types.Transaction, success, isDel bool) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+
+	txHash := hex.EncodeToString(crossTx.Hash())
+	var payload pt.ParacrossAction
+	err := types.Decode(crossTx.Payload, &payload)
+	if err != nil {
+		clog.Crit("updateLocalParaTx Decode Tx failed", "para title", paraTitle,
+			"para height", paraHeight, "error", err, "txHash", txHash)
+		return nil, err
+	}
+	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(crossTx.Execer))
 		if err != nil {
-			clog.Crit("paracross.Commit Decode Tx failed", "para title", paraTitle,
-				"para height", paraHeight, "para tx index", i, "error", err, "txHash",
-				hex.EncodeToString(crossTxHashs[i]))
+			clog.Crit("updateLocalParaTx getCrossAction failed", "error", err)
 			return nil, err
 		}
-		if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-			act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(paraTx.Tx.Execer))
-			if err != nil {
-				clog.Crit("udpateLocalParaTxs getCrossAction failed", "error", err)
-				return nil, err
-			}
-			//主链共识后，平行链执行出错的主链资产transfer回滚
-			if act == pt.ParacrossMainAssetTransfer || act == pt.ParacrossParaAssetWithdraw {
-				kv, err := c.updateLocalAssetTransfer(paraTx.Tx, paraHeight, success, isDel)
-				if err != nil {
-					return nil, err
-				}
-				set.KV = append(set.KV, kv)
-			}
-			//主链共识后，平行链执行出错的平行链资产withdraw回滚
-			if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
-				asset, err := c.getCrossAssetTransferInfo(payload.GetCrossAssetTransfer(), paraTx.Tx, act)
-				if err != nil {
-					return nil, err
-				}
-				kv, err := c.initLocalAssetTransferDone(paraTx.Tx, asset, paraHeight, success, isDel)
-				if err != nil {
-					return nil, err
-				}
-				set.KV = append(set.KV, kv)
-			}
-		}
-
-		if payload.Ty == pt.ParacrossActionAssetTransfer {
-			kv, err := c.updateLocalAssetTransfer(paraTx.Tx, paraHeight, success, isDel)
-			if err != nil {
-				return nil, err
-			}
-			set.KV = append(set.KV, kv)
-		} else if payload.Ty == pt.ParacrossActionAssetWithdraw {
-			asset, err := c.getAssetTransferInfo(paraTx.Tx, payload.GetAssetWithdraw().Cointoken, true)
-			if err != nil {
-				return nil, err
-			}
-			kv, err := c.initLocalAssetTransferDone(paraTx.Tx, asset, paraHeight, success, isDel)
+		//主链共识后，平行链执行出错的主链资产transfer回滚
+		if act == pt.ParacrossMainAssetTransfer || act == pt.ParacrossParaAssetWithdraw {
+			kv, err := c.updateLocalAssetTransfer(crossTx, paraHeight, success, isDel)
 			if err != nil {
 				return nil, err
 			}
 			set.KV = append(set.KV, kv)
 		}
+		//主链共识后，平行链执行出错的平行链资产withdraw回滚
+		if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
+			asset, err := c.getCrossAssetTransferInfo(payload.GetCrossAssetTransfer(), crossTx, act)
+			if err != nil {
+				return nil, err
+			}
+			kv, err := c.initLocalAssetTransferDone(crossTx, asset, paraHeight, success, isDel)
+			if err != nil {
+				return nil, err
+			}
+			set.KV = append(set.KV, kv)
+		}
+	}
+
+	if payload.Ty == pt.ParacrossActionAssetTransfer {
+		kv, err := c.updateLocalAssetTransfer(crossTx, paraHeight, success, isDel)
+		if err != nil {
+			return nil, err
+		}
+		set.KV = append(set.KV, kv)
+	} else if payload.Ty == pt.ParacrossActionAssetWithdraw {
+		asset, err := c.getAssetTransferInfo(crossTx, payload.GetAssetWithdraw().Cointoken, true)
+		if err != nil {
+			return nil, err
+		}
+		kv, err := c.initLocalAssetTransferDone(crossTx, asset, paraHeight, success, isDel)
+		if err != nil {
+			return nil, err
+		}
+		set.KV = append(set.KV, kv)
 	}
 
 	return &set, nil
