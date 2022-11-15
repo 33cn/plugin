@@ -89,31 +89,8 @@ message SubTree {
   bytes rootHash = 2; //子树的根hash
 }
 
-message MerkleTreeProof {
-  string rootHash = 1;
-  repeated string proofSet = 2;
-  repeated string helpers = 3;
-}
 
-message ZkReqEscapeProof{
-  uint64 accountId = 1;
-  uint64 tokenId   = 2;
-  string rootHash  = 3;
-}
 
-message ZkAccountTreeProof {
-  HistoryLeaf account = 1;
-  MerkleTreeProof proof = 2;
-}
-message ZkTokenTreeProof {
-  TokenBalance token = 1;
-  MerkleTreeProof proof = 2;
-}
-
-message ZkEscapeProof {
-  ZkAccountTreeProof accountProof = 1;
-  ZkTokenTreeProof   tokenProof   = 2;
-}
 
 message ZkDeposit {
   uint64 tokenId = 1;
@@ -166,7 +143,7 @@ message ZkTransferToNew {
   string amount = 2;
   uint64 fromAccountId = 3;
   string toEthAddress = 4;
-  string toChain33Address = 5;
+  string toLayer2Address = 5;
   ZkSignature signature = 6;
 }
 
@@ -243,7 +220,6 @@ message ZkNFTTokenStatus {
 //电路验证key
 message ZkVerifyKey {
   string key = 1;
-  uint64 ChainTitleId = 2;
 }
 
 message ReceiptSetVerifyKey {
@@ -301,6 +277,8 @@ message CommitProofState {
   //commit时候的blockHeight
   int64  commitBlockHeight = 12;
   uint64 chainTitleId = 13;
+  //all tx pub datas, record proof 的验证需要用到
+  repeated string pubDatas = 14;
 
 }
 
@@ -315,8 +293,7 @@ message ReceiptCommitProofRecord {
 
 //电路验证者名单
 message ZkVerifier {
-  uint64 chainTitleId = 1;
-  repeated string verifiers = 2;
+  repeated string verifiers = 1;
 }
 
 message ReceiptSetVerifier {
@@ -344,13 +321,7 @@ message RelayerOperators {
   repeated string operators   = 1;
 }
 
-// leaf merkle proof票据日志
-message ZkReceiptLeaf {
-  Leaf leaf = 1;
-  TokenBalance token = 2;
-  MerkleTreeProof treeProof = 3;
-  MerkleTreeProof tokenProof = 4;
-}
+
 
 message ZkQueryReq {
   uint64 accountId = 1;
@@ -442,8 +413,33 @@ message ReceiptEthPriorityQueueID {
   int64 current = 2;
 }
 
+message ZkAcctRollbackInfo{
+  uint64 accountId = 1;
+  uint64 tokenId   = 2;
+  string balance   = 3;
+  string needRollback = 4;
+  string gap = 5; //gap=needRollback-balance
+}
+
+message ZkExodusRollbackModeParm {
+  uint64 lastSuccessProofId = 1; //在回滚模式时候，设置此在eth上最后success的proofId，系统根据此Id对应queueId回滚一些withdraw操作
+  //lastSuccessEthPriorityID 缺省为0不设置则回滚lastSuccProofId后的所有deposit,
+  //1. 如果某deposit已经转走交易，余额不够无法rollback扣减,则尝试从交易所交易费垫付扣除，保证L2和L1此token资产总额相等
+  //2. 如果交易所的交易费也不够扣减，则扣光后统计差额，差额需要管理员在L1存款补充被忽略掉的deposit资产金额，不然会导致最后从L1逃生舱执行不成功
+  bool  knownBalanceGap = 2; //是否已知晓差额统计的错误报告，缺省不忽略，知晓差额后，设置为true完成回滚
+}
+
+message ZkExodusPauseModeParm {
+  bool value = 1;  //true: 设置pause，false：restore pause
+}
+
 message ZkExodusMode {
   uint32 mode = 1;
+  oneof value {
+    ZkExodusRollbackModeParm rollback = 2;
+    ZkExodusPauseModeParm pause = 3;
+  }
+
 }
 
 message ReceiptExodusMode {
@@ -496,5 +492,31 @@ message ZkExodusBatchProofReq {
   string rootHash = 4;
   uint64 chainTitleId = 5;
 }
+
+//记录L2 的所有operation 到queue，以和proof校验
+message ReceiptL2LastQueueID {
+  int64 prev = 1;
+  int64 current = 2;
+}
+message ReceiptL2FirstQueueID {
+  int64 prev = 1;
+  int64 current = 2;
+}
+
+message ReceiptL2QueueIDData {
+  int64 id = 1;
+  ZkOperation op = 2;
+}
+
+message ProofId2QueueIdData{
+  uint64 proofId = 1;
+  int64 firstQueueId = 2;
+  int64 lastQueueId = 3;
+}
+
+message ReceiptProofId2QueueIDData {
+  ProofId2QueueIdData data = 1;
+}
+
 
 service zksync{}

@@ -146,8 +146,6 @@ message ZkProxyExitWitnessInfo {
   ZkSignature signature   = 5;
   string    ethAddress    = 7;
   ZkFee fee      = 8;
-  //记录deposit或fullExit对应的eth priorityID，方便查询对应区块高度和证明ID
-  int64 ethPriorityID = 9;
 }
 
 message ZkSetPubKeyWitnessInfo {
@@ -208,7 +206,7 @@ message ZkMintNFTWitnessInfo {
   repeated string contentHash = 4;
   uint64    newNFTTokenID     = 5;
   uint64    createSerialID = 6;
-  string    amount        = 7;
+  uint64    amount        = 7;
   ZkSignature signature   = 8;
   ZkFee fee    = 9;
 }
@@ -217,12 +215,12 @@ message ZkMintNFTWitnessInfo {
 message ZkWithdrawNFTWitnessInfo {
   uint64    fromAcctID    = 1;
   uint64    NFTTokenID     = 2;
-  string    withdrawAmount = 3;
+  uint64    withdrawAmount = 3;
   uint64    creatorAcctID = 4;
   uint64    ercProtocol   = 5;
   repeated string contentHash = 6;
   uint64    creatorSerialID = 7;
-  string    initMintAmount        = 8;
+  uint64    initMintAmount        = 8;
   ZkSignature signature   = 9;
   string    ethAddress     = 11;
   ZkFee fee    = 12;
@@ -232,7 +230,7 @@ message ZkTransferNFTWitnessInfo {
   uint64 fromAccountID = 1;
   uint64 recipientID = 2;
   uint64 NFTTokenID = 3;
-  string amount     = 4;
+  uint64 amount     = 4;
   ZkSignature signature = 6;
   ZkFee fee    = 7;
 }
@@ -286,3 +284,4 @@ message ZkProofWitness {
   TokenWitness   tokenWitness         = 2;
   string treeRoot = 3;
 }
+
