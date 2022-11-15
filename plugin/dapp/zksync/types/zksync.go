@@ -105,6 +105,12 @@ const (
 	TyLogContractAssetWithdraw = 209 //contract 资产withdraw到tree
 	TyLogSetTokenSymbol        = 210 //设置电路验证key
 	TyLogSetExodusMode         = 211 //系统设置exodus mode
+	TySetL2OpQueueIdLog        = 212 //设置 L2 上的 operation 到queue
+	TySetL2OpFirstQueueIdLog   = 213 //设置 L2 上的 first queue id
+	TySetL2OpLastQueueIdLog    = 214 //设置 L2 上的 last queue id
+	TySetProofId2QueueIdLog    = 215 //设置 proofId的pubdata的最后一个op 对应的最后一个queue id
+	TyDepositRollbackLog       = 216 //deposit 回滚的log
+	TyWithdrawRollbackLog      = 217 //withdraw 回滚的log
 )
 
 const (
@@ -128,13 +134,6 @@ const ZkVerifierKey = "verifier"
 //配置的系统收交易费账户
 const ZkCfgEthFeeAddr = "ethFeeAddr"
 const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
-
-//配置的无效交易和无效证明，用于平行链zksync交易的回滚(假设proof和eth不一致，无法fix时候)
-const ZkCfgInvalidTx = "invalidTxHash"
-const ZkCfgInvalidProof = "invalidProofRootHash"
-
-//ZkParaChainInnerTitleId 平行链内部只有一个titleId，缺省为1，在主链上不同平行链有自己的titleId
-const ZkParaChainInnerTitleId = "1"
 
 //msg宽度
 const (
@@ -213,8 +212,10 @@ const (
 )
 
 const (
-	ExodusPrepareMode = 1 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
-	ExodusClearMode   = 2 //逃生舱清算阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
+	InitMode           = 0
+	PauseMode          = 1 //暂停模式，管理员在监测到存款异常后可以设置暂停模式，暂停存款
+	ExodusMode         = 2 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
+	ExodusRollbackMode = 3 //逃生舱回滚阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
 )
 
 var (
@@ -270,6 +271,9 @@ var (
 		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
 		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
 		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
+		TySetL2OpQueueIdLog:        {Ty: reflect.TypeOf(ReceiptL2QueueIDData{}), Name: "TySetL2OpQueueIdLog"},
+		TyDepositRollbackLog:       {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositRollbackLog"},
+		TyWithdrawRollbackLog:      {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawRollbackLog"},
 	}
 
 	FeeMap = map[int64]string{

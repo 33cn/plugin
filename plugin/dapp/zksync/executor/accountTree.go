@@ -41,6 +41,7 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	return ethAddrDecimal, chain33AddrDecimal
 }
 
+//由于ethAddr+chain33Addr 唯一确定一个accountId,所以设置初始账户的chain33Addr不相同
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	zeroHash := zt.Str2Byte("0")
 	defaultAccount := &zt.Leaf{
@@ -75,10 +76,10 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 }
 
 //获取系统初始root，如果未设置fee账户，缺省采用配置文件，
-func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, chain33AddrDecimal string) string {
+func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, layer2AddrDecimal string) string {
 	var feeEth, fee33 string
-	if len(ethAddrDecimal) > 0 && len(chain33AddrDecimal) > 0 {
-		feeEth, fee33 = ethAddrDecimal, chain33AddrDecimal
+	if len(ethAddrDecimal) > 0 && len(layer2AddrDecimal) > 0 {
+		feeEth, fee33 = ethAddrDecimal, layer2AddrDecimal
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
@@ -264,7 +265,7 @@ func updateLeafOpt(statedb dbm.KV, leaf *zt.Leaf, tokenId uint64, option int32) 
 func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32, statedb dbm.KV, leaf *zt.Leaf, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
 	var kvs []*types.KeyValue
 	var log *types.ReceiptLog
-	balancekv, balancehistory, err := updateTokenBalance(accountID, tokenID, amount, option, statedb)
+	balancekv, balanceHistory, err := updateTokenBalance(accountID, tokenID, amount, option, statedb)
 	if nil != err {
 		return nil, nil, nil, err
 	}
@@ -282,8 +283,8 @@ func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32
 	l2Log.Chain33Addr = leaf.Chain33Addr
 	l2Log.TokenId = tokenID
 	l2Log.AccountId = accountID
-	l2Log.BalanceBefore = balancehistory.before
-	l2Log.BalanceAfter = balancehistory.after
+	l2Log.BalanceBefore = balanceHistory.before
+	l2Log.BalanceAfter = balanceHistory.after
 
 	if makeEncode {
 		log = &types.ReceiptLog{
@@ -358,10 +359,6 @@ func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 }
 
 func GetLeafByAccountId(db dbm.KV, accountId uint64) (*zt.Leaf, error) {
-	if accountId <= 0 {
-		return nil, nil
-	}
-
 	val, err := db.Get(GetAccountIdPrimaryKey(accountId))
 	if err != nil {
 		if err.Error() == types.ErrNotFound.Error() {

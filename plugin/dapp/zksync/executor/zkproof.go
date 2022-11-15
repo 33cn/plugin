@@ -2,6 +2,7 @@ package executor
 
 import (
 	"bytes"
+	"fmt"
 	"hash"
 	"math/big"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
@@ -19,7 +21,7 @@ import (
 )
 
 func makeSetVerifyKeyReceipt(oldKey, newKey *zt.ZkVerifyKey) *types.Receipt {
-	key := getVerifyKey(new(big.Int).SetUint64(newKey.GetChainTitleId()).String())
+	key := getVerifyKey()
 	log := &zt.ReceiptSetVerifyKey{
 		Prev:    oldKey,
 		Current: newKey,
@@ -37,7 +39,7 @@ func makeSetVerifyKeyReceipt(oldKey, newKey *zt.ZkVerifyKey) *types.Receipt {
 }
 
 func makeCommitProofReceipt(old, newState *zt.CommitProofState) *types.Receipt {
-	key := getLastProofIdKey(new(big.Int).SetUint64(newState.GetChainTitleId()).String())
+	key := getLastProofIdKey()
 	log := &zt.ReceiptCommitProof{
 		Prev:    old,
 		Current: newState,
@@ -53,7 +55,7 @@ func makeCommitProofReceipt(old, newState *zt.CommitProofState) *types.Receipt {
 	}
 	//只在onChainProof 有效时候保存
 	if newState.OnChainProofId > 0 {
-		onChainIdKey := getLastOnChainProofIdKey(new(big.Int).SetUint64(newState.GetChainTitleId()).String())
+		onChainIdKey := getLastOnChainProofIdKey()
 		r.KV = append(r.KV, &types.KeyValue{Key: onChainIdKey,
 			Value: types.Encode(&zt.LastOnChainProof{ChainTitleId: newState.ChainTitleId, ProofId: newState.ProofId, OnChainProofId: newState.OnChainProofId})})
 	}
@@ -61,7 +63,7 @@ func makeCommitProofReceipt(old, newState *zt.CommitProofState) *types.Receipt {
 }
 
 func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64) *types.Receipt {
-	key := getProofIdKey(new(big.Int).SetUint64(proof.ChainTitleId).String(), proof.ProofId)
+	key := getProofIdKey(proof.ProofId)
 	log := &zt.ReceiptCommitProofRecord{
 		Proof: proof,
 	}
@@ -77,8 +79,31 @@ func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64
 
 	//如果此proofId 比maxRecordId更大，记录下来
 	if proof.ProofId > maxRecordId {
-		r.KV = append(r.KV, &types.KeyValue{Key: getMaxRecordProofIdKey(new(big.Int).SetUint64(proof.ChainTitleId).String()),
+		r.KV = append(r.KV, &types.KeyValue{Key: getMaxRecordProofIdKey(),
 			Value: types.Encode(&types.Int64{Data: int64(proof.ProofId)})})
+	}
+
+	return r
+}
+
+func makeProofId2QueueIdReceipt(proofId uint64, firstQueueId, lastQueueId int64) *types.Receipt {
+	key := getProofId2QueueIdKey(proofId)
+	data := &zt.ProofId2QueueIdData{
+		ProofId:      proofId,
+		FirstQueueId: firstQueueId,
+		LastQueueId:  lastQueueId,
+	}
+	log := &zt.ReceiptProofId2QueueIDData{
+		Data: data,
+	}
+	r := &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(data)},
+		},
+		Logs: []*types.ReceiptLog{
+			{Ty: zt.TySetProofId2QueueIdLog, Log: types.Encode(log)},
+		},
 	}
 
 	return r
@@ -102,8 +127,8 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
-func isVerifier(statedb dbm.KV, chainTitleId, addr string) bool {
-	verifier, err := getVerifierData(statedb, chainTitleId)
+func isVerifier(statedb dbm.KV, addr string) bool {
+	verifier, err := getVerifierData(statedb)
 	if err != nil {
 		if isNotFound(errors.Cause(err)) {
 			return false
@@ -119,8 +144,8 @@ func isVerifier(statedb dbm.KV, chainTitleId, addr string) bool {
 	return false
 }
 
-func getVerifyKeyData(db dbm.KV, chainTitleId string) (*zt.ZkVerifyKey, error) {
-	key := getVerifyKey(chainTitleId)
+func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
+	key := getVerifyKey()
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -137,26 +162,15 @@ func getVerifyKeyData(db dbm.KV, chainTitleId string) (*zt.ZkVerifyKey, error) {
 //合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	v, ok := new(big.Int).SetString(zt.ZkParaChainInnerTitleId, 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "innertitleId=%s", zt.ZkParaChainInnerTitleId)
-	}
-	chainId := v.Uint64()
-	if !cfg.IsPara() {
-		if payload.GetChainTitleId() <= 0 {
-			return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
-		}
-		chainId = payload.GetChainTitleId()
-	}
+
 	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
-	oldKey, err := getVerifyKeyData(a.statedb, new(big.Int).SetUint64(chainId).String())
+	oldKey, err := getVerifyKeyData(a.statedb)
 	if isNotFound(errors.Cause(err)) {
 		key := &zt.ZkVerifyKey{
-			Key:          payload.Key,
-			ChainTitleId: chainId,
+			Key: payload.Key,
 		}
 		return makeSetVerifyKeyReceipt(nil, key), nil
 	}
@@ -165,14 +179,13 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
 	newKey := &zt.ZkVerifyKey{
-		Key:          payload.Key,
-		ChainTitleId: chainId,
+		Key: payload.Key,
 	}
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
-func getLastCommitProofData(db dbm.KV, titleId string) (*zt.CommitProofState, error) {
-	key := getLastProofIdKey(titleId)
+func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
+	key := getLastProofIdKey()
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -198,8 +211,8 @@ func getLastCommitProofData(db dbm.KV, titleId string) (*zt.CommitProofState, er
 	return &data, nil
 }
 
-func getLastOnChainProofData(db dbm.KV, chainTitle string) (*zt.LastOnChainProof, error) {
-	key := getLastOnChainProofIdKey(chainTitle)
+func getLastOnChainProofData(db dbm.KV) (*zt.LastOnChainProof, error) {
+	key := getLastOnChainProofIdKey()
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -215,8 +228,8 @@ func getLastOnChainProofData(db dbm.KV, chainTitle string) (*zt.LastOnChainProof
 	return &data, nil
 }
 
-func getMaxRecordProofIdData(db dbm.KV, chainTitle string) (*types.Int64, error) {
-	key := getMaxRecordProofIdKey(chainTitle)
+func getMaxRecordProofIdData(db dbm.KV) (*types.Int64, error) {
+	key := getMaxRecordProofIdKey()
 	v, err := db.Get(key)
 	if err != nil {
 		if isNotFound(err) {
@@ -263,35 +276,25 @@ func (a *Action) verifyInitRoot(payload *zt.ZkCommitProof) error {
 	if payload.ProofId != 1 {
 		return nil
 	}
-	if len(payload.GetCfgFeeAddrs().EthFeeAddr) <= 0 || len(payload.GetCfgFeeAddrs().L2FeeAddr) <= 0 {
-		return errors.Wrapf(types.ErrInvalidParam, "1st proofId fee Addr nil, eth=%s,l2=%s", payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
-	}
-
-	initRoot := getInitTreeRoot(a.api.GetConfig(), payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
+	//默认系统是在平行链下，获取缺省配置的eth和layer2Addr. 如果是在主链上只能配置一个eth/layer2Addr，不允许修改
+	initRoot := getInitTreeRoot(a.api.GetConfig(), "", "")
 	if initRoot != payload.OldTreeRoot {
-		return errors.Wrapf(types.ErrInvalidParam, "calcInitRoot=%s, proof's oldRoot=%s, EthFeeAddrDecimal=%s, L2FeeAddrDecimal=%s",
-			initRoot, payload.OldTreeRoot, payload.GetCfgFeeAddrs().EthFeeAddr, payload.GetCfgFeeAddrs().L2FeeAddr)
+		return errors.Wrapf(types.ErrInvalidParam, "calcInitRoot=%s, proof's oldRoot=%s", initRoot, payload.OldTreeRoot)
 	}
 	return nil
 }
 
 func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	chainId := zt.ZkParaChainInnerTitleId
-	if !cfg.IsPara() {
-		if payload.GetChainTitleId() <= 0 {
-			return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitle is null")
-		}
-		chainId = new(big.Int).SetUint64(payload.GetChainTitleId()).String()
+
+	if payload.GetChainTitleId() <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitle is null")
 	}
 
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, chainId, a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
-	//如果系统配置了无效证明，则相应证明失效，相继的证明也失效。在exodus mode场景下使用，系统回滚到此证明则丢弃，后面重新接受上一个证明基础上的新的证明
-	if isInvalidProof(a.api.GetConfig(), payload.NewTreeRoot) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "system cfg invalid proof")
-	}
+
 	//基本检查
 	/* len(onChainPubdata)     OnChainProofId
 	   =0                      =0
@@ -304,13 +307,12 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	//验证proofId=1时候的initRoot
 	err := a.verifyInitRoot(payload)
 	if err != nil {
-		zklog.Error("commitProof.verifyInitRoot", "chainId", chainId, "err", err)
 		return nil, err
 	}
 
 	//1. 先验证proof是否ok
 	//get verify key
-	verifyKey, err := getVerifyKeyData(a.statedb, chainId)
+	verifyKey, err := getVerifyKeyData(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get verify key")
 	}
@@ -320,10 +322,6 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	}
 
 	//更新数据库, public and proof, pubdata 不上链，存localdb
-	chainTitleVal, ok := new(big.Int).SetString(chainId, 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitleVal=%s", chainId)
-	}
 	newProof := &zt.CommitProofState{
 		BlockStart:        payload.BlockStart,
 		BlockEnd:          payload.BlockEnd,
@@ -335,11 +333,13 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		NewTreeRoot:       payload.NewTreeRoot,
 		OnChainProofId:    payload.OnChainProofId,
 		CommitBlockHeight: a.height,
-		ChainTitleId:      chainTitleVal.Uint64(),
+		//区分eth上不同的zksync合约的id(如果之前zksync合约作废，可以重新部署一个),不同平行链已经区分了不同合约的id，这里主要是为eth上的区分
+		ChainTitleId: payload.ChainTitleId,
+		PubDatas:     payload.PubDatas,
 	}
 
 	//2. 验证proof是否连续，不连续则暂时保存(考虑交易顺序被打散的场景)
-	lastProof, err := getLastCommitProofData(a.statedb, chainId)
+	lastProof, err := getLastCommitProofData(a.statedb)
 	if err != nil {
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
@@ -347,7 +347,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d less or equal  lastProofId=%d", payload.ProofId, lastProof.ProofId)
 	}
 	//get未处理的证明的最大id
-	maxRecordId, err := getMaxRecordProofIdData(a.statedb, chainId)
+	maxRecordId, err := getMaxRecordProofIdData(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getMaxRecordProofId for id=%d", payload.ProofId)
 	}
@@ -355,7 +355,8 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if payload.ProofId > lastProof.ProofId+1 {
 		return makeCommitProofRecordReceipt(newProof, uint64(maxRecordId.Data)), nil
 	}
-	lastOnChainProof, err := getLastOnChainProofData(a.statedb, chainId)
+
+	lastOnChainProof, err := getLastOnChainProofData(a.statedb)
 	if err != nil {
 		return nil, errors.Wrap(err, "getLastOnChainProof")
 	}
@@ -365,10 +366,23 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	}
 	receipt := makeCommitProofReceipt(lastProof, newProof)
 
+	//检查证明的pubdata是否和queue一致
+	firstQueueId, err := GetL2FirstQueueId(a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "GetL2FirstQueueId")
+	}
+	oldFirstQueId := firstQueueId
+	firstQueueId, err = checkNewProofPubData(a.statedb, oldFirstQueId, payload.PubDatas)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkNewProofPubData")
+	}
+	//记录proofId对应的开始结束queueId，可以根据proof定位其结束的queueId，以此对余下的queueId的某些操作比如withdraw做回滚(逃生舱场景)
+	mergeReceipt(receipt, makeProofId2QueueIdReceipt(payload.ProofId, oldFirstQueId+1, firstQueueId))
+
 	//循环检查可能未处理的recordProof
 	lastProof = newProof
 	for i := lastProof.ProofId + 1; i < uint64(maxRecordId.Data); i++ {
-		recordProof, _ := getRecordProof(a.statedb, chainId, i)
+		recordProof, _ := getRecordProof(a.statedb, i)
 		if recordProof == nil {
 			break
 		}
@@ -378,14 +392,25 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 			//record检查出错，不作为本交易的错误，待下次更新错误的proofId
 			break
 		}
+		//检查证明的pubdata是否和queue一致
+		newFirstQueueId, err := checkNewProofPubData(a.statedb, firstQueueId, recordProof.PubDatas)
+		if err != nil {
+			zklog.Error("checkRecordProof.checkNewProofPubData", "firstQueueId", firstQueueId, "recordProofId", recordProof.ProofId, "err", err)
+			break
+		}
+		//整个证明验证成功才更新
 		mergeReceipt(receipt, makeCommitProofReceipt(lastProof, newProof))
 		lastProof = recordProof
+		mergeReceipt(receipt, makeProofId2QueueIdReceipt(recordProof.ProofId, firstQueueId+1, newFirstQueueId))
+		firstQueueId = newFirstQueueId
 	}
+	//移动firstQueueId
+	mergeReceipt(receipt, makeSetL2FirstQueueIdReceipt(oldFirstQueId, firstQueueId))
 	return receipt, nil
 }
 
-func getRecordProof(db dbm.KV, title string, id uint64) (*zt.CommitProofState, error) {
-	key := getProofIdKey(title, id)
+func getRecordProof(db dbm.KV, id uint64) (*zt.CommitProofState, error) {
+	key := getProofIdKey(id)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, err
@@ -417,9 +442,32 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 			return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastOnChainId not match, lastOnChainId=%d, commit=%d", lastOnChainProofId, newProof.OnChainProofId)
 		}
 		//更新新的onChainProofId
-		return newProof.OnChainProofId, nil
+		lastOnChainProofId = newProof.OnChainProofId
 	}
+
 	return lastOnChainProofId, nil
+}
+
+//检查来自proof的pubdata和queue里的operation一致
+//链上每个op都会把数据压入queue中，包括fee，链下提交的证明的pubdatas要和压入的queue op顺序和数值严格一致，好处是抗回滚
+//first queue op从id=0开始,一旦被proof验证过后firstOpId会移到最后一个验证了的id
+// 0,1,2,3|,4,5,6,7|-----
+//       3=first queue op, 7=last queue op
+func checkNewProofPubData(db dbm.KV, lastQueueId int64, pubData []string) (int64, error) {
+	ops := transferPubDataToOps(pubData)
+	for _, o := range ops {
+		lastQueueId += 1
+		queueOp, err := GetL2QueueIdOp(db, lastQueueId)
+		if err != nil {
+			return 0, errors.Wrapf(err, "GetL2QueueIdOp id=%d", lastQueueId)
+		}
+		err = checkOpSame(queueOp, o)
+		if err != nil {
+			return 0, errors.Wrapf(err, "checkOpSame queueId=%d", lastQueueId)
+		}
+	}
+	return lastQueueId, nil
+
 }
 
 func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
@@ -517,33 +565,21 @@ func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
 	if len(payload.Verifiers) == 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "verifier nil")
 	}
-	//chainTitle只是在主链有作用，区分不同平行链， 平行链默认为0
-	v, ok := new(big.Int).SetString(zt.ZkParaChainInnerTitleId, 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "innertitleId=%s", zt.ZkParaChainInnerTitleId)
-	}
-	chainTitleId := v.Uint64()
-	if !cfg.IsPara() {
-		if payload.GetChainTitleId() <= 0 {
-			return nil, errors.Wrap(types.ErrInvalidParam, "chainTitle or verifier nil")
-		}
-		chainTitleId = payload.ChainTitleId
-	}
 
-	oldKey, err := getVerifierData(a.statedb, new(big.Int).SetUint64(chainTitleId).String())
+	oldKey, err := getVerifierData(a.statedb)
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.ZkVerifier{ChainTitleId: chainTitleId, Verifiers: payload.Verifiers}
+		key := &zt.ZkVerifier{Verifiers: payload.Verifiers}
 		return makeSetVerifierReceipt(nil, key), nil
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.ZkVerifier{ChainTitleId: chainTitleId, Verifiers: payload.Verifiers}
+	newKey := &zt.ZkVerifier{Verifiers: payload.Verifiers}
 	return makeSetVerifierReceipt(oldKey, newKey), nil
 }
 
-func getVerifierData(db dbm.KV, chainTitleId string) (*zt.ZkVerifier, error) {
-	key := getVerifier(chainTitleId)
+func getVerifierData(db dbm.KV) (*zt.ZkVerifier, error) {
+	key := getVerifier()
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -558,7 +594,7 @@ func getVerifierData(db dbm.KV, chainTitleId string) (*zt.ZkVerifier, error) {
 }
 
 func makeSetVerifierReceipt(old, newData *zt.ZkVerifier) *types.Receipt {
-	key := getVerifier(new(big.Int).SetUint64(newData.ChainTitleId).String())
+	key := getVerifier()
 	log := &zt.ReceiptSetVerifier{
 		Prev:    old,
 		Current: newData,
@@ -572,4 +608,493 @@ func makeSetVerifierReceipt(old, newData *zt.ZkVerifier) *types.Receipt {
 			{Ty: zt.TySetVerifierLog, Log: types.Encode(log)},
 		},
 	}
+}
+
+func transferPubDataToOps(pubData []string) []*zt.ZkOperation {
+	operations := make([]*zt.ZkOperation, 0)
+	start := 0
+	for start < len(pubData) {
+		chunk := wallet.ChunkStringToByte(pubData[start])
+		operationTy := getTyByChunk(chunk)
+		chunkNum := getChunkNum(operationTy)
+		if operationTy != zt.TyNoopAction {
+			operation := getOperationByChunk(pubData[start:start+chunkNum], operationTy)
+			//fmt.Println("transferPubDatasToOption.op=", operation)
+			operations = append(operations, operation)
+		}
+		start = start + chunkNum
+	}
+	return operations
+}
+
+func getTyByChunk(chunk []byte) uint64 {
+	return new(big.Int).SetBytes(chunk[:1]).Uint64()
+}
+
+func getChunkNum(opType uint64) int {
+	switch opType {
+	case zt.TyNoopAction:
+		return zt.NoopChunks
+	case zt.TyDepositAction:
+		return zt.DepositChunks
+	case zt.TyWithdrawAction:
+		return zt.WithdrawChunks
+	case zt.TyTransferAction:
+		return zt.TransferChunks
+	case zt.TyTransferToNewAction:
+		return zt.Transfer2NewChunks
+	case zt.TyProxyExitAction:
+		return zt.ProxyExitChunks
+	case zt.TySetPubKeyAction:
+		return zt.SetPubKeyChunks
+	case zt.TyFullExitAction:
+		return zt.FullExitChunks
+	case zt.TySwapAction:
+		return zt.SwapChunks
+	case zt.TyContractToTreeAction:
+		return zt.Contract2TreeChunks
+	case zt.TyContractToTreeNewAction:
+		return zt.Contract2TreeNewChunks
+	case zt.TyTreeToContractAction:
+		return zt.Tree2ContractChunks
+	case zt.TyFeeAction:
+		return zt.FeeChunks
+	case zt.TyMintNFTAction:
+		return zt.MintNFTChunks
+	case zt.TyWithdrawNFTAction:
+		return zt.WithdrawNFTChunks
+	case zt.TyTransferNFTAction:
+		return zt.TransferNFTChunks
+
+	default:
+		panic(fmt.Sprintf("operation tx type=%d not support", opType))
+	}
+
+}
+
+func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
+	totalChunk := make([]byte, 0)
+	for _, chunk := range chunks {
+		totalChunk = append(totalChunk, wallet.ChunkStringToByte(chunk)...)
+	}
+	switch optionTy {
+	case zt.TyDepositAction:
+		return getDepositOperationByChunk(totalChunk)
+	case zt.TyWithdrawAction:
+		return getWithDrawOperationByChunk(totalChunk)
+	case zt.TyTransferAction:
+		return getTransferOperationByChunk(totalChunk)
+	case zt.TyTransferToNewAction:
+		return getTransfer2NewOperationByChunk(totalChunk)
+	case zt.TyProxyExitAction:
+		return getProxyExitOperationByChunk(totalChunk)
+	case zt.TySetPubKeyAction:
+		return getSetPubKeyOperationByChunk(totalChunk)
+	case zt.TyFullExitAction:
+		return getFullExitOperationByChunk(totalChunk)
+	case zt.TySwapAction:
+		return getSwapOperationByChunk(totalChunk)
+	case zt.TyContractToTreeAction:
+		return getContract2TreeOptionByChunk(totalChunk)
+	case zt.TyContractToTreeNewAction:
+		return getContract2TreeNewOptionByChunk(totalChunk)
+	case zt.TyTreeToContractAction:
+		return getTree2ContractOperationByChunk(totalChunk)
+	case zt.TyFeeAction:
+		return getFeeOperationByChunk(totalChunk)
+	case zt.TyMintNFTAction:
+		return getMintNFTOperationByChunk(totalChunk)
+	case zt.TyWithdrawNFTAction:
+		return getWithdrawNFTOperationByChunk(totalChunk)
+	case zt.TyTransferNFTAction:
+		return getTransferNFTOperationByChunk(totalChunk)
+	default:
+		panic("operationTy not support")
+	}
+}
+
+func getDepositOperationByChunk(chunk []byte) *zt.ZkOperation {
+	deposit := &zt.ZkDepositWitnessInfo{}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	deposit.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	deposit.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	deposit.Amount = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	deposit.EthAddress = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.HashBitWidth/8
+	deposit.Layer2Addr = zt.Byte2Str(chunk[start:end])
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Deposit{Deposit: deposit}}
+	return &zt.ZkOperation{Ty: zt.TyDepositAction, Op: special}
+}
+
+func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
+	withdraw := &zt.ZkWithdrawWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	withdraw.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	withdraw.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	withdraw.Amount = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	withdraw.EthAddress = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	withdraw.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Withdraw{Withdraw: withdraw}}
+	return &zt.ZkOperation{Ty: zt.TyWithdrawAction, Op: special}
+}
+
+func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
+	leftOrder := &zt.ZkSwapOrderInfo{}
+	rightOrder := &zt.ZkSwapOrderInfo{}
+	operation := &zt.ZkSwapWitnessInfo{Left: leftOrder, Right: rightOrder, Fee: &zt.ZkFee{}}
+
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	leftOrder.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	rightOrder.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	//1st token, left asset
+	operation.LeftTokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	//2nd token, right asset
+	operation.RightTokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	//1st amount, left asset amount
+	operation.LeftDealAmount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	//2nd amount right asset amount
+	operation.RightDealAmount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	//1st fee, left's fee
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Swap{Swap: operation}}
+	return &zt.ZkOperation{Ty: zt.TySwapAction, Op: special}
+}
+
+func getContract2TreeOptionByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkContractToTreeWitnessInfo{}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ContractToTree{ContractToTree: operation}}
+	return &zt.ZkOperation{Ty: zt.TyContractToTreeAction, Op: special}
+}
+
+func getContract2TreeNewOptionByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkContractToTreeNewWitnessInfo{}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.ToAccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.HashBitWidth/8
+	operation.Layer2Addr = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Contract2TreeNew{Contract2TreeNew: operation}}
+	return &zt.ZkOperation{Ty: zt.TyContractToTreeAction, Op: special}
+}
+
+func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkTreeToContractWitnessInfo{}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TreeToContract{TreeToContract: operation}}
+	return &zt.ZkOperation{Ty: zt.TyTreeToContractAction, Op: special}
+}
+
+func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkTransferWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.FromAccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	operation.ToAccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: operation}}
+	return &zt.ZkOperation{Ty: zt.TyTransferAction, Op: special}
+}
+
+func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkTransferToNewWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.FromAccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	operation.ToAccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacAmountManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.HashBitWidth/8
+	operation.Layer2Addr = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferToNew{TransferToNew: operation}}
+	return &zt.ZkOperation{Ty: zt.TyTransferToNewAction, Op: special}
+}
+
+func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkSetPubKeyWitnessInfo{}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TxTypeBitWidth/8
+	operation.PubKeyTy = zt.Byte2Uint64(chunk[start:end])
+	pubkey := &zt.ZkPubKey{}
+	start = end
+	end = start + zt.PubKeyBitWidth/8
+	pubkey.X = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.PubKeyBitWidth/8
+	pubkey.Y = zt.Byte2Str(chunk[start:end])
+	operation.PubKey = pubkey
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_SetPubKey{SetPubKey: operation}}
+	return &zt.ZkOperation{Ty: zt.TySetPubKeyAction, Op: special}
+}
+
+func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkProxyExitWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	//proxy id
+	operation.ProxyID = zt.Byte2Uint64(chunk[start:end])
+	start = zt.TxTypeBitWidth / 8
+	end = start + zt.AccountBitWidth/8
+	//toId
+	operation.TargetID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ProxyExit{ProxyExit: operation}}
+	return &zt.ZkOperation{Ty: zt.TyProxyExitAction, Op: special}
+}
+
+func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkFullExitWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_FullExit{FullExit: operation}}
+	return &zt.ZkOperation{Ty: zt.TyFullExitAction, Op: special}
+}
+
+func getFeeOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkFeeWitnessInfo{}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Amount = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Fee{Fee: operation}}
+	return &zt.ZkOperation{Ty: zt.TyFeeAction, Op: special}
+}
+
+func getMintNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkMintNFTWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.MintAcctID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	operation.RecipientID = zt.Byte2Uint64(chunk[start:end])
+	//ERC 721/1155 protocol
+	start = end
+	end = start + zt.TxTypeBitWidth/8
+	operation.ErcProtocol = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.NFTAmountBitWidth/8
+	operation.Amount = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.HashBitWidth/(2*8)
+	operation.ContentHash = append(operation.ContentHash, zt.Byte2Str(chunk[start:end]))
+	start = end
+	end = start + zt.HashBitWidth/(2*8)
+	operation.ContentHash = append(operation.ContentHash, zt.Byte2Str(chunk[start:end]))
+
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.Fee.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_MintNFT{MintNFT: operation}}
+	return &zt.ZkOperation{Ty: zt.TyMintNFTAction, Op: special}
+}
+
+func getWithdrawNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkWithdrawNFTWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	//fromId
+	operation.FromAcctID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	//original creator id
+	operation.CreatorAcctID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.NFTTokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.NFTAmountBitWidth/8
+	operation.CreatorSerialID = zt.Byte2Uint64(chunk[start:end])
+	//ERC 721/1155 protocol
+	start = end
+	end = start + zt.TxTypeBitWidth/8
+	operation.ErcProtocol = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.NFTAmountBitWidth/8
+	operation.InitMintAmount = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.NFTAmountBitWidth/8
+	operation.WithdrawAmount = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
+
+	start = end
+	end = start + zt.HashBitWidth/(2*8)
+	operation.ContentHash = append(operation.ContentHash, zt.Byte2Str(chunk[start:end]))
+	start = end
+	end = start + zt.HashBitWidth/(2*8)
+	operation.ContentHash = append(operation.ContentHash, zt.Byte2Str(chunk[start:end]))
+
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.Fee.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_WithdrawNFT{WithdrawNFT: operation}}
+	return &zt.ZkOperation{Ty: zt.TyWithdrawNFTAction, Op: special}
+}
+
+func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkTransferNFTWitnessInfo{Fee: &zt.ZkFee{}}
+	start := zt.TxTypeBitWidth / 8
+	end := start + zt.AccountBitWidth/8
+	operation.FromAccountID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	operation.RecipientID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.NFTTokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + zt.NFTAmountBitWidth/8
+	operation.Amount = zt.Byte2Uint64(chunk[start:end])
+
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.Fee.TokenID = zt.Byte2Uint64(chunk[start:end])
+	start = end
+	end = start + (zt.PacFeeManBitWidth+zt.PacExpBitWidth)/8
+	operation.Fee.Fee = zt.DecodePacVal(chunk[start:end], zt.PacExpBitWidth)
+
+	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferNFT{TransferNFT: operation}}
+	return &zt.ZkOperation{Ty: zt.TyTransferNFTAction, Op: special}
 }

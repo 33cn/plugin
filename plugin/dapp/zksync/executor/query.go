@@ -107,16 +107,26 @@ func (z *zksync) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) 
 	if err != nil {
 		return nil, err
 	}
-	leaf.EthAddress, _ = zt.DecimalAddr2Hex(leaf.GetEthAddress())
-	leaf.Chain33Addr, _ = zt.DecimalAddr2Hex(leaf.GetChain33Addr())
+	var ok bool
+	leaf.EthAddress, ok = zt.DecimalAddr2Hex(leaf.GetEthAddress())
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong eth addr format=%s", leaf.GetEthAddress())
+	}
+	leaf.Chain33Addr, ok = zt.DecimalAddr2Hex(leaf.GetChain33Addr())
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong chain33 addr format=%s", leaf.GetChain33Addr())
+	}
 	return &leaf, nil
 }
 
 // Query_GetAccountByEth  通过eth地址查询account
 func (z *zksync) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error) {
 	res := new(zt.ZkQueryResp)
-	in.EthAddress, _ = zt.HexAddr2Decimal(in.EthAddress)
-	leaves, err := GetLeafByEthAddress(z.GetLocalDB(), in.EthAddress)
+	newEthAddr, ok := zt.HexAddr2Decimal(in.EthAddress)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong eth addr format=%s", in.GetEthAddress())
+	}
+	leaves, err := GetLeafByEthAddress(z.GetLocalDB(), newEthAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +137,11 @@ func (z *zksync) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error)
 // Query_GetAccountByChain33  通过chain33地址查询account
 func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, error) {
 	res := new(zt.ZkQueryResp)
-	in.Chain33Addr, _ = zt.HexAddr2Decimal(in.Chain33Addr)
-	leaves, err := GetLeafByChain33Address(z.GetLocalDB(), in.Chain33Addr)
+	addr, ok := zt.HexAddr2Decimal(in.GetChain33Addr())
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "chain33 addr not hex format,%s", in.GetChain33Addr())
+	}
+	leaves, err := GetLeafByChain33Address(z.GetLocalDB(), addr)
 	if err != nil {
 		return nil, err
 	}
@@ -137,32 +150,34 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 }
 
 // Query_GetLastCommitProof 获取最新proof信息
-func (z *zksync) Query_GetLastCommitProof(in *zt.ZkChainTitle) (types.Message, error) {
-	//平行链缺省是1
-	if z.GetAPI().GetConfig().IsPara() && in.GetChainTitleId() == 0 {
-		return getLastCommitProofData(z.GetStateDB(), zt.ZkParaChainInnerTitleId)
-	}
-	//主链需要注明不同的平行链titleId
-	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id less or equal 0")
-	}
-	return getLastCommitProofData(z.GetStateDB(), new(big.Int).SetUint64(in.ChainTitleId).String())
+func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, error) {
+	return getLastCommitProofData(z.GetStateDB())
 }
 
 //Query_GetLastOnChainProof 获取最新的包含OnChainPubData的Proof
-func (z *zksync) Query_GetLastOnChainProof(in *zt.ZkChainTitle) (types.Message, error) {
-	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "req chain id less or equal 0")
-	}
-	return getLastOnChainProofData(z.GetStateDB(), new(big.Int).SetUint64(in.ChainTitleId).String())
+func (z *zksync) Query_GetLastOnChainProof(in *types.ReqNil) (types.Message, error) {
+	return getLastOnChainProofData(z.GetStateDB())
 }
 
 // Query_GetLastPriorityQueueId 获取最后的eth priority queue id
-func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
+func (z *zksync) Query_GetLastPriorityQueueId(in *types.ReqNil) (types.Message, error) {
+	return getLastEthPriorityQueueID(z.GetStateDB())
+}
+
+// Query_GetMaxAccountId 获取当前最大账户id
+func (z *zksync) Query_GetMaxAccountId(in *types.ReqNil) (types.Message, error) {
+	var tree zt.AccountTree
+	val, err := z.GetStateDB().Get(GetAccountTreeKey())
+	if err != nil {
+		return nil, err
 	}
-	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
+	err = types.Decode(val, &tree)
+	if err != nil {
+		return nil, err
+	}
+	var id types.Int64
+	id.Data = int64(tree.GetTotalIndex()) - 1
+	return &id, nil
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
@@ -171,13 +186,43 @@ func (z *zksync) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error
 		return nil, types.ErrInvalidParam
 	}
 	var eth, chain33 string
+	//可以不填addr
 	if len(in.Addrs) == 2 {
-		eth = in.Addrs[0]
-		chain33 = in.Addrs[1]
+		addr, ok := zt.HexAddr2Decimal(in.Addrs[0])
+		if !ok {
+			return nil, errors.Wrapf(types.ErrNotAllow, "addr0=%s not hex format", in.Addrs[0])
+		}
+		eth = addr
+
+		addr, ok = zt.HexAddr2Decimal(in.Addrs[1])
+		if !ok {
+			return nil, errors.Wrapf(types.ErrNotAllow, "addr1=%s not hex format", in.Addrs[1])
+		}
+		chain33 = addr
 	}
 
 	root := getInitTreeRoot(z.GetAPI().GetConfig(), eth, chain33)
 	return &types.ReplyString{Data: root}, nil
+}
+
+//Query_GetCfgFeeAddr 获取系统初始fee addr
+func (z *zksync) Query_GetCfgFeeAddr(in *types.ReqNil) (types.Message, error) {
+	eth, l2 := getCfgFeeAddr(z.GetAPI().GetConfig())
+	return &zt.ZkFeeAddrs{EthFeeAddr: eth, L2FeeAddr: l2}, nil
+}
+
+//Query_GetCfgTokenFee 获取系统配置的fee
+func (z *zksync) Query_GetCfgTokenFee(in *zt.ZkSetFee) (types.Message, error) {
+	amount, err := getDbFeeData(z.GetStateDB(), in.GetActionTy(), in.GetTokenId())
+	if err != nil {
+		return nil, err
+	}
+	return &types.ReplyString{Data: amount}, nil
+}
+
+//Query_GetVerifiers 获取系统初始fee addr
+func (z *zksync) Query_GetVerifiers(in *types.ReqNil) (types.Message, error) {
+	return getVerifierData(z.GetStateDB())
 }
 
 // Query_GetTxProofByHeights 根据多个高度批量获取交易证明
@@ -243,6 +288,36 @@ func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error)
 	return res, nil
 }
 
+// Query_GetTokenSymbol 根据id获取当前symbol，根据symbol获取对应token id
+func (z *zksync) Query_GetTokenSymbol(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	//symbol非空，查询id
+	if len(in.TokenSymbol) > 0 {
+		return GetTokenBySymbol(z.GetStateDB(), in.TokenSymbol)
+	}
+	//根据id查询symbol
+	idStr := new(big.Int).SetUint64(in.TokenId).String()
+	return GetTokenByTokenId(z.GetStateDB(), idStr)
+}
+
+// Query_GetPriorityOpInfo 根据priorityId获取operation信息
+func (z *zksync) Query_GetPriorityOpInfo(in *zt.EthPriorityQueueID) (types.Message, error) {
+	if len(in.GetID()) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	table := NewZksyncInfoTable(z.GetLocalDB())
+	rows, err := table.ListIndex("priorityId", []byte(fmt.Sprintf("%s", in.GetID())), nil, 1, zt.ListASC)
+	if err != nil {
+		return nil, errors.Wrapf(err, "listIndex")
+	}
+	if len(rows) < 1 {
+		return nil, types.ErrNotFound
+	}
+	return rows[0].Data.(*zt.OperationInfo), nil
+}
+
 // Query_GetProofByTxHash 根据txhash获取proof信息
 func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
@@ -263,14 +338,45 @@ func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error
 	return res, nil
 }
 
+//
+//func (z *zksync) Query_GetHaveCommitProofStatusById(in *zt.ZkQueryReq) (types.Message, error) {
+//	if in.GetChainTitleId() == 0 {
+//		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
+//	}
+//	chainId := zt.ZkParaChainInnerTitleId
+//	lastProof, err := getLastCommitProofData(z.GetStateDB(), chainId)
+//	if err != nil {
+//		return nil, errors.Wrap(err, "get last commit Proof")
+//	}
+//	//get未处理的证明的最大id
+//	maxRecordId, err := getMaxRecordProofIdData(z.GetStateDB(), chainId)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "getMaxRecordProofId")
+//	}
+//	if maxRecordId.Data == 0 {
+//		maxRecordId.Data = int64(lastProof.ProofId)
+//	}
+//	ret := &zt.ZkQueryProofStatusResp{
+//		ProofId:                in.ProofId,
+//		TxHash:                 "",
+//		LatestCommitProofState: lastProof,
+//		MaxRecordId:            maxRecordId.Data,
+//	}
+//	if in.ProofId != 0 {
+//		recordProof, err := getRecordProof(z.GetStateDB(), chainId, in.ProofId)
+//		if err != nil {
+//			return nil, err
+//		}
+//		ret.CommitProofState = recordProof
+//	}
+//	return ret, nil
+//}
+
 // Query_GetCommitProofById 根据proofId获取commitProof信息
 func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, error) {
-	if in.GetChainTitleId() == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
-	}
 
 	table := NewCommitProofTable(z.GetLocalDB())
-	row, err := table.GetData(getProofIdCommitProofKey(new(big.Int).SetUint64(in.GetChainTitleId()).String(), in.ProofId))
+	row, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
 	if err != nil {
 		return nil, err
 	}
@@ -278,6 +384,28 @@ func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, err
 
 	return data, nil
 }
+
+// Query_GetProofChainTitleList 获取所有chainTitle信息
+//func (z *zksync) Query_GetProofChainTitleList(in *types.ReqNil) (types.Message, error) {
+//
+//	table := NewCommitProofTable(z.GetLocalDB())
+//	//只查找有proofId=1的记录，再统计
+//	rows, err := table.ListIndex("proofId", []byte(fmt.Sprintf("%016d", 1)), nil, 0, zt.ListASC)
+//	if err != nil {
+//		zklog.Error("Query_GetProofChainTitleList", "err", err.Error())
+//		return nil, err
+//	}
+//	var chains zt.ZkChainTitleList
+//	for _, r := range rows {
+//		chain := &zt.ZkChainTitle{
+//			ChainTitleId: r.Data.(*zt.ZkCommitProof).GetChainTitleId(),
+//			ChainTitle:   r.Data.(*zt.ZkCommitProof).GetChainTitle(),
+//		}
+//		chains.Chains = append(chains.Chains, chain)
+//	}
+//	return &chains, nil
+//
+//}
 
 // Query_GetProofList 根据proofId fetch 后续证明
 func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
@@ -315,15 +443,10 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 		}
 	}
 	// 按序获取proofId
-	rows, err := table.GetData(getProofIdCommitProofKey(new(big.Int).SetUint64(in.ChainTitleId).String(), in.ProofId))
+	rows, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
 	if err != nil {
 		zklog.Error("Query_GetProofList.getProofId", "currentProofId", in.ProofId, "err", err.Error())
 		return nil, err
 	}
 	return rows.Data.(*zt.ZkCommitProof), nil
-}
-
-func (z *zksync) Query_GetQueueID(in *types.ReqNil) (types.Message, error) {
-	ethPriorityQueueID, err := getLastEthPriorityQueueID(z.GetStateDB(), 0)
-	return ethPriorityQueueID, err
 }

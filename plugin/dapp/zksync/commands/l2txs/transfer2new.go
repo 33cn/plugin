@@ -56,11 +56,11 @@ func transferManyToNew(cmd *cobra.Command, _ []string) {
 	for i := 0; i < len(fids); i++ {
 		fid, _ := strconv.ParseInt(fids[i], 10, 64)
 		param := &zksyncTypes.ZkTransferToNew{
-			TokenId:          tokenId,
-			Amount:           amount,
-			FromAccountId:    uint64(fid),
-			ToEthAddress:     toEthAddress,
-			ToChain33Address: addrs[i],
+			TokenId:         tokenId,
+			Amount:          amount,
+			FromAccountId:   uint64(fid),
+			ToEthAddress:    toEthAddress,
+			ToLayer2Address: addrs[i],
 		}
 
 		action := &zksyncTypes.ZksyncAction{
@@ -119,11 +119,11 @@ func transferToNewMany(cmd *cobra.Command, _ []string) {
 
 	for i := 0; i < len(addrs); i++ {
 		param := &zksyncTypes.ZkTransferToNew{
-			TokenId:          tokenId,
-			Amount:           amount,
-			FromAccountId:    uint64(fid),
-			ToEthAddress:     toEthAddress,
-			ToChain33Address: addrs[i],
+			TokenId:         tokenId,
+			Amount:          amount,
+			FromAccountId:   uint64(fid),
+			ToEthAddress:    toEthAddress,
+			ToLayer2Address: addrs[i],
 		}
 
 		action := &zksyncTypes.ZksyncAction{
