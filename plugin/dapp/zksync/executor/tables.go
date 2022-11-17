@@ -71,6 +71,7 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
+//目前似乎没啥用
 var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",

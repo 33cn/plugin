@@ -48,10 +48,6 @@ func GetAccountTreeKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"accountTree"))
 }
 
-func getHeightKey(height int64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
-}
-
 func getVerifyKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-verifyKey"))
 }
@@ -60,16 +56,8 @@ func getVerifier() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-"+zt.ZkVerifierKey))
 }
 
-func getLastProofKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
-}
-
 func getLastOnChainProofIdKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-lastOnChainProofId"))
-}
-
-func getValidatorsKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"validators"))
 }
 
 func getEthPriorityQueueKey() []byte {
@@ -112,7 +100,7 @@ func GetTokenSymbolIdKey(symbol string) []byte {
 }
 
 func getLastProofIdKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-lastProofId"))
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-lastProof"))
 }
 
 func getMaxRecordProofIdKey() []byte {
@@ -141,4 +129,9 @@ func getL2QueueIdKey(id int64) []byte {
 //the proof id to the end first queue id key, the end first queue id == last pubdata's operation
 func getProofId2QueueIdKey(proofID uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"-proof2queueId", proofID))
+}
+
+//the proof id to the end first queue id key, the end first queue id == last pubdata's operation
+func getL1PriorityId2QueueIdKey(priorityId int64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"-priority2QueId", priorityId))
 }

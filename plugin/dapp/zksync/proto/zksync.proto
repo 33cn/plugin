@@ -24,13 +24,15 @@ message ZksyncAction {
     ZkTransferNFT transferNFT   = 14;
 
     ZkVerifyKey         setVerifyKey = 31;
-    ZkCommitProof         commitProof  = 32;
-    ZkVerifier  setVerifier         = 33;
-    ZkSetFee    setFee              = 34;
-    ZkTokenSymbol setTokenSymbol    = 35;
-    types.AssetsTransfer        transfer        = 36;
-    types.AssetsWithdraw        withdraw        = 37;
-    types.AssetsTransferToExec  transferToExec  = 38;
+    ZkCommitProof       commitProof  = 32;
+    ZkVerifier          setVerifier  = 33;
+    ZkSetFee            setFee       = 34;
+    ZkTokenSymbol       setTokenSymbol = 35;
+    ZkExodusMode        setExodusMode  = 36;
+
+    types.AssetsTransfer        transfer        = 40;
+    types.AssetsWithdraw        withdraw        = 41;
+    types.AssetsTransferToExec  transferToExec  = 42;
   }
 
   int32 ty = 15;
@@ -97,7 +99,7 @@ message ZkDeposit {
   string amount = 2;
   string ethAddress = 3;
   string chain33Addr = 4;
-  int64 ethPriorityQueueId = 5; //需要在合约保证id连续
+  int64  l1PriorityId = 5; //需要在合约保证id连续
   ZkSignature signature = 6;
 
 }
@@ -404,13 +406,26 @@ message ZkSetPubKeyData {
    ZkPubKey pubKey = 7; //eddsa公钥，用于验证身份
 }
 
-message EthPriorityQueueID {
-  string ID = 1;
+message L1PriorityID {
+  int64 ID = 1;
 }
 
-message ReceiptEthPriorityQueueID {
+message ReceiptL1PriorityID {
   int64 prev = 1;
   int64 current = 2;
+}
+
+message MerkleTreeProof {
+  string rootHash = 1;
+  repeated string proofSet = 2;
+  repeated string helpers = 3;
+}
+// leaf merkle proof票据日志
+message ZkReceiptLeaf {
+  Leaf leaf = 1;
+  TokenBalance token = 2;
+  MerkleTreeProof treeProof = 3;
+  MerkleTreeProof tokenProof = 4;
 }
 
 message ZkAcctRollbackInfo{
@@ -473,7 +488,6 @@ message ZkReqExistenceProof{
   uint64 accountId = 1;
   uint64 tokenId   = 2;
   string rootHash  = 3;
-  uint64 chainTitleId = 4;
 }
 
 message ZkQueryTxOperationReq {
@@ -490,7 +504,6 @@ message ZkExodusBatchProofReq {
   uint64 endAccountId = 2;
   uint64 tokenId = 3;
   string rootHash = 4;
-  uint64 chainTitleId = 5;
 }
 
 //记录L2 的所有operation 到queue，以和proof校验
@@ -518,5 +531,9 @@ message ReceiptProofId2QueueIDData {
   ProofId2QueueIdData data = 1;
 }
 
+message Priority2QueueId {
+  int64 priorityId = 1;
+  int64 queueId = 2;
+}
 
 service zksync{}

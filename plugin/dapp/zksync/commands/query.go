@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"math/big"
-
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -245,8 +243,8 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 
 func getEthPriorityInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "queue_id",
-		Short: "get eth deposit queue id info",
+		Use:   "priority_id",
+		Short: "get eth deposit priority id info",
 		Run:   getPriority,
 	}
 	getPriorityFlag(cmd)
@@ -254,19 +252,19 @@ func getEthPriorityInfoCmd() *cobra.Command {
 }
 
 func getPriorityFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("priorityId", "i", 0, "eth priority id, id >= 0")
+	cmd.Flags().Int64P("priorityId", "i", 0, "eth priority id, id >= 0")
 	cmd.MarkFlagRequired("priorityId")
 }
 
 func getPriority(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	priorityId, _ := cmd.Flags().GetUint64("priorityId")
+	priorityId, _ := cmd.Flags().GetInt64("priorityId")
 
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = zt.Zksync
-	req := &zt.EthPriorityQueueID{
-		ID: new(big.Int).SetUint64(priorityId).String(),
+	req := &zt.L1PriorityID{
+		ID: priorityId,
 	}
 
 	params.FuncName = "GetPriorityOpInfo"
@@ -297,7 +295,7 @@ func getLastPriority(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetLastPriorityQueueId"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.EthPriorityQueueID
+	var resp zt.L1PriorityID
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

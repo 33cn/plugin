@@ -336,6 +336,11 @@ func getNewTree() *merkletree.Tree {
 	return merkletree.New(mimc.NewMiMC(zt.ZkMimcHashSeed))
 }
 
+func getNewTreeWithHash(h hash.Hash) *merkletree.Tree {
+	h.Reset()
+	return merkletree.New(h)
+}
+
 func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 	var tree zt.AccountTree
 	if info != nil {
@@ -440,52 +445,6 @@ func GetLeafByChain33AndEthAddress(db dbm.KV, chain33Addr, ethAddress string) (*
 	return &leaf, nil
 }
 
-func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64) ([]*zt.Leaf, error) {
-	leaves := make([]*zt.Leaf, 0)
-	for i := startIndex; i <= endIndex; i++ {
-		leaf, err := GetLeafByAccountId(db, i)
-		if err != nil {
-			return nil, err
-		}
-		leaves = append(leaves, leaf)
-	}
-	return leaves, nil
-}
-
-func GetAllRoots(db dbm.KV, endIndex uint64, info *TreeUpdateInfo) ([]*zt.RootInfo, error) {
-	roots := make([]*zt.RootInfo, 0)
-	for i := uint64(1); i <= endIndex; i++ {
-		rootInfo, err := GetRootByStartIndex(db, (i-1)*1024+1, info)
-		if err != nil {
-			return nil, err
-		}
-		roots = append(roots, rootInfo)
-	}
-	return roots, nil
-}
-
-func GetRootByStartIndex(db dbm.KV, index uint64, info *TreeUpdateInfo) (*zt.RootInfo, error) {
-	var rootInfo zt.RootInfo
-	if val, ok := info.updateMap[string(GetRootIndexPrimaryKey(index))]; ok {
-		err := types.Decode(val, &rootInfo)
-		if err != nil {
-			return nil, err
-		}
-		return &rootInfo, nil
-	}
-
-	val, err := db.Get(GetRootIndexPrimaryKey(index))
-	if err != nil {
-		return nil, err
-	}
-
-	err = types.Decode(val, &rootInfo)
-	if err != nil {
-		return nil, err
-	}
-	return &rootInfo, nil
-}
-
 func GetTokenByAccountIdAndTokenId(db dbm.KV, accountId uint64, tokenId uint64) (*zt.TokenBalance, error) {
 	val, err := db.Get(GetTokenPrimaryKey(accountId, tokenId))
 	if err != nil {
@@ -538,34 +497,6 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	return h.Sum(nil)
 }
 
-func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
-	h.Write(accountIdBytes[:])
-	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
-	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
-
-	getLeafPubKeyHash(h, leaf.GetPubKey())
-	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
-	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
-	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
-
-	h.Write(zt.Str2Byte(getHistoryTokenHash(leaf.AccountId, leaf.Tokens)))
-	return h.Sum(nil)
-}
-
-func getHistoryTokenHash(accountId uint64, tokens []*zt.TokenBalance) string {
-	if (accountId == zt.SystemFeeAccountId || accountId == zt.SystemNFTAccountId) && len(tokens) <= 0 {
-		return "0"
-	}
-
-	tokenTree := getNewTree()
-	for _, token := range tokens {
-		tokenTree.Push(getTokenBalanceHash(token))
-	}
-	return zt.Byte2Str(tokenTree.Root())
-}
-
 func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
 	if pubKey != nil {
 		h.Write(zt.Str2Byte(pubKey.GetX()))
@@ -575,26 +506,6 @@ func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
 
 	h.Write(zt.Str2Byte("0")) //X
 	h.Write(zt.Str2Byte("0")) //Y
-}
-
-func getTokenRootHash(db dbm.KV, accountId uint64, tokenIds []uint64) (string, error) {
-	tree := getNewTree()
-	for _, tokenId := range tokenIds {
-		token, err := GetTokenByAccountIdAndTokenId(db, accountId, tokenId)
-		if err != nil {
-			return "", err
-		}
-		tree.Push(getTokenBalanceHash(token))
-	}
-	return zt.Byte2Str(tree.Root()), nil
-}
-
-func getTokenBalanceHash(token *zt.TokenBalance) []byte {
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	tokenIdBytes := new(fr.Element).SetUint64(token.GetTokenId()).Bytes()
-	h.Write(tokenIdBytes[:])
-	h.Write(zt.Str2Byte(token.Balance))
-	return h.Sum(nil)
 }
 
 func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
