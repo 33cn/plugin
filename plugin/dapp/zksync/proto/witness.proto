@@ -106,7 +106,7 @@ message ZkDepositWitnessInfo {
   string    layer2Addr    = 6;
   ZkSignature signature = 7;
   //记录deposit或fullExit对应的eth priorityID，方便查询对应区块高度和证明ID
-  int64 ethPriorityID = 8;
+  int64 l1PriorityID = 8;
 }
 
 message ZkWithdrawWitnessInfo {

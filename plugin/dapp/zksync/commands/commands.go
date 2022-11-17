@@ -110,11 +110,11 @@ func deposit(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	deposit := &zt.ZkDeposit{
-		TokenId:            tokenId,
-		Amount:             amount,
-		EthAddress:         ethAddress,
-		Chain33Addr:        chain33Addr,
-		EthPriorityQueueId: int64(queueId),
+		TokenId:      tokenId,
+		Amount:       amount,
+		EthAddress:   ethAddress,
+		Chain33Addr:  chain33Addr,
+		L1PriorityId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     commands.GetRealExecName(paraName, zt.Zksync),

@@ -1,6 +1,9 @@
 package executor
 
 import (
+	"math/big"
+	"strings"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
@@ -55,6 +58,7 @@ func GetL2QueueIdOp(db dbm.KV, id int64) (*zt.ZkOperation, error) {
 	return &data, nil
 }
 
+//GetProofId2QueueId proof中的pubdata 对应的operation的start/end queueId
 func GetProofId2QueueId(db dbm.KV, id uint64) (*zt.ProofId2QueueIdData, error) {
 	key := getProofId2QueueIdKey(id)
 	r, err := db.Get(key)
@@ -67,6 +71,35 @@ func GetProofId2QueueId(db dbm.KV, id uint64) (*zt.ProofId2QueueIdData, error) {
 		return nil, errors.Wrapf(err, "decode")
 	}
 	return &data, nil
+}
+
+func GetPriority2QueueId(db dbm.KV, priorityId int64) (int64, error) {
+	key := getL1PriorityId2QueueIdKey(priorityId)
+	r, err := db.Get(key)
+	if err != nil {
+		return 0, errors.Wrapf(err, "getDb")
+	}
+	var data types.Int64
+	err = types.Decode(r, &data)
+	if err != nil {
+		return 0, errors.Wrapf(err, "decode")
+	}
+	return data.Data, nil
+}
+
+func GetPriorityDepositData(db dbm.KV, priorityId int64) (*zt.ZkDepositWitnessInfo, error) {
+	queueId, err := GetPriority2QueueId(db, priorityId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "GetPriority2QueueId=%d", priorityId)
+	}
+	op, err := GetL2QueueIdOp(db, queueId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "GetL2QueueIdOp id=%d", queueId)
+	}
+	if op.Ty != zt.TyDepositAction {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "priorityId=%d,to queueId=%d, queue op.ty=%d not deposit", priorityId, queueId, op.Ty)
+	}
+	return op.GetOp().GetDeposit(), nil
 }
 
 func checkOpSame(queueOp, pubDataOp *zt.ZkOperation) error {
@@ -136,7 +169,7 @@ func checkSameWithdraw(queueOp, pubDataOp *zt.ZkOperation) error {
 		return errors.Wrapf(types.ErrInvalidParam, "withdraw tokenId queue=%d, pub=%d", q.TokenID, p.TokenID)
 	}
 	if q.Amount != p.Amount {
-		return errors.Wrapf(types.ErrInvalidParam, "withdraw amount queue=%d, pub=%d", q.Amount, p.Amount)
+		return errors.Wrapf(types.ErrInvalidParam, "withdraw amount queue=%s, pub=%s", q.Amount, p.Amount)
 	}
 	if q.EthAddress != p.EthAddress {
 		return errors.Wrapf(types.ErrInvalidParam, "withdraw ethAddr queue=%s, pub=%s", q.EthAddress, p.EthAddress)
@@ -403,4 +436,78 @@ func checkSameTransferNFT(queueOp, pubDataOp *zt.ZkOperation) error {
 		return errors.Wrapf(types.ErrInvalidParam, "contracmintNFTt2treeNew fee queue=%s, pub=%s", q.Fee.Fee, p.Fee.Fee)
 	}
 	return nil
+}
+
+func checkPackValue(amount string, manMaxBitWidth int64) error {
+	amountInt, ok := new(big.Int).SetString(amount, 10)
+	if !ok {
+		return errors.Wrapf(types.ErrInvalidParam, "checkPackValue amount=%s", amount)
+	}
+	if amountInt.Cmp(big.NewInt(0)) == 0 {
+		return nil
+	}
+	//exp部分默认最大是31，不需要检查
+	man, _ := zt.ZkTransferManExpPart(amount)
+	manV, ok := new(big.Int).SetString(man, 10)
+	if !ok {
+		return errors.Wrapf(types.ErrInvalidParam, "transferManExpPart,man=%s,amount=%s", manV, amount)
+	}
+
+	//最大mantissa部分的值 比如2^35, amount的非0部分的值不能超过此值，超过的话，可以分多次
+	maxManV := new(big.Int).Exp(big.NewInt(2), big.NewInt(manMaxBitWidth), nil)
+	//manv <= maxMan
+	if maxManV.Cmp(manV) < 0 {
+		return errors.Wrapf(types.ErrNotAllow, "amount's mant part=%s big than %s(2^%d)", man, maxManV.String(), manMaxBitWidth)
+	}
+	return nil
+}
+
+//根据系统和token精度，计算合约转化为二层tree侧的amount，合约侧amount都是系统精度
+func GetTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal int) (amount4Tree, totalAmount4Tree, feeAmount4Tree string, err error) {
+	amount4Tree, err = TransferDecimalAmount(amount, sysDecimal, tokenDecimal)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", amount, tokenDecimal, sysDecimal)
+	}
+	totalAmount4Tree, err = TransferDecimalAmount(totalAmount, sysDecimal, tokenDecimal)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", totalAmount, tokenDecimal, sysDecimal)
+	}
+	feeAmount4Tree, err = TransferDecimalAmount(fee, sysDecimal, tokenDecimal)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", fee, tokenDecimal, sysDecimal)
+	}
+	err = checkPackValue(amount4Tree, zt.PacAmountManBitWidth)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "checkPackVal amount=%s", amount4Tree)
+	}
+	err = checkPackValue(feeAmount4Tree, zt.PacFeeManBitWidth)
+	if err != nil {
+		return "", "", "", errors.Wrapf(err, "checkPackVal fee=%s", feeAmount4Tree)
+	}
+	return amount4Tree, totalAmount4Tree, feeAmount4Tree, nil
+}
+
+//from向to小数对齐，如果from>to, 需要裁减掉差别部分，且差别部分需要全0，如果from<to,差别部分需要补0
+func TransferDecimalAmount(amount string, fromDecimal, toDecimal int) (string, error) {
+	amountInt, ok := new(big.Int).SetString(amount, 10)
+	if !ok {
+		return "", errors.Wrapf(types.ErrInvalidParam, "TransferDecimalAmount amount=%s", amount)
+	}
+	//防止产生amount="0"时候扩充到"0000"字串
+	if amountInt.Cmp(big.NewInt(0)) == 0 {
+		return "0", nil
+	}
+	//from=tokenDecimal大于to=sysDecimal场景，需要裁减差别部分, 比如 1e18 > 1e8,裁减1e10
+	if fromDecimal > toDecimal {
+		diff := fromDecimal - toDecimal
+		suffix := strings.Repeat("0", diff)
+		if !strings.HasSuffix(amount, suffix) {
+			return "", errors.Wrapf(types.ErrInvalidParam, "amount=%s not include suffix decimal=%d", amount, diff)
+		}
+		return amount[:len(amount)-diff], nil
+	}
+	//tokenDecimal <= 合约decimal场景，需要扩展，比如1e6 < 1e8,扩展"00"
+	diff := toDecimal - fromDecimal
+	suffix := strings.Repeat("0", diff)
+	return amount + suffix, nil
 }

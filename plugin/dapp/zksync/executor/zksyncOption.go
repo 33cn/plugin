@@ -93,16 +93,13 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	payload.EthAddress = newAddr
 
 	//TODO set chainID
-	lastPriority, err := getLastEthPriorityQueueID(a.statedb)
+	lastPriorityId, err := getLastEthPriorityQueueID(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get eth last priority queue id")
 	}
-	lastPriorityId, ok := big.NewInt(0).SetString(lastPriority.GetID(), 10)
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
-	}
-	if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
-		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
+
+	if lastPriorityId.ID+1 != payload.GetL1PriorityId() {
+		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId.ID, payload.GetL1PriorityId())
 	}
 
 	leaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetChain33Addr(), payload.GetEthAddress())
@@ -112,11 +109,11 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	special := &zt.ZkDepositWitnessInfo{
 		//accountId nil
-		TokenID:       payload.TokenId,
-		Amount:        payload.Amount,
-		EthAddress:    payload.EthAddress,
-		Layer2Addr:    payload.Chain33Addr,
-		EthPriorityID: payload.EthPriorityQueueId,
+		TokenID:      payload.TokenId,
+		Amount:       payload.Amount,
+		EthAddress:   payload.EthAddress,
+		Layer2Addr:   payload.Chain33Addr,
+		L1PriorityID: payload.L1PriorityId,
 	}
 
 	//leaf不存在就添加
@@ -124,7 +121,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		zklog.Debug("zksync deposit add new leaf")
 
 		var accountID uint64
-		lastAccountID, _ := getLatestAccountID(a.statedb)
+		lastAccountID, err := getLatestAccountID(a.statedb)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getLatestAccountID")
+		}
 		if zt.SystemDefaultAcctId == lastAccountID {
 			ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
 			kvs4InitAccount, err := NewInitAccount(ethFeeAddr, chain33FeeAddr)
@@ -160,32 +160,39 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
-	r := makeSetEthPriorityIdReceipt(lastPriorityId.Int64(), payload.EthPriorityQueueId)
+	r := makeSetL1PriorityIdReceipt(lastPriorityId.ID, payload.L1PriorityId)
 	mergeReceipt(receipts, r)
 
 	//add deposit queue
-	r, err = setL2QueueData(a.statedb, []*zt.ZkOperation{{Ty: zt.TyDepositAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Deposit{Deposit: special}}}})
+	r, lastQueueId, err := setL2QueueData(a.statedb, []*zt.ZkOperation{{Ty: zt.TyDepositAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Deposit{Deposit: special}}}})
 	if err != nil {
 		return nil, err
 	}
-	return mergeReceipt(receipts, r), nil
+	mergeReceipt(receipts, r)
+	//note: deposit 只push queue一个operation，没有fee op， lastQueueId就对应deposit op,如果加入fee，就需要调整
+	r = makeSetPriority2QueIdReceipt(payload.L1PriorityId, lastQueueId)
+	mergeReceipt(receipts, r)
+	return receipts, nil
 }
 
-func setL2QueueData(db dbm.KV, ops []*zt.ZkOperation) (*types.Receipt, error) {
+func setL2QueueData(db dbm.KV, ops []*zt.ZkOperation) (*types.Receipt, int64, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk}
 	//add deposit queue
 	lastQueueId, err := GetL2LastQueueId(db)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getL2LastQueueId")
+		return nil, 0, errors.Wrapf(err, "getL2LastQueueId")
 	}
-	for i, o := range ops {
-		q1 := makeSetL2LastQueueIdReceipt(lastQueueId, lastQueueId+1+int64(i))
-		mergeReceipt(receipts, q1)
-		q2 := makeSetL2QueueIdReceipt(lastQueueId+1+int64(i), o)
-		mergeReceipt(receipts, q2)
+	newQueId := lastQueueId
+	for _, o := range ops {
+		newQueId += 1
+		r := makeSetL2LastQueueIdReceipt(lastQueueId, newQueId)
+		mergeReceipt(receipts, r)
+		r = makeSetL2QueueIdReceipt(newQueId, o)
+		mergeReceipt(receipts, r)
+		lastQueueId = newQueId
 	}
 
-	return receipts, nil
+	return receipts, lastQueueId, nil
 }
 
 func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
@@ -268,7 +275,7 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyWithdrawAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Withdraw{Withdraw: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +444,7 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.Z
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyContractToTreeNewAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Contract2TreeNew{Contract2TreeNew: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -565,17 +572,20 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
+	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, actionTy, payload.Amount, payload.TokenId)
+	if err != nil {
+		return nil, err
+	}
 	special := &zt.ZkTransferWitnessInfo{
 		FromAccountID: payload.FromAccountId,
 		ToAccountID:   payload.ToAccountId,
 		TokenID:       payload.TokenId,
 		Amount:        payload.Amount,
+		Fee:           &zt.ZkFee{Fee: fee},
 	}
+	//transfer 和 tree2contract 重用电路的TyTransferAction
+	operation := &zt.ZkOperation{Ty: zt.TyTransferAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: special}}}
 
-	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, actionTy, payload.Amount, payload.TokenId)
-	if err != nil {
-		return nil, err
-	}
 	if actionTy == zt.TyContractToTreeAction {
 		sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
 		amountTree, amountPlusFeeTree, feeTree, err := GetTreeSideAmount(payload.Amount, amountPlusFee, fee, sysDecimal, decimal)
@@ -585,6 +595,15 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 		amountPlusFee = amountPlusFeeTree
 		fee = feeTree
 		payload.Amount = amountTree
+		//reset operation
+		special2 := &zt.ZkContractToTreeWitnessInfo{
+			AccountID: payload.ToAccountId,
+			TokenID:   payload.TokenId,
+			Amount:    payload.Amount,
+			Fee:       &zt.ZkFee{Fee: fee},
+		}
+		operation.Ty = zt.TyContractToTreeAction
+		operation.Op = &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ContractToTree{ContractToTree: special2}}
 	}
 
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId())
@@ -649,11 +668,10 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 	receipts = mergeReceipt(receipts, feeReceipt)
 
 	//add  transfer & fee queue
-	special.Fee = &zt.ZkFee{Fee: fee}
 	var ops []*zt.ZkOperation
-	ops = append(ops, &zt.ZkOperation{Ty: zt.TyTransferAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: special}}})
+	ops = append(ops, operation)
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -713,6 +731,9 @@ func (a *Action) transferToNewInnerProcess(fromLeaf *zt.Leaf, toChain33Address, 
 
 	//1.操作to 账户
 	lastAccountID, err := getLatestAccountID(a.statedb)
+	if err != nil {
+		return nil, 0, errors.Wrapf(err, "getLatestAccountID")
+	}
 	if lastAccountID == zt.SystemDefaultAcctId {
 		return nil, 0, errors.Wrapf(err, "getLatestAccountID")
 	}
@@ -728,11 +749,11 @@ func (a *Action) transferToNewInnerProcess(fromLeaf *zt.Leaf, toChain33Address, 
 		From: receiptFrom,
 		To:   receiptTo,
 	}
-	l2Transferlog := &types.ReceiptLog{
+	l2TransferLog := &types.ReceiptLog{
 		Ty:  zt.TyTransferToNewLog,
 		Log: types.Encode(transferToNewLog),
 	}
-	logs = append(logs, l2Transferlog)
+	logs = append(logs, l2TransferLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
@@ -808,7 +829,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyTransferToNewAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferToNew{TransferToNew: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -885,7 +906,7 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "applyL2AccountUpdate")
 	}
 	kvs = append(kvs, proxyKVs...)
-	l2LogFrom.Ty = zt.TyProxyExitLog
+	l2Logproxy.Ty = zt.TyProxyExitLog
 	logs = append(logs, l2Logproxy)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -908,7 +929,7 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyProxyExitAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ProxyExit{ProxyExit: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -982,7 +1003,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TySetPubKeyAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_SetPubKey{SetPubKey: special}}})
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -1125,17 +1146,17 @@ func checkIsNFTToken(id uint64) bool {
 	return id > zt.SystemNFTTokenId
 }
 
-func getLastEthPriorityQueueID(db dbm.KV) (*zt.EthPriorityQueueID, error) {
+func getLastEthPriorityQueueID(db dbm.KV) (*zt.L1PriorityID, error) {
 	key := getEthPriorityQueueKey()
 	v, err := db.Get(key)
 	//未找到返回-1
 	if isNotFound(err) {
-		return &zt.EthPriorityQueueID{ID: "-1"}, nil
+		return &zt.L1PriorityID{ID: -1}, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	var id zt.EthPriorityQueueID
+	var id zt.L1PriorityID
 	err = types.Decode(v, &id)
 	if err != nil {
 		zklog.Error("getLastEthPriorityQueueID.decode", "err", err)
@@ -1148,15 +1169,16 @@ func getLastEthPriorityQueueID(db dbm.KV) (*zt.EthPriorityQueueID, error) {
 func getLatestAccountID(db dbm.KV) (int64, error) {
 	key := CalcLatestAccountIDKey()
 	v, err := db.Get(key)
-
+	if isNotFound(err) {
+		return zt.SystemDefaultAcctId, nil
+	}
 	if err != nil {
 		return zt.SystemDefaultAcctId, err
 	}
 	var id types.Int64
 	err = types.Decode(v, &id)
 	if err != nil {
-		zklog.Error("getLastEthPriorityQueueID.decode", "err", err)
-		return zt.SystemDefaultAcctId, err
+		return zt.SystemDefaultAcctId, errors.Wrapf(err, "decode")
 	}
 
 	return id.Data, nil
@@ -1175,20 +1197,40 @@ func CalcNewAccountIDkv(accounID int64) *types.KeyValue {
 	return kv
 }
 
-func makeSetEthPriorityIdReceipt(prev, current int64) *types.Receipt {
+func makeSetL1PriorityIdReceipt(prev, current int64) *types.Receipt {
 	key := getEthPriorityQueueKey()
-	log := &zt.ReceiptEthPriorityQueueID{
+	log := &zt.ReceiptL1PriorityID{
 		Prev:    prev,
 		Current: current,
 	}
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{Key: key, Value: types.Encode(&zt.EthPriorityQueueID{ID: big.NewInt(current).String()})},
+			{Key: key, Value: types.Encode(&zt.L1PriorityID{ID: current})},
 		},
 		Logs: []*types.ReceiptLog{
 			{
 				Ty:  zt.TySetEthPriorityQueueId,
+				Log: types.Encode(log),
+			},
+		},
+	}
+}
+
+func makeSetPriority2QueIdReceipt(priorityId, queueId int64) *types.Receipt {
+	key := getL1PriorityId2QueueIdKey(priorityId)
+	log := &zt.Priority2QueueId{
+		PriorityId: priorityId,
+		QueueId:    queueId,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(&types.Int64{Data: queueId})},
+		},
+		Logs: []*types.ReceiptLog{
+			{
+				Ty:  zt.TyPriority2QueIdLog,
 				Log: types.Encode(log),
 			},
 		},
@@ -1264,25 +1306,6 @@ func mergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
 	return receipt1
 }
 
-func checkPackValue(amount string, manMaxBitWidth int64) error {
-	//exp部分默认最大是31，不需要检查
-	man, _, err := zt.ZkTransferManExpPart(amount)
-	if err != nil {
-		return errors.Wrapf(err, "ZkTransferManExpPart,amount=%s", amount)
-	}
-	manV, ok := new(big.Int).SetString(man, 10)
-	if !ok {
-		return errors.Wrapf(types.ErrInvalidParam, "ZkTransferManExpPart,man=%s,amount=%s", manV, amount)
-	}
-
-	maxManV := new(big.Int).Exp(big.NewInt(2), big.NewInt(manMaxBitWidth), nil)
-	//manv <= maxMan
-	if maxManV.Cmp(manV) < 0 {
-		return errors.Wrapf(types.ErrNotAllow, "fee amount's manV=%s big than 2^%d", man, manMaxBitWidth)
-	}
-	return nil
-}
-
 func (a *Action) MakeFeeLog(amount string, tokenId uint64) (*types.Receipt, *zt.ZkOperation, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -1323,6 +1346,13 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
+	amountInt, ok := new(big.Int).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	}
+	if amountInt.Cmp(big.NewInt(0)) < 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%s", payload.Amount)
+	}
 	//跟其他action手续费以二层各token精度一致不同，contract2tree action的手续费统一以合约的精度处理，这样和合约侧amount精度一致，简化了合约侧的精度处理
 	if payload.ActionTy == zt.TyContractToTreeAction {
 		token, err := GetTokenByTokenId(a.statedb, big.NewInt(int64(payload.TokenId)).String())
@@ -1330,8 +1360,9 @@ func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
 			return nil, errors.Wrapf(err, "getTokenId=%d", payload.TokenId)
 		}
 		sysDecimal := strings.Count(strconv.Itoa(int(a.api.GetConfig().GetCoinPrecision())), "0")
+
 		//比如token精度为6，sysDecimal=8, token的fee在sysDecimal下需要补2个0，也就是后缀需要至少有两个0，不然会丢失精度，在token精度大于sys精度时候没这问题
-		if int(token.Decimal) < sysDecimal && !strings.HasSuffix(payload.Amount, strings.Repeat("0", sysDecimal-int(token.Decimal))) {
+		if int(token.Decimal) < sysDecimal && amountInt.Cmp(big.NewInt(0)) > 0 && !strings.HasSuffix(payload.Amount, strings.Repeat("0", sysDecimal-int(token.Decimal))) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "contract2tree fee need at least with suffix=%s", strings.Repeat("0", sysDecimal-int(token.Decimal)))
 		}
 	}
@@ -1630,7 +1661,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyMintNFTAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_MintNFT{MintNFT: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -1763,7 +1794,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyWithdrawNFTAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_WithdrawNFT{WithdrawNFT: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -1905,7 +1936,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyTransferNFTAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferNFT{TransferNFT: special}}})
 	ops = append(ops, feeQueue)
-	r, err := setL2QueueData(a.statedb, ops)
+	r, _, err := setL2QueueData(a.statedb, ops)
 	if err != nil {
 		return nil, err
 	}
@@ -2580,46 +2611,4 @@ func (a *Action) AssetTransferToExec(transfer *types.AssetsTransferToExec, tx *t
 		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
 	}
 	return nil, types.ErrToAddrNotSameToExecAddr
-}
-
-//根据系统和token精度，计算合约转化为二层tree侧的amount，合约侧amount都是系统精度
-func GetTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal int) (amount4Tree, totalAmount4Tree, feeAmount4Tree string, err error) {
-	amount4Tree, err = TransferDecimalAmount(amount, sysDecimal, tokenDecimal)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", amount, tokenDecimal, sysDecimal)
-	}
-	totalAmount4Tree, err = TransferDecimalAmount(totalAmount, sysDecimal, tokenDecimal)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", totalAmount, tokenDecimal, sysDecimal)
-	}
-	feeAmount4Tree, err = TransferDecimalAmount(fee, sysDecimal, tokenDecimal)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "transferDecimalAmount,amount=%s,tokenDecimal=%d,sysDecimal=%d", fee, tokenDecimal, sysDecimal)
-	}
-	err = checkPackValue(amount4Tree, zt.PacAmountManBitWidth)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "checkPackVal amount=%s", amount4Tree)
-	}
-	err = checkPackValue(feeAmount4Tree, zt.PacFeeManBitWidth)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "checkPackVal fee=%s", feeAmount4Tree)
-	}
-	return amount4Tree, totalAmount4Tree, feeAmount4Tree, nil
-}
-
-//from向to小数对齐，如果from>to, 需要裁减掉差别部分，且差别部分需要全0，如果from<to,差别部分需要补0
-func TransferDecimalAmount(amount string, fromDecimal, toDecimal int) (string, error) {
-	//from=tokenDecimal大于to=sysDecimal场景，需要裁减差别部分, 比如 1e18 > 1e8,裁减1e10
-	if fromDecimal > toDecimal {
-		diff := fromDecimal - toDecimal
-		suffix := strings.Repeat("0", diff)
-		if !strings.HasSuffix(amount, suffix) {
-			return "", errors.Wrapf(types.ErrInvalidParam, "amount=%s not include suffix decimal=%d", amount, diff)
-		}
-		return amount[:len(amount)-diff], nil
-	}
-	//tokenDecimal <= 合约decimal场景，需要扩展，比如1e6 < 1e8,扩展"00"
-	diff := toDecimal - fromDecimal
-	suffix := strings.Repeat("0", diff)
-	return amount + suffix, nil
 }

@@ -21,12 +21,37 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getFirstRootHashCmd())
 	cmd.AddCommand(getZkCommitProofListCmd())
 	//cmd.AddCommand(getProofWitnessCmd())
-	//cmd.AddCommand(getExistProofCmd())
+	cmd.AddCommand(getExistProofCmd())
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
 
-	//cmd.AddCommand(commitProofCmd())
+	cmd.AddCommand(buildProofCmd())
 
 	return cmd
+}
+
+func buildProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "build",
+		Short: "build db account tree for exodus proof,return tree roothash",
+		Run:   buildProof,
+	}
+	return cmd
+}
+
+func buildProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqNil{}
+
+	params.FuncName = "BuildHistoryAccounts"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
 
 func getTxProofCmd() *cobra.Command {
@@ -389,51 +414,47 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 //	ctx.Run()
 //}
 //
-//func getExistProofCmd() *cobra.Command {
-//	cmd := &cobra.Command{
-//		Use:   "exist",
-//		Short: "get account's existence proof for specific token",
-//		Run:   getExist,
-//	}
-//	getExistFlag(cmd)
-//	return cmd
-//}
-//
-//func getExistFlag(cmd *cobra.Command) {
-//	cmd.Flags().Uint64P("account", "a", 0, "account id")
-//	cmd.MarkFlagRequired("account")
-//	cmd.Flags().Uint64P("token", "t", 0, "token id")
-//	cmd.MarkFlagRequired("token")
-//	cmd.Flags().StringP("rootHash", "r", "", "target tree root hash")
-//	cmd.MarkFlagRequired("rootHash")
-//
-//}
-//
-//func getExist(cmd *cobra.Command, args []string) {
-//	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-//	account, _ := cmd.Flags().GetUint64("account")
-//	token, _ := cmd.Flags().GetUint64("token")
-//	rootHash, _ := cmd.Flags().GetString("rootHash")
-//
-//
-//	var params rpctypes.Query4Jrpc
-//
-//	params.Execer = zt.Zksync
-//	req := &zt.ZkReqExistenceProof{
-//		AccountId:    account,
-//		TokenId:      token,
-//		RootHash:     rootHash,
-//
-//	}
-//
-//	params.FuncName = "GetExistenceProof"
-//	params.Payload = types.MustPBToJSON(req)
-//
-//	var resp zt.ZkProofWitness
-//	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-//	ctx.Run()
-//}
-//
+func getExistProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "exist",
+		Short: "get account's exist/exodus proof for specific token",
+		Run:   getExist,
+	}
+	getExistFlag(cmd)
+	return cmd
+}
+
+func getExistFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("account", "a", 0, "account id")
+	cmd.MarkFlagRequired("account")
+	cmd.Flags().Uint64P("token", "t", 0, "token id")
+	cmd.MarkFlagRequired("token")
+	cmd.Flags().StringP("rootHash", "r", "", "optional,target tree root hash")
+
+}
+
+func getExist(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	account, _ := cmd.Flags().GetUint64("account")
+	token, _ := cmd.Flags().GetUint64("token")
+	rootHash, _ := cmd.Flags().GetString("rootHash")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkReqExistenceProof{
+		AccountId: account,
+		TokenId:   token,
+		RootHash:  rootHash,
+	}
+
+	params.FuncName = "GetExistenceProof"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkProofWitness
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
 
 func getLastOnChainCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{

@@ -1351,11 +1351,11 @@ func TestNFTMisc(t *testing.T) {
 
 func deposit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, queueId uint64, amount, ethAddress, chain33Addr string) (*types.Receipt, *types.LocalDBSet, error) {
 	deposit := &zksyncTypes.ZkDeposit{
-		TokenId:            tokenId,
-		Amount:             amount,
-		EthAddress:         ethAddress,
-		Chain33Addr:        chain33Addr,
-		EthPriorityQueueId: int64(queueId),
+		TokenId:      tokenId,
+		Amount:       amount,
+		EthAddress:   ethAddress,
+		Chain33Addr:  chain33Addr,
+		L1PriorityId: int64(queueId),
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1563,11 +1563,11 @@ func transfer(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccoun
 
 func transfer2New(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, fromAccountId uint64, amount, toEthAddress, toChain33Address string) (*types.Receipt, *types.LocalDBSet, error) {
 	transfer2New := &zksyncTypes.ZkTransferToNew{
-		TokenId:          tokenId,
-		Amount:           amount,
-		FromAccountId:    fromAccountId,
-		ToEthAddress:     toEthAddress,
-		ToChain33Address: toChain33Address,
+		TokenId:         tokenId,
+		Amount:          amount,
+		FromAccountId:   fromAccountId,
+		ToEthAddress:    toEthAddress,
+		ToLayer2Address: toChain33Address,
 	}
 
 	action := &zksyncTypes.ZksyncAction{

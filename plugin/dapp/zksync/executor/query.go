@@ -61,40 +61,6 @@ func (z *zksync) Query_GetNFTId(in *types.ReqString) (types.Message, error) {
 	return &id, nil
 }
 
-// Query_GetTxProof 获取交易证明
-func (z *zksync) Query_GetTxProof(in *zt.ZkQueryReq) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
-	}
-	table := NewZksyncInfoTable(z.GetLocalDB())
-	row, err := table.GetData([]byte(fmt.Sprintf("%016d.%016d", in.GetBlockHeight(), in.GetTxIndex())))
-	if err != nil {
-		return nil, err
-	}
-	data := row.Data.(*zt.OperationInfo)
-	return data, nil
-}
-
-// Query_GetTxProof 批量获取交易证明
-func (z *zksync) Query_GetTxProofByHeight(in *zt.ZkQueryReq) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
-	}
-	res := new(zt.ZkQueryResp)
-	datas := make([]*zt.OperationInfo, 0)
-	table := NewZksyncInfoTable(z.GetLocalDB())
-	rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", in.GetBlockHeight())), nil, 1000, zt.ListASC)
-	if err != nil {
-		return nil, err
-	}
-	for _, row := range rows {
-		data := row.Data.(*zt.OperationInfo)
-		datas = append(datas, data)
-	}
-	res.OperationInfos = datas
-	return res, nil
-}
-
 // Query_GetAccountById  通过accountId查询account
 func (z *zksync) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) {
 	var leaf zt.Leaf
@@ -225,45 +191,6 @@ func (z *zksync) Query_GetVerifiers(in *types.ReqNil) (types.Message, error) {
 	return getVerifierData(z.GetStateDB())
 }
 
-// Query_GetTxProofByHeights 根据多个高度批量获取交易证明
-func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
-	}
-	res := new(zt.ZkQueryProofResp)
-	datas := make([]*zt.OperationInfo, 0)
-	table := NewZksyncInfoTable(z.GetLocalDB())
-	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight(); i++ {
-		var primaryKey []byte
-		if i == in.GetStartBlockHeight() && in.GetStartIndex() != 0 {
-			primaryKey = []byte(fmt.Sprintf("%016d.%016d.%016d", i, in.GetStartIndex(), in.OpIndex))
-		} else {
-			primaryKey = nil
-		}
-		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, types.MaxTxsPerBlock, zt.ListASC)
-		if err != nil {
-			if isNotFound(err) {
-				continue
-			} else {
-				return nil, err
-			}
-		}
-		for _, row := range rows {
-			data := row.Data.(*zt.OperationInfo)
-			if in.GetNeedDetail() {
-				datas = append(datas, data)
-			} else {
-				info := new(zt.OperationInfo)
-				info.BlockHeight = i
-				info.TxType = data.TxType
-				datas = append(datas, info)
-			}
-		}
-	}
-	res.OperationInfos = datas
-	return res, nil
-}
-
 // Query_GetZkContractAccount 批量获取交易证明
 func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
@@ -303,39 +230,13 @@ func (z *zksync) Query_GetTokenSymbol(in *zt.ZkQueryReq) (types.Message, error) 
 }
 
 // Query_GetPriorityOpInfo 根据priorityId获取operation信息
-func (z *zksync) Query_GetPriorityOpInfo(in *zt.EthPriorityQueueID) (types.Message, error) {
-	if len(in.GetID()) == 0 {
-		return nil, types.ErrInvalidParam
-	}
-	table := NewZksyncInfoTable(z.GetLocalDB())
-	rows, err := table.ListIndex("priorityId", []byte(fmt.Sprintf("%s", in.GetID())), nil, 1, zt.ListASC)
-	if err != nil {
-		return nil, errors.Wrapf(err, "listIndex")
-	}
-	if len(rows) < 1 {
-		return nil, types.ErrNotFound
-	}
-	return rows[0].Data.(*zt.OperationInfo), nil
+func (z *zksync) Query_GetPriorityOpInfo(in *zt.L1PriorityID) (types.Message, error) {
+	return GetPriorityDepositData(z.GetStateDB(), in.ID)
 }
 
-// Query_GetProofByTxHash 根据txhash获取proof信息
-func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
-	}
-	res := new(zt.ZkQueryResp)
-	datas := make([]*zt.OperationInfo, 0)
-	table := NewZksyncInfoTable(z.GetLocalDB())
-	rows, err := table.ListIndex("txHash", []byte(fmt.Sprintf("%s", in.GetTxHash())), nil, 1, zt.ListASC)
-	if err != nil {
-		return nil, err
-	}
-	for _, row := range rows {
-		data := row.Data.(*zt.OperationInfo)
-		datas = append(datas, data)
-	}
-	res.OperationInfos = datas
-	return res, nil
+// Query_GetL2QueueOpInfo 根据priorityId获取operation信息
+func (z *zksync) Query_GetL2QueueOpInfo(in *zt.L1PriorityID) (types.Message, error) {
+	return GetPriorityDepositData(z.GetStateDB(), in.ID)
 }
 
 //
@@ -385,28 +286,6 @@ func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, err
 	return data, nil
 }
 
-// Query_GetProofChainTitleList 获取所有chainTitle信息
-//func (z *zksync) Query_GetProofChainTitleList(in *types.ReqNil) (types.Message, error) {
-//
-//	table := NewCommitProofTable(z.GetLocalDB())
-//	//只查找有proofId=1的记录，再统计
-//	rows, err := table.ListIndex("proofId", []byte(fmt.Sprintf("%016d", 1)), nil, 0, zt.ListASC)
-//	if err != nil {
-//		zklog.Error("Query_GetProofChainTitleList", "err", err.Error())
-//		return nil, err
-//	}
-//	var chains zt.ZkChainTitleList
-//	for _, r := range rows {
-//		chain := &zt.ZkChainTitle{
-//			ChainTitleId: r.Data.(*zt.ZkCommitProof).GetChainTitleId(),
-//			ChainTitle:   r.Data.(*zt.ZkCommitProof).GetChainTitle(),
-//		}
-//		chains.Chains = append(chains.Chains, chain)
-//	}
-//	return &chains, nil
-//
-//}
-
 // Query_GetProofList 根据proofId fetch 后续证明
 func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
 	if in.GetChainTitleId() <= 0 {
@@ -449,4 +328,19 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 		return nil, err
 	}
 	return rows.Data.(*zt.ZkCommitProof), nil
+}
+
+func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Message, error) {
+	return getAccountProofInHistory(z.GetStateDB(), in)
+}
+
+//Query_BuildHistoryAccounts 获取statedb中的tree账户信息构建merkel tree，返回tree roothash
+func (z *zksync) Query_BuildHistoryAccounts(in *types.ReqNil) (types.Message, error) {
+	accts, err := BuildStateDbHistoryAccount(z.GetStateDB(), "")
+	if err != nil {
+		return nil, err
+	}
+	var resp types.ReplyString
+	resp.Data = accts.RootHash
+	return &resp, nil
 }
