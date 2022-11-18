@@ -424,7 +424,10 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastProofId=%d,newProofId=%d, lastBlockEnd=%d,newBlockStart=%d",
 			lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
 	}
-
+	//if lastProof.ProofId+1 != newProof.ProofId {
+	//	return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "lastProofId=%d,newProofId=%d, lastBlockEnd=%d,newBlockStart=%d",
+	//		lastProof.ProofId, newProof.ProofId, lastProof.BlockEnd, newProof.BlockStart)
+	//}
 	//tree root 需要衔接, 从proofId=1开始校验
 	if lastProof.ProofId > 0 && lastProof.NewTreeRoot != newProof.OldTreeRoot {
 		return lastOnChainProofId, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
@@ -446,7 +449,7 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 //检查来自proof的pubdata和queue里的operation一致
 //链上每个op都会把数据压入queue中，包括fee，链下提交的证明的pubdatas要和压入的queue op顺序和数值严格一致，好处是抗回滚
 //first queue op从id=0开始,一旦被proof验证过后firstOpId会移到最后一个验证了的id
-// 0,1,2,3|,4,5,6,7|-----
+//  1,2,3|,4,5,6,7|-----
 //       3=first queue op, 7=last queue op
 func checkNewProofPubData(db dbm.KV, lastQueueId int64, pubData []string) (int64, error) {
 	ops := transferPubDataToOps(pubData)

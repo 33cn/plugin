@@ -14,7 +14,7 @@ func GetL2FirstQueueId(db dbm.KV) (int64, error) {
 	key := getL2FirstQueueIdKey()
 	r, err := db.Get(key)
 	if isNotFound(err) {
-		return -1, nil
+		return 0, nil
 	}
 	if err != nil {
 		return 0, errors.Wrapf(err, "getDb")
@@ -31,7 +31,7 @@ func GetL2LastQueueId(db dbm.KV) (int64, error) {
 	key := getL2LastQueueIdKey()
 	r, err := db.Get(key)
 	if isNotFound(err) {
-		return -1, nil
+		return 0, nil
 	}
 	if err != nil {
 		return 0, errors.Wrapf(err, "getDb")

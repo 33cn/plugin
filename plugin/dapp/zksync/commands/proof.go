@@ -1,11 +1,13 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 func queryProofCmd() *cobra.Command {
@@ -31,7 +33,7 @@ func queryProofCmd() *cobra.Command {
 
 func buildProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "build",
+		Use:   "build_tree",
 		Short: "build db account tree for exodus proof,return tree roothash",
 		Run:   buildProof,
 	}
@@ -182,23 +184,19 @@ func getLastCommitProofCmd() *cobra.Command {
 		Short: "get last committed proof",
 		Run:   getLastCommitProof,
 	}
-	getLastCommitProofFlag(cmd)
+
 	return cmd
-}
-func getLastCommitProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id of proof, needed in main chain")
 }
 
 func getLastCommitProof(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
 
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = zt.Zksync
 
 	params.FuncName = "GetLastCommitProof"
-	params.Payload = types.MustPBToJSON(&zt.ZkChainTitle{ChainTitleId: chainTitleId})
+	params.Payload = types.MustPBToJSON(&types.ReqNil{})
 
 	var resp zt.CommitProofState
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
@@ -303,7 +301,7 @@ func getFirstRootHashCmd() *cobra.Command {
 
 func getFirstRootHashFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("ethAddr", "e", "", "optional eth fee addr, hex format default from config")
-	cmd.Flags().StringP("chain33Addr", "c", "", "optional chain33 fee addr, hex format,default from config")
+	cmd.Flags().StringP("chain33Addr", "c", "", "optional layer2 fee addr, hex format,default from config")
 }
 
 func getFirstRootHash(cmd *cobra.Command, args []string) {
@@ -313,7 +311,14 @@ func getFirstRootHash(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = zt.Zksync
-	req := &types.ReqAddrs{Addrs: []string{eth, chain33}}
+	req := &types.ReqAddrs{}
+	if (len(eth) == 0 && len(chain33) != 0) || (len(eth) == 0 && len(chain33) != 0) {
+		fmt.Fprintln(os.Stderr, "eth or layer2 addr nil")
+		return
+	}
+	if len(eth) > 0 && len(chain33) > 0 {
+		req = &types.ReqAddrs{Addrs: []string{eth, chain33}}
+	}
 
 	params.FuncName = "GetTreeInitRoot"
 	params.Payload = types.MustPBToJSON(req)
@@ -462,20 +467,19 @@ func getLastOnChainCommitProofCmd() *cobra.Command {
 		Short: "get last on chain committed proof",
 		Run:   getLastOnChainCommitProof,
 	}
-	getLastCommitProofFlag(cmd)
+
 	return cmd
 }
 
 func getLastOnChainCommitProof(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
 
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = zt.Zksync
 
 	params.FuncName = "GetLastOnChainProof"
-	params.Payload = types.MustPBToJSON(&zt.ZkChainTitle{ChainTitleId: chainTitleId})
+	params.Payload = types.MustPBToJSON(&types.ReqNil{})
 
 	var resp zt.LastOnChainProof
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)

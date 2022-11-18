@@ -92,14 +92,17 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	}
 	payload.EthAddress = newAddr
 
-	//TODO set chainID
-	lastPriorityId, err := getLastEthPriorityQueueID(a.statedb)
+	lastPriority, err := getLastEthPriorityQueueID(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get eth last priority queue id")
 	}
-
-	if lastPriorityId.ID+1 != payload.GetL1PriorityId() {
-		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId.ID, payload.GetL1PriorityId())
+	//note:需要为string，不能为int64,因为db不支持ID=0的时候
+	lastPriorityId, ok := big.NewInt(0).SetString(lastPriority.GetID(), 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("lastPriorityID=%s", lastPriority.GetID()))
+	}
+	if lastPriorityId.Int64()+1 != payload.L1PriorityId {
+		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.L1PriorityId)
 	}
 
 	leaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetChain33Addr(), payload.GetEthAddress())
@@ -114,6 +117,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		EthAddress:   payload.EthAddress,
 		Layer2Addr:   payload.Chain33Addr,
 		L1PriorityID: payload.L1PriorityId,
+		BlockInfo:    &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 
 	//leaf不存在就添加
@@ -160,7 +164,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
-	r := makeSetL1PriorityIdReceipt(lastPriorityId.ID, payload.L1PriorityId)
+	r := makeSetL1PriorityIdReceipt(lastPriorityId.Int64(), payload.L1PriorityId)
 	mergeReceipt(receipts, r)
 
 	//add deposit queue
@@ -175,6 +179,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	return receipts, nil
 }
 
+//L2 queue 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
 func setL2QueueData(db dbm.KV, ops []*zt.ZkOperation) (*types.Receipt, int64, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk}
 	//add deposit queue
@@ -238,6 +243,7 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		Fee: &zt.ZkFee{
 			Fee: fee,
 		},
+		BlockInfo: &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 
 	balancekv, balancehistory, err := updateTokenBalance(payload.AccountId, special.TokenID, amountPlusFee, zt.Sub, a.statedb)
@@ -440,6 +446,7 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.Z
 		EthAddress:  payload.ToEthAddr,
 		Layer2Addr:  payload.ToLayer2Addr,
 		Fee:         &zt.ZkFee{Fee: feeTree},
+		BlockInfo:   &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyContractToTreeNewAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Contract2TreeNew{Contract2TreeNew: special}}})
@@ -582,6 +589,7 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 		TokenID:       payload.TokenId,
 		Amount:        payload.Amount,
 		Fee:           &zt.ZkFee{Fee: fee},
+		BlockInfo:     &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	//transfer 和 tree2contract 重用电路的TyTransferAction
 	operation := &zt.ZkOperation{Ty: zt.TyTransferAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Transfer{Transfer: special}}}
@@ -601,6 +609,7 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 			TokenID:   payload.TokenId,
 			Amount:    payload.Amount,
 			Fee:       &zt.ZkFee{Fee: fee},
+			BlockInfo: &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 		}
 		operation.Ty = zt.TyContractToTreeAction
 		operation.Op = &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ContractToTree{ContractToTree: special2}}
@@ -825,6 +834,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		EthAddress:    payload.ToEthAddress,
 		Layer2Addr:    payload.ToLayer2Address,
 		Fee:           &zt.ZkFee{Fee: fee},
+		BlockInfo:     &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyTransferToNewAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferToNew{TransferToNew: special}}})
@@ -925,6 +935,7 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 		Amount:     targetToken.Balance,
 		EthAddress: targetLeaf.GetEthAddress(),
 		Fee:        &zt.ZkFee{Fee: fee},
+		BlockInfo:  &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyProxyExitAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_ProxyExit{ProxyExit: special}}})
@@ -1000,6 +1011,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		AccountID: payload.AccountId,
 		PubKeyTy:  payload.PubKeyTy,
 		PubKey:    payload.GetPubKey(),
+		BlockInfo: &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TySetPubKeyAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_SetPubKey{SetPubKey: special}}})
@@ -1151,7 +1163,7 @@ func getLastEthPriorityQueueID(db dbm.KV) (*zt.L1PriorityID, error) {
 	v, err := db.Get(key)
 	//未找到返回-1
 	if isNotFound(err) {
-		return &zt.L1PriorityID{ID: -1}, nil
+		return &zt.L1PriorityID{ID: "-1"}, nil
 	}
 	if err != nil {
 		return nil, err
@@ -1206,11 +1218,11 @@ func makeSetL1PriorityIdReceipt(prev, current int64) *types.Receipt {
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{Key: key, Value: types.Encode(&zt.L1PriorityID{ID: current})},
+			{Key: key, Value: types.Encode(&zt.L1PriorityID{ID: new(big.Int).SetInt64(current).String()})},
 		},
 		Logs: []*types.ReceiptLog{
 			{
-				Ty:  zt.TySetEthPriorityQueueId,
+				Ty:  zt.TySetL1PriorityId,
 				Log: types.Encode(log),
 			},
 		},
@@ -1657,6 +1669,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 			Fee:     feeAmount,
 			TokenID: feeTokenId,
 		},
+		BlockInfo: &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyMintNFTAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_MintNFT{MintNFT: special}}})
@@ -1790,6 +1803,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		InitMintAmount:  nftStatus.MintAmount,
 		Signature:       payload.Signature,
 		Fee:             feeInfo,
+		BlockInfo:       &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyWithdrawNFTAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_WithdrawNFT{WithdrawNFT: special}}})
@@ -1932,6 +1946,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 		NFTTokenID:    payload.NFTTokenId,
 		Amount:        payload.Amount,
 		Fee:           feeInfo,
+		BlockInfo:     &zt.OpBlockInfo{Height: a.height, TxIndex: int32(a.index)},
 	}
 	var ops []*zt.ZkOperation
 	ops = append(ops, &zt.ZkOperation{Ty: zt.TyTransferNFTAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferNFT{TransferNFT: special}}})
@@ -2165,69 +2180,6 @@ func getRollbackOps(db dbm.KV, reqStartQueueId int64) ([]*zt.ZkOperation, error)
 	return ops, nil
 }
 
-//
-func parseRollbackOps(ops []*zt.ZkOperation) ([]uint64, []uint64, map[uint64]*zt.HistoryLeaf, map[uint64]*zt.HistoryLeaf, error) {
-	if len(ops) <= 0 {
-		return nil, nil, nil, nil, errors.Wrapf(types.ErrInvalidParam, "rollback ops=0")
-	}
-	var depositAcctIds, withdrawAcctIds []uint64
-	depositAccountMap := make(map[uint64]*zt.HistoryLeaf)
-	withdrawAccountMap := make(map[uint64]*zt.HistoryLeaf)
-	//LastQueueId+1开始查找回滚
-	for _, op := range ops {
-		switch op.Ty {
-		case zt.TyDepositAction:
-			operation := op.Op.GetDeposit()
-			if _, ok := depositAccountMap[operation.AccountID]; !ok {
-				depositAcctIds = append(depositAcctIds, operation.AccountID)
-			}
-			leaf, err := updateLeaf(depositAccountMap, operation.AccountID, operation.TokenID, operation.Amount)
-			if err != nil {
-				return nil, nil, nil, nil, errors.Wrapf(types.ErrInvalidParam, "deposit undateLeaf acctId=%d,tokenId=%d", operation.AccountID, operation.TokenID)
-			}
-			depositAccountMap[operation.AccountID] = leaf
-		case zt.TyWithdrawAction:
-			operation := op.Op.GetWithdraw()
-			if _, ok := withdrawAccountMap[operation.AccountID]; !ok {
-				withdrawAcctIds = append(withdrawAcctIds, operation.AccountID)
-			}
-			amount, _ := new(big.Int).SetString(operation.Amount, 10)
-			fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
-			amount = new(big.Int).Add(amount, fee)
-			leaf, err := updateLeaf(withdrawAccountMap, operation.AccountID, operation.TokenID, amount.String())
-			if err != nil {
-				return nil, nil, nil, nil, errors.Wrapf(types.ErrInvalidParam, "withdraw undateLeaf acctId=%d,tokenId=%d", operation.AccountID, operation.TokenID)
-			}
-			withdrawAccountMap[operation.AccountID] = leaf
-		case zt.TyProxyExitAction:
-			operation := op.Op.GetProxyExit()
-			if _, ok := withdrawAccountMap[operation.GetProxyID()]; !ok {
-				withdrawAcctIds = append(withdrawAcctIds, operation.GetProxyID())
-			}
-			if _, ok := withdrawAccountMap[operation.GetTargetID()]; !ok {
-				withdrawAcctIds = append(withdrawAcctIds, operation.GetTargetID())
-			}
-			leaf, err := updateLeaf(withdrawAccountMap, operation.ProxyID, operation.TokenID, operation.Fee.Fee)
-			if err != nil {
-				return nil, nil, nil, nil, errors.Wrapf(types.ErrInvalidParam, "withdraw undateLeaf proxy acctId=%d,tokenId=%d", operation.ProxyID, operation.TokenID)
-			}
-			withdrawAccountMap[operation.GetProxyID()] = leaf
-
-			leaf, err = updateLeaf(withdrawAccountMap, operation.TargetID, operation.TokenID, operation.Amount)
-			if err != nil {
-				return nil, nil, nil, nil, errors.Wrapf(types.ErrInvalidParam, "withdraw undateLeaf target acctId=%d,tokenId=%d", operation.ProxyID, operation.TokenID)
-			}
-			withdrawAccountMap[operation.GetTargetID()] = leaf
-		}
-	}
-	//如果deposit和withdraw有相同账户的相同token，则先做merge,防止tree上余额不够
-	err := mergeAccountMap(depositAccountMap, withdrawAccountMap)
-	if err != nil {
-		return nil, nil, nil, nil, errors.Wrapf(err, "mergeAccountMap")
-	}
-	return depositAcctIds, withdrawAcctIds, depositAccountMap, withdrawAccountMap, nil
-}
-
 func checkSystemFeeAcctGap(db dbm.KV, tokensGap map[uint64]string) ([]*zt.ZkAcctRollbackInfo, string, error) {
 	accountId := uint64(zt.SystemFeeAccountId)
 	leaf, err := GetLeafByAccountId(db, accountId)
@@ -2279,50 +2231,6 @@ func checkSystemFeeAcctGap(db dbm.KV, tokensGap map[uint64]string) ([]*zt.ZkAcct
 	return systemGapData, systemGapResp, nil
 }
 
-//deposit和withdraw中相同acctId且相同tokenId的balance做一个合并,方便清算
-func mergeAccountMap(depositMap, withdrawMap map[uint64]*zt.HistoryLeaf) error {
-	for i, w := range withdrawMap {
-		if d, ok := depositMap[i]; ok {
-			err := mergeAccountTokens(d.Tokens, w.Tokens)
-			if err != nil {
-				return errors.Wrapf(err, "merge accountId=%d", i)
-			}
-		}
-	}
-	return nil
-}
-
-func mergeAccountTokens(depositTokens, withdrawTokens []*zt.TokenBalance) error {
-	depositMap := make(map[uint64]*zt.TokenBalance)
-	for _, d := range depositTokens {
-		depositMap[d.TokenId] = d
-	}
-
-	for _, w := range withdrawTokens {
-		if d, ok := depositMap[w.TokenId]; ok {
-			dBalance, ok := new(big.Int).SetString(d.Balance, 10)
-			if !ok {
-				return errors.Wrapf(types.ErrInvalidParam, "deposit invalid balance=%s tokenId=%d", d.Balance, d.TokenId)
-			}
-			wBalance, ok := new(big.Int).SetString(w.Balance, 10)
-			if !ok {
-				return errors.Wrapf(types.ErrInvalidParam, "withdraw invalid balance=%s tokenId=%d", w.Balance, w.TokenId)
-			}
-			//需要deposit扣减的部分可以先从withdraw部分抵消掉
-			if wBalance.Cmp(dBalance) >= 0 {
-				//withdraw 100，deposit 10
-				w.Balance = new(big.Int).Sub(wBalance, dBalance).String()
-				d.Balance = "0"
-			} else {
-				//withdraw 10, deposit 100
-				d.Balance = new(big.Int).Sub(dBalance, wBalance).String()
-				w.Balance = "0"
-			}
-		}
-	}
-	return nil
-}
-
 func checkAccountBalanceNil(db dbm.KV, accountId uint64) error {
 	leaf, err := GetLeafByAccountId(db, accountId)
 	if err != nil {
@@ -2346,60 +2254,6 @@ func checkAccountBalanceNil(db dbm.KV, accountId uint64) error {
 		}
 	}
 	return nil
-}
-
-func updateLeaf(tree map[uint64]*zt.HistoryLeaf, accountID, tokenID uint64, amountPlusFee string) (*zt.HistoryLeaf, error) {
-	leaf, ok := tree[accountID]
-	if !ok {
-		leaf = &zt.HistoryLeaf{
-			AccountId: accountID,
-			Tokens: []*zt.TokenBalance{
-				{
-					TokenId: tokenID,
-					Balance: amountPlusFee,
-				},
-			},
-		}
-	} else {
-		var tokenBalance *zt.TokenBalance
-		//找到token
-		for _, token := range leaf.Tokens {
-			if token.TokenId == tokenID {
-				tokenBalance = token
-			}
-		}
-		if tokenBalance == nil {
-			tokenBalance = &zt.TokenBalance{
-				TokenId: tokenID,
-				Balance: amountPlusFee,
-			}
-			leaf.Tokens = append(leaf.Tokens, tokenBalance)
-		} else {
-			balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
-			if !ok {
-				return nil, errors.Wrapf(types.ErrInvalidParam, "token balance=%s", tokenBalance.GetBalance())
-			}
-			change, _ := new(big.Int).SetString(amountPlusFee, 10)
-			if !ok {
-				return nil, errors.Wrapf(types.ErrInvalidParam, "amountPlusFee=%s", amountPlusFee)
-			}
-			tokenBalance.Balance = new(big.Int).Add(balance, change).String()
-		}
-	}
-	return leaf, nil
-}
-
-//统计所有token的gap
-func updateTokenGap(tokenGap map[uint64]string, tokenId uint64, gap string) {
-	v, ok := tokenGap[tokenId]
-	if !ok {
-		tokenGap[tokenId] = gap
-	} else {
-		balance, _ := new(big.Int).SetString(v, 10)
-		change, _ := new(big.Int).SetString(gap, 10)
-		tokenGap[tokenId] = new(big.Int).Add(balance, change).String()
-	}
-
 }
 
 func getAcctDepositRollbackInfo(db dbm.KV, accountId, tokenId uint64, rollbackAmount string) (*zt.ZkAcctRollbackInfo, error) {

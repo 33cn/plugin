@@ -407,7 +407,7 @@ message ZkSetPubKeyData {
 }
 
 message L1PriorityID {
-  int64 ID = 1;
+  string ID = 1; //需要为string，不能为int64,因为db不支持ID=0的时候
 }
 
 message ReceiptL1PriorityID {
