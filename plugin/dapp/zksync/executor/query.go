@@ -125,11 +125,6 @@ func (z *zksync) Query_GetLastOnChainProof(in *types.ReqNil) (types.Message, err
 	return getLastOnChainProofData(z.GetStateDB())
 }
 
-// Query_GetLastPriorityQueueId 获取最后的eth priority queue id
-func (z *zksync) Query_GetLastPriorityQueueId(in *types.ReqNil) (types.Message, error) {
-	return getLastEthPriorityQueueID(z.GetStateDB())
-}
-
 // Query_GetMaxAccountId 获取当前最大账户id
 func (z *zksync) Query_GetMaxAccountId(in *types.ReqNil) (types.Message, error) {
 	var tree zt.AccountTree
@@ -229,14 +224,33 @@ func (z *zksync) Query_GetTokenSymbol(in *zt.ZkQueryReq) (types.Message, error) 
 	return GetTokenByTokenId(z.GetStateDB(), idStr)
 }
 
-// Query_GetPriorityOpInfo 根据priorityId获取operation信息
-func (z *zksync) Query_GetPriorityOpInfo(in *zt.L1PriorityID) (types.Message, error) {
-	return GetPriorityDepositData(z.GetStateDB(), in.ID)
+// Query_GetLastPriorityQueueId 获取最后的 l1 priority  id
+func (z *zksync) Query_GetLastPriorityQueueId(in *types.ReqNil) (types.Message, error) {
+	return getLastEthPriorityQueueID(z.GetStateDB())
 }
 
-// Query_GetL2QueueOpInfo 根据priorityId获取operation信息
-func (z *zksync) Query_GetL2QueueOpInfo(in *zt.L1PriorityID) (types.Message, error) {
-	return GetPriorityDepositData(z.GetStateDB(), in.ID)
+// Query_GetPriorityOpInfo 根据priorityId获取operation信息
+func (z *zksync) Query_GetPriorityOpInfo(in *types.Int64) (types.Message, error) {
+	return GetPriorityDepositData(z.GetStateDB(), in.Data)
+}
+
+// Query_GetL2QueueOpInfo 根据l2 queue id获取operation信息
+func (z *zksync) Query_GetL2QueueOpInfo(in *types.Int64) (types.Message, error) {
+	return GetL2QueueIdOp(z.GetStateDB(), in.Data)
+}
+
+// Query_GetL2LastQueueId get l2 last queue id
+func (z *zksync) Query_GetL2LastQueueId(in *types.ReqNil) (types.Message, error) {
+	lastId, err := GetL2LastQueueId(z.GetStateDB())
+	return &types.Int64{Data: lastId}, err
+}
+
+// Query_GetProofId2QueueId get proof 's queue info
+func (z *zksync) Query_GetProofId2QueueId(in *types.Int64) (types.Message, error) {
+	if in == nil {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "id nil")
+	}
+	return GetProofId2QueueId(z.GetStateDB(), uint64(in.Data))
 }
 
 //

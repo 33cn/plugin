@@ -102,7 +102,7 @@ const (
 	TySetVerifyKeyLog          = 202 //设置电路验证key
 	TyCommitProofLog           = 203 //提交zk proof
 	TySetVerifierLog           = 204 //设置验证者
-	TySetEthPriorityQueueId    = 205 //设置 eth上 priority queue id;
+	TySetL1PriorityId          = 205 //设置 l1 priority id;
 	TySetFeeLog                = 206
 	TyCommitProofRecordLog     = 207 //提交zk proof
 	TyLogContractAssetDeposit  = 208 //tree资产存储到contract
@@ -270,14 +270,17 @@ var (
 		TySetVerifyKeyLog:          {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:           {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:           {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
-		TySetEthPriorityQueueId:    {Ty: reflect.TypeOf(ReceiptL1PriorityID{}), Name: "TySetEthPriorityQueueID"},
+		TySetL1PriorityId:          {Ty: reflect.TypeOf(ReceiptL1PriorityID{}), Name: "TySetL1PriorityId"},
 		TySetFeeLog:                {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
 		TyCommitProofRecordLog:     {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecordLog"},
 		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
 		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
 		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
 		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
-		TySetL2OpQueueIdLog:        {Ty: reflect.TypeOf(ReceiptL2QueueIDData{}), Name: "TySetL2OpQueueIdLog"},
+		TySetL2OpQueueIdLog:        {Ty: reflect.TypeOf(ReceiptL2QueueIDData{}), Name: "TySetL2QueueIdLog"},
+		TySetL2OpFirstQueueIdLog:   {Ty: reflect.TypeOf(ReceiptL2FirstQueueID{}), Name: "TySetL2FirstQueueIdLog"},
+		TySetL2OpLastQueueIdLog:    {Ty: reflect.TypeOf(ReceiptL2LastQueueID{}), Name: "TySetL2LastQueueIdLog"},
+		TySetProofId2QueueIdLog:    {Ty: reflect.TypeOf(ProofId2QueueIdData{}), Name: "TySetProofId2QueueIdLog"},
 		TyDepositRollbackLog:       {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositRollbackLog"},
 		TyWithdrawRollbackLog:      {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawRollbackLog"},
 		TyPriority2QueIdLog:        {Ty: reflect.TypeOf(Priority2QueueId{}), Name: "TyPriority2QueueIdLog"},

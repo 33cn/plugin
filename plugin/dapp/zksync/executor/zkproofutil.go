@@ -2,9 +2,11 @@ package executor
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"hash"
 	"math/big"
 
+	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -547,4 +549,161 @@ func getTransferNFTOperationByChunk(chunk []byte) *zt.ZkOperation {
 
 	special := &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_TransferNFT{TransferNFT: operation}}
 	return &zt.ZkOperation{Ty: zt.TyTransferNFTAction, Op: special}
+}
+
+//根据ops解析成leaf，并对相同的acctId,tokenId做合并，同时对deposit和withdraw操作做merge
+func parseRollbackOps(ops []*zt.ZkOperation) ([]uint64, []uint64, map[uint64]*zt.HistoryLeaf, map[uint64]*zt.HistoryLeaf, error) {
+	if len(ops) <= 0 {
+		return nil, nil, nil, nil, errors.Wrapf(types.ErrInvalidParam, "rollback ops=0")
+	}
+	var depositAcctIds, withdrawAcctIds []uint64
+	depositAccountMap := make(map[uint64]*zt.HistoryLeaf)
+	withdrawAccountMap := make(map[uint64]*zt.HistoryLeaf)
+
+	//LastQueueId+1开始查找回滚
+	for _, op := range ops {
+		switch op.Ty {
+		case zt.TyDepositAction:
+			operation := op.Op.GetDeposit()
+			if _, ok := depositAccountMap[operation.AccountID]; !ok {
+				depositAcctIds = append(depositAcctIds, operation.AccountID)
+			}
+			depositAccountMap[operation.AccountID] = updateLeaf(depositAccountMap, operation.AccountID, operation.TokenID, operation.Amount)
+		case zt.TyWithdrawAction:
+			operation := op.Op.GetWithdraw()
+			if _, ok := withdrawAccountMap[operation.AccountID]; !ok {
+				withdrawAcctIds = append(withdrawAcctIds, operation.AccountID)
+			}
+			amount, _ := new(big.Int).SetString(operation.Amount, 10)
+			fee, _ := new(big.Int).SetString(operation.Fee.Fee, 10)
+			amount = new(big.Int).Add(amount, fee)
+			withdrawAccountMap[operation.AccountID] = updateLeaf(withdrawAccountMap, operation.AccountID, operation.TokenID, amount.String())
+
+			//扣除fee账户的tx fee，放到depositAccountMap中
+			if _, ok := depositAccountMap[zt.SystemFeeAccountId]; !ok {
+				depositAcctIds = append(depositAcctIds, zt.SystemFeeAccountId)
+			}
+			depositAccountMap[zt.SystemFeeAccountId] = updateLeaf(depositAccountMap, zt.SystemFeeAccountId, operation.TokenID, operation.Fee.Fee)
+
+		case zt.TyProxyExitAction:
+			operation := op.Op.GetProxyExit()
+			if _, ok := withdrawAccountMap[operation.GetProxyID()]; !ok {
+				withdrawAcctIds = append(withdrawAcctIds, operation.GetProxyID())
+			}
+			if _, ok := withdrawAccountMap[operation.GetTargetID()]; !ok {
+				withdrawAcctIds = append(withdrawAcctIds, operation.GetTargetID())
+			}
+			//proxy id
+			withdrawAccountMap[operation.GetProxyID()] = updateLeaf(withdrawAccountMap, operation.ProxyID, operation.TokenID, operation.Fee.Fee)
+			//targetId
+			withdrawAccountMap[operation.GetTargetID()] = updateLeaf(withdrawAccountMap, operation.TargetID, operation.TokenID, operation.Amount)
+
+			//扣除fee账户的tx fee，放到depositAccountMap中
+			if _, ok := depositAccountMap[zt.SystemFeeAccountId]; !ok {
+				depositAcctIds = append(depositAcctIds, zt.SystemFeeAccountId)
+			}
+			depositAccountMap[zt.SystemFeeAccountId] = updateLeaf(depositAccountMap, zt.SystemFeeAccountId, operation.TokenID, operation.Fee.Fee)
+
+		}
+
+	}
+	//如果deposit和withdraw有相同账户的相同token，则先做merge,防止tree上余额不够
+	err := mergeAccountMap(depositAccountMap, withdrawAccountMap)
+	if err != nil {
+		return nil, nil, nil, nil, errors.Wrapf(err, "mergeAccountMap")
+	}
+	return depositAcctIds, withdrawAcctIds, depositAccountMap, withdrawAccountMap, nil
+}
+
+//deposit和withdraw中相同acctId且相同tokenId的balance做一个合并,方便清算
+func mergeAccountMap(depositMap, withdrawMap map[uint64]*zt.HistoryLeaf) error {
+	for i, w := range withdrawMap {
+		if d, ok := depositMap[i]; ok {
+			err := mergeAccountTokens(d.Tokens, w.Tokens)
+			if err != nil {
+				return errors.Wrapf(err, "merge accountId=%d", i)
+			}
+		}
+	}
+	return nil
+}
+
+func mergeAccountTokens(depositTokens, withdrawTokens []*zt.TokenBalance) error {
+	depositMap := make(map[uint64]*zt.TokenBalance)
+	for _, d := range depositTokens {
+		depositMap[d.TokenId] = d
+	}
+
+	for _, w := range withdrawTokens {
+		if d, ok := depositMap[w.TokenId]; ok {
+			dBalance, ok := new(big.Int).SetString(d.Balance, 10)
+			if !ok {
+				return errors.Wrapf(types.ErrInvalidParam, "deposit invalid balance=%s tokenId=%d", d.Balance, d.TokenId)
+			}
+			wBalance, ok := new(big.Int).SetString(w.Balance, 10)
+			if !ok {
+				return errors.Wrapf(types.ErrInvalidParam, "withdraw invalid balance=%s tokenId=%d", w.Balance, w.TokenId)
+			}
+			//需要deposit扣减的部分可以先从withdraw部分抵消掉
+			if wBalance.Cmp(dBalance) >= 0 {
+				//withdraw 100，deposit 10
+				w.Balance = new(big.Int).Sub(wBalance, dBalance).String()
+				d.Balance = "0"
+			} else {
+				//withdraw 10, deposit 100
+				d.Balance = new(big.Int).Sub(dBalance, wBalance).String()
+				w.Balance = "0"
+			}
+		}
+	}
+	return nil
+}
+
+func updateLeaf(tree map[uint64]*zt.HistoryLeaf, accountID, tokenID uint64, amountPlusFee string) *zt.HistoryLeaf {
+	leaf, ok := tree[accountID]
+	if !ok {
+		leaf = &zt.HistoryLeaf{
+			AccountId: accountID,
+			Tokens: []*zt.TokenBalance{
+				{
+					TokenId: tokenID,
+					Balance: amountPlusFee,
+				},
+			},
+		}
+	} else {
+		var tokenBalance *zt.TokenBalance
+		//找到token
+		for _, token := range leaf.Tokens {
+			if token.TokenId == tokenID {
+				tokenBalance = token
+			}
+		}
+		if tokenBalance == nil {
+			tokenBalance = &zt.TokenBalance{
+				TokenId: tokenID,
+				Balance: amountPlusFee,
+			}
+			leaf.Tokens = append(leaf.Tokens, tokenBalance)
+		} else {
+			//这些值都是big.int创建的，不会不ok
+			balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+			change, _ := new(big.Int).SetString(amountPlusFee, 10)
+			tokenBalance.Balance = new(big.Int).Add(balance, change).String()
+		}
+	}
+	return leaf
+}
+
+//统计所有token的gap
+func updateTokenGap(tokenGap map[uint64]string, tokenId uint64, gap string) {
+	v, ok := tokenGap[tokenId]
+	if !ok {
+		tokenGap[tokenId] = gap
+	} else {
+		balance, _ := new(big.Int).SetString(v, 10)
+		change, _ := new(big.Int).SetString(gap, 10)
+		tokenGap[tokenId] = new(big.Int).Add(balance, change).String()
+	}
+
 }
