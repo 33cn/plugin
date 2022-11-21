@@ -3,6 +3,7 @@ package executor
 import (
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -1989,7 +1990,7 @@ func isExodusMode(statedb dbm.KV) error {
 	if err != nil {
 		return err
 	}
-	if mode > 0 {
+	if mode > zt.NormalMode {
 		return errors.Wrapf(types.ErrNotAllow, "isExodusMode=%d", mode)
 	}
 	return nil
@@ -2015,7 +2016,7 @@ func getExodusMode(db dbm.KV) (int64, error) {
 //设置逃生舱模式,为保证顺序，管理员只允许在无效交易生效后，也就是逃生舱准备模式后设置清算模式
 func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if payload.GetMode() < zt.PauseMode || payload.GetMode() > zt.ExodusRollbackMode {
+	if payload.GetMode() < zt.NormalMode || payload.GetMode() > zt.ExodusRollbackMode {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "mode=%d not between[%d:%d]", payload.GetMode(), zt.PauseMode, zt.ExodusRollbackMode)
 	}
 
@@ -2025,7 +2026,7 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		return nil, errors.Wrapf(err, "getExoduxMode")
 	}
 	switch payload.Mode {
-	case zt.PauseMode:
+	case zt.PauseMode, zt.NormalMode:
 		//允许设置暂停模式，在verifier校验L2上deposit和L1的queue不一致时，立即设置pause，校验L2和L1的deposit queue一致后再恢复
 		//因为proof提交到L1可能会比较晚，防止proof被L1校验出错之前有大量deposit存入需要回滚
 		//只有管理员可以设置
@@ -2035,12 +2036,8 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		if mode > zt.PauseMode {
 			return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d", mode)
 		}
-		if payload.GetPause().GetValue() {
-			//pause
-			return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
-		}
-		//restore to 0
-		return makeSetExodusModeReceipt(mode, zt.InitMode), nil
+		//pause or normal
+		return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
 	case zt.ExodusMode:
 		//只有管理员可以设置
 		if !isSuperManager(cfg, a.fromaddr) {
@@ -2077,7 +2074,7 @@ func (a *Action) procExodusRollbackMode(payload *zt.ZkExodusMode) (*types.Receip
 	//1. 确保SystemTree2ContractAcctId的所有tokenId balance都为0才能设置回滚，意味着从contract已经全部token转回到tree了
 	err = checkAccountBalanceNil(a.statedb, zt.SystemTree2ContractAcctId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "checkAccountTokenNil id=%d", zt.SystemTree2ContractAcctId)
+		return nil, errors.Wrapf(err, "checkAccBalanceNil id=%d", zt.SystemTree2ContractAcctId)
 	}
 
 	//2. rollback queue里面的deposit,withdraw等和L1有关系的操作
@@ -2091,7 +2088,7 @@ func (a *Action) procExodusRollbackMode(payload *zt.ZkExodusMode) (*types.Receip
 		return nil, errors.Wrapf(err, "parseRollbackOps")
 	}
 
-	//deposit acctId 需要扣除
+	//deposit acctId 回滚数据，需要扣除
 	depositRollbackAcctData, err := getDepositRollbackData(a.statedb, depositAcctIds, depositAccountMap, rollbackParam.KnownBalanceGap)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getDepositRollbackData")
@@ -2120,9 +2117,11 @@ func (a *Action) procExodusRollbackMode(payload *zt.ZkExodusMode) (*types.Receip
 
 }
 
-func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMap map[uint64]*zt.HistoryLeaf, knownBalanceGap bool) ([]*zt.ZkAcctRollbackInfo, error) {
+//获取deposit操作需要回滚的数据，如果余额不够，尝试从systemFeeId扣除，如果fee也不够，记录gap从L1补充
+func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMap map[uint64]*zt.HistoryLeaf, knownBalanceGap uint32) ([]*zt.ZkAcctRollbackInfo, error) {
 	var depositRollbackAcctData []*zt.ZkAcctRollbackInfo
 	tokensGap := make(map[uint64]string)
+	var tokenIds []uint64 //记录顺序
 	var totalAccountGapStr string
 	//统计所有存款账户rollback相对本身账户余额的gap信息
 	//1. 如果没有gap则从账户本身余额扣除
@@ -2134,6 +2133,9 @@ func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMa
 			}
 			depositRollbackAcctData = append(depositRollbackAcctData, info)
 			if len(info.Gap) > 0 {
+				if _, ok := tokensGap[token.TokenId]; !ok {
+					tokenIds = append(tokenIds, token.TokenId)
+				}
 				updateTokenGap(tokensGap, token.TokenId, info.Gap)
 				totalAccountGapStr += fmt.Sprintf("acctId=%d,tokenId=%d,gap=%s,", info.AccountId, info.TokenId, info.Gap)
 			}
@@ -2142,12 +2144,13 @@ func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMa
 	//2. 如果有gap则尝试从system fee账户扣除，如果fee账户仍不够，则提供累计gap信息到receipt，管理员存款到L1弥补后保证提款成功
 	if len(tokensGap) > 0 {
 		zklog.Error("getDepositRollbackData", "exist acct gap", totalAccountGapStr)
-		sysRollbackData, systemGapStr, err := checkSystemFeeAcctGap(db, tokensGap)
+		sysFeeTokens, err := getAcctTokens(db, zt.SystemFeeAccountId)
 		if err != nil {
-			return nil, errors.Wrapf(err, "checkSystemFeeAcctGap")
+			return nil, errors.Wrapf(err, "getSysFeeAcctTokens acctId=%d", zt.SystemFeeAccountId)
 		}
+		sysRollbackData, systemGapStr := checkSystemFeeAcctGap(sysFeeTokens, tokensGap)
 		//说明系统rollback后也不够，需要L1层补充
-		if len(systemGapStr) > 0 && !knownBalanceGap {
+		if len(systemGapStr) > 0 && knownBalanceGap != zt.ModeValYes {
 			gapStr := fmt.Sprintf("deposit rollback balance gap,sum=%s(%s)", systemGapStr, totalAccountGapStr)
 			zklog.Error("getDepositRollbackData", "system gap", gapStr)
 			return nil, errors.Wrapf(types.ErrNotAllow, gapStr)
@@ -2180,11 +2183,10 @@ func getRollbackOps(db dbm.KV, reqStartQueueId int64) ([]*zt.ZkOperation, error)
 	return ops, nil
 }
 
-func checkSystemFeeAcctGap(db dbm.KV, tokensGap map[uint64]string) ([]*zt.ZkAcctRollbackInfo, string, error) {
-	accountId := uint64(zt.SystemFeeAccountId)
+func getAcctTokens(db dbm.KV, accountId uint64) (map[uint64]string, error) {
 	leaf, err := GetLeafByAccountId(db, accountId)
 	if err != nil {
-		return nil, "", errors.Wrapf(err, "get leaf id=%d", accountId)
+		return nil, errors.Wrapf(err, "get leaf id=%d", accountId)
 	}
 
 	sysTokens := make(map[uint64]string)
@@ -2192,25 +2194,36 @@ func checkSystemFeeAcctGap(db dbm.KV, tokensGap map[uint64]string) ([]*zt.ZkAcct
 		for _, tokenId := range leaf.TokenIds {
 			balance, err := GetTokenByAccountIdAndTokenId(db, accountId, tokenId)
 			if err != nil {
-				return nil, "", errors.Wrapf(err, "acctId=%d,token=%d", accountId, tokenId)
+				return nil, errors.Wrapf(err, "acctId=%d,token=%d", accountId, tokenId)
 			}
 			if balance != nil {
 				sysTokens[tokenId] = balance.Balance
 			}
 		}
 	}
+	return sysTokens, nil
+}
+
+func checkSystemFeeAcctGap(sysFeeTokens, tokensGap map[uint64]string) ([]*zt.ZkAcctRollbackInfo, string) {
 	var systemGapResp string
 	var systemGapData []*zt.ZkAcctRollbackInfo
-	for tokenId, gap := range tokensGap {
-		sysBalance, ok := sysTokens[tokenId]
+	var tokenIds []uint64 //记录顺序
+	for id, _ := range tokensGap {
+		tokenIds = append(tokenIds, id)
+	}
+	sort.Slice(tokenIds, func(i, j int) bool { return tokenIds[i] < tokenIds[j] })
+	for _, tokenId := range tokenIds {
+		sysBalance, ok := sysFeeTokens[tokenId]
+		gap := tokensGap[tokenId]
 		if !ok {
 			//feeAcct中不存在此token
 			systemGapResp += fmt.Sprintf("tokenId=%d,gap=%s,", tokenId, gap)
 		} else {
+
 			sysV, _ := new(big.Int).SetString(sysBalance, 10)
 			gapV, _ := new(big.Int).SetString(gap, 10)
 			data := &zt.ZkAcctRollbackInfo{
-				AccountId:    accountId,
+				AccountId:    zt.SystemFeeAccountId,
 				TokenId:      tokenId,
 				Balance:      sysBalance,
 				NeedRollback: gap,
@@ -2228,7 +2241,7 @@ func checkSystemFeeAcctGap(db dbm.KV, tokensGap map[uint64]string) ([]*zt.ZkAcct
 		}
 	}
 
-	return systemGapData, systemGapResp, nil
+	return systemGapData, systemGapResp
 }
 
 func checkAccountBalanceNil(db dbm.KV, accountId uint64) error {
@@ -2240,15 +2253,15 @@ func checkAccountBalanceNil(db dbm.KV, accountId uint64) error {
 		for _, tokenId := range leaf.TokenIds {
 			balance, err := GetTokenByAccountIdAndTokenId(db, accountId, tokenId)
 			if err != nil {
-				return errors.Wrapf(err, "acctId=%d,token=%d", accountId, tokenId)
+				return errors.Wrapf(err, "acctId=%d,tokenId=%d", accountId, tokenId)
 			}
 			if balance != nil {
 				v, ok := new(big.Int).SetString(balance.Balance, 10)
 				if !ok {
-					return errors.Wrapf(types.ErrInvalidParam, "acctId=%d,token=%d,balance=%s", accountId, tokenId, balance.Balance)
+					return errors.Wrapf(types.ErrInvalidParam, "acctId=%d,tokenId=%d,balance=%s", accountId, tokenId, balance.Balance)
 				}
 				if v.Cmp(big.NewInt(0)) != 0 {
-					return errors.Wrapf(types.ErrNotAllow, "acctId=%d,token=%d,balance=%s not 0", accountId, tokenId, balance.Balance)
+					return errors.Wrapf(types.ErrNotAllow, "acctId=%d,tokenId=%d,balance=%s not 0", accountId, tokenId, balance.Balance)
 				}
 			}
 		}
@@ -2355,7 +2368,7 @@ func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, erro
 	}
 
 	if payload.Decimal > zt.MaxDecimalAllow || payload.Decimal < zt.MinDecimalAllow {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "Decimal=%d", payload.Decimal)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "Decimal=%d,max=%d,mini=%d", payload.Decimal, zt.MaxDecimalAllow, zt.MinDecimalAllow)
 	}
 
 	//首先检查symbol是否存在，symbol存在不允许修改

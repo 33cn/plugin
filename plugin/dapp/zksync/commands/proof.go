@@ -22,38 +22,11 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getZkCommitProofCmd())
 	cmd.AddCommand(getFirstRootHashCmd())
 	cmd.AddCommand(getZkCommitProofListCmd())
-	//cmd.AddCommand(getProofWitnessCmd())
+	cmd.AddCommand(getProof2QueueInfoCmd())
 	cmd.AddCommand(getExistProofCmd())
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
 
-	cmd.AddCommand(buildProofCmd())
-
 	return cmd
-}
-
-func buildProofCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "build_tree",
-		Short: "build db account tree for exodus proof,return tree roothash",
-		Run:   buildProof,
-	}
-	return cmd
-}
-
-func buildProof(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	var params rpctypes.Query4Jrpc
-
-	params.Execer = zt.Zksync
-	req := &types.ReqNil{}
-
-	params.FuncName = "BuildHistoryAccounts"
-	params.Payload = types.MustPBToJSON(req)
-
-	var resp types.ReplyString
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-	ctx.Run()
 }
 
 func getTxProofCmd() *cobra.Command {

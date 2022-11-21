@@ -218,9 +218,16 @@ const (
 
 const (
 	InitMode           = 0
-	PauseMode          = 1 //暂停模式，管理员在监测到存款异常后可以设置暂停模式，暂停存款
-	ExodusMode         = 2 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
-	ExodusRollbackMode = 3 //逃生舱回滚阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
+	NormalMode         = 1 //从pause模式可以恢复为normal mode
+	PauseMode          = 2 //暂停模式，管理员在监测到存款异常后可以设置暂停模式，暂停存款
+	ExodusMode         = 3 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
+	ExodusRollbackMode = 4 //逃生舱回滚阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
+)
+
+const (
+	ModeValNo  = 0 //
+	ModeValYes = 1 //
+
 )
 
 var (
@@ -255,8 +262,8 @@ var (
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
 		TyDepositLog:               {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositLog"},
 		TyWithdrawLog:              {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyTreeToContractLog"},
+		TyContractToTreeLog:        {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:        {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTreeToContractLog"},
 		TyTransferLog:              {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferLog"},
 		TyTransferToNewLog:         {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferToNewLog"},
 		TyProxyExitLog:             {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyForceExitLog"},

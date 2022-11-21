@@ -18,11 +18,9 @@ func queryCmd() *cobra.Command {
 	cmd.AddCommand(getTokenSymbolCmd())
 	cmd.AddCommand(getVerifiersCmd())
 	cmd.AddCommand(getTokenFeeCmd())
-	cmd.AddCommand(getEthPriorityInfoCmd())
-	cmd.AddCommand(getEthLastPriorityCmd())
-	cmd.AddCommand(getL2QueueInfoCmd())
-	cmd.AddCommand(getL2LastQueueIdCmd())
-	cmd.AddCommand(getProof2QueueInfoCmd())
+	cmd.AddCommand(queryL2QueueCmd())
+	cmd.AddCommand(queryL1PriorityCmd())
+
 	return cmd
 }
 
@@ -244,9 +242,44 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func queryL2QueueCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "l2",
+		Short: "query l2 queue related cmd",
+	}
+	cmd.AddCommand(getL2QueueInfoCmd())
+	cmd.AddCommand(getL2LastQueueIdCmd())
+	return cmd
+}
+
+func getL2LastQueueIdCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "last_queue_id",
+		Short: "get l2 last queue id",
+		Run:   getLastQueueId,
+	}
+	return cmd
+}
+
+func getLastQueueId(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqNil{}
+
+	params.FuncName = "GetL2LastQueueId"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.Int64
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func getL2QueueInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "l2queue_id",
+		Use:   "queue_id",
 		Short: "get l2 queue id operation info",
 		Run:   getL2Queue,
 	}
@@ -308,10 +341,21 @@ func getProof2Queue(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func queryL1PriorityCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "l1",
+		Short: "query l1 priority related cmd",
+	}
+	cmd.AddCommand(getEthPriorityInfoCmd())
+	cmd.AddCommand(getEthLastPriorityCmd())
+
+	return cmd
+}
+
 func getEthPriorityInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "priority_id",
-		Short: "get eth deposit priority id info",
+		Short: "get l1 deposit priority id info",
 		Run:   getPriority,
 	}
 	getPriorityFlag(cmd)
@@ -361,31 +405,6 @@ func getLastPriority(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.L1PriorityID
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-	ctx.Run()
-}
-
-func getL2LastQueueIdCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "last_queue_id",
-		Short: "get l2 last queue id",
-		Run:   getLastQueueId,
-	}
-	return cmd
-}
-
-func getLastQueueId(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	var params rpctypes.Query4Jrpc
-
-	params.Execer = zt.Zksync
-	req := &types.ReqNil{}
-
-	params.FuncName = "GetL2LastQueueId"
-	params.Payload = types.MustPBToJSON(req)
-
-	var resp types.Int64
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
