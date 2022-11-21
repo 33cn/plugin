@@ -25,11 +25,10 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 	}
 
 	parentHash := common.ToHex(commit.GetBatch().GetBlockHeaders()[0].ParentHash)
-	isNextRound := status.CommitRound+1 == commitRound
+
 	// check parent block hash with last commit round
 	// 首次提交没有status记录, lastBlockHash为空
-	if len(status.CommitBlockHash) > 0 && isNextRound &&
-		status.CommitBlockHash != parentHash {
+	if len(status.CommitBlockHash) > 0 && status.CommitBlockHash != parentHash {
 
 		elog.Error("Exec_CommitBatch", "title", commit.GetChainTitle(),
 			"round", commitRound, "currLastHash", status.CommitBlockHash,
@@ -58,43 +57,22 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 		Log: encodeVal,
 	})
 
-	// 向后遍历statedb, 检测后续round是否已经提交到链上, 进行串连(batch在提交时是无序的)
+	status.Timestamp = r.GetBlockTime()
+	status.CommitRound = roundInfo.CommitRound
+	status.CommitBlockHeight = roundInfo.LastBlockHeight
+	status.CommitBlockHash = roundInfo.LastBlockHash
+	status.CommitAddr = tx.From()
+	status.CrossTxSyncedHeight = commit.CrossTxSyncedHeight
+	encodeVal = types.Encode(status)
+	receipt.KV = append(receipt.KV, &types.KeyValue{
+		Key:   formatRollupStatusKey(commit.GetChainTitle()),
+		Value: encodeVal,
+	})
 
-	for isNextRound {
-		commitRound++
-
-		nextInfo, err := r.getRoundInfo(commit.GetChainTitle(), commitRound)
-		if err != nil {
-			break
-		}
-		if roundInfo.LastBlockHash == nextInfo.ParentBlockHash {
-			roundInfo = nextInfo
-		} else {
-			elog.Error("Exec_CommitBatch ParentHashNotMatch", "commitRound", commitRound,
-				"expectHash", roundInfo.LastBlockHash,
-				"actualHash", nextInfo.ParentBlockHash)
-		}
-	}
-
-	if isNextRound {
-
-		status.Timestamp = r.GetBlockTime()
-		status.CommitRound = roundInfo.CommitRound
-		status.CommitBlockHeight = roundInfo.LastBlockHeight
-		status.CommitBlockHash = roundInfo.LastBlockHash
-		status.CommitAddr = tx.From()
-		status.CrossTxSyncedHeight = commit.CrossTxSyncedHeight
-		encodeVal = types.Encode(status)
-		receipt.KV = append(receipt.KV, &types.KeyValue{
-			Key:   formatRollupStatusKey(commit.GetChainTitle()),
-			Value: encodeVal,
-		})
-
-		receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
-			Ty:  rolluptypes.TyRollupStatusLog,
-			Log: encodeVal,
-		})
-	}
+	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
+		Ty:  rolluptypes.TyRollupStatusLog,
+		Log: encodeVal,
+	})
 
 	return receipt, nil
 }
