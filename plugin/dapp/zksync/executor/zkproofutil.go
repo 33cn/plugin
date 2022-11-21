@@ -561,7 +561,7 @@ func parseRollbackOps(ops []*zt.ZkOperation) ([]uint64, []uint64, map[uint64]*zt
 	withdrawAccountMap := make(map[uint64]*zt.HistoryLeaf)
 
 	//LastQueueId+1开始查找回滚
-	for _, op := range ops {
+	for i, op := range ops {
 		switch op.Ty {
 		case zt.TyDepositAction:
 			operation := op.Op.GetDeposit()
@@ -569,6 +569,8 @@ func parseRollbackOps(ops []*zt.ZkOperation) ([]uint64, []uint64, map[uint64]*zt
 				depositAcctIds = append(depositAcctIds, operation.AccountID)
 			}
 			depositAccountMap[operation.AccountID] = updateLeaf(depositAccountMap, operation.AccountID, operation.TokenID, operation.Amount)
+			zklog.Info("parseRollbackOps", "idx", i, "ty", "deposit", "acctId", operation.AccountID, "tokenId", operation.TokenID,
+				"amount", operation.Amount, "height", operation.BlockInfo.Height)
 		case zt.TyWithdrawAction:
 			operation := op.Op.GetWithdraw()
 			if _, ok := withdrawAccountMap[operation.AccountID]; !ok {
@@ -584,7 +586,8 @@ func parseRollbackOps(ops []*zt.ZkOperation) ([]uint64, []uint64, map[uint64]*zt
 				depositAcctIds = append(depositAcctIds, zt.SystemFeeAccountId)
 			}
 			depositAccountMap[zt.SystemFeeAccountId] = updateLeaf(depositAccountMap, zt.SystemFeeAccountId, operation.TokenID, operation.Fee.Fee)
-
+			zklog.Info("parseRollbackOps", "idx", i, "ty", "withdraw", "acctId", operation.AccountID, "tokenId", operation.TokenID,
+				"amount", operation.Amount, "fee", operation.Fee.Fee, "height", operation.BlockInfo.Height)
 		case zt.TyProxyExitAction:
 			operation := op.Op.GetProxyExit()
 			if _, ok := withdrawAccountMap[operation.GetProxyID()]; !ok {
@@ -603,7 +606,8 @@ func parseRollbackOps(ops []*zt.ZkOperation) ([]uint64, []uint64, map[uint64]*zt
 				depositAcctIds = append(depositAcctIds, zt.SystemFeeAccountId)
 			}
 			depositAccountMap[zt.SystemFeeAccountId] = updateLeaf(depositAccountMap, zt.SystemFeeAccountId, operation.TokenID, operation.Fee.Fee)
-
+			zklog.Info("parseRollbackOps", "idx", i, "ty", "proxyExit", "proxyId", operation.ProxyID, "targetId", operation.TargetID,
+				"tokenId", operation.TokenID, "amount", operation.Amount, "fee", operation.Fee.Fee, "height", operation.BlockInfo.Height)
 		}
 
 	}

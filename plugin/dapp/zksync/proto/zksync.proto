@@ -437,22 +437,18 @@ message ZkAcctRollbackInfo{
 }
 
 message ZkExodusRollbackModeParm {
-  uint64 lastSuccessProofId = 1; //在回滚模式时候，设置此在eth上最后success的proofId，系统根据此Id对应queueId回滚一些withdraw操作
-  //lastSuccessEthPriorityID 缺省为0不设置则回滚lastSuccProofId后的所有deposit,
+  uint64 lastSuccessProofId = 1; //在回滚模式时候，设置此在l1上最后success的proofId，系统根据此Id对应queueId回滚一些deposit,withdraw操作
+  //回滚lastSuccessProofId后的所有deposit的策略
   //1. 如果某deposit已经转走交易，余额不够无法rollback扣减,则尝试从交易所交易费垫付扣除，保证L2和L1此token资产总额相等
   //2. 如果交易所的交易费也不够扣减，则扣光后统计差额，差额需要管理员在L1存款补充被忽略掉的deposit资产金额，不然会导致最后从L1逃生舱执行不成功
-  bool  knownBalanceGap = 2; //是否已知晓差额统计的错误报告，缺省不忽略，知晓差额后，设置为true完成回滚
+  uint32  knownBalanceGap = 2; //是否已知晓差额统计的错误报告，缺省不忽略，如果不需要L1补充，则直接rollback成功，若需要L1补充，知晓差额后，设置为1完成回滚
 }
 
-message ZkExodusPauseModeParm {
-  bool value = 1;  //true: 设置pause，false：restore pause
-}
 
 message ZkExodusMode {
   uint32 mode = 1;
   oneof value {
     ZkExodusRollbackModeParm rollback = 2;
-    ZkExodusPauseModeParm pause = 3;
   }
 
 }

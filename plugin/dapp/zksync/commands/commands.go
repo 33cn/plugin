@@ -70,6 +70,8 @@ func layer2Cmd() *cobra.Command {
 		setTokenFeeCmd(),
 		setTokenSymbolCmd(),
 		setExodusModeCmd(),
+
+		buildTreeCmd(),
 	)
 
 	return cmd
@@ -927,8 +929,11 @@ func setExodusModeCmd() *cobra.Command {
 }
 
 func setExodusModeFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("mode", "m", 0, "manager set exodus clearing mode 2")
+	cmd.Flags().Uint32P("mode", "m", 0, "0:invalid,1:normal,2:pause,3:exodus prepare,4:rollback")
 	cmd.MarkFlagRequired("mode")
+
+	cmd.Flags().Uint64P("proofId", "i", 0, "rollback mode, last success proofId on L1")
+	cmd.Flags().Uint32P("knownGap", "k", 0, "rollback mode, manager known balance gap if any,1:known,0:default")
 
 }
 
@@ -936,9 +941,17 @@ func setExodusMode(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	mode, _ := cmd.Flags().GetUint32("mode")
+	proofId, _ := cmd.Flags().GetUint64("proofId")
+	knownGap, _ := cmd.Flags().GetUint32("knownGap")
 
 	payload := &zt.ZkExodusMode{
 		Mode: mode,
+	}
+	if mode == zt.ExodusRollbackMode {
+		payload.Value = &zt.ZkExodusMode_Rollback{Rollback: &zt.ZkExodusRollbackModeParm{
+			LastSuccessProofId: proofId,
+			KnownBalanceGap:    knownGap,
+		}}
 	}
 
 	params := &rpctypes.CreateTxIn{
@@ -949,4 +962,29 @@ func setExodusMode(cmd *cobra.Command, args []string) {
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
+}
+
+func buildTreeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "build_tree",
+		Short: "build db account tree for exodus proof,return tree roothash",
+		Run:   buildProof,
+	}
+	return cmd
+}
+
+func buildProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqNil{}
+
+	params.FuncName = "BuildHistoryAccounts"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }

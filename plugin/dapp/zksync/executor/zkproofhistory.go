@@ -977,7 +977,7 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 	if targetAccountID > uint64(len(historyAccountInfo.Leaves)) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "targetAccountID=%d not exist", targetAccountID)
 	}
-	targetLeaf := historyAccountInfo.Leaves[targetAccountID-1]
+	targetLeaf := historyAccountInfo.Leaves[targetAccountID]
 
 	var tokenFound bool
 	var tokenIndex int
@@ -992,7 +992,7 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 		return nil, errors.Wrapf(types.ErrInvalidParam, "AccountID=%d has no asset TokenID=%d", targetAccountID, targetTokenID)
 	}
 	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	accountMerkleProof, err := getMerkleTreeProof(targetAccountID-1, historyAccountInfo.LeafHashes, h)
+	accountMerkleProof, err := getMerkleTreeProof(targetAccountID, historyAccountInfo.LeafHashes, h)
 	if err != nil {
 		return nil, errors.Wrapf(err, "account.getMerkleTreeProof")
 	}
