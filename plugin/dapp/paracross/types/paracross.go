@@ -61,7 +61,7 @@ const (
 // action name
 const (
 	// NameCommitRollupAction action name
-	NameCommitRollupAction = "CommitRollupTx"
+	NameCommitRollupAction = "CommitRollup"
 )
 
 // action type
