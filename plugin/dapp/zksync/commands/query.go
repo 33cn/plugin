@@ -75,7 +75,7 @@ func getAccountByIdCmd() *cobra.Command {
 }
 
 func getAccountByIdFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("accountId", "a", 0, "zksync accountId")
+	cmd.Flags().Uint64P("accountId", "i", 0, "zksync accountId")
 	cmd.MarkFlagRequired("accountId")
 }
 
