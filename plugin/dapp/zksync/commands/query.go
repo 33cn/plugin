@@ -249,6 +249,8 @@ func queryL2QueueCmd() *cobra.Command {
 	}
 	cmd.AddCommand(getL2QueueInfoCmd())
 	cmd.AddCommand(getL2LastQueueIdCmd())
+	cmd.AddCommand(getL2BatchQueueInfoCmd())
+
 	return cmd
 }
 
@@ -309,34 +311,37 @@ func getL2Queue(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-func getProof2QueueInfoCmd() *cobra.Command {
+func getL2BatchQueueInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proof2queue",
-		Short: "get proof's l2 queue info",
-		Run:   getProof2Queue,
+		Use:   "queue_id_batch",
+		Short: "batch get l2 queue id operation info",
+		Run:   getL2BatchQueue,
 	}
-	getProof2QueueFlag(cmd)
+	getL2BatchQueueFlag(cmd)
 	return cmd
 }
 
-func getProof2QueueFlag(cmd *cobra.Command) {
-	cmd.Flags().Int64P("proofId", "i", 0, "proof id, id > 0")
-	cmd.MarkFlagRequired("proofId")
+func getL2BatchQueueFlag(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "start l2 queue id, id >= 0")
+	cmd.MarkFlagRequired("start")
+	cmd.Flags().Int64P("end", "e", 0, "end l2 queue id, id >= 0")
+	cmd.MarkFlagRequired("end")
 }
 
-func getProof2Queue(cmd *cobra.Command, args []string) {
+func getL2BatchQueue(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	proofId, _ := cmd.Flags().GetInt64("proofId")
+	start, _ := cmd.Flags().GetInt64("start")
+	end, _ := cmd.Flags().GetInt64("end")
 
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = zt.Zksync
-	req := &types.Int64{Data: proofId}
+	req := &types.ReqBlocks{Start: start, End: end}
 
-	params.FuncName = "GetProofId2QueueId"
+	params.FuncName = "GetL2BatchQueueOpInfo"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.ProofId2QueueIdData
+	var resp zt.ZkBatchOperation
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

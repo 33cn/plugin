@@ -2039,7 +2039,7 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		//pause or normal
 		return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
 	case zt.ExodusMode:
-		//只有管理员可以设置
+		//只有管理员可以设置,Pause模式比exodus模式更灵活，唯一区别是pause mode可以恢复，这样可以腾挪资金，eoxdus设置后就不允许恢复了
 		if !isSuperManager(cfg, a.fromaddr) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "not manager")
 		}
@@ -2053,7 +2053,7 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		if !isSuperManager(cfg, a.fromaddr) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "not manager")
 		}
-		//1. 模式正确
+		//1. 模式在exodus和pause下都可以进行rollback
 		if mode != zt.ExodusMode && mode != zt.PauseMode {
 			return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d", mode)
 		}
