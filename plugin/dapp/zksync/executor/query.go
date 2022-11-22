@@ -231,12 +231,37 @@ func (z *zksync) Query_GetLastPriorityQueueId(in *types.ReqNil) (types.Message, 
 
 // Query_GetPriorityOpInfo 根据priorityId获取operation信息
 func (z *zksync) Query_GetPriorityOpInfo(in *types.Int64) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
 	return GetPriorityDepositData(z.GetStateDB(), in.Data)
 }
 
 // Query_GetL2QueueOpInfo 根据l2 queue id获取operation信息
 func (z *zksync) Query_GetL2QueueOpInfo(in *types.Int64) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
 	return GetL2QueueIdOp(z.GetStateDB(), in.Data)
+}
+
+// Query_GetL2BatchQueueOpInfo 批量获取l2 queue id的operation信息
+func (z *zksync) Query_GetL2BatchQueueOpInfo(in *types.ReqBlocks) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if in.End < in.Start {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "end=%d < start=%d", in.End, in.Start)
+	}
+	var batch zt.ZkBatchOperation
+	for i := in.Start; i <= in.End; i++ {
+		op, err := GetL2QueueIdOp(z.GetStateDB(), i)
+		if err != nil {
+			return nil, errors.Wrapf(err, "id=%d", i)
+		}
+		batch.Ops = append(batch.Ops, op)
+	}
+	return &batch, nil
 }
 
 // Query_GetL2LastQueueId get l2 last queue id

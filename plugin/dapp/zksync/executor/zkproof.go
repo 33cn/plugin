@@ -282,10 +282,6 @@ func (a *Action) verifyInitRoot(payload *zt.ZkCommitProof) error {
 func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
-	if payload.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chainTitle is null")
-	}
-
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}

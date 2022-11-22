@@ -29,6 +29,38 @@ func queryProofCmd() *cobra.Command {
 	return cmd
 }
 
+func getProof2QueueInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proof2queue",
+		Short: "get proof's l2 queue info",
+		Run:   getProof2Queue,
+	}
+	getProof2QueueFlag(cmd)
+	return cmd
+}
+
+func getProof2QueueFlag(cmd *cobra.Command) {
+	cmd.Flags().Int64P("proofId", "i", 0, "proof id, id > 0")
+	cmd.MarkFlagRequired("proofId")
+}
+
+func getProof2Queue(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	proofId, _ := cmd.Flags().GetInt64("proofId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.Int64{Data: proofId}
+
+	params.FuncName = "GetProofId2QueueId"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ProofId2QueueIdData
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func getTxProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tx",

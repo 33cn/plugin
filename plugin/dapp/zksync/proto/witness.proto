@@ -299,6 +299,10 @@ message ZkOperation {
   OperationSpecialInfo op = 2;
 }
 
+message ZkBatchOperation {
+  repeated  ZkOperation ops = 1;
+}
+
 message ZkProofWitness {
   AccountWitness accountWitness       = 1;
   TokenWitness   tokenWitness         = 2;
