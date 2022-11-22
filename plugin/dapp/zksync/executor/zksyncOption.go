@@ -2143,7 +2143,8 @@ func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMa
 	}
 	//2. 如果有gap则尝试从system fee账户扣除，如果fee账户仍不够，则提供累计gap信息到receipt，管理员存款到L1弥补后保证提款成功
 	if len(tokensGap) > 0 {
-		zklog.Error("getDepositRollbackData", "exist acct gap", totalAccountGapStr)
+		totalAccountGapStr = strings.TrimSuffix(totalAccountGapStr, ",")
+		zklog.Info("getDepositRollbackData", "exist acct gap", totalAccountGapStr)
 		sysFeeTokens, err := getAcctTokens(db, zt.SystemFeeAccountId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getSysFeeAcctTokens acctId=%d", zt.SystemFeeAccountId)
@@ -2151,7 +2152,7 @@ func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMa
 		sysRollbackData, systemGapStr := checkSystemFeeAcctGap(sysFeeTokens, tokensGap)
 		//说明系统rollback后也不够，需要L1层补充
 		if len(systemGapStr) > 0 && knownBalanceGap != zt.ModeValYes {
-			gapStr := fmt.Sprintf("deposit rollback balance gap,sum=%s(%s)", systemGapStr, totalAccountGapStr)
+			gapStr := fmt.Sprintf("deposit rollback balance gap,sum: %s(%s)", systemGapStr, totalAccountGapStr)
 			zklog.Error("getDepositRollbackData", "system gap", gapStr)
 			return nil, errors.Wrapf(types.ErrNotAllow, gapStr)
 		}
@@ -2241,7 +2242,7 @@ func checkSystemFeeAcctGap(sysFeeTokens, tokensGap map[uint64]string) ([]*zt.ZkA
 		}
 	}
 
-	return systemGapData, systemGapResp
+	return systemGapData, strings.TrimSuffix(systemGapResp, ",")
 }
 
 func checkAccountBalanceNil(db dbm.KV, accountId uint64) error {

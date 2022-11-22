@@ -16,7 +16,7 @@ func TestCheckSystemFeeAcctGap(t *testing.T) {
 	tokensGap[2] = "300"
 
 	_, rst := checkSystemFeeAcctGap(sysFeeTokens, tokensGap)
-	assert.Equal(t, "tokenId=0,gap=90,tokenId=2,gap=300,", rst)
+	assert.Equal(t, "tokenId=0,gap=90,tokenId=2,gap=300", rst)
 
 	tokensGap[0] = "90"
 	sysFeeTokens[2] = "360"
