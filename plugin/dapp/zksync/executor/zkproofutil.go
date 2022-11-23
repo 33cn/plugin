@@ -2,9 +2,10 @@ package executor
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"hash"
 	"math/big"
+
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
@@ -12,7 +13,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
-func calcPubDataCommitHash(mimcHash hash.Hash, blockStart, blockEnd, chainTitleId uint64, oldRoot, newRoot string, pubDatas []string) string {
+func calcPubDataCommitHash(mimcHash hash.Hash, blockStart, blockEnd uint64, oldRoot, newRoot string, pubDatas []string) string {
 	mimcHash.Reset()
 
 	var f fr.Element
@@ -28,9 +29,6 @@ func calcPubDataCommitHash(mimcHash hash.Hash, blockStart, blockEnd, chainTitleI
 	t = f.SetString(newRoot).Bytes()
 	mimcHash.Write(t[:])
 
-	t = f.SetUint64(chainTitleId).Bytes()
-	mimcHash.Write(t[:])
-
 	for _, r := range pubDatas {
 		t = f.SetString(r).Bytes()
 		mimcHash.Write(t[:])
@@ -40,13 +38,11 @@ func calcPubDataCommitHash(mimcHash hash.Hash, blockStart, blockEnd, chainTitleI
 	return f.SetBytes(ret).String()
 }
 
-func calcOnChainPubDataCommitHash(mimcHash hash.Hash, chainTitleId uint64, newRoot string, pubDatas []string) string {
+func calcOnChainPubDataCommitHash(mimcHash hash.Hash, newRoot string, pubDatas []string) string {
 	mimcHash.Reset()
 	var f fr.Element
 
 	t := f.SetString(newRoot).Bytes()
-	mimcHash.Write(t[:])
-	t = f.SetUint64(chainTitleId).Bytes()
 	mimcHash.Write(t[:])
 
 	sum := mimcHash.Sum(nil)

@@ -327,15 +327,12 @@ func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, err
 
 // Query_GetProofList 根据proofId fetch 后续证明
 func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
-	if in.GetChainTitleId() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "chain title not set")
-	}
 
 	table := NewCommitProofTable(z.GetLocalDB())
 
 	if in.GetReqOnChainProof() {
 		//升序
-		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%s-%016d", new(big.Int).SetUint64(in.ChainTitleId).String(), in.OnChainProofId)), nil, 1, zt.ListASC)
+		rows, err := table.ListIndex("onChainId", []byte(fmt.Sprintf("%016d", in.OnChainProofId)), nil, 1, zt.ListASC)
 		if err != nil {
 			zklog.Error("Query_GetProofList.getOnChainSubId", "id", in.OnChainProofId, "err", err.Error())
 			return nil, err
@@ -346,7 +343,7 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 	//按截止高度获取最新proof
 	if in.GetReqLatestProof() {
 		//降序获取到第一个小于等于endHeight的commitHeight proof
-		rows, err := table.ListIndex("commitHeight", []byte(fmt.Sprintf("%s-%016d", new(big.Int).SetUint64(in.ChainTitleId).String(), in.GetEndHeight())), nil, 1, zt.ListDESC)
+		rows, err := table.ListIndex("commitHeight", []byte(fmt.Sprintf("%016d", in.GetEndHeight())), nil, 1, zt.ListDESC)
 		if err != nil {
 			zklog.Error("Query_GetProofList.listCommitHeight", "endHeight", in.GetEndHeight())
 			return nil, err

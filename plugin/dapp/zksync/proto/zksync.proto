@@ -255,10 +255,7 @@ message ZkCommitProof {
   uint64 onChainProofId = 13;
   //commit时候的blockHeight,localdb会填充
   int64  commitBlockHeight = 14;
-  //proof属于的链id和title, id唯一，和proof绑定，title可重复
-  uint64 chainTitleId    = 15;
-  string chainTitle      = 16;
-  ZkFeeAddrs cfgFeeAddrs = 17;
+  ZkFeeAddrs cfgFeeAddrs = 15;
 }
 
 //commit proof stat, pubdata保存到localdb
@@ -278,7 +275,6 @@ message CommitProofState {
   uint64 onChainProofId = 11;
   //commit时候的blockHeight
   int64  commitBlockHeight = 12;
-  uint64 chainTitleId = 13;
   //all tx pub datas, record proof 的验证需要用到
   repeated string pubDatas = 14;
 
@@ -336,8 +332,7 @@ message ZkQueryReq {
   uint64 tokenId = 8;
   string txHash = 9;
   uint64 proofId = 10;
-  uint64 chainTitleId = 11;
-  uint32 opType = 12;
+  uint32 opType = 11;
 }
 
 message ZkQueryResp {
@@ -370,7 +365,6 @@ message ZkFetchProofList {
   bool reqOnChainProof = 3; //
   bool reqLatestProof = 4; //请求截止高度之前的最新的proof，适用于获取最新proof场景
   uint64 endHeight = 5; //截止高度
-  uint64 chainTitleId = 6;
 }
 
 //NFT content hash切分成两部分
@@ -463,15 +457,10 @@ message ReceiptSetTokenSymbol {
   ZkTokenSymbol cur = 2;
 }
 
-message ZkChainTitle {
-  uint64 chainTitleId = 1;
-  string chainTitle = 2;
-}
 
 message LastOnChainProof {
-  uint64 chainTitleId  = 1;
-  uint64 proofId = 2;
-  uint64 onChainProofId = 3;
+  uint64 proofId = 1;
+  uint64 onChainProofId = 2;
 }
 
 message HistoryAccountProofInfo {
