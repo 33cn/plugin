@@ -2,7 +2,6 @@ package executor
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/33cn/chain33/common/address"
 
@@ -173,17 +172,16 @@ func (r *CommitProofRow) isProofNeedOnChain() int {
 
 //Get 按照indexName 查询 indexValue
 func (r *CommitProofRow) Get(key string) ([]byte, error) {
-	chainTitleId := new(big.Int).SetUint64(r.ChainTitleId).String()
 	if key == "proofId" {
-		return []byte(fmt.Sprintf("%016d-%s", r.GetProofId(), chainTitleId)), nil
+		return []byte(fmt.Sprintf("%016d", r.GetProofId())), nil
 	} else if key == "root" {
-		return []byte(fmt.Sprintf("%s-%s", chainTitleId, r.GetNewTreeRoot())), nil
+		return []byte(fmt.Sprintf("%s", r.GetNewTreeRoot())), nil
 	} else if key == "endHeight" {
-		return []byte(fmt.Sprintf("%s-%016d", chainTitleId, r.GetBlockEnd())), nil
+		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
 	} else if key == "commitHeight" {
-		return []byte(fmt.Sprintf("%s-%016d", chainTitleId, r.GetCommitBlockHeight())), nil
+		return []byte(fmt.Sprintf("%016d", r.GetCommitBlockHeight())), nil
 	} else if key == "onChainId" {
-		return []byte(fmt.Sprintf("%s-%016d", chainTitleId, r.GetOnChainProofId())), nil
+		return []byte(fmt.Sprintf("%016d", r.GetOnChainProofId())), nil
 	}
 	return nil, types.ErrNotFound
 }

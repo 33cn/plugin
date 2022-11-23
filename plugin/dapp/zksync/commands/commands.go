@@ -933,7 +933,8 @@ func setExodusModeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("mode")
 
 	cmd.Flags().Uint64P("proofId", "i", 0, "rollback mode, last success proofId on L1")
-	cmd.Flags().Uint32P("knownGap", "k", 0, "rollback mode, manager known balance gap if any,1:known,0:default")
+	cmd.MarkFlagRequired("proofId")
+	cmd.Flags().Uint32P("knownGap", "s", 0, "rollback mode, manager known balance gap if any,1:known,0:default")
 
 }
 

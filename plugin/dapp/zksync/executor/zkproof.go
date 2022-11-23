@@ -52,7 +52,7 @@ func makeCommitProofReceipt(old, newState *zt.CommitProofState) *types.Receipt {
 	if newState.OnChainProofId > 0 {
 		onChainIdKey := getLastOnChainProofIdKey()
 		r.KV = append(r.KV, &types.KeyValue{Key: onChainIdKey,
-			Value: types.Encode(&zt.LastOnChainProof{ChainTitleId: newState.ChainTitleId, ProofId: newState.ProofId, OnChainProofId: newState.OnChainProofId})})
+			Value: types.Encode(&zt.LastOnChainProof{ProofId: newState.ProofId, OnChainProofId: newState.OnChainProofId})})
 	}
 	return r
 }
@@ -324,9 +324,8 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		NewTreeRoot:       payload.NewTreeRoot,
 		OnChainProofId:    payload.OnChainProofId,
 		CommitBlockHeight: a.height,
-		//区分eth上不同的zksync合约的id(如果之前zksync合约作废，可以重新部署一个),不同平行链已经区分了不同合约的id，这里主要是为eth上的区分
-		ChainTitleId: payload.ChainTitleId,
-		PubDatas:     payload.PubDatas,
+		//pubdatas上链，主要是考虑提前提交的record proof的验证
+		PubDatas: payload.PubDatas,
 	}
 
 	//2. 验证proof是否连续，不连续则暂时保存(考虑交易顺序被打散的场景)
@@ -478,14 +477,14 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 	//计算pubData hash 需要和commit的一致
 	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	commitPubDataHash := proofCircuit.PubDataCommitment.GetWitnessValue(ecc.BN254)
-	calcPubDataHash := calcPubDataCommitHash(mimcHash, proof.BlockStart, proof.BlockEnd, proof.ChainTitleId, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
+	calcPubDataHash := calcPubDataCommitHash(mimcHash, proof.BlockStart, proof.BlockEnd, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
 	if commitPubDataHash.String() != calcPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "pubData hash not match, PI=%s,calc=%s", commitPubDataHash.String(), calcPubDataHash)
 	}
 
 	//计算onChain pubData hash 需要和commit的一致
 	commitOnChainPubDataHash := proofCircuit.OnChainPubDataCommitment.GetWitnessValue(ecc.BN254)
-	calcOnChainPubDataHash := calcOnChainPubDataCommitHash(mimcHash, proof.ChainTitleId, proof.NewTreeRoot, proof.OnChainPubDatas)
+	calcOnChainPubDataHash := calcOnChainPubDataCommitHash(mimcHash, proof.NewTreeRoot, proof.OnChainPubDatas)
 	if commitOnChainPubDataHash.String() != calcOnChainPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "onChain pubData hash not match, PI=%s,calc=%s", commitOnChainPubDataHash.String(), calcOnChainPubDataHash)
 	}

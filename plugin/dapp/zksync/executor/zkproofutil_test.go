@@ -1,9 +1,10 @@
 package executor
 
 import (
+	"testing"
+
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestParseRollbackOps(t *testing.T) {

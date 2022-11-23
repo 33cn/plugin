@@ -88,7 +88,7 @@ func (z *zksync) Exec_CommitProof(payload *zt.ZkCommitProof, tx *types.Transacti
 	action := NewAction(z, tx, index)
 	r, err := action.commitProof(payload)
 	if err != nil {
-		zlog.Error("CommitProof", "chainId", payload.ChainTitleId, "err", err)
+		zlog.Error("CommitProof", "err", err)
 	}
 	return r, err
 }
