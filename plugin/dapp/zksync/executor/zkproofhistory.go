@@ -104,7 +104,7 @@ func BuildStateDbHistoryAccount(db dbm.KV, reqRootHash string) (*zt.HistoryAccou
 }
 
 //根据某个proof的root恢复所有账户的快照，在资产不会从L2转出到contract时候可以使用
-func getHistoryAccountByRoot(localdb dbm.KV, targetRootHash string) (*zt.HistoryAccountProofInfo, error) {
+func getHistoryAccountByRoot(localdb dbm.KV, targetRootHash, l1FeeAddr, l2FeeAddr string) (*zt.HistoryAccountProofInfo, error) {
 	info := getHistoryAccountProofFromDb(targetRootHash)
 	if info != nil {
 		return info, nil
@@ -130,7 +130,8 @@ func getHistoryAccountByRoot(localdb dbm.KV, targetRootHash string) (*zt.History
 		data := row.Data.(*zt.ZkCommitProof)
 		//从第一个proof获取cfgFeeAddr
 		if i == uint64(1) {
-			initLeaves := getInitHistoryLeaf(data.GetCfgFeeAddrs().EthFeeAddr, data.GetCfgFeeAddrs().L2FeeAddr)
+			//从配置文件获取 feeAddr
+			initLeaves := getInitHistoryLeaf(l1FeeAddr, l2FeeAddr)
 			for _, l := range initLeaves {
 				accountMap[l.AccountId] = l
 				if maxAccountID < l.AccountId {

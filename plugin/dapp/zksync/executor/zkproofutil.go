@@ -242,7 +242,7 @@ func getSwapOperationByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getContract2TreeOptionByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkContractToTreeWitnessInfo{}
+	operation := &zt.ZkContractToTreeWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
@@ -261,7 +261,7 @@ func getContract2TreeOptionByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getContract2TreeNewOptionByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkContractToTreeNewWitnessInfo{}
+	operation := &zt.ZkContractToTreeNewWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.ToAccountID = zt.Byte2Uint64(chunk[start:end])
@@ -286,7 +286,7 @@ func getContract2TreeNewOptionByChunk(chunk []byte) *zt.ZkOperation {
 }
 
 func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
-	operation := &zt.ZkTreeToContractWitnessInfo{}
+	operation := &zt.ZkTreeToContractWitnessInfo{Fee: &zt.ZkFee{}}
 	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
 	operation.AccountID = zt.Byte2Uint64(chunk[start:end])
@@ -381,7 +381,7 @@ func getProxyExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	end := start + zt.AccountBitWidth/8
 	//proxy id
 	operation.ProxyID = zt.Byte2Uint64(chunk[start:end])
-	start = zt.TxTypeBitWidth / 8
+	start = end
 	end = start + zt.AccountBitWidth/8
 	//toId
 	operation.TargetID = zt.Byte2Uint64(chunk[start:end])
