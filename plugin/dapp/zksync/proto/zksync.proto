@@ -255,7 +255,7 @@ message ZkCommitProof {
   uint64 onChainProofId = 13;
   //commit时候的blockHeight,localdb会填充
   int64  commitBlockHeight = 14;
-  ZkFeeAddrs cfgFeeAddrs = 15;
+
 }
 
 //commit proof stat, pubdata保存到localdb

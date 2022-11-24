@@ -287,7 +287,7 @@ var (
 		TySetL2OpQueueIdLog:        {Ty: reflect.TypeOf(ReceiptL2QueueIDData{}), Name: "TySetL2QueueIdLog"},
 		TySetL2OpFirstQueueIdLog:   {Ty: reflect.TypeOf(ReceiptL2FirstQueueID{}), Name: "TySetL2FirstQueueIdLog"},
 		TySetL2OpLastQueueIdLog:    {Ty: reflect.TypeOf(ReceiptL2LastQueueID{}), Name: "TySetL2LastQueueIdLog"},
-		TySetProofId2QueueIdLog:    {Ty: reflect.TypeOf(ProofId2QueueIdData{}), Name: "TySetProofId2QueueIdLog"},
+		TySetProofId2QueueIdLog:    {Ty: reflect.TypeOf(ReceiptProofId2QueueIDData{}), Name: "TySetProofId2QueueIdLog"},
 		TyDepositRollbackLog:       {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositRollbackLog"},
 		TyWithdrawRollbackLog:      {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawRollbackLog"},
 		TyPriority2QueIdLog:        {Ty: reflect.TypeOf(Priority2QueueId{}), Name: "TyPriority2QueueIdLog"},

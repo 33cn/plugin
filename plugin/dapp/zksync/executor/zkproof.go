@@ -58,6 +58,7 @@ func makeCommitProofReceipt(old, newState *zt.CommitProofState) *types.Receipt {
 }
 
 func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64) *types.Receipt {
+	//对record里面已有的proofId，直接更新
 	key := getProofIdKey(proof.ProofId)
 	log := &zt.ReceiptCommitProofRecord{
 		Proof: proof,
@@ -72,7 +73,7 @@ func makeCommitProofRecordReceipt(proof *zt.CommitProofState, maxRecordId uint64
 		},
 	}
 
-	//如果此proofId 比maxRecordId更大，记录下来
+	//如果此proofId 比maxRecordId更大，更新maxRecordId，方便遍历
 	if proof.ProofId > maxRecordId {
 		r.KV = append(r.KV, &types.KeyValue{Key: getMaxRecordProofIdKey(),
 			Value: types.Encode(&types.Int64{Data: int64(proof.ProofId)})})
@@ -333,6 +334,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
+	//小于当前proofId的proof直接reject
 	if payload.ProofId < lastProof.ProofId+1 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "commitedId=%d less or equal  lastProofId=%d", payload.ProofId, lastProof.ProofId)
 	}
@@ -345,7 +347,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	if payload.ProofId > lastProof.ProofId+1 {
 		return makeCommitProofRecordReceipt(newProof, uint64(maxRecordId.Data)), nil
 	}
-
+	//onChainProof是提交到L1的proof，可能proofId不连续(有些proof都是L2 op)，但onChainId需要连续
 	lastOnChainProof, err := getLastOnChainProofData(a.statedb)
 	if err != nil {
 		return nil, errors.Wrap(err, "getLastOnChainProof")
@@ -389,12 +391,12 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 			break
 		}
 		//整个证明验证成功才更新
-		mergeReceipt(receipt, makeCommitProofReceipt(lastProof, newProof))
+		mergeReceipt(receipt, makeCommitProofReceipt(lastProof, recordProof))
 		lastProof = recordProof
 		mergeReceipt(receipt, makeProofId2QueueIdReceipt(recordProof.ProofId, firstQueueId+1, newFirstQueueId))
 		firstQueueId = newFirstQueueId
 	}
-	//移动firstQueueId
+	//更新firstQueueId 到成功的proof最后一个queueId
 	mergeReceipt(receipt, makeSetL2FirstQueueIdReceipt(oldFirstQueId, firstQueueId))
 	return receipt, nil
 }

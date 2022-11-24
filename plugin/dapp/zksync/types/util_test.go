@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,4 +79,18 @@ func TestFindManExpPart(t *testing.T) {
 	m, e = ZkTransferManExpPart(s)
 	assert.True(t, m == "120")
 	assert.True(t, e == 31)
+}
+
+func TestDecodePacVal(t *testing.T) {
+	val := "0d02"
+	bVal, err := hex.DecodeString(val)
+	assert.Nil(t, err)
+	rst := DecodePacVal(bVal, PacExpBitWidth)
+	assert.Equal(t, "10400", rst)
+
+	val = "002e"
+	bVal, err = hex.DecodeString(val)
+	assert.Nil(t, err)
+	rst = DecodePacVal(bVal, PacExpBitWidth)
+	assert.Equal(t, "100000000000000", rst)
 }
