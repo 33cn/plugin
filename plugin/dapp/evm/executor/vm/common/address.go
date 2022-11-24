@@ -26,7 +26,7 @@ import (
 var (
 	// 地址驱动, 适配chain33和evm间的地址格式差异
 	evmAddressDriver address.Driver
-	once             sync.Once
+	lock             sync.RWMutex
 )
 
 // 设置默认值, btc地址格式
@@ -34,15 +34,17 @@ func init() {
 	evmAddressDriver, _ = address.LoadDriver(btc.NormalAddressID, -1)
 }
 
-// InitEvmAddressType 基于配置初始化
-func InitEvmAddressTypeOnce(driver address.Driver) {
-	once.Do(func() {
-		evmAddressDriver = driver
-	})
+// InitEvmAddressDriver 初始化地址类型
+func InitEvmAddressDriver(driver address.Driver) {
+	lock.Lock()
+	defer lock.Unlock()
+	evmAddressDriver = driver
 }
 
 // GetEvmAddressDriver get driver
 func GetEvmAddressDriver() address.Driver {
+	lock.RLock()
+	defer lock.RUnlock()
 	return evmAddressDriver
 }
 
@@ -190,8 +192,9 @@ func BytesToHash160Address(b []byte) Hash160Address {
 	return h
 }
 
-// StringToAddress 字符串转换为地址
-func StringToAddress(s string) *Address {
+// StringToAddressLegacy 字符串转换为地址
+// Deprecated
+func StringToAddressLegacy(s string) *Address {
 	raw, err := evmAddressDriver.FromString(s)
 	if err != nil {
 		//检查是否是十六进制地址数据
@@ -202,6 +205,25 @@ func StringToAddress(s string) *Address {
 		}
 	}
 	a := &Address{}
+	a.SetBytes(raw)
+	return a
+}
+
+// StringToAddress try convert string to Address
+func StringToAddress(addr string) *Address {
+
+	raw, err := evmAddressDriver.FromString(addr)
+	// 由于evm和底层框架配置的地址格式可能不同
+	// 错误时需使用底层默认的地址尝试解析
+	if err != nil {
+		raw, err = address.GetDefaultAddressDriver().FromString(addr)
+		if err != nil {
+			log15.Error("create address form string error", "addr:", addr)
+			return nil
+		}
+	}
+	// 格式化地址采用输入值,不进行二次转化, 避免配置不同导致地址格式混乱
+	a := &Address{formatAddr: addr}
 	a.SetBytes(raw)
 	return a
 }
