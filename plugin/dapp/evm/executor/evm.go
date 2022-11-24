@@ -56,7 +56,7 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 	if err != nil {
 		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
 	}
-	common.InitEvmAddressTypeOnce(driver)
+	common.InitEvmAddressDriver(driver)
 }
 
 // Init 初始化本合约对象

@@ -187,7 +187,7 @@ func initEvmExeccutor(t *testing.T, api *apimock.QueueProtocolAPI) *EVMExecutor 
 	driver, err := address.LoadDriver(2, -1)
 	assert.Equal(t, nil, err)
 
-	vcomm.InitEvmAddressTypeOnce(driver)
+	vcomm.InitEvmAddressDriver(driver)
 	var exec = NewEVMExecutor()
 	exec.SetAPI(api)
 	statDB, err := dbm.NewGoMemDB("state", "state", 1024)
