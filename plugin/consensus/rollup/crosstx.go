@@ -26,8 +26,8 @@ func (h *crossTxHandler) init(r *RollUp, status *rtypes.RollupStatus) {
 
 	h.ru = r
 	h.txIdxCache = make(map[string]*crossTxInfo, 32)
-	h.pulledHeight = r.cfg.BootHeight
-	if status.CrossTxSyncedHeight > r.cfg.BootHeight {
+	h.pulledHeight = r.cfg.StartHeight
+	if status.CrossTxSyncedHeight > r.cfg.StartHeight {
 		h.pulledHeight = status.CrossTxSyncedHeight
 	}
 }

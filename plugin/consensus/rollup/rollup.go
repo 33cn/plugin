@@ -78,8 +78,8 @@ func (r *RollUp) initJob() {
 	valPubs := r.getValidatorPubKeys()
 	status := r.getRollupStatus()
 	for len(valPubs.GetBlsPubs()) == 0 || status == nil {
-		rlog.Error("initJob", "status", status, "valPubs", valPubs)
-		time.Sleep(time.Second)
+		rlog.Warn("Init rollup wait...", "status", status, "valPubs", valPubs)
+		time.Sleep(5 * time.Second)
 		valPubs = r.getValidatorPubKeys()
 		status = r.getRollupStatus()
 	}

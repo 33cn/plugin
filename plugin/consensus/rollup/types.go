@@ -7,11 +7,11 @@ import (
 
 // Config rollup 配置
 type Config struct {
-	SignTxKey      string
-	CommitBlsKey   string
-	CommitInterval int32
-	// BootHeight 指定平行链启动时主链的高度
-	BootHeight int64
+	CommitTxKey     string `json:"commitTxKey,omitempty"`
+	ValidatorBlsKey string `json:"validatorBlsKey,omitempty"`
+	CommitInterval  int32  `json:"commitInterval,omitempty"`
+	// StartHeight 指定平行链启动时主链的高度
+	StartHeight int64 `json:"startHeight,omitempty"`
 }
 
 type validatorSignMsgSet struct {

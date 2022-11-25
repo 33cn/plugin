@@ -57,8 +57,8 @@ func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtyp
 	}
 
 	v.exit = make(chan struct{})
-	v.blsDriver, v.blsKey = getPrivKey(bls.Name, cfg.CommitBlsKey)
-	_, v.signTxKey = getPrivKey(secp256k1.Name, cfg.SignTxKey)
+	v.blsDriver, v.blsKey = getPrivKey(bls.Name, cfg.ValidatorBlsKey)
+	_, v.signTxKey = getPrivKey(secp256k1.Name, cfg.CommitTxKey)
 	v.updateValidators(valPubs)
 	v.updateRollupStatus(status)
 
