@@ -168,6 +168,9 @@ type aggreSignFunc = func(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []
 
 func (v *validator) aggregateSign(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []byte) {
 
+	if set == nil {
+		return nil, nil
+	}
 	valCount := v.getValidatorCount()
 	// 2/3 共识, 向上取整
 	minSignCount := valCount * 2 / 3

@@ -19,14 +19,14 @@ func validatorCMD() *cobra.Command {
 }
 
 func addTitleFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("chaintitle", "t", "", "chain title")
-	markRequired(cmd, "chaintitle")
+	cmd.Flags().StringP("paratitle", "t", "", "para chain title")
+	markRequired(cmd, "paratitle")
 }
 
 func getValidator(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
+	title, _ := cmd.Flags().GetString("paratitle")
 	if title == "" {
-		fmt.Fprintf(os.Stderr, "Err empty chain title")
+		fmt.Fprintf(os.Stderr, "Err empty parachain title")
 		return
 	}
 
@@ -48,9 +48,9 @@ func rollupStatusCMD() *cobra.Command {
 }
 
 func getRollupStatus(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
+	title, _ := cmd.Flags().GetString("paratitle")
 	if title == "" {
-		fmt.Fprintf(os.Stderr, "Err empty chain title")
+		fmt.Fprintf(os.Stderr, "Err empty parachain title")
 		return
 	}
 
@@ -74,9 +74,9 @@ func roundInfoCMD() *cobra.Command {
 }
 
 func getRoundInfo(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
+	title, _ := cmd.Flags().GetString("paratitle")
 	if title == "" {
-		fmt.Fprintf(os.Stderr, "Err empty chain title")
+		fmt.Fprintf(os.Stderr, "Err empty parachain title")
 		return
 	}
 

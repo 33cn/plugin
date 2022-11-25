@@ -54,7 +54,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 		return
 	}
 
-	types.MustDecode(subCfg, r.cfg)
+	types.MustDecode(subCfg, &r.cfg)
 
 	r.chainCfg = chainCfg
 	r.ctx, r.cancel = context.WithCancel(base.Context)
@@ -62,6 +62,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	r.subChan = make(chan *types.TopicData, 32)
 	r.lastFeeRate = 100000
 	r.cross = &crossTxHandler{}
+	r.base = base
 
 	var err error
 	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)
@@ -78,19 +79,20 @@ func (r *RollUp) initJob() {
 	valPubs := r.getValidatorPubKeys()
 	status := r.getRollupStatus()
 	for len(valPubs.GetBlsPubs()) == 0 || status == nil {
-		rlog.Warn("Init rollup wait...", "status", status, "valPubs", valPubs)
+		rlog.Warn("Init rollup wait 5 seconds...", "status", status, "valPubs", valPubs)
 		time.Sleep(5 * time.Second)
 		valPubs = r.getValidatorPubKeys()
 		status = r.getRollupStatus()
 	}
-	val := &validator{}
-	val.init(r.cfg, valPubs, status)
+	r.val = &validator{}
+	r.val.init(r.cfg, valPubs, status)
 	r.nextBuildRound = status.CommitRound + 1
 	r.nextBuildHeight = status.CommitBlockHeight + 1
 	r.cache = newCommitCache(status.CommitRound)
 	r.cross.init(r, status)
 	r.trySubTopic(psValidatorSignTopic)
 	r.initDone <- struct{}{}
+
 }
 
 func (r *RollUp) startRollupRoutine() {

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/33cn/plugin/plugin/crypto/bls"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -104,6 +105,11 @@ func LoadHelp() {
 }
 
 // Perf 性能测试
+// host grpc地址, localhost:8802
+// txsize 存证交易字节大小
+// num 单次发送交易数量
+// sleepinterval 每次发送sleep秒
+// totalduration  总持续次数
 func Perf(host, txsize, num, sleepinterval, totalduration string) {
 	var numThread int
 	numInt, err := strconv.Atoi(num)
@@ -161,7 +167,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 
 	for i := 0; i < numThread; i++ {
 		go func() {
-			_, priv := genaddress()
+			_, priv := genBls()
 			for sec := 0; durInt == 0 || sec < durInt; sec++ {
 				height := atomic.LoadInt64(&blockHeight)
 				for txs := 0; txs < numInt/numThread; txs++ {
@@ -173,7 +179,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 					tx.Expire = height + types.TxHeightFlag + types.LowAllowPackHeight
 					tx.Payload = RandStringBytes(sizeInt)
 					//交易签名
-					tx.Sign(types.SECP256K1, priv)
+					tx.Sign(bls.ID, priv)
 					txChan <- tx
 				}
 				if sleep > 0 {
@@ -550,6 +556,20 @@ func getprivkey(key string) crypto.PrivKey {
 		panic(err)
 	}
 	return priv
+}
+
+func genBls() (string, crypto.PrivKey){
+	cr, err := crypto.Load(types.GetSignName("", bls.ID), -1)
+	if err != nil {
+		panic(err)
+	}
+	privto, err := cr.GenKey()
+	if err != nil {
+		panic(err)
+	}
+	addrto := address.PubKeyToAddr(address.DefaultID, privto.PubKey().Bytes())
+	fmt.Println("addr:", addrto)
+	return addrto, privto
 }
 
 func genaddress() (string, crypto.PrivKey) {

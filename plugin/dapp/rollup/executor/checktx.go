@@ -27,7 +27,7 @@ func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
 		err = types.ErrActionNotSupport
 	}
 	if err != nil {
-		elog.Error("rollup CheckTx", "txHash", txHash, "actionName", tx.ActionName(), "err", err, "actionData", action.String())
+		elog.Error("rollup CheckTx", "txHash", txHash, "actionName", tx.ActionName(), "err", err)
 	}
 	return err
 }
@@ -92,11 +92,11 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		txPubs = append(txPubs, txPub)
 	}
 	aggreTxSign, _ := blsDriver.SignatureFromBytes(cp.GetBatch().GetAggregateTxSign())
-	err = aggreDriver.VerifyAggregatedN(txPubs, txHashList, aggreTxSign)
+	err = aggreDriver.VerifyAggregatedN(txPubs, cp.GetBatch().GetTxList(), aggreTxSign)
 
 	if err != nil {
 		elog.Error("checkCommit", "commitRound", commitRound, "verify aggregate tx sig err", err)
-		return ErrInvalidValidatorSign
+		return ErrInvalidTxAggregateSign
 	}
 
 	return nil

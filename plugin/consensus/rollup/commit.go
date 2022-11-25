@@ -92,6 +92,7 @@ func (r *RollUp) handleCommit() {
 			commit := r.cache.getPreparedCommit(nextCommitRound, r.val.aggregateSign)
 			// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
 			if commit == nil {
+				rlog.Debug("handleCommit not ready", "round", nextCommitRound)
 				continue
 			}
 

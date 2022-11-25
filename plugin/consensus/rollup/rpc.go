@@ -73,7 +73,7 @@ func (r *RollUp) createTx(exec, action string, payload []byte) (*types.Transacti
 
 func (r *RollUp) getProperFeeRate() int64 {
 
-	reply, err := r.mainChainGrpc.GetProperFee(r.ctx, nil)
+	reply, err := r.mainChainGrpc.GetProperFee(r.ctx, &types.ReqProperFee{})
 	if err != nil {
 		rlog.Error("getProperFeeRate", "err", err)
 	} else {
