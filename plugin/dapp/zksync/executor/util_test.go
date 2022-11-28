@@ -25,5 +25,5 @@ func TestCheckPackValue(t *testing.T) {
 		amount += "0"
 	}
 	err := checkPackValue(amount, zt.PacAmountManBitWidth)
-	assert.Nil(t, err)
+	assert.NotNil(t, err)
 }

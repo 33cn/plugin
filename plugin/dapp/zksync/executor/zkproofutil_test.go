@@ -12,6 +12,7 @@ func TestParseRollbackOps(t *testing.T) {
 		AccountID: 5,
 		TokenID:   1,
 		Amount:    "100",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit1 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -21,6 +22,7 @@ func TestParseRollbackOps(t *testing.T) {
 		AccountID: 5,
 		TokenID:   1,
 		Amount:    "200",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit2 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -31,6 +33,7 @@ func TestParseRollbackOps(t *testing.T) {
 		AccountID: 6,
 		TokenID:   1,
 		Amount:    "100",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit3 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -44,6 +47,7 @@ func TestParseRollbackOps(t *testing.T) {
 		Fee: &zt.ZkFee{
 			Fee: "10",
 		},
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opWithdraw1 := &zt.ZkOperation{
 		Ty: zt.TyWithdrawAction,
@@ -68,6 +72,7 @@ func TestParseRollbackOps2(t *testing.T) {
 		AccountID: 5,
 		TokenID:   1,
 		Amount:    "100",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit1 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -77,6 +82,7 @@ func TestParseRollbackOps2(t *testing.T) {
 		AccountID: 5,
 		TokenID:   1,
 		Amount:    "200",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit2 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -90,6 +96,7 @@ func TestParseRollbackOps2(t *testing.T) {
 		Fee: &zt.ZkFee{
 			Fee: "10",
 		},
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opWithdraw1 := &zt.ZkOperation{
 		Ty: zt.TyWithdrawAction,
@@ -113,6 +120,7 @@ func TestParseRollbackOps3(t *testing.T) {
 		AccountID: 5,
 		TokenID:   1,
 		Amount:    "100",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit1 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -122,6 +130,7 @@ func TestParseRollbackOps3(t *testing.T) {
 		AccountID: 5,
 		TokenID:   1,
 		Amount:    "200",
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opDeposit2 := &zt.ZkOperation{
 		Ty: zt.TyDepositAction,
@@ -135,6 +144,7 @@ func TestParseRollbackOps3(t *testing.T) {
 		Fee: &zt.ZkFee{
 			Fee: "10",
 		},
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opWithdraw1 := &zt.ZkOperation{
 		Ty: zt.TyWithdrawAction,
@@ -149,6 +159,7 @@ func TestParseRollbackOps3(t *testing.T) {
 		Fee: &zt.ZkFee{
 			Fee: "10",
 		},
+		BlockInfo: &zt.OpBlockInfo{},
 	}
 	opWithdraw2 := &zt.ZkOperation{
 		Ty: zt.TyProxyExitAction,
