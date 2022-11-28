@@ -183,10 +183,13 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
 	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas)
-
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
+	}
+	// Fail if we're trying to transfer more than the available balance
+	if value != 0 && !evm.Context.CanTransfer(evm.StateDB, caller.Address(), value) {
+		return nil, -1, gas, model.ErrInsufficientBalance
 	}
 
 	p, sp, isPrecompile := evm.precompile(addr)
@@ -199,8 +202,11 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 				if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 					evm.VMConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
 					evm.VMConfig.Tracer.CaptureEnd(ret, 0, 0, nil)
+
 				}
-				return nil, -1, gas, model.ErrAddrNotExists
+				//合约地址不存在的时候，直接返回
+				return nil, -1, gas, nil
+				//return nil, -1, gas, model.ErrAddrNotExists
 			}
 		} else {
 
@@ -458,7 +464,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 // 使用传入的部署代码创建新的合约；
 // 目前chain33为了保证账户安全，不允许合约中涉及到外部账户的转账操作，
 // 所以，本步骤不接收转账金额参数
-func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias string, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias string, value uint64, readonly bool) (ret []byte, snapshot int, leftOverGas uint64, err error) {
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
@@ -481,10 +487,8 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		evm.VMConfig.Tracer.CaptureStart(caller.Address(), contractAddr, true, code, gas, 0)
 	}
 	start := types.Now()
-
 	// 通过预编译指令和解释器执行合约
-	ret, err = run(evm, contract, nil, false)
-
+	ret, err = run(evm, contract, nil, readonly)
 	// 检查部署后的合约代码大小是否超限
 	maxCodeSizeExceeded := len(ret) > evm.maxCodeSize
 	// 如果执行成功，计算存储合约代码需要花费的Gas

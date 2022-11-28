@@ -620,7 +620,6 @@ func opGas(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 // 合约创建操作
 func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
-
 	// 从栈和内存中分别获取操作所需的参数
 	var (
 		value        = callContext.stack.pop()
@@ -633,7 +632,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	stackvalue := size
 
 	addr := common.NewContractAddress(evm.Origin, evm.TxHash)
-	res, _, returnGas, suberr := evm.Create(callContext.contract, addr, input, gas, "innerContract", "", value.Uint64())
+	res, _, returnGas, suberr := evm.Create(callContext.contract, addr, input, gas, "innerContract", "", value.Uint64(), false)
 
 	// 出错时压栈0，否则压栈创建出来的合约对象的地址
 	if suberr != nil && suberr != model.ErrCodeStoreOutOfGas {
@@ -683,7 +682,7 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	log15.Info("opCreate2", "newContractAddr", newContractAddr.String(), "newContractAddr byte", common.Bytes2Hex(newContractAddr.Bytes()))
 	saltSlice := salt.Bytes32()
 	saltStr := common.Bytes2Hex(saltSlice[:])
-	res, _, returnGas, suberr := evm.Create(callContext.contract, newContractAddr, input, gas, saltStr, "", endowment.Uint64())
+	res, _, returnGas, suberr := evm.Create(callContext.contract, newContractAddr, input, gas, saltStr, "", endowment.Uint64(), false)
 	// push item on the stack based on the returned error.
 
 	log15.Info("opCreate2", "callContext.contract.Address()", callContext.contract.Address(),
