@@ -222,6 +222,10 @@ func StringToAddress(addr string) *Address {
 			return nil
 		}
 	}
+	// 以太坊统一格式为小写
+	if address.IsEthAddress(addr) {
+		addr = address.ToLower(addr)
+	}
 	// 格式化地址采用输入值,不进行二次转化, 避免配置不同导致地址格式混乱
 	a := &Address{formatAddr: addr}
 	a.SetBytes(raw)
