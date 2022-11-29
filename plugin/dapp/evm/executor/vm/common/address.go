@@ -212,22 +212,18 @@ func StringToAddressLegacy(s string) *Address {
 // StringToAddress try convert string to Address
 func StringToAddress(addr string) *Address {
 
-	raw, err := evmAddressDriver.FromString(addr)
-	// 由于evm和底层框架配置的地址格式可能不同
-	// 错误时需使用底层默认的地址尝试解析
-	if err != nil {
-		raw, err = address.GetDefaultAddressDriver().FromString(addr)
-		if err != nil {
-			log15.Error("create address form string error", "addr:", addr)
-			return nil
-		}
-	}
-	// 以太坊统一格式为小写
+	a := &Address{}
+	// 以太坊地址类型直接解析
 	if address.IsEthAddress(addr) {
-		addr = address.ToLower(addr)
+		a.SetBytes(common.HexToAddress(addr).Bytes())
+		return a
 	}
-	// 格式化地址采用输入值,不进行二次转化, 避免配置不同导致地址格式混乱
-	a := &Address{formatAddr: addr}
+	// 其他地址类型,尝试用框架地址驱动解析
+	raw, err := address.GetDefaultAddressDriver().FromString(addr)
+	if err != nil {
+		log15.Error("decode address from string error", "addr:", addr)
+		return nil
+	}
 	a.SetBytes(raw)
 	return a
 }
