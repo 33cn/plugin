@@ -319,7 +319,7 @@ function zksync_setVerifyKey() {
     echo -e "${GRE}=========== $FUNCNAME ===========${NOC}"
     #set verify key
     verify_key="9bacd15739de2797c5712ba1bb4b04770c792bc4f0b07ba413a3be104c730d0999f4db226287bede62c82c2013cb4998a812081a6953dfb0ce5d61702e89a75cca66711a9deb2bea5d86a1f5ca9ec3aa59fe6d4754ce9335f4719dd3d3549acc2773cf1a9af35365661ffd9230c6f9686463c0d9012db3e261f539a68b3dba4edbdcc88d1567c5ace42099bcb784bf4d95ce329b819ab9abf5ae868cf43f3ad6026f98d38ea6f20a4dffab047049537100448622c1a37b324285a5d2fe5e9b60eb41673c17eb70f8a2d83a9057ebc7864afcc3a059f2f86630c62536d1c98587cf206c7a2ebd29849ac4932243f5cbb3c218d7c4f515dcfe165a2298a55bce26029e64c87c78557f5c22a74577043a695e4576055c7ca65c96b9b7265740c6ab000000039310846b7cd5a7bd2da482f3ec8d72ed029102686ef2dc6781c5979e7b4338c9ad5cb48c1ef34c50b016772988e95d6508aad5c4f2e9b5d3e53acd854d4fc242df0aba967c2dc815e1af26e27a9a64913b1192e9dd17fcf4817c08a807ca7907"
-    hash=$(${CLI} send zksync l2 vkey -n 1 -v "${verify_key}" -k "${management_key}")
+    hash=$(${CLI} send zksync l2 vkey -v "${verify_key}" -k "${management_key}")
     check_tx "${CLI}" "${hash}"
 }
 

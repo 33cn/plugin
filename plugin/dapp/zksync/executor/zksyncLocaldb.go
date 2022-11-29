@@ -19,45 +19,24 @@ func (z *zksync) execAutoLocalZksync(tx *types.Transaction, receiptData *types.R
 }
 
 func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	infoTable := NewZksyncInfoTable(z.GetLocalDB())
+	infoTable := NewAccountTreeTable(z.GetLocalDB())
 
 	dbSet := &types.LocalDBSet{}
 	for _, log := range receiptData.Logs {
 		switch log.Ty {
-		case
-			zt.TyDepositLog,
-			zt.TyWithdrawLog,
-			zt.TyTreeToContractLog,
-			zt.TyContractToTreeLog,
-			zt.TyTransferLog,
-			zt.TyTransferToNewLog,
-			//zt.TySetPubKeyLog,
-			zt.TyProxyExitLog,
-			zt.TyFullExitLog,
-			zt.TySwapLog,
-			zt.TyMintNFTLog,
-			zt.TyWithdrawNFTLog,
-			zt.TyFeeLog:
+		case zt.TyDepositLog:
 			var receipt zt.AccountTokenBalanceReceipt
 			err := types.Decode(log.GetLog(), &receipt)
 			if err != nil {
 				return nil, err
 			}
-			err = infoTable.Replace(&receipt)
-			if err != nil {
-				return nil, err
+			leaf := &zt.Leaf{
+				AccountId:   receipt.AccountId,
+				EthAddress:  receipt.EthAddress,
+				Chain33Addr: receipt.Chain33Addr,
 			}
-		case zt.TyTransferNFTLog:
-			var receipt zt.TransferReceipt4L2
-			err := types.Decode(log.GetLog(), &receipt)
-			if err != nil {
-				return nil, err
-			}
-			err = infoTable.Replace(receipt.From)
-			if err != nil {
-				return nil, err
-			}
-			err = infoTable.Replace(receipt.To)
+
+			err = infoTable.Replace(leaf)
 			if err != nil {
 				return nil, err
 			}
