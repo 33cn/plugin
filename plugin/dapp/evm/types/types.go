@@ -46,6 +46,8 @@ const (
 	ForkEVMYoloV1 = "ForkEVMYoloV1"
 	//ForkEVMTxGroup 交易组中的交易通过GAS检查
 	ForkEVMTxGroup = "ForkEVMTxGroup"
+	// ForkEVMMixAddress evm同时兼容base58及16进制地址混合调用处理
+	ForkEVMMixAddress = "ForkEVMMixAddress"
 )
 
 var (
