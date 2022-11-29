@@ -66,7 +66,8 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	initEvmSubConfig(sub, enableHeight)
 	driverName = name
 	drivers.Register(cfg, driverName, newEVMDriver, enableHeight)
-	EvmAddress = address.ExecAddress(cfg.ExecName(name))
+	// 格式化为配置地址格式
+	EvmAddress = common.StringToAddress(address.ExecAddress(cfg.ExecName(name))).String()
 	// 初始化硬分叉数据
 	state.InitForkData()
 	InitExecType()
