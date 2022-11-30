@@ -96,7 +96,13 @@ func (z *zksync) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error)
 	if err != nil {
 		return nil, err
 	}
-	res.Leaves = leaves
+	for _, l := range leaves {
+		r, err := z.Query_GetAccountById(&zt.ZkQueryReq{AccountId: l.GetAccountId()})
+		if err != nil {
+			return nil, errors.Wrapf(err, "id=%d", l.AccountId)
+		}
+		res.Leaves = append(res.Leaves, r.(*zt.Leaf))
+	}
 	return res, nil
 }
 
@@ -111,7 +117,13 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 	if err != nil {
 		return nil, err
 	}
-	res.Leaves = leaves
+	for _, l := range leaves {
+		r, err := z.Query_GetAccountById(&zt.ZkQueryReq{AccountId: l.GetAccountId()})
+		if err != nil {
+			return nil, errors.Wrapf(err, "id=%d", l.AccountId)
+		}
+		res.Leaves = append(res.Leaves, r.(*zt.Leaf))
+	}
 	return res, nil
 }
 
