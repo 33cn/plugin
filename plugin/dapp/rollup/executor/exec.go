@@ -12,43 +12,31 @@ import (
  * 关键数据上链（statedb）并生成交易回执（log）
  */
 
-func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (r *rollup) Exec_Commit(cp *rolluptypes.CheckPoint, tx *types.Transaction, index int) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
-	commitRound := commit.GetCommitRound()
-	status, err := r.getRollupStatus(commit.GetChainTitle())
+	commitRound := cp.GetCommitRound()
+	status, err := r.getRollupStatus(cp.GetChainTitle())
 	if err != nil {
-		elog.Error("Exec_CommitBatch", "title", commit.GetChainTitle(),
+		elog.Error("Exec_CommitBatch", "title", cp.GetChainTitle(),
 			"round", commitRound, "get status err", err)
 		return nil, ErrGetRollupStatus
 	}
 
-	parentHash := common.ToHex(commit.GetBatch().GetBlockHeaders()[0].ParentHash)
-
-	// check parent block hash with last commit round
-	// 首次提交没有status记录, lastBlockHash为空
-	if len(status.CommitBlockHash) > 0 && status.CommitBlockHash != parentHash {
-
-		elog.Error("Exec_CommitBatch", "title", commit.GetChainTitle(),
-			"round", commitRound, "currLastHash", status.CommitBlockHash,
-			"parentHash", parentHash)
-		return nil, ErrParentHashNotEqual
-	}
-
-	headers := commit.GetBatch().GetBlockHeaders()
+	headers := cp.GetBatch().GetBlockHeaders()
 	roundInfo := &rolluptypes.CommitRoundInfo{
 		CommitRound:      commitRound,
-		ParentBlockHash:  parentHash,
-		LastBlockHash:    calcBlockHash(headers[len(headers)-1]),
+		FirstBlockHeight: headers[0].Height,
 		LastBlockHeight:  headers[len(headers)-1].Height,
-		CrossTxCheckHash: common.ToHex(commit.GetBatch().GetCrossTxCheckHash()),
-		CrossTxResults:   common.ToHex(commit.GetBatch().GetCrossTxResults()),
+		CommitTxCount:    int32(len(cp.GetBatch().GetTxList())),
+		CrossTxCheckHash: common.ToHex(cp.GetBatch().GetCrossTxCheckHash()),
+		CrossTxResults:   common.ToHex(cp.GetBatch().GetCrossTxResults()),
 	}
 
 	encodeVal := types.Encode(roundInfo)
 	receipt.KV = append(receipt.KV, &types.KeyValue{
-		Key:   formatCommitRoundInfoKey(commit.GetChainTitle(), commitRound),
+		Key:   formatCommitRoundInfoKey(cp.GetChainTitle(), commitRound),
 		Value: encodeVal,
 	})
 
@@ -60,12 +48,12 @@ func (r *rollup) Exec_Commit(commit *rolluptypes.CheckPoint, tx *types.Transacti
 	status.Timestamp = r.GetBlockTime()
 	status.CommitRound = roundInfo.CommitRound
 	status.CommitBlockHeight = roundInfo.LastBlockHeight
-	status.CommitBlockHash = roundInfo.LastBlockHash
+	status.CommitBlockHash = calcBlockHash(headers[len(headers)-1])
 	status.CommitAddr = tx.From()
-	status.CrossTxSyncedHeight = commit.CrossTxSyncedHeight
+	status.CrossTxSyncedHeight = cp.CrossTxSyncedHeight
 	encodeVal = types.Encode(status)
 	receipt.KV = append(receipt.KV, &types.KeyValue{
-		Key:   formatRollupStatusKey(commit.GetChainTitle()),
+		Key:   formatRollupStatusKey(cp.GetChainTitle()),
 		Value: encodeVal,
 	})
 

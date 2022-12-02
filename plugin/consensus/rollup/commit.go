@@ -16,25 +16,90 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
-func (r *RollUp) buildCommitData(details []*types.BlockDetail) (*rtypes.BlockBatch, *pt.CommitRollup) {
+const (
+	maxCommitDataSize = types.MaxTxSize * 3 / 4
+)
+
+func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.CommitRollup) {
 
 	batch := &rtypes.BlockBatch{}
-	batch.BlockHeaders = make([]*types.Header, 0, len(details))
+	batch.BlockHeaders = make([]*types.Header, 0, 8)
 	batch.TxList = make([][]byte, 0, minCommitTxCount)
 	batch.PubKeyList = make([][]byte, 0, minCommitTxCount)
 	batch.TxAddrIDList = make([]byte, 0, minCommitTxCount)
-	signs := make([]crypto.Signature, 0, minCommitTxCount)
-	blsDriver := r.val.blsDriver
+
+	if header != nil {
+		batch.BlockHeaders = append(batch.BlockHeaders, header)
+	}
 
 	crossInfo := &pt.CommitRollup{}
+	return batch, crossInfo
+}
+
+// 构造提交数据, 包括区块交易数据, 跨链交易信息数据
+func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64,
+	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.CommitRollup) {
+
+	batchList := make([]*rtypes.BlockBatch, 0, 1)
+	crossList := make([]*pt.CommitRollup, 0, 1)
+	batch, crossInfo := newCommitData(nil)
+
+	signs := make([]crypto.Signature, 0, minCommitTxCount)
+	blsDriver := r.val.blsDriver
 	crossTxHashes := make([][]byte, 0, 8)
 	crossTxRst := big.NewInt(0)
+	commitSize := 0
+	aggreDriver := blsDriver.(crypto.AggregateCrypto)
+
+	// 提交数据封装
+	sealData := func(fragIndex int) error {
+
+		batch.BlockFragIndex = int32(fragIndex)
+		aggreSign, err := aggreDriver.Aggregate(signs)
+		if err != nil {
+			rlog.Error("buildCommitData", "round", commitRound, "aggregate sign err", err)
+			return err
+		}
+		batch.AggregateTxSign = aggreSign.Bytes()
+		if len(crossTxHashes) > 0 {
+			batch.CrossTxResults = crossTxRst.Bytes()
+			batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
+		}
+		crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
+		batchList = append(batchList, batch)
+		crossList = append(crossList, crossInfo)
+		return nil
+	}
+	// 区块分割后接续, 从下标位置读取交易, 只有首次启动构建存在断点拼接情况
+	if *fragIndex > 0 {
+		details[0].Block.Txs = details[0].Block.Txs[*fragIndex:]
+		*fragIndex = 0
+	}
+
 	for _, detail := range details {
 
 		header := detail.Block.GetHeader(r.chainCfg)
 		header.Hash = nil
 		batch.BlockHeaders = append(batch.BlockHeaders, header)
 		for i, tx := range detail.Block.Txs {
+
+			ctx := types.CloneTx(tx)
+			ctx.Signature = nil
+			txData := types.Encode(ctx)
+
+			// 超过最大容量, 区块分割
+			if commitSize+len(txData) > maxCommitDataSize {
+
+				if sealData(i) != nil {
+					return nil, nil
+				}
+				batch, crossInfo = newCommitData(header)
+				crossTxHashes = crossTxHashes[:0]
+				crossTxRst = big.NewInt(0)
+				commitSize = 0
+			}
+
+			commitSize += len(txData)
 
 			// 过滤跨链交易
 			if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
@@ -44,31 +109,71 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail) (*rtypes.BlockBat
 				crossTxHashes = append(crossTxHashes, tx.Hash())
 			}
 
-			ctx := types.CloneTx(tx)
-			batch.PubKeyList = append(batch.PubKeyList, ctx.Signature.Pubkey)
+			batch.PubKeyList = append(batch.PubKeyList, tx.Signature.Pubkey)
 			// 本地已执行区块, 签名信息合法, 无需错误处理
-			sign, _ := blsDriver.SignatureFromBytes(ctx.Signature.GetSignature())
+			sign, _ := blsDriver.SignatureFromBytes(tx.Signature.GetSignature())
 			signs = append(signs, sign)
 			batch.TxAddrIDList = append(batch.TxAddrIDList, byte(types.ExtractAddressID(ctx.Signature.Ty)))
-			ctx.Signature = nil
-			batch.TxList = append(batch.TxList, types.Encode(ctx))
-
+			batch.TxList = append(batch.TxList, txData)
 		}
 	}
 
-	aggreDriver := r.val.blsDriver.(crypto.AggregateCrypto)
-	aggreSign, err := aggreDriver.Aggregate(signs)
-	if err != nil {
-		rlog.Error("buildCommitData", "aggregate sign err", aggreSign)
+	if sealData(0) != nil {
 		return nil, nil
 	}
-	batch.AggregateTxSign = aggreSign.Bytes()
-	if len(crossTxHashes) > 0 {
-		batch.CrossTxResults = crossTxRst.Bytes()
-		batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
+	return batchList, crossList
+}
+
+func (r *RollUp) handleBuildBatch() {
+
+	ticker := time.NewTicker(time.Second * 10)
+	defer ticker.Stop()
+	var blockDetails []*types.BlockDetail
+	fragIndex := r.initFragIndex
+	for {
+
+		select {
+		case <-ticker.C:
+			blockDetails = r.getNextBatchBlocks(r.nextBuildHeight)
+		case <-r.ctx.Done():
+			return
+		}
+		// 区块内未达到最低批量数量, 需要继续等待
+		if blockDetails == nil {
+			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
+				"round", r.nextBuildRound, "msg", "wait more block")
+			continue
+		}
+		batchList, crossList := r.buildCommitData(blockDetails, r.nextBuildRound, &fragIndex)
+
+		for i, blkBatch := range batchList {
+			crossInfo := crossList[i]
+
+			cp := &rtypes.CheckPoint{
+				ChainTitle:          r.chainCfg.GetTitle(),
+				CommitRound:         r.nextBuildRound,
+				Batch:               blkBatch,
+				CrossTxSyncedHeight: r.cross.refreshSyncedHeight(),
+			}
+			crossInfo.ChainTitle = r.chainCfg.GetTitle()
+			crossInfo.CommitRound = r.nextBuildRound
+			commit := &commitInfo{
+				cp:      cp,
+				crossTx: crossInfo,
+			}
+
+			r.nextBuildRound++
+			sign := r.val.sign(cp.GetCommitRound(), cp.GetBatch())
+
+			r.cache.addCommitInfo(commit)
+			r.cache.addValidatorSign(true, sign)
+			r.tryPubMsg(psValidatorSignTopic, types.Encode(sign), sign.CommitRound)
+
+		}
+
+		r.nextBuildHeight += int64(len(blockDetails))
+
 	}
-	crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
-	return batch, crossInfo
 }
 
 // 提交共识

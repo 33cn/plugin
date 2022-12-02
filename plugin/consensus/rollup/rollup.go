@@ -5,10 +5,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/33cn/chain33/rpc/grpcclient"
-	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
-
 	"github.com/33cn/chain33/common/log"
+	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/system/consensus"
 	"github.com/33cn/chain33/types"
 )
@@ -30,6 +28,7 @@ func init() {
 type RollUp struct {
 	nextBuildHeight int64
 	nextBuildRound  int64
+	initFragIndex   int32
 	cfg             Config
 
 	initDone chan struct{}
@@ -87,7 +86,11 @@ func (r *RollUp) initJob() {
 	r.val = &validator{}
 	r.val.init(r.cfg, valPubs, status)
 	r.nextBuildRound = status.CommitRound + 1
+	r.initFragIndex = status.BlockFragIndex
 	r.nextBuildHeight = status.CommitBlockHeight + 1
+	if status.BlockFragIndex > 0 {
+		r.nextBuildHeight = status.CommitBlockHeight
+	}
 	r.cache = newCommitCache(status.CommitRound)
 	r.cross.init(r, status)
 	r.trySubTopic(psValidatorSignTopic)
@@ -126,49 +129,6 @@ func (r *RollUp) handleExit() {
 			rlog.Info("rollup exit")
 			return
 		}
-	}
-}
-
-func (r *RollUp) handleBuildBatch() {
-
-	ticker := time.NewTicker(time.Second * 10)
-	defer ticker.Stop()
-	var blockDetails []*types.BlockDetail
-	for {
-
-		select {
-		case <-ticker.C:
-			blockDetails = r.getNextBatchBlocks(r.nextBuildHeight)
-		case <-r.ctx.Done():
-			return
-		}
-		// 区块内未达到最低批量数量, 需要继续等待
-		if blockDetails == nil {
-			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
-				"round", r.nextBuildRound, "msg", "wait more block")
-			continue
-		}
-		blkBatch, crossInfo := r.buildCommitData(blockDetails)
-		cp := &rtypes.CheckPoint{
-			ChainTitle:          r.chainCfg.GetTitle(),
-			CommitRound:         r.nextBuildRound,
-			Batch:               blkBatch,
-			CrossTxSyncedHeight: r.cross.refreshSyncedHeight(),
-		}
-		crossInfo.ChainTitle = r.chainCfg.GetTitle()
-		crossInfo.CommitRound = r.nextBuildRound
-		commit := &commitInfo{
-			cp:      cp,
-			crossTx: crossInfo,
-		}
-
-		r.nextBuildRound++
-		r.nextBuildHeight += int64(len(blockDetails))
-		sign := r.val.sign(cp.GetCommitRound(), cp.GetBatch())
-
-		r.cache.addCommitInfo(commit)
-		r.cache.addValidatorSign(true, sign)
-		r.tryPubMsg(psValidatorSignTopic, types.Encode(sign), sign.CommitRound)
 	}
 }
 

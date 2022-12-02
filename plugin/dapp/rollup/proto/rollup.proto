@@ -15,13 +15,15 @@ message RollupAction {
 
 message BlockBatch {
 
-    repeated Header blockHeaders    = 1;
-    repeated bytes txList           = 2;
-    repeated bytes pubKeyList       = 3;
-    bytes          aggregateTxSign  = 4;
-    bytes          txAddrIDList     = 5;
-    bytes          crossTxCheckHash = 6;
-    bytes          crossTxResults   = 7;
+    repeated Header blockHeaders = 1;
+    // 区块过大, 分段提交分割位置(交易下标)
+    int32    blockFragIndex         = 2;
+    repeated bytes txList           = 3;
+    repeated bytes pubKeyList       = 4;
+    bytes          aggregateTxSign  = 5;
+    bytes          txAddrIDList     = 6;
+    bytes          crossTxCheckHash = 7;
+    bytes          crossTxResults   = 8;
 }
 
 message ValidatorSignMsg {
@@ -44,22 +46,23 @@ message CheckPoint {
 
 message RollupStatus {
 
-    int64  timestamp         = 1;
-    int64  commitRound       = 2;
-    int64  commitBlockHeight = 3;
-    string commitBlockHash   = 4;
-    string commitAddr        = 5;
+    int64 timestamp         = 1;
+    int64 commitRound       = 2;
+    int64 commitBlockHeight = 3;
+    // 区块过大, 分段提交分割位置(交易下标)
+    int32  blockFragIndex  = 4;
+    string commitBlockHash = 5;
+    string commitAddr      = 6;
     // main chain block height
-    int64 crossTxSyncedHeight = 6;
+    int64 crossTxSyncedHeight = 7;
 }
 
 message CommitRoundInfo {
 
-    int64 commitRound     = 1;
-    int64 lastBlockHeight = 2;
-    // 第一个区块的父哈希
-    string parentBlockHash  = 3;
-    string lastBlockHash    = 4;
+    int64  commitRound      = 1;
+    int64  firstBlockHeight = 2;
+    int64  lastBlockHeight  = 3;
+    int32  commitTxCount    = 4;
     string crossTxCheckHash = 5;
     string crossTxResults   = 6;
 }
