@@ -52,10 +52,6 @@ func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
 
 func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtypes.RollupStatus) {
 
-	if cfg.CommitInterval <= 0 {
-		cfg.CommitInterval = 30
-	}
-
 	v.exit = make(chan struct{})
 	v.blsDriver, v.blsKey = getPrivKey(bls.Name, cfg.ValidatorBlsKey)
 	_, v.signTxKey = getPrivKey(secp256k1.Name, cfg.CommitTxKey)
@@ -77,8 +73,8 @@ func (v *validator) isMyCommitTurn() (int64, bool) {
 	}
 
 	waitTime := types.Now().Unix() - v.status.Timestamp
-	// 达到一半超时, 即触发由上一个提交者代理提交
-	if waitTime >= rtypes.RollupCommitTimeout/2 && v.status.CommitAddr == v.commitAddr {
+	// 预计超时情况, 触发由上一个提交者代理提交
+	if waitTime >= rtypes.RollupCommitTimeout*2/3 && v.status.CommitAddr == v.commitAddr {
 		return nextCommitRound, true
 	}
 

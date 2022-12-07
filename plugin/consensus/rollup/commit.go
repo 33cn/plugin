@@ -128,20 +128,20 @@ func (r *RollUp) handleBuildBatch() {
 
 	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()
-	var blockDetails []*types.BlockDetail
 	fragIndex := r.initFragIndex
 	for {
 
 		select {
-		case <-ticker.C:
-			blockDetails = r.getNextBatchBlocks(r.nextBuildHeight)
 		case <-r.ctx.Done():
 			return
+		default:
 		}
+		blockDetails := r.getNextBatchBlocks(r.nextBuildHeight)
 		// 区块内未达到最低批量数量, 需要继续等待
 		if blockDetails == nil {
 			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
 				"round", r.nextBuildRound, "msg", "wait more block")
+			time.Sleep(time.Second * 10)
 			continue
 		}
 		batchList, crossList := r.buildCommitData(blockDetails, r.nextBuildRound, &fragIndex)
@@ -179,41 +179,39 @@ func (r *RollUp) handleBuildBatch() {
 // 提交共识
 func (r *RollUp) handleCommit() {
 
-	ticker := time.NewTicker(time.Duration(r.cfg.CommitInterval) * time.Second)
 	var alreadyCommitRound int64
-	defer ticker.Stop()
 	for {
 
 		select {
-
 		case <-r.ctx.Done():
 			return
-		case <-ticker.C:
-
-			nextCommitRound, ok := r.val.isMyCommitTurn()
-			if !ok || nextCommitRound <= alreadyCommitRound {
-				continue
-			}
-			commit := r.cache.getPreparedCommit(nextCommitRound, r.val.aggregateSign)
-			// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
-			if commit == nil {
-				rlog.Debug("handleCommit not ready", "round", nextCommitRound)
-				continue
-			}
-
-			// commit
-			commitRound := commit.cp.GetCommitRound()
-			if err := r.commit2MainChain(commit); err != nil {
-				rlog.Error("handleCommit", "round", commitRound,
-					"crossTx", len(commit.crossTx.TxIndices), "err", err)
-				continue
-			}
-
-			alreadyCommitRound = commitRound
+		default:
 		}
 
-	}
+		nextCommitRound, ok := r.val.isMyCommitTurn()
+		if !ok || nextCommitRound <= alreadyCommitRound {
+			time.Sleep(time.Second)
+			continue
+		}
+		commit := r.cache.getPreparedCommit(nextCommitRound, r.val.aggregateSign)
+		// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
+		if commit == nil {
+			rlog.Debug("handleCommit not ready", "round", nextCommitRound)
+			time.Sleep(time.Second)
+			continue
+		}
 
+		// commit
+		commitRound := commit.cp.GetCommitRound()
+		if err := r.commit2MainChain(commit); err != nil {
+			rlog.Error("handleCommit", "round", commitRound,
+				"crossTx", len(commit.crossTx.TxIndices), "err", err)
+			time.Sleep(time.Second)
+			continue
+		}
+
+		alreadyCommitRound = commitRound
+	}
 }
 
 func (r *RollUp) commit2MainChain(info *commitInfo) error {

@@ -9,7 +9,6 @@ import (
 type Config struct {
 	CommitTxKey     string `json:"commitTxKey,omitempty"`
 	ValidatorBlsKey string `json:"validatorBlsKey,omitempty"`
-	CommitInterval  int32  `json:"commitInterval,omitempty"`
 	// StartHeight 指定平行链启动时主链的高度
 	StartHeight int64 `json:"startHeight,omitempty"`
 }
