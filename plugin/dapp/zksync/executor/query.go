@@ -2,7 +2,9 @@ package executor
 
 import (
 	"fmt"
+	"math"
 	"math/big"
+	"strconv"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/types"
@@ -198,6 +200,17 @@ func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, e
 	return contractAccount, nil
 }
 
+//注意：如果val超过1e10会被圆整到1e10格式表示
+func decimalVal(val string, decimal uint32) string {
+	if decimal == 0 {
+		return val
+	}
+	fbalance := new(big.Float)
+	fbalance.SetString(val)
+	ethValue := new(big.Float).Quo(fbalance, big.NewFloat(math.Pow10(int(decimal))))
+	return ethValue.String()
+}
+
 // Query_GetTokenBalance 根据token和account获取balance
 func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
@@ -206,8 +219,17 @@ func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error)
 	res := new(zt.ZkQueryResp)
 	token, err := GetTokenByAccountIdAndTokenIdInDB(z.GetStateDB(), in.AccountId, in.TokenId)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "getTokenInDb")
 	}
+
+	if in.Decimal > 0 {
+		symbol, err := GetTokenByTokenId(z.GetStateDB(), strconv.Itoa(int(in.TokenId)))
+		if err != nil {
+			return nil, errors.Wrapf(err, "getTokenSymbol")
+		}
+		token.Balance = decimalVal(token.Balance, symbol.Decimal)
+	}
+
 	res.TokenBalances = append(res.TokenBalances, token)
 	return res, nil
 }

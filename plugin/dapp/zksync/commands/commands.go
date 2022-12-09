@@ -179,9 +179,9 @@ func treeToContractCmd() *cobra.Command {
 }
 
 func treeToContractFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "treeToContract tokenId")
+	cmd.Flags().Uint64P("tokenId", "t", 1, "token Id,eth=0")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().StringP("amount", "a", "0", "treeToContract amount")
+	cmd.Flags().StringP("amount", "a", "0", "token self decimal amount, like 1 eth fill 1e18")
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "i", 0, "treeToContract accountId")
 	cmd.MarkFlagRequired("accountId")
@@ -227,7 +227,7 @@ func contractToTreeCmd() *cobra.Command {
 func contractToTreeFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("tokenSymbol", "t", "", "token symbol asset")
 	cmd.MarkFlagRequired("tokenSymbol")
-	cmd.Flags().StringP("amount", "a", "0", "contractToTree amount")
+	cmd.Flags().StringP("amount", "a", "0", "chain33 side decimal amount,default decimal 8, like 1eth fill 1e8")
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "i", 0, "contractToTree to accountId")
 	cmd.Flags().StringP("ethAddr", "e", "", "to eth addr")
@@ -929,12 +929,11 @@ func setExodusModeCmd() *cobra.Command {
 }
 
 func setExodusModeFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("mode", "m", 0, "0:invalid,1:normal,2:pause,3:exodus prepare,4:rollback")
+	cmd.Flags().Uint32P("mode", "m", 0, "0:invalid,1:normal,2:pause,3:exodus prepare,4:final")
 	cmd.MarkFlagRequired("mode")
 
-	cmd.Flags().Uint64P("proofId", "i", 0, "rollback mode, last success proofId on L1")
-	cmd.MarkFlagRequired("proofId")
-	cmd.Flags().Uint32P("knownGap", "s", 0, "rollback mode, manager known balance gap if any,1:known,0:default")
+	cmd.Flags().Uint64P("proofId", "i", 0, "final mode, last success proofId on L1")
+	cmd.Flags().Uint32P("knownGap", "s", 0, "final mode, manager known balance gap if any,1:known,0:default")
 
 }
 
@@ -948,7 +947,11 @@ func setExodusMode(cmd *cobra.Command, args []string) {
 	payload := &zt.ZkExodusMode{
 		Mode: mode,
 	}
-	if mode == zt.ExodusRollbackMode {
+	if mode == zt.ExodusFinalMode {
+		if proofId == 0 {
+			fmt.Fprintln(os.Stderr, "final mode,proofId should > 0")
+			return
+		}
 		payload.Value = &zt.ZkExodusMode_Rollback{Rollback: &zt.ZkExodusRollbackModeParm{
 			LastSuccessProofId: proofId,
 			KnownBalanceGap:    knownGap,
