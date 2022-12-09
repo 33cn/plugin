@@ -217,11 +217,11 @@ const (
 )
 
 const (
-	InitMode           = 0
-	NormalMode         = 1 //从pause模式可以恢复为normal mode
-	PauseMode          = 2 //暂停模式，管理员在监测到存款异常后可以设置暂停模式，暂停所有操作，以防止错误的deposit转账，检查正常可以恢复
-	ExodusMode         = 3 //逃生舱预备阶段，停止所有除contract2tree外的操作，不可以恢复到Normal
-	ExodusRollbackMode = 4 //逃生舱回滚阶段 回滚last successed proof后的deposit和withdraw操作，统计balance gap信息，收敛最终treeRoot,保证尽快退出资产到L1
+	InitMode        = 0
+	NormalMode      = 1 //从pause模式可以恢复为normal mode
+	PauseMode       = 2 //暂停模式，管理员在监测到存款异常后可以设置暂停模式，暂停所有操作，以防止错误的deposit转账，检查正常可以恢复
+	ExodusMode      = 3 //逃生舱预备阶段，停止所有除contract2tree外的操作，不可以恢复到Normal
+	ExodusFinalMode = 4 //逃生舱最终阶段 回滚last successed proof后的deposit和withdraw操作，统计balance gap信息，收敛最终treeRoot,保证尽快退出资产到L1
 )
 
 const (

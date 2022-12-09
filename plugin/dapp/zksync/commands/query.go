@@ -219,12 +219,15 @@ func getTokenBalanceFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().Uint64P("token", "t", 1, "zksync token id")
 	cmd.MarkFlagRequired("token")
+	cmd.Flags().Uint32P("decimal", "d", 0, "1:show with token's decimal, 0: real value")
+
 }
 
 func getTokenBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	token, _ := cmd.Flags().GetUint64("token")
+	decimal, _ := cmd.Flags().GetUint32("decimal")
 
 	var params rpctypes.Query4Jrpc
 
@@ -232,6 +235,7 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 	req := &zt.ZkQueryReq{
 		TokenId:   token,
 		AccountId: accountId,
+		Decimal:   decimal,
 	}
 
 	params.FuncName = "GetTokenBalance"

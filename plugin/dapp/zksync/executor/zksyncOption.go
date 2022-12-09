@@ -2016,8 +2016,8 @@ func getExodusMode(db dbm.KV) (int64, error) {
 //设置逃生舱模式,为保证顺序，管理员只允许在无效交易生效后，也就是逃生舱准备模式后设置清算模式
 func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if payload.GetMode() < zt.NormalMode || payload.GetMode() > zt.ExodusRollbackMode {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "mode=%d not between[%d:%d]", payload.GetMode(), zt.PauseMode, zt.ExodusRollbackMode)
+	if payload.GetMode() < zt.NormalMode || payload.GetMode() > zt.ExodusFinalMode {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "mode=%d not between[%d:%d]", payload.GetMode(), zt.PauseMode, zt.ExodusFinalMode)
 	}
 
 	//当前mode
@@ -2048,7 +2048,7 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 			return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d,set mode=%d", mode, payload.Mode)
 		}
 		return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
-	case zt.ExodusRollbackMode:
+	case zt.ExodusFinalMode:
 		//只有管理员可以设置
 		if !isSuperManager(cfg, a.fromaddr) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "not manager")

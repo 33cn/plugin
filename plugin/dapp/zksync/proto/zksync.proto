@@ -333,6 +333,7 @@ message ZkQueryReq {
   string txHash = 9;
   uint64 proofId = 10;
   uint32 opType = 11;
+  uint32 decimal = 12; //是否以decimal show
 }
 
 message ZkQueryResp {
