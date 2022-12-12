@@ -201,6 +201,16 @@ func setL2QueueData(db dbm.KV, ops []*zt.ZkOperation) (*types.Receipt, int64, er
 	return receipts, lastQueueId, nil
 }
 
+func saveKvs(db dbm.KV, kvs []*types.KeyValue) error {
+	for _, kv := range kvs {
+		err := db.Set(kv.Key, kv.Value)
+		if err != nil {
+			return errors.Wrapf(err, "saveKvs k=%s", string(kv.Key))
+		}
+	}
+	return nil
+}
+
 func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -212,6 +222,11 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	amountPlusFee, fee, err := GetAmountWithFee(a.statedb, zt.TyWithdrawAction, payload.Amount, payload.TokenId)
 	if err != nil {
 		return nil, err
+	}
+	//如果是系统feeId提取，则不收fee
+	if payload.AccountId == zt.SystemFeeAccountId {
+		amountPlusFee = payload.Amount
+		fee = "0"
 	}
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId())
@@ -271,6 +286,12 @@ func (a *Action) ZkWithdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(withdrawReceiptLog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+
+	//在acctId=SystemFeeAccountId 时候未把kv设进fee，和下面的fee op处理冲突，这里需要把kv设进db
+	err = saveKvs(a.statedb, receipts.KV)
+	if err != nil {
+		return nil, err
+	}
 
 	feeReceipt, feeQueue, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
