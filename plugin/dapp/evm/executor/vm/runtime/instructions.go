@@ -726,7 +726,14 @@ func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	log15.Info("evm contract opCall", "toAddr", toAddr.String(), "value:", value.Uint64(), "input  len", len(args))
 	if !value.IsZero() {
 		gas += params.CallStipend
+		if evm.CheckIsEthTx() {
+			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
+			ethUnit := big.NewInt(1e18)
+			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
+			value = *uint256.NewInt(newValue.Uint64())
+		}
 	}
+
 	// 注意，这里的处理比较特殊，出错情况下0压栈，正确情况下1压栈
 	ret, _, returnGas, err := evm.Call(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
@@ -760,7 +767,14 @@ func opCallCode(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 	if !value.IsZero() {
 		gas += params.CallStipend
+		if evm.CheckIsEthTx {
+			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
+			ethUnit := big.NewInt(1e18)
+			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
+			value = *uint256.NewInt(newValue.Uint64())
+		}
 	}
+
 	ret, returnGas, err := evm.CallCode(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
 		temp.Clear()
@@ -888,7 +902,7 @@ func makeLog(size int) executionFunc {
 			// core/state doesn't know the current block number.
 			BlockNumber: evm.BlockNumber.Uint64(),
 		})
-		log15.Info("makeLog End", "data", string(d), "data in hex", common.Bytes2Hex(d))
+		log15.Info("makeLog End", "data in hex", common.Bytes2Hex(d))
 		return nil, nil
 	}
 }

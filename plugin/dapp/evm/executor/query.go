@@ -111,6 +111,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	executable := func(evm *EVMExecutor, tx *types.Transaction, msg *evmCommon.Message, gas uint64) (bool, *evmtypes.EstimateEVMGasResp, error) {
 		msg.SetGasLimit(gas)
 		index := 0
+
 		receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, evmtypes.MaxGasLimit, true)
 		if err != nil {
 			if strings.Contains(err.Error(), "out of gas") || strings.Contains(err.Error(), model.ErrIntrinsicGas.Error()) {
@@ -122,29 +123,30 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 			}
 
 		}
-
-		if len(receipt.GetLogs()) == 0 {
+		if receipt == nil || len(receipt.GetLogs()) == 0 {
+			log.Error("executable,contract call error", err.Error())
 			return false, nil, errors.New("contract call error")
 		}
 		callData := getCallReceipt(receipt.GetLogs())
 		if callData == nil {
 			return false, nil, errors.New("nil receipt")
 		}
-		log.Info("executable", "evm usedGas:", callData.UsedGas, "contractAddr:", callData.ContractAddr)
+
+		log.Debug("executable", "evm usedGas:", callData.GetUsedGas(), "contractAddr:", callData.GetContractAddr())
 		result := &evmtypes.EstimateEVMGasResp{}
 		result.Gas = callData.UsedGas
 		return true, result, nil
 	}
 	var count int
-	evm.mStateDB.Snapshot()
-	snapID := evm.mStateDB.GetLastSnapshot()
+
 	for lo+1 < hi {
 		count++
 		mid := (hi + lo) / 2
 		log.Info("Query_EstimateGas", "[executable  count]:", count, "the last low gas:", lo, "the last high gas:", hi, "the mid gas:", mid)
 		// ok 设置的gas可以执行
+		snapID := evm.mStateDB.Snapshot()
 		ok, _, err := executable(evm, &tx, msg, mid)
-		evm.mStateDB.RevertToSnapshot(snapID.GetID())
+		evm.mStateDB.RevertToSnapshot(snapID)
 		ldb := evm.mStateDB.LocalDB.(*executor.LocalDB)
 		ldb.ResetCache()
 		if err != nil {
@@ -155,7 +157,6 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		} else { //如果ok,说明mid Gas 有较多余量，则把mid gas 赋值给hi 降低high gas 的值,进而压缩mid gas 的值
 			hi = mid
 		}
-		evm.CheckInit()
 	}
 	log.Info("Query_EstimateGas", "[complete,executable count]:", count, "the last low gas:", lo, "the last high gas:", hi)
 

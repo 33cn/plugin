@@ -34,8 +34,6 @@ var (
 type subConfig struct {
 	// AddressDriver address driver name, support btc/eth
 	AddressDriver string `json:"addressDriver"`
-	// PreCompileAddr key: preContractorAddress  value: real contract information
-	PreCompile runtime.TokenContract `json:"preCompile,omitempty"`
 }
 
 func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
@@ -59,8 +57,6 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
 	}
 	common.InitEvmAddressTypeOnce(driver)
-	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TokenPrecompileAddr)] = runtime.NewTokenPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
-
 }
 
 // Init 初始化本合约对象

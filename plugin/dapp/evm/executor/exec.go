@@ -64,7 +64,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		data = msg.Para()
 	}
 	//加上固有消费的gas
-	gas, err := intrinsicGas(data, isCreate, true, true)
+	gas, err := intrinsicGas(data, isCreate, true)
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +131,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	} else {
 		callPara := msg.Para()
 		log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
+		//设置eth 签名交易标签，如果msg.Value 不为0，则在evm 合约执行中从精度1e8转换为1e18
+		env.SetEthTxFlag(types.IsEthSignID(sigType))
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), callPara, context.GasLimit, msg.Value())
 	}
 	// 打印合约中生成的日志
@@ -212,7 +214,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 
 	evm.collectEvmTxLog(txHash, contractReceipt, receipt)
 	//&& !readOnly
-	if isCreate {
+	if isCreate && !readOnly {
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
@@ -220,10 +222,11 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	return receipt, nil
 }
 
-func intrinsicGas(data []byte, isContractCreation bool, isHomestead, isEIP2028 bool) (uint64, error) {
+//intrinsicGas 计算固定gas消费
+func intrinsicGas(data []byte, isContractCreation bool, isEIP2028 bool) (uint64, error) {
 	// Set the starting gas for the raw transaction
 	var gas uint64
-	if isContractCreation && isHomestead {
+	if isContractCreation {
 		gas = params.TxGasContractCreation
 	} else {
 		gas = params.TxGas
