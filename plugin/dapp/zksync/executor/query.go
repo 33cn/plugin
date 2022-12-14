@@ -261,6 +261,24 @@ func (z *zksync) Query_GetPriorityOpInfo(in *types.Int64) (types.Message, error)
 	return GetPriorityDepositData(z.GetStateDB(), in.Data)
 }
 
+// Query_GetBatchPriorityOpInfo 根据priorityId获取operation信息
+func (z *zksync) Query_GetBatchPriorityOpInfo(in *types.ReqBlocks) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	var batch zt.ZkBatchOperation
+	for i := in.Start; i <= in.End; i++ {
+		deposit, err := GetPriorityDepositData(z.GetStateDB(), i)
+		if err != nil {
+			zklog.Error("Query_GetBatchPriorityOpInfo", "priorityid", i, "err", err)
+			return nil, err
+		}
+		batch.Ops = append(batch.Ops, &zt.ZkOperation{Ty: zt.TyDepositAction, Op: &zt.OperationSpecialInfo{Value: &zt.OperationSpecialInfo_Deposit{Deposit: deposit}}})
+	}
+	return &batch, nil
+
+}
+
 // Query_GetL2QueueOpInfo 根据l2 queue id获取operation信息
 func (z *zksync) Query_GetL2QueueOpInfo(in *types.Int64) (types.Message, error) {
 	if in == nil {
@@ -304,15 +322,19 @@ func (z *zksync) Query_GetProofId2QueueId(in *types.Int64) (types.Message, error
 
 // Query_GetCommitProofById 根据proofId获取commitProof信息
 func (z *zksync) Query_GetCommitProofById(in *zt.ZkQueryReq) (types.Message, error) {
-
+	var proofInfo zt.QueryProofInfo
 	table := NewCommitProofTable(z.GetLocalDB())
 	row, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
 	if err != nil {
 		return nil, err
 	}
-	data := row.Data.(*zt.ZkCommitProof)
+	proofInfo.Proof = row.Data.(*zt.ZkCommitProof)
+	proofInfo.Queues, err = GetProofId2QueueId(z.GetStateDB(), in.ProofId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "GetProofId2QueueId id=%d", in.ProofId)
+	}
 
-	return data, nil
+	return &proofInfo, nil
 }
 
 // Query_GetProofList 根据proofId fetch 后续证明
@@ -354,6 +376,16 @@ func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, err
 		return nil, err
 	}
 	return rows.Data.(*zt.ZkCommitProof), nil
+}
+
+func (z *zksync) Query_GetCurrentExodusMode(in *types.ReqNil) (types.Message, error) {
+	var mode types.Int64
+	data, err := getExodusMode(z.GetStateDB())
+	if err != nil {
+		return nil, err
+	}
+	mode.Data = data
+	return &mode, nil
 }
 
 func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Message, error) {

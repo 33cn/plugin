@@ -254,6 +254,7 @@ func queryL2QueueCmd() *cobra.Command {
 	cmd.AddCommand(getL2QueueInfoCmd())
 	cmd.AddCommand(getL2LastQueueIdCmd())
 	cmd.AddCommand(getL2BatchQueueInfoCmd())
+	cmd.AddCommand(getL2ExodusModeCmd())
 
 	return cmd
 }
@@ -346,6 +347,31 @@ func getL2BatchQueue(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.ZkBatchOperation
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getL2ExodusModeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "exodus_mode",
+		Short: "get l2 exodus mode,0:init,1:normal,2:pause,3:exodus_prepare,4:final",
+		Run:   getExodusMode,
+	}
+	return cmd
+}
+
+func getExodusMode(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqNil{}
+
+	params.FuncName = "GetCurrentExodusMode"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.Int64
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
