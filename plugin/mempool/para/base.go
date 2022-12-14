@@ -45,9 +45,22 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 			var reply interface{}
 			switch msg.Ty {
 			case types.EventTx:
-				mlog.Info("Receive msg from para mempool")
 				tx := msg.GetData().(*types.Transaction)
 				reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
+				// 兼容rpc发送交易错误处理, 同常规mempool返回逻辑保持一致
+				if err != nil {
+					reply = &types.Reply{IsOk: false, Msg: []byte(err.Error())}
+					err = nil
+				}
+			case types.EventAddDelayTx:
+				dtx := msg.GetData().(*types.DelayTx)
+				reply, err = mem.mainGrpcCli.SendDelayTransaction(context.Background(), dtx)
+				// 兼容rpc接收返回时错误处理
+				if err != nil {
+					reply = &types.Reply{IsOk: false, Msg: []byte(err.Error())}
+					err = nil
+				}
+
 			case types.EventGetProperFee:
 				reply, err = mem.mainGrpcCli.GetProperFee(context.Background(), &types.ReqProperFee{})
 			case types.EventGetMempoolSize:
