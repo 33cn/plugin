@@ -289,6 +289,11 @@ message ReceiptCommitProofRecord {
   CommitProofState proof = 1;
 }
 
+message QueryProofInfo {
+  ZkCommitProof proof = 1;
+  ProofId2QueueIdData queues = 2;
+}
+
 //电路验证者名单
 message ZkVerifier {
   repeated string verifiers = 1;

@@ -290,7 +290,7 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetCommitProofById"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.ZkCommitProof
+	var resp zt.QueryProofInfo
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

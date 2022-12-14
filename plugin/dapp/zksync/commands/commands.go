@@ -751,7 +751,7 @@ func setTokenFeeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("fee", "f", "10000", "fee")
 	cmd.MarkFlagRequired("fee")
-	cmd.Flags().Int32P("action", "a", 0, "action ty,withdraw:2,transfer:3,transfer2new:4,proxyExit:5,contract2tree:9,tree2contract:10")
+	cmd.Flags().Int32P("action", "a", 0, "action ty,2:withdraw,3:transfer,4:transfer2new,5:proxyExit,9:contract2tree,10:tree2contract")
 	cmd.MarkFlagRequired("action")
 }
 
@@ -920,7 +920,7 @@ func setTokenSymbol(cmd *cobra.Command, args []string) {
 
 func setExodusModeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exodusmode",
+		Use:   "set_exodus",
 		Short: "set exodus mode",
 		Run:   setExodusMode,
 	}

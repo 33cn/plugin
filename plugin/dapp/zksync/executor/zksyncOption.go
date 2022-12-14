@@ -2046,6 +2046,9 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getExoduxMode")
 	}
+	if payload.Mode == uint32(mode) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d,set mode=%d", mode, payload.Mode)
+	}
 	switch payload.Mode {
 	case zt.PauseMode, zt.NormalMode:
 		//允许设置暂停模式，在verifier校验L2上deposit和L1的queue不一致时，立即设置pause，校验L2和L1的deposit queue一致后再恢复

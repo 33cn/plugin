@@ -60,6 +60,7 @@ func getLastOnChainProofIdKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-lastOnChainProofId"))
 }
 
+//last eth priority id key
 func getEthPriorityQueueKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"priorityQueue"))
 }
