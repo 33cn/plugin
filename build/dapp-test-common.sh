@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# shellcheck disable=SC2294
 RAW_TX_HASH=""
 LAST_BLOCK_HASH=""
 LAST_BLOCK_HEIGHT=0

@@ -118,7 +118,7 @@ linter: vet ineffassign ## Use gometalinter check code, ignore some unserious wa
 
 linter_test: ## Use gometalinter check code, for local test
 	@./golinter.sh "test" "${p}"
-	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2294
 
 ineffassign:
 	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign ./...
