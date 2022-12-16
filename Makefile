@@ -114,7 +114,7 @@ dep:
 
 linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
-	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086
 
 linter_test: ## Use gometalinter check code, for local test
 	@./golinter.sh "test" "${p}"
