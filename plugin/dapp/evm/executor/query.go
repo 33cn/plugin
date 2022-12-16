@@ -157,6 +157,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		} else { //如果ok,说明mid Gas 有较多余量，则把mid gas 赋值给hi 降低high gas 的值,进而压缩mid gas 的值
 			hi = mid
 		}
+		evm.CheckInit()
 	}
 	log.Info("Query_EstimateGas", "[complete,executable count]:", count, "the last low gas:", lo, "the last high gas:", hi)
 

@@ -5,7 +5,6 @@
 package runtime
 
 import (
-	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -309,7 +308,6 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		// 正常从合约地址加载合约代码
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		ret, err = run(evm, contract, input, false)
-		fmt.Println("CallCode:run.Gas:", contract.Gas)
 		gas = contract.Gas
 
 	}
@@ -430,7 +428,6 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 		ret, err = run(evm, contract, input, false)
 		gas = contract.Gas
 	}
-	fmt.Println("StaticCall:run.Gas:", contract.Gas)
 	// 同外部合约的创建和修改逻辑，在每次调用时，需要创建并初始化一个新的合约内存对象
 	if err != nil {
 		// 合约执行出错时进行回滚

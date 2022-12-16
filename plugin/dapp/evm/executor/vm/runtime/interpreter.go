@@ -5,7 +5,6 @@
 package runtime
 
 import (
-	"fmt"
 	"sync/atomic"
 
 	"github.com/33cn/chain33/common/log/log15"
@@ -182,7 +181,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 				"CallerAddress=", contract.CallerAddress.String(),
 				"caller=", contract.caller.Address().String(), "need:", need)
-			return []byte(ErrOutOfGas.Error()), ErrOutOfGas
+			return nil, ErrOutOfGas
 		}
 
 		var memorySize uint64
@@ -192,12 +191,12 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		if operation.memorySize != nil {
 			memSize, overflow := operation.memorySize(stack)
 			if overflow {
-				return []byte(ErrGasUintOverflow.Error()), ErrGasUintOverflow
+				return nil, ErrGasUintOverflow
 			}
 			// memory is expanded in words of 32 bytes. Gas
 			// is also calculated in words.
 			if memorySize, overflow = math.SafeMul(toWordSize(memSize), 32); overflow {
-				return []byte(ErrGasUintOverflow.Error()), ErrGasUintOverflow
+				return nil, ErrGasUintOverflow
 			}
 		}
 		// Dynamic portion of gas
@@ -212,11 +211,8 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 
 				log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 					"CallerAddress=", contract.CallerAddress.String(),
-					"caller=", contract.caller.Address().String())
-				fmt.Println("Run:outOfGas op=", op.String(), "contract addr=", contract.self.Address().String(),
-					"CallerAddress=", contract.CallerAddress.String(),
 					"caller=", contract.caller.Address().String(), "dynamicCost", dynamicCost)
-				return []byte(ErrOutOfGas.Error()), ErrOutOfGas
+				return nil, ErrOutOfGas
 			}
 		}
 		if memorySize > 0 {

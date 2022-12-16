@@ -767,7 +767,7 @@ func opCallCode(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 	if !value.IsZero() {
 		gas += params.CallStipend
-		if evm.CheckIsEthTx {
+		if evm.CheckIsEthTx() {
 			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
 			ethUnit := big.NewInt(1e18)
 			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))

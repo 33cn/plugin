@@ -155,9 +155,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			visiableOut = append(visiableOut, ret[i])
 		}
 		ret = visiableOut
-		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), string(ret))
-		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
-
+		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), common.Bytes2Hex(ret))
+		log.Error("evm contract exec error", "error info", vmerr)
 		var logs []*types.ReceiptLog
 		contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}
 		logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
@@ -183,15 +182,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	// 从状态机中获取数据变更和变更日志
 	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}
-	//// 这里进行ABI调用结果格式化
-	//if len(methodName) > 0 && len(msg.Para()) > 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
-	//	jsonRet, err := abi.Unpack(ret, methodName, evm.mStateDB.GetAbi(msg.To().String()))
-	//	if err != nil {
-	//		// 这里出错不影响整体执行，只打印错误信息
-	//		log.Error("unpack evm return error", "error", err)
-	//	}
-	//	contractReceipt.JsonRet = jsonRet
-	//}
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddrStr)...)
 
@@ -213,12 +203,11 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	state.ProcessFork(cfg, evm.GetHeight(), txHash, receipt)
 
 	evm.collectEvmTxLog(txHash, contractReceipt, receipt)
-	//&& !readOnly
+
 	if isCreate && !readOnly {
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
-
 	return receipt, nil
 }
 
