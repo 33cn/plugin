@@ -111,7 +111,6 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	executable := func(evm *EVMExecutor, tx *types.Transaction, msg *evmCommon.Message, gas uint64) (bool, *evmtypes.EstimateEVMGasResp, error) {
 		msg.SetGasLimit(gas)
 		index := 0
-
 		receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, evmtypes.MaxGasLimit, true)
 		if err != nil {
 			if strings.Contains(err.Error(), "out of gas") || strings.Contains(err.Error(), model.ErrIntrinsicGas.Error()) {
@@ -132,7 +131,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 			return false, nil, errors.New("nil receipt")
 		}
 
-		log.Debug("executable", "evm usedGas:", callData.GetUsedGas(), "contractAddr:", callData.GetContractAddr())
+		log.Info("executable", "evm usedGas:", callData.GetUsedGas(), "contractAddr:", callData.GetContractAddr())
 		result := &evmtypes.EstimateEVMGasResp{}
 		result.Gas = callData.UsedGas
 		return true, result, nil

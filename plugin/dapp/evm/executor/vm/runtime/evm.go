@@ -446,7 +446,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 // 使用传入的部署代码创建新的合约；
 // 目前chain33为了保证账户安全，不允许合约中涉及到外部账户的转账操作，
 // 所以，本步骤不接收转账金额参数
-func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias string, value uint64, readonly bool) (ret []byte, snapshot int, leftOverGas uint64, err error) {
+func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []byte, gas uint64, execName, alias string, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
@@ -470,7 +470,7 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	}
 	start := types.Now()
 	// 通过预编译指令和解释器执行合约
-	ret, err = run(evm, contract, nil, readonly)
+	ret, err = run(evm, contract, nil, false)
 	// 检查部署后的合约代码大小是否超限
 	maxCodeSizeExceeded := len(ret) > evm.maxCodeSize
 	// 如果执行成功，计算存储合约代码需要花费的Gas

@@ -6,7 +6,6 @@ package state
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -460,44 +459,6 @@ const (
 	// Error 处理出错
 	Error
 )
-
-//TransferToToken evm call token
-func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (bool, error) {
-	tokendb, err := account.NewAccountDB(mdb.api.GetConfig(), "token", symbol, mdb.StateDB)
-	if err != nil {
-		return false, err
-	}
-	execName := mdb.api.GetConfig().ExecName("token")
-	execaddress := address.ExecAddress(execName)
-	if recipient == execaddress {
-		return false, errors.New("not allow")
-	}
-	receipt, err := tokendb.Transfer(from, recipient, amount)
-	if err != nil {
-		return false, err
-	}
-
-	mdb.addChange(transferChange{
-		baseChange: baseChange{},
-		amount:     amount,
-		data:       receipt.GetKV(),
-		logs:       receipt.GetLogs(),
-	})
-	return true, nil
-
-}
-
-func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbol string) (int64, error) {
-	tokenAccount, err := account.NewAccountDB(mdb.GetConfig(), execer, tokensymbol, mdb.StateDB)
-	if err != nil {
-		return 0, err
-	}
-	acc := tokenAccount.LoadAccount(caller.String())
-	if acc == nil {
-		return 0, nil
-	}
-	return acc.Balance, nil
-}
 
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {

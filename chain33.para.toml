@@ -209,7 +209,6 @@ autonomyExec=""
 [exec.sub.token]
 saveTokenTxList=true
 tokenApprs=[]
-friendExecer=["evm"]
 
 [exec.sub.paracross]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
@@ -227,10 +226,6 @@ useBalance=false
 #平行链evm合约ETH资产映射的合约和资产类型（symbol）
 ethMapFromExecutor="paracross"
 ethMapFromSymbol="coins.bty"
-
-[exec.sub.evm.preCompile]
-# 激活合token-erc20 的合约管理地址，必须配置管理员地址
-superManager=[""]
 
 [exec.sub.mix]
 #私对私的交易费,交易比较大，需要多的手续费

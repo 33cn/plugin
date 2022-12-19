@@ -35,8 +35,7 @@ const (
 var driverName = "token"
 
 type subConfig struct {
-	SaveTokenTxList bool     `json:"saveTokenTxList"`
-	FriendExecer    []string `json:"friendExecer,omitempty"`
+	SaveTokenTxList bool `json:"saveTokenTxList"`
 }
 
 var subCfg subConfig

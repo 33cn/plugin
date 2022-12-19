@@ -54,20 +54,14 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
 	//coins转账，para数据作为备注交易
 	isTransferNote := strings.Compare(msg.To().String(), EvmAddress) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
-	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote", isTransferNote, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
-		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly", readOnly)
 
-	var data []byte
-	if isCreate {
-		data = msg.Data()
-	} else {
-		data = msg.Para()
-	}
 	//加上固有消费的gas
-	gas, err := intrinsicGas(data, isCreate, true)
+	gas, err := intrinsicGas(msg, isCreate, true)
 	if err != nil {
 		return nil, err
 	}
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas)
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
 	}
@@ -127,7 +121,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
 	if isCreate {
-		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value(), false)
+		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
 		log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
@@ -157,10 +151,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		ret = visiableOut
 		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), common.Bytes2Hex(ret))
 		log.Error("evm contract exec error", "error info", vmerr)
-		var logs []*types.ReceiptLog
-		contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}
-		logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
-		receipt = &types.Receipt{Ty: types.ExecErr, Logs: logs}
 		return receipt, vmerr
 	}
 
@@ -208,11 +198,18 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
+
 	return receipt, nil
 }
 
 //intrinsicGas 计算固定gas消费
-func intrinsicGas(data []byte, isContractCreation bool, isEIP2028 bool) (uint64, error) {
+func intrinsicGas(msg *common.Message, isContractCreation bool, isEIP2028 bool) (uint64, error) {
+	var data []byte
+	if isContractCreation {
+		data = msg.Data()
+	} else {
+		data = msg.Para()
+	}
 	// Set the starting gas for the raw transaction
 	var gas uint64
 	if isContractCreation {

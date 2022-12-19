@@ -279,7 +279,6 @@ tokenApprs = [
 	"1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",
 	"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
 ]
-friendExecer=["evm"]
 
 [exec.sub.cert]
 # 是否启用证书验证和签名

@@ -28,7 +28,7 @@ evm_SignTxAndEstimate() {
 
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"EstimateGas","payload":{"tx":"'${txHex}'", "from":"'${from}'"}}]}'
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "EstimateGas" ".result.gas"
-    gas=$((RETURN_RESP + 50000))
+    gas=$((RETURN_RESP + 10000))
     echo "the estimate gas is = ${gas}"
 }
 
@@ -43,7 +43,6 @@ function evm_createContract() {
     tx=$(curl -ksd '{"method":"evm.CreateDeployTx","params":[{"code":"'${erc20_code}'", "abi":"'"${erc20_abi}"'", "fee":'${gas}', "note": "deploy erc20", "alias": "zbc", "parameter": "constructor(zbc, zbc, 3300, '${evm_creatorAddr}')", "expire":"'${expire}'", "paraName":"'"${paraName}"'", "amount":0}]}' "${MAIN_HTTP}" | jq -r ".result")
     chain33_SignAndSendTx "${tx}" "${evm_creatorAddr_key}" "$MAIN_HTTP" "${expire}" "${gas}"
     txHash=$RAW_TX_HASH
-    sleep 2
     queryTransaction "jq -r .result.receipt.tyName" "ExecOk"
     echo "CreateContract queryExecRes end,contract addr:$(evm_contractAddr)"
     chain33_BlockWait 1 "$MAIN_HTTP"
@@ -77,7 +76,6 @@ function evm_addressCheck() {
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}'
     resok='(.result.contract == true) and (.result.contractAddr == "'"$evm_contractAddr"'")'
     chain33_Http "$req" "${MAIN_HTTP}" "${resok}" "CheckAddrExists"
-    echo "evm_addressCheck evm_createContract: ${evm_contractAddr}"
     evm_callQuery "symbol()" "${evm_creatorAddr}" "zbc" "symbol"
 }
 
@@ -101,10 +99,7 @@ function queryTransaction() {
     validators=$1
     expectRes=$2
     echo "txHash=${txHash}"
-    echo "mainIP:${MAIN_HTTP}"
-    echo "expectRes res:${expectRes}"
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' "${MAIN_HTTP}")
-    echo "queryTransaction result:${res}"
     times=$(echo "${validators}" | awk -F '|' '{print NF}')
     for ((i = 1; i <= times; i++)); do
         validator=$(echo "${validators}" | awk -F '|' '{print $'"$i"'}')
@@ -127,7 +122,6 @@ function queryTransaction() {
             # 去掉 hash 前面的 0x
             txhash=${txHash:2}
             evm_contractAddr=$(curl -ksd '{"method":"evm.CalcNewContractAddr","params":[{"caller":"'"${evm_creatorAddr}"'","txhash":"'"${txhash}"'"}]}' "${MAIN_HTTP}" | jq -r ".result")
-            echo "CalcNewContractAddr contract addr =${evm_contractAddr}"
         fi
         return 0
     fi
