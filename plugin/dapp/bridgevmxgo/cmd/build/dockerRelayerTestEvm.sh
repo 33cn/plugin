@@ -198,6 +198,9 @@ function TestETH2EVMToChain33() {
     chain33_offline_send_evm "approve_erc20.txt"
 
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33MainBridgeTokenAddr}, 500000000)")
+
+    result=$(${Chain33Cli} tx query -s ${hash})
+    echo "tx query result = ${result}"
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
