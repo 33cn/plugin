@@ -126,8 +126,6 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 
 func (r *RollUp) handleBuildBatch() {
 
-	ticker := time.NewTicker(time.Second * 10)
-	defer ticker.Stop()
 	fragIndex := r.initFragIndex
 	for {
 

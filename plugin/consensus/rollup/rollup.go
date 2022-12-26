@@ -135,7 +135,7 @@ func (r *RollUp) handleExit() {
 // 同步链上已提交的最新 blockHeight 和 commitRound, 维护batch缓存
 func (r *RollUp) syncRollupState() {
 
-	ticker := time.NewTicker(time.Duration(r.cfg.CommitInterval) * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 
 	for {
 
