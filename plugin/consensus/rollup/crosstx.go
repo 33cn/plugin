@@ -1,6 +1,7 @@
 package rollup
 
 import (
+	"bytes"
 	"encoding/hex"
 	"sync"
 	"time"
@@ -194,10 +195,17 @@ func (h *crossTxHandler) send2Mempool(mainHeight int64, txs []*types.Transaction
 
 	for _, tx := range txs {
 
+		// 交易组情况, 只需要第一笔发送至mempool
+		if tx.GroupCount > 0 && !bytes.Equal(tx.Hash(), tx.Header) {
+			rlog.Debug("send2Mempool txgroup", "mainHeight", mainHeight,
+				"txHash", hex.EncodeToString(tx.Hash()))
+			continue
+		}
 		reply, err := h.ru.base.GetAPI().SendTx(tx)
 		if err != nil || !reply.GetIsOk() {
 			errTxs = append(errTxs, tx)
-			rlog.Error("send2Mempool", "mainHeight", mainHeight, "txHash", hex.EncodeToString(tx.Hash()))
+			rlog.Error("send2Mempool error", "mainHeight", mainHeight, "txHash", hex.EncodeToString(tx.Hash()),
+				"err", err, "reply msg", string(reply.GetMsg()))
 		}
 	}
 
