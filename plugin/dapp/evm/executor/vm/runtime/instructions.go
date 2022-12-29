@@ -269,7 +269,12 @@ func opBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	//采用新的库unint256.Int
 	slot := callContext.stack.peek()
 	address := common.Uint256ToAddress(slot)
-	slot.SetUint64(evm.StateDB.GetBalance(address.String()))
+	//TODO 临时调整
+	ebalance := evm.StateDB.GetBalance(address.String())
+	ethUnit := big.NewInt(1e18)
+	mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
+	slot.SetUint64(new(big.Int).Mul(new(big.Int).SetUint64(ebalance), mulUnit).Uint64())
+
 	return nil, nil
 }
 
