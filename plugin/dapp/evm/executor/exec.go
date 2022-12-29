@@ -67,7 +67,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	}
 
 	context.GasLimit = msg.GasLimit() - gas
-
 	var (
 		ret             []byte
 		vmerr           error

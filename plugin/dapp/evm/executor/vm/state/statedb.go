@@ -136,7 +136,14 @@ func (mdb *MemoryStateDB) AddBalance(addr, caddr string, value uint64) {
 
 // GetBalance ...
 func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
-	ac := mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
+	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	var ac *types.Account
+	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
+		ac = mdb.CoinsAccount.LoadAccount(addr)
+	} else {
+		ac = mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
+	}
 	return uint64(ac.Balance)
 }
 

@@ -192,10 +192,6 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if !pass {
 		return nil, -1, gas, err
 	}
-	// Fail if we're trying to transfer more than the available balance
-	if value != 0 && !evm.Context.CanTransfer(evm.StateDB, caller.Address(), value) {
-		return nil, -1, gas, model.ErrInsufficientBalance
-	}
 
 	p, isPrecompile := evm.precompile(addr)
 	if !evm.StateDB.Exist(addr.String()) {
