@@ -7,6 +7,7 @@ package state
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
@@ -144,7 +145,10 @@ func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 	} else {
 		ac = mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
 	}
-	return uint64(ac.Balance)
+	//TODO 临时调整
+	ethUnit := big.NewInt(1e18)
+	mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(mdb.api.GetConfig().GetCoinPrecision()))
+	return new(big.Int).Mul(new(big.Int).SetUint64(uint64(ac.GetBalance())), mulUnit).Uint64()
 }
 
 //GetAccountNonce 获取普通地址下的nonce,用于兼容eth签名交易
