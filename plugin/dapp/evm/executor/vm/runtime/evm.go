@@ -456,9 +456,6 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 
 	// 创建一个新的账户对象（合约账户）
 	snapshot = evm.StateDB.Snapshot()
-	if alias == "" {
-		alias = "no alias"
-	}
 	evm.StateDB.CreateAccount(contractAddr.String(), contract.CallerAddress.String(), execName, alias)
 
 	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {

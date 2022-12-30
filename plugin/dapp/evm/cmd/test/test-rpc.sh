@@ -43,8 +43,9 @@ function evm_createContract() {
     tx=$(curl -ksd '{"method":"evm.CreateDeployTx","params":[{"code":"'${erc20_code}'", "abi":"'"${erc20_abi}"'", "fee":'${gas}', "note": "deploy erc20", "alias": "zbc", "parameter": "constructor(zbc, zbc, 3300, '${evm_creatorAddr}')", "expire":"'${expire}'", "paraName":"'"${paraName}"'", "amount":0}]}' "${MAIN_HTTP}" | jq -r ".result")
     chain33_SignAndSendTx "${tx}" "${evm_creatorAddr_key}" "$MAIN_HTTP" "${expire}" "${gas}"
     txHash=$RAW_TX_HASH
+
     queryTransaction "jq -r .result.receipt.tyName" "ExecOk"
-    echo "CreateContract queryExecRes end,contract addr:$(evm_contractAddr)"
+    echo "CreateContract queryExecRes end"
     chain33_BlockWait 1 "$MAIN_HTTP"
 }
 
@@ -76,6 +77,7 @@ function evm_addressCheck() {
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}'
     resok='(.result.contract == true) and (.result.contractAddr == "'"$evm_contractAddr"'")'
     chain33_Http "$req" "${MAIN_HTTP}" "${resok}" "CheckAddrExists"
+
     evm_callQuery "symbol()" "${evm_creatorAddr}" "zbc" "symbol"
 }
 
@@ -99,7 +101,9 @@ function queryTransaction() {
     validators=$1
     expectRes=$2
     echo "txHash=${txHash}"
+
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' "${MAIN_HTTP}")
+
     times=$(echo "${validators}" | awk -F '|' '{print NF}')
     for ((i = 1; i <= times; i++)); do
         validator=$(echo "${validators}" | awk -F '|' '{print $'"$i"'}')
@@ -125,7 +129,6 @@ function queryTransaction() {
         fi
         return 0
     fi
-     echo "end queryTransaction contract addr =${evm_contractAddr}"
 }
 
 function init() {

@@ -141,7 +141,6 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			}
 		}()
 	}
-	var need uint64
 	// 遍历合约代码中的指令执行，直到遇到特殊指令（停止、自毁、暂停、恢复、返回）
 	steps := 0
 	for {
@@ -177,10 +176,9 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		// Static portion of gas
 		cost = operation.constantGas // For tracing
 		if !contract.UseGas(operation.constantGas) {
-			need += cost
 			log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 				"CallerAddress=", contract.CallerAddress.String(),
-				"caller=", contract.caller.Address().String(), "need:", need)
+				"caller=", contract.caller.Address().String())
 			return nil, ErrOutOfGas
 		}
 
