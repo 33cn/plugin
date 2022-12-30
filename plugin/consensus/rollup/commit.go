@@ -186,7 +186,7 @@ func (r *RollUp) handleCommit() {
 		default:
 		}
 
-		nextCommitRound, ok := r.val.isMyCommitTurn()
+		nextCommitRound, ok := r.val.isMyCommitTurn(r.cfg.MaxCommitInterval)
 		if !ok || nextCommitRound <= alreadyCommitRound {
 			time.Sleep(time.Second)
 			continue

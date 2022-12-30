@@ -23,7 +23,6 @@ type validator struct {
 	commitAddr       string
 	validators       map[string]int
 	valPubHash       []byte
-	timeout          bool
 	blsDriver        crypto.Crypto
 	status           *rtypes.RollupStatus
 	exit             chan struct{}
@@ -60,7 +59,7 @@ func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtyp
 
 }
 
-func (v *validator) isMyCommitTurn() (int64, bool) {
+func (v *validator) isMyCommitTurn(maxCommitInterval int64) (int64, bool) {
 
 	v.lock.RLock()
 	defer v.lock.RUnlock()
@@ -74,12 +73,12 @@ func (v *validator) isMyCommitTurn() (int64, bool) {
 
 	waitTime := types.Now().Unix() - v.status.Timestamp
 	// 预计超时情况, 触发由上一个提交者代理提交
-	if waitTime >= rtypes.RollupCommitTimeout*2/3 && v.status.CommitAddr == v.commitAddr {
+	if waitTime >= maxCommitInterval+120 && v.status.CommitAddr == v.commitAddr {
 		return nextCommitRound, true
 	}
 
 	// 超时情况, 任意其他节点代理提交
-	if waitTime >= rtypes.RollupCommitTimeout {
+	if waitTime >= maxCommitInterval+300 {
 		return nextCommitRound, true
 	}
 

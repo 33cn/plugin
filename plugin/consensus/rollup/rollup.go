@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	minCommitTxCount          = 128
-	eachValidatorCommitRounds = 10
+	minCommitTxCount = 128
+	// 两次提交最大间隔
+	defaultMaxCommitInterval = 300 // seconds
 )
 
 var (
@@ -54,6 +55,10 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	}
 
 	types.MustDecode(subCfg, &r.cfg)
+
+	if r.cfg.MaxCommitInterval <= 60 {
+		r.cfg.MaxCommitInterval = defaultMaxCommitInterval
+	}
 
 	r.chainCfg = chainCfg
 	r.ctx, r.cancel = context.WithCancel(base.Context)

@@ -32,7 +32,7 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.BlockDetail {
 	}
 	// 本地停止出块时, 满足一定时长触发提交流程
 	if len(details.GetItems()) > 0 &&
-		types.Now().Unix()-details.GetItems()[0].Block.BlockTime >= 200 {
+		types.Now().Unix()-details.GetItems()[0].Block.BlockTime >= r.cfg.MaxCommitInterval {
 		return details.GetItems()
 	}
 
