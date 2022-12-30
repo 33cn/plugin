@@ -237,22 +237,27 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	} else {
 		caller = evmCommon.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
 	}
-	log.Info("Query_Query", "caller", caller, "to:", in.Address)
-	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "estimateGas")
+	log.Info("Query_Query", "caller", caller, "to:", in.Address, "isEthQuery:", in.GetEthquery())
+	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "")
 	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
-
-	receipt, err := evm.innerExec(msg, txHash, 0, 1, evmtypes.MaxGasLimit, true)
+	var sigType int32 = 0
+	if in.GetEthquery() { // eth rpc 接口过来的请求
+		sigType = types.EncodeSignID(types.SECP256K1ETH, 2)
+	}
+	receipt, err := evm.innerExec(msg, txHash, sigType, 1, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		ret.JsonData = fmt.Sprintf("%v", err)
 		return ret, nil
 	}
 	if receipt.Ty == types.ExecOk {
 		callData := getCallReceipt(receipt.GetLogs())
+
 		if callData != nil {
 			ret.RawData = evmCommon.Bytes2Hex(callData.Ret)
 			ret.JsonData = callData.JsonRet
 			return ret, nil
 		}
+
 	}
 	return ret, nil
 }

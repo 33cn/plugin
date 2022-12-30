@@ -269,7 +269,18 @@ func opBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	//采用新的库unint256.Int
 	slot := callContext.stack.peek()
 	address := common.Uint256ToAddress(slot)
-	slot.SetUint64(evm.StateDB.GetBalance(address.String()))
+	if evm.CheckIsEthTx() {
+		ethUnit := big.NewInt(1e18)
+		mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
+		balance := evm.StateDB.GetBalance(address.String())
+		realBalance := new(big.Int).Mul(new(big.Int).SetUint64(balance), mulUnit)
+		bigBalance, _ := uint256.FromBig(realBalance)
+		slot.Set(bigBalance)
+
+	} else {
+		slot.SetUint64(evm.StateDB.GetBalance(address.String()))
+	}
+
 	return nil, nil
 }
 
@@ -730,7 +741,8 @@ func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
 			ethUnit := big.NewInt(1e18)
 			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
-			value = *uint256.NewInt(newValue.Uint64())
+			bigValue, _ := uint256.FromBig(newValue)
+			value = *bigValue
 		}
 	}
 
@@ -771,7 +783,8 @@ func opCallCode(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
 			ethUnit := big.NewInt(1e18)
 			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
-			value = *uint256.NewInt(newValue.Uint64())
+			bigValue, _ := uint256.FromBig(newValue)
+			value = *bigValue
 		}
 	}
 
@@ -968,7 +981,16 @@ func makeSwap(size int64) executionFunc {
 // 获取自身余额
 func opSelfBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	balance := uint256.NewInt(evm.StateDB.GetBalance(callContext.contract.Address().String()))
-	callContext.stack.push(balance)
+	if evm.CheckIsEthTx() {
+		ethUnit := big.NewInt(1e18)
+		mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
+		realBalance := new(big.Int).Mul(new(big.Int).SetUint64(balance.Uint64()), mulUnit)
+		bigBalance, _ := uint256.FromBig(realBalance)
+		callContext.stack.push(bigBalance)
+	} else {
+		callContext.stack.push(balance)
+	}
+
 	return nil, nil
 }
 

@@ -135,9 +135,10 @@ message EvmQueryAbiResp {
 }
 
 message EvmQueryReq {
-    string address = 1;
-    string input   = 2;
-    string caller  = 3;
+    string address   = 1;
+    string input     = 2;
+    string caller    = 3;
+    bool   ethquery  = 4;
 }
 
 message EvmQueryResp {
