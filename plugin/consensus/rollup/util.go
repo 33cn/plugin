@@ -13,7 +13,7 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.BlockDetail {
 
 	req := &types.ReqBlocks{
 		Start: startHeight,
-		End:   startHeight + minCommitTxCount,
+		End:   startHeight + minCommitCount - 1,
 	}
 
 	details, err := r.base.GetAPI().GetBlocks(req)
@@ -22,20 +22,28 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.BlockDetail {
 		return nil
 	}
 
-	txCount := 0
-	for i, detail := range details.GetItems() {
-
-		txCount += len(detail.GetBlock().GetTxs())
-		if txCount >= minCommitTxCount {
-			return details.GetItems()[:i]
+	// 全量数据提交, 以交易为单位, 需满足最低提交数量
+	if r.cfg.FullDataCommit {
+		txCount := 0
+		for i, detail := range details.GetItems() {
+			txCount += len(detail.GetBlock().GetTxs())
+			if txCount >= minCommitCount {
+				return details.GetItems()[:i]
+			}
+		}
+	} else {
+		// 精简模式, 只提交区块头数据, 以区块为单位, 需满足最低提交数量
+		if len(details.GetItems()) == minCommitCount {
+			return details.GetItems()
 		}
 	}
-	// 本地停止出块时, 满足一定时长触发提交流程
+	// 满足最大提交间隔, 触发提交
 	if len(details.GetItems()) > 0 &&
 		types.Now().Unix()-details.GetItems()[0].Block.BlockTime >= r.cfg.MaxCommitInterval {
 		return details.GetItems()
 	}
 
+	// 未达到提交阈值
 	return nil
 }
 

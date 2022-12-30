@@ -167,11 +167,8 @@ func (v *validator) aggregateSign(set *validatorSignMsgSet) (pubs [][]byte, aggr
 		return nil, nil
 	}
 	valCount := v.getValidatorCount()
-	// 2/3 共识, 向上取整
-	minSignCount := valCount * 2 / 3
-	if valCount%3 != 0 {
-		minSignCount++
-	}
+	// 2/3 共识
+	minSignCount := valCount*2/3 + 1
 	if len(set.others)+1 < minSignCount {
 		rlog.Debug("aggregateSign", "commitRound", set.self.CommitRound,
 			"valCount", valCount, "signCount", len(set.others)+1)

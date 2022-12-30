@@ -60,16 +60,16 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		return errorOrder("commit round")
 	}
 
-	var previousHash string
-	var previousHeight int64
+	var parentHash string
+	var parentHeight int64
 
 	// 首次提交无状态数据记录, 信息为空
 	if len(status.CommitBlockHash) == 0 {
-		previousHeight = -1
-		previousHash = common.ToHex(cp.GetBatch().GetBlockHeaders()[0].ParentHash)
+		parentHash = common.ToHex(cp.GetBatch().GetBlockHeaders()[0].ParentHash)
+		parentHeight = -1
 	} else {
-		previousHash = status.CommitBlockHash
-		previousHeight = status.CommitBlockHeight
+		parentHash = status.CommitBlockHash
+		parentHeight = status.CommitBlockHeight
 	}
 
 	// 区块数据过大被分割情况, 分割区块的区块头信息会被重复提交
@@ -77,21 +77,20 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		if status.CommitBlockHash != calcBlockHash(cp.GetBatch().GetBlockHeaders()[0]) {
 			return errorOrder("fragment block hash")
 		}
-		previousHeight = status.CommitBlockHeight - 1
-		previousHash = common.ToHex(cp.GetBatch().GetBlockHeaders()[0].ParentHash)
+		parentHash = common.ToHex(cp.GetBatch().GetBlockHeaders()[0].ParentHash)
+		parentHeight = status.CommitBlockHeight - 1
 	}
 
 	for _, header := range cp.GetBatch().GetBlockHeaders() {
 
-		parentHash := common.ToHex(header.GetParentHash())
-		if previousHash != parentHash {
+		if common.ToHex(header.GetParentHash()) != parentHash {
 			return errorOrder("block hash")
 		}
-		previousHash = calcBlockHash(header)
-		if previousHeight+1 != header.GetHeight() {
+		parentHash = calcBlockHash(header)
+		if parentHeight+1 != header.GetHeight() {
 			return errorOrder("block height")
 		}
-		previousHeight++
+		parentHeight++
 	}
 
 	// check validator
@@ -107,6 +106,11 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		valPubs[rtypes.FormatHexPubKey(pub)] = struct{}{}
 	}
 
+	if len(cp.GetValidatorPubs()) < len(pubs)*2/3+1 {
+		elog.Error("checkCommit", "title", cp.GetChainTitle(),
+			"commitRound", commitRound, "err", "not enough validator")
+		return ErrInvalidValidator
+	}
 	blsPubs := make([]crypto.PubKey, 0, len(cp.GetValidatorPubs()))
 	for _, pub := range cp.GetValidatorPubs() {
 		hexPub := hex.EncodeToString(pub)
@@ -129,7 +133,7 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		return ErrInvalidValidatorSign
 	}
 
-	// 无交易数据提交
+	// 精简模式, 不校验交易数据
 	if len(cp.GetBatch().GetTxList()) == 0 {
 		return nil
 	}

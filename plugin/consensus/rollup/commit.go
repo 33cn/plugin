@@ -20,13 +20,54 @@ const (
 	maxCommitDataSize = types.MaxTxSize * 3 / 4
 )
 
+func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64,
+	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.CommitRollup) {
+
+	// 全量提交, 打包交易数据
+	if r.cfg.FullDataCommit {
+		return r.buildFullData(details, commitRound, fragIndex)
+	}
+
+	// 精简提交
+	batch := &rtypes.BlockBatch{}
+	batch.BlockHeaders = make([]*types.Header, 0, minCommitCount)
+	crossInfo := &pt.CommitRollup{}
+	crossTxHashes := make([][]byte, 0, 8)
+	crossTxRst := big.NewInt(0)
+
+	for _, detail := range details {
+
+		header := detail.Block.GetHeader(r.chainCfg)
+		header.Hash = nil
+		batch.BlockHeaders = append(batch.BlockHeaders, header)
+		for i, tx := range detail.Block.Txs {
+
+			// 过滤跨链交易
+			if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+				if detail.Receipts[i].Ty == types.ExecOk {
+					crossTxRst.SetBit(crossTxRst, len(crossTxHashes), 1)
+				}
+				crossTxHashes = append(crossTxHashes, tx.Hash())
+			}
+		}
+	}
+
+	if len(crossTxHashes) > 0 {
+		batch.CrossTxResults = crossTxRst.Bytes()
+		batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
+	}
+	crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
+
+	return []*rtypes.BlockBatch{batch}, []*pt.CommitRollup{crossInfo}
+}
+
 func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.CommitRollup) {
 
 	batch := &rtypes.BlockBatch{}
 	batch.BlockHeaders = make([]*types.Header, 0, 8)
-	batch.TxList = make([][]byte, 0, minCommitTxCount)
-	batch.PubKeyList = make([][]byte, 0, minCommitTxCount)
-	batch.TxAddrIDList = make([]byte, 0, minCommitTxCount)
+	batch.TxList = make([][]byte, 0, minCommitCount)
+	batch.PubKeyList = make([][]byte, 0, minCommitCount)
+	batch.TxAddrIDList = make([]byte, 0, minCommitCount)
 
 	if header != nil {
 		batch.BlockHeaders = append(batch.BlockHeaders, header)
@@ -37,14 +78,14 @@ func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.CommitRollup) 
 }
 
 // 构造提交数据, 包括区块交易数据, 跨链交易信息数据
-func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64,
+func (r *RollUp) buildFullData(details []*types.BlockDetail, commitRound int64,
 	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.CommitRollup) {
 
 	batchList := make([]*rtypes.BlockBatch, 0, 1)
 	crossList := make([]*pt.CommitRollup, 0, 1)
 	batch, crossInfo := newCommitData(nil)
 
-	signs := make([]crypto.Signature, 0, minCommitTxCount)
+	signs := make([]crypto.Signature, 0, minCommitCount)
 	blsDriver := r.val.blsDriver
 	crossTxHashes := make([][]byte, 0, 8)
 	crossTxRst := big.NewInt(0)
@@ -52,12 +93,12 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 	aggreDriver := blsDriver.(crypto.AggregateCrypto)
 
 	// 提交数据封装
-	sealData := func(fragIndex int) error {
+	sealBlockBatch := func(fragIndex int) error {
 
 		batch.BlockFragIndex = int32(fragIndex)
 		aggreSign, err := aggreDriver.Aggregate(signs)
 		if err != nil {
-			rlog.Error("buildCommitData", "round", commitRound, "aggregate sign err", err)
+			rlog.Error("buildFullData", "round", commitRound, "aggregate sign err", err)
 			return err
 		}
 		batch.AggregateTxSign = aggreSign.Bytes()
@@ -90,7 +131,7 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 			// 超过最大容量, 区块分割
 			if commitSize+len(txData) > maxCommitDataSize {
 
-				if sealData(i) != nil {
+				if sealBlockBatch(i) != nil {
 					return nil, nil
 				}
 				batch, crossInfo = newCommitData(header)
@@ -118,7 +159,7 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 		}
 	}
 
-	if sealData(0) != nil {
+	if sealBlockBatch(0) != nil {
 		return nil, nil
 	}
 	return batchList, crossList

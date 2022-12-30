@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	minCommitTxCount = 128
+	minCommitCount = 128
 	// 两次提交最大间隔
 	defaultMaxCommitInterval = 300 // seconds
 )
