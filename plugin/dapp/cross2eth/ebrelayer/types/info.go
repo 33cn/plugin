@@ -19,6 +19,7 @@ const (
 	Source_Chain_Chain33     = int32(1)
 	Invalid_Tx_Index         = int64(0)
 	Invalid_Chain33Tx_Status = int32(-1)
+	ChanSize                 = 1000
 )
 
 var Tx_Status_Map = map[int32]string{
