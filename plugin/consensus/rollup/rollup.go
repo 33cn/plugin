@@ -112,6 +112,7 @@ func (r *RollUp) startRollupRoutine() {
 		go r.handleBuildBatch()
 		go r.handleCommit()
 		go r.syncRollupState()
+		go r.cross.pullCrossTx()
 
 		n := runtime.NumCPU()
 

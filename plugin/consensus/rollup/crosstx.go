@@ -38,9 +38,6 @@ func (h *crossTxHandler) addMainChainCrossTx(mainHeight int64, filterTxs []*type
 	defer h.lock.Unlock()
 
 	h.pulledHeight = mainHeight
-	if len(filterTxs) == 0 {
-		return
-	}
 	timestamp := types.Now().Unix()
 	for idx, tx := range filterTxs {
 		info := &crossTxInfo{
@@ -95,7 +92,7 @@ func (h *crossTxHandler) refreshSyncedHeight() int64 {
 	for hash, info := range h.txIdxCache {
 
 		// 10min 在缓存中未打包, 标记为过期
-		if now-info.enterTimestamp > 600 {
+		if now-info.enterTimestamp >= 600 {
 
 			rlog.Error("refreshSyncedHeight expired", "shortHash", hex.EncodeToString([]byte(hash)),
 				"txIndex", info.txIndex.String())
@@ -139,60 +136,58 @@ const (
 
 func (h *crossTxHandler) pullCrossTx() {
 
-	ticker := time.NewTicker(time.Minute)
 	start := h.pulledHeight + 1
 	for {
 
 		select {
-
 		case <-h.ru.ctx.Done():
-			ticker.Stop()
 			return
-		case <-ticker.C:
-
-			mainHeader, err := h.ru.mainChainGrpc.GetLastHeader(h.ru.ctx, nil)
-			if err != nil {
-				rlog.Error("pullCrossTx", "start", start, "getLastHeader err", err)
-				continue
-			}
-
-			// 预留一定高度, 降低回滚概率
-			end := mainHeader.Height - reservedMainHeight
-
-			if end < start {
-				continue
-			}
-
-			if end > start+maxPullIntervalOnce {
-				end = start + maxPullIntervalOnce
-			}
-
-			details, err := h.ru.fetchCrossTx(start, end)
-			if err != nil {
-				rlog.Error("pullCrossTx", "start", start, "end", end, "fetchCrossTx err", err)
-				continue
-			}
-
-			start = end + 1
-
-			for _, detail := range details.GetItems() {
-
-				crossTxs := filterParaCrossTx(filterParaTx(h.ru.chainCfg, detail))
-				h.addMainChainCrossTx(detail.Header.Height, crossTxs)
-				h.send2Mempool(detail.Header.Height, crossTxs)
-			}
-
+		default:
 		}
 
+		mainHeader, err := h.ru.mainChainGrpc.GetLastHeader(h.ru.ctx, &types.ReqNil{})
+		if err != nil {
+			rlog.Error("pullCrossTx", "start", start, "getLastHeader err", err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+
+		// 预留一定高度, 降低回滚概率
+		end := mainHeader.Height - reservedMainHeight
+		if end < start {
+			rlog.Debug("pullCrossTx wait for reserved block 1m")
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		if end >= start+maxPullIntervalOnce {
+			end = start + maxPullIntervalOnce - 1
+		}
+
+		rlog.Debug("pullCrossTx", "start", start, "end", end)
+		details, err := h.ru.fetchCrossTx(start, end)
+		if err != nil {
+			rlog.Error("pullCrossTx", "start", start, "end", end, "fetchCrossTx err", err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+
+		for _, detail := range details.GetItems() {
+
+			crossTxs := filterParaCrossTx(filterParaTx(h.ru.chainCfg, detail))
+			h.addMainChainCrossTx(detail.Header.Height, crossTxs)
+			h.send2Mempool(detail.Header.Height, crossTxs)
+		}
+		start = end + 1
 	}
 }
 
 func (h *crossTxHandler) send2Mempool(mainHeight int64, txs []*types.Transaction) {
 
-	//TODO 处理交易组情况
-
+	if len(txs) == 0 {
+		return
+	}
 	var errTxs []*types.Transaction
-
 	for _, tx := range txs {
 
 		// 交易组情况, 只需要第一笔发送至mempool
