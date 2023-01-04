@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"sync"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 
 	"github.com/33cn/chain33/common"
@@ -54,6 +56,7 @@ func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtyp
 	v.exit = make(chan struct{})
 	v.blsDriver, v.blsKey = getPrivKey(bls.Name, cfg.ValidatorBlsKey)
 	_, v.signTxKey = getPrivKey(secp256k1.Name, cfg.CommitTxKey)
+	v.commitAddr = address.PubKeyToAddr(address.DefaultID, v.signTxKey.PubKey().Bytes())
 	v.updateValidators(valPubs)
 	v.updateRollupStatus(status)
 
@@ -129,6 +132,9 @@ func (v *validator) updateValidators(valPubs *rtypes.ValidatorPubs) {
 
 func (v *validator) validateSignMsg(sign *rtypes.ValidatorSignMsg) bool {
 
+	if len(sign.GetMsgHash()) == 0 || len(sign.PubKey) == 0 {
+		return false
+	}
 	v.lock.RLock()
 	defer v.lock.RUnlock()
 	pub := hex.EncodeToString(sign.PubKey)
@@ -163,7 +169,7 @@ type aggreSignFunc = func(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []
 
 func (v *validator) aggregateSign(set *validatorSignMsgSet) (pubs [][]byte, aggreSign []byte) {
 
-	if set == nil {
+	if set == nil || set.self == nil {
 		return nil, nil
 	}
 	valCount := v.getValidatorCount()
@@ -181,6 +187,7 @@ func (v *validator) aggregateSign(set *validatorSignMsgSet) (pubs [][]byte, aggr
 	s, _ := v.blsDriver.SignatureFromBytes(set.self.Signature)
 	signs = append(signs, s)
 	pubs = append(pubs, set.self.PubKey)
+	// 筛选出正确签名, 并删除错误签名
 	for i := 0; i < len(set.others); {
 		sign := set.others[i]
 		// 数据哈希不一致, 非法签名
@@ -197,11 +204,18 @@ func (v *validator) aggregateSign(set *validatorSignMsgSet) (pubs [][]byte, aggr
 		pubs = append(pubs, sign.PubKey)
 		i++
 	}
+	// 存在错误签名, 导致数量不足
+	if len(signs) < minSignCount {
+		rlog.Debug("aggregateSign", "commitRound", set.self.CommitRound,
+			"minSignCount", minSignCount, "signCount", len(signs))
+		return nil, nil
+	}
 
+	// 聚合签名, 满足最低要求数量
 	blsAggre := v.blsDriver.(crypto.AggregateCrypto)
 	s, err := blsAggre.Aggregate(signs[:minSignCount])
 	if err != nil {
-		rlog.Error("aggregateSign", "commitRound", set.self.CommitRound, "aggre err", err)
+		rlog.Error("aggregateSign", "commitRound", set.self.GetCommitRound(), "aggre err", err)
 		return nil, nil
 	}
 

@@ -92,7 +92,7 @@ func TestPullCrossTx(t *testing.T) {
 		h.lock.Lock()
 		pulled := h.pulledHeight
 		h.lock.Unlock()
-		if pulled == 8 {
+		if pulled == 20-reservedMainHeight {
 			return
 		}
 		if types.Now().Unix()-start >= 5 {
