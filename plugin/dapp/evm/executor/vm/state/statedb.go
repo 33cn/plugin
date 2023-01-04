@@ -506,9 +506,9 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		})
 	}
 
-	log15.Info("transfer successful", "paracross balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
+	log15.Info("transfer successful", "recipient", recipient, "paracross balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
 		"coins balance", mdb.CoinsAccount.LoadAccount(recipient).GetBalance(),
-		"mdb.CoinsAccount", mdb.CoinsAccount)
+		"sender", sender, "recipient", recipient, "amount:", amount)
 
 	return true
 }

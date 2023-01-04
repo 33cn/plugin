@@ -187,7 +187,7 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
-	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value)
+	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value, "inputsize:", len(input))
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
@@ -196,19 +196,18 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	p, isPrecompile := evm.precompile(addr)
 	if !evm.StateDB.Exist(addr.String()) {
 		// 合约地址在自定义合约和预编译合约中都不存在时，可能为外部账户
-		if !isPrecompile {
+		if !isPrecompile && value == 0 {
 			// 只有一种情况会走到这里来，就是合约账户向外部账户转账的情况
-			if len(input) > 0 || value == 0 {
-				// 其它情况要求地址必须存在，所以需要报错
-				if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
-					evm.VMConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
-					evm.VMConfig.Tracer.CaptureEnd(ret, 0, 0, nil)
-				}
-
-				return nil, -1, gas, model.ErrAddrNotExists
+			//if len(input) > 0 || value == 0 {
+			// 其它情况要求地址必须存在，所以需要报错
+			if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
+				evm.VMConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
+				evm.VMConfig.Tracer.CaptureEnd(ret, 0, 0, nil)
 			}
+			return nil, -1, gas, nil
+			//return nil, -1, gas, model.ErrAddrNotExists
+			//}
 		} else {
-
 			// 否则，为预编译合约，创建一个新的账号
 			// 此分支先屏蔽，不需要为预编译合约创建账号也可以调用合约逻辑，因为预编译合约只有逻辑没有存储状态，可以不对应具体的账号存储
 			//evm.StateDB.CreateAccount(addr, caller.Address())
