@@ -187,7 +187,7 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
-	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx())
+	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value)
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err

@@ -107,11 +107,17 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		return result, nil
 
 	}
+	var sigType int32 = 0
+	if req.GetEthquery() {
+		sigType = types.EncodeSignID(types.SECP256K1ETH, 2)
+	}
 
 	executable := func(evm *EVMExecutor, tx *types.Transaction, msg *evmCommon.Message, gas uint64) (bool, *evmtypes.EstimateEVMGasResp, error) {
 		msg.SetGasLimit(gas)
+
 		index := 0
-		receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, evmtypes.MaxGasLimit, true)
+
+		receipt, err := evm.innerExec(msg, tx.Hash(), sigType, index, evmtypes.MaxGasLimit, true)
 		if err != nil {
 			if strings.Contains(err.Error(), "out of gas") || strings.Contains(err.Error(), model.ErrIntrinsicGas.Error()) {
 				return false, nil, nil
@@ -126,6 +132,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 			log.Error("executable,contract call error", err.Error())
 			return false, nil, errors.New("contract call error")
 		}
+
 		callData := getCallReceipt(receipt.GetLogs())
 		if callData == nil {
 			return false, nil, errors.New("nil receipt")
@@ -134,10 +141,10 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		log.Info("executable", "evm usedGas:", callData.GetUsedGas(), "contractAddr:", callData.GetContractAddr())
 		result := &evmtypes.EstimateEVMGasResp{}
 		result.Gas = callData.UsedGas
+
 		return true, result, nil
 	}
 	var count int
-
 	for lo+1 < hi {
 		count++
 		mid := (hi + lo) / 2
@@ -148,6 +155,8 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		evm.mStateDB.RevertToSnapshot(snapID)
 		ldb := evm.mStateDB.LocalDB.(*executor.LocalDB)
 		ldb.ResetCache()
+		sdb := evm.mStateDB.StateDB.(*executor.StateDB)
+		sdb.ResetCache()
 		if err != nil {
 			return nil, err
 		}

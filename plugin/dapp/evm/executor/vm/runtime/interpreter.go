@@ -31,7 +31,7 @@ type Config struct {
 	JumpTable [256]*operation
 }
 
-// EVMInterpreter 解释器接结构定义
+// Interpreter  解释器接结构定义
 type Interpreter struct {
 	evm *EVM
 	cfg Config
