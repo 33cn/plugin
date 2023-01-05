@@ -691,6 +691,12 @@ func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal 
 	logs = append(logs, l2Transferlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
+	//在acctId=SystemFeeAccountId 时候未把kv设进fee，和下面的fee op处理冲突，这里需要把kv设进db
+	err = saveKvs(a.statedb, receipts.KV)
+	if err != nil {
+		return nil, err
+	}
+
 	//2.操作交易费账户
 	feeReceipt, feeQueue, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
@@ -942,6 +948,12 @@ func (a *Action) ProxyExit(payload *zt.ZkProxyExit) (*types.Receipt, error) {
 	logs = append(logs, l2Logproxy)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+
+	//在acctId=SystemFeeAccountId 时候未把kv设进fee，和下面的fee op处理冲突，这里需要把kv设进db
+	err = saveKvs(a.statedb, receipts.KV)
+	if err != nil {
+		return nil, err
+	}
 
 	feeReceipt, feeQueue, err := a.MakeFeeLog(fee, payload.TokenId)
 	if err != nil {
