@@ -205,14 +205,14 @@ message crossTxIndex {
     int32 filterIndex = 2;
 }
 
-message CommitRollup {
+message RollupCrossTx {
 
     string   chainTitle             = 1;
     int64    commitRound            = 2;
     repeated crossTxIndex txIndices = 3;
 }
 
-message CommitRollupLog {
+message RollupCrossTxLog {
     int64 commitRound = 1;
     string chainTitle = 2;
     string crossTxResults = 3;
@@ -235,7 +235,7 @@ message ParacrossAction {
         CrossAssetTransfer    crossAssetTransfer    = 12;
         ParaBindMinerCmd      paraBindMiner         = 13;
         ParaNodeGroupConfig   supervisionNodeConfig = 14;
-        CommitRollup          commitRollup = 15;
+        RollupCrossTx         rollupCrossTx = 15;
     }
     int32 ty = 2;
 }

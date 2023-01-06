@@ -21,7 +21,7 @@ const (
 )
 
 func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64,
-	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.CommitRollup) {
+	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.RollupCrossTx) {
 
 	// 全量提交, 打包交易数据
 	if r.cfg.FullDataCommit {
@@ -31,7 +31,7 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 	// 精简提交
 	batch := &rtypes.BlockBatch{}
 	batch.BlockHeaders = make([]*types.Header, 0, minCommitCount)
-	crossInfo := &pt.CommitRollup{}
+	crossInfo := &pt.RollupCrossTx{}
 	crossTxHashes := make([][]byte, 0, 8)
 	crossTxRst := big.NewInt(0)
 
@@ -58,10 +58,10 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 	}
 	crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
 
-	return []*rtypes.BlockBatch{batch}, []*pt.CommitRollup{crossInfo}
+	return []*rtypes.BlockBatch{batch}, []*pt.RollupCrossTx{crossInfo}
 }
 
-func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.CommitRollup) {
+func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.RollupCrossTx) {
 
 	batch := &rtypes.BlockBatch{}
 	batch.BlockHeaders = make([]*types.Header, 0, 8)
@@ -73,16 +73,16 @@ func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.CommitRollup) 
 		batch.BlockHeaders = append(batch.BlockHeaders, header)
 	}
 
-	crossInfo := &pt.CommitRollup{}
+	crossInfo := &pt.RollupCrossTx{}
 	return batch, crossInfo
 }
 
 // 构造提交数据, 包括区块交易数据, 跨链交易信息数据
 func (r *RollUp) buildFullData(details []*types.BlockDetail, commitRound int64,
-	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.CommitRollup) {
+	fragIndex *int32) ([]*rtypes.BlockBatch, []*pt.RollupCrossTx) {
 
 	batchList := make([]*rtypes.BlockBatch, 0, 1)
-	crossList := make([]*pt.CommitRollup, 0, 1)
+	crossList := make([]*pt.RollupCrossTx, 0, 1)
 	batch, crossInfo := newCommitData(nil)
 
 	signs := make([]crypto.Signature, 0, minCommitCount)
@@ -263,7 +263,7 @@ func (r *RollUp) commit2MainChain(info *commitInfo) error {
 	tx.Sign(types.EncodeSignID(secp256k1.ID, address.GetDefaultAddressID()), r.val.signTxKey)
 	// 提交跨链交易, 构建交易组
 	if len(info.crossTx.TxIndices) > 0 {
-		tx2, err := r.createTx(pt.ParaX, pt.NameCommitRollupAction, types.Encode(info.crossTx))
+		tx2, err := r.createTx(pt.ParaX, pt.NameRollupCrossTxAction, types.Encode(info.crossTx))
 		if err != nil {
 			return errors.New("ErrCreateCommitCrossTx")
 		}

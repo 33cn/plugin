@@ -13,10 +13,10 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
-//Exec_CommitRollup exec commit rollup
-func (p *Paracross) Exec_CommitRollup(commit *pt.CommitRollup, tx *types.Transaction, index int) (*types.Receipt, error) {
+//Exec_RollupCrossTx exec commit rollup
+func (p *Paracross) Exec_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(p, tx)
-	return a.commitRollup(commit)
+	return a.rollupCrossTx(commit)
 }
 
 //当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
@@ -27,16 +27,16 @@ func (p *Paracross) setAutoRollBack(tx *types.Transaction, kv []*types.KeyValue)
 	return dbSet
 }
 
-//ExecLocal_CommitRollup exec local commit rollup
-func (p *Paracross) ExecLocal_CommitRollup(commit *pt.CommitRollup, tx *types.Transaction,
+//ExecLocal_RollupCrossTx exec local commit rollup
+func (p *Paracross) ExecLocal_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.Transaction,
 	receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 
 	dbSet := &types.LocalDBSet{}
 
-	rollupLog := &pt.CommitRollupLog{}
+	rollupLog := &pt.RollupCrossTxLog{}
 	err := types.Decode(receiptData.Logs[0].Log, rollupLog)
 	if err != nil {
-		clog.Error("ExecLocal_CommitRollup", "commitRound", commit.GetCommitRound(),
+		clog.Error("ExecLocal_RollupCrossTx", "commitRound", commit.GetCommitRound(),
 			"txHash", hex.EncodeToString(tx.Hash()), "decode err", err)
 		return nil, types.ErrDecode
 	}
@@ -44,7 +44,7 @@ func (p *Paracross) ExecLocal_CommitRollup(commit *pt.CommitRollup, tx *types.Tr
 	crossTxHashes, crossTxs, err := getRollupCrossTxs(p.GetAPI(), commit.GetTxIndices())
 
 	if err != nil {
-		clog.Error("ExecLocal_CommitRollup", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
+		clog.Error("ExecLocal_RollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
 		return nil, ErrGetRollupCrossTx
 	}
 	crossTxResults, _ := common.FromHex(rollupLog.CrossTxResults)
@@ -53,7 +53,7 @@ func (p *Paracross) ExecLocal_CommitRollup(commit *pt.CommitRollup, tx *types.Tr
 		paraHeight := commit.GetTxIndices()[i].BlockHeight
 		set, err := p.updateLocalParaTx(commit.GetChainTitle(), paraHeight, crossTx, execOK, false)
 		if err != nil {
-			clog.Error("ExecLocal_CommitRollup", "title", commit.GetChainTitle(), "height", paraHeight,
+			clog.Error("ExecLocal_RollupCrossTx", "title", commit.GetChainTitle(), "height", paraHeight,
 				"txIndex", i, "txHash", hex.EncodeToString(crossTxHashes[i]),
 				"execOK", execOK, "err", err)
 			return nil, err
@@ -65,8 +65,8 @@ func (p *Paracross) ExecLocal_CommitRollup(commit *pt.CommitRollup, tx *types.Tr
 	return p.setAutoRollBack(tx, dbSet.KV), nil
 }
 
-//ExecDelLocal_CommitRollup exec local commit rollup
-func (p *Paracross) ExecDelLocal_CommitRollup(_ *pt.CommitRollup, tx *types.Transaction,
+//ExecDelLocal_RollupCrossTx exec local commit rollup
+func (p *Paracross) ExecDelLocal_RollupCrossTx(_ *pt.RollupCrossTx, tx *types.Transaction,
 	_ *types.ReceiptData, _ int) (*types.LocalDBSet, error) {
 	kvs, err := p.DelRollbackKV(tx, tx.Execer)
 	if err != nil {
@@ -106,8 +106,8 @@ var (
 	ErrCrossTxCheckHash     = errors.New("ErrCrossTxCheckHash")
 )
 
-func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
-	clog.Debug("commitRollup", "title", commit.GetChainTitle(), "commitRound", commit.GetCommitRound())
+func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error) {
+	clog.Debug("rollupCrossTx", "title", commit.GetChainTitle(), "commitRound", commit.GetCommitRound())
 	if a.api.GetConfig().IsPara() {
 		return nil, ErrInvalidChain
 	}
@@ -116,39 +116,39 @@ func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
 
 	if err != nil || status.CommitRound != commit.GetCommitRound() {
 
-		clog.Error("commitRollup", "currRound", status.GetCommitRound(),
+		clog.Error("rollupCrossTx", "currRound", status.GetCommitRound(),
 			"commitRound", commit.GetCommitRound(), "getRollupStatus err", err)
 		return nil, ErrInvalidCommitRound
 	}
 
 	roundInfo, err := a.getRollupCommitRound(commit.GetChainTitle(), commit.GetCommitRound())
 	if err != nil {
-		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(), "getRollupCommitRound err", err)
+		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCommitRound err", err)
 		return nil, ErrGetRollupCommitRound
 	}
 
 	crossTxHashes, crossTxs, err := getRollupCrossTxs(a.api, commit.GetTxIndices())
 
 	if err != nil {
-		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
+		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
 		return nil, ErrGetRollupCrossTx
 	}
 
 	checkHash := common.ToHex(CalcTxHashsHash(crossTxHashes))
 
 	if roundInfo.CrossTxCheckHash != checkHash {
-		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(),
+		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(),
 			"calcHash", checkHash, "commitHash", roundInfo.CrossTxCheckHash)
 
 		for i, hash := range crossTxHashes {
-			clog.Error("commitRollup cross tx info", "index", commit.GetTxIndices()[i].String(), "txhash", common.ToHex(hash))
+			clog.Error("RollupCrossTx cross tx info", "index", commit.GetTxIndices()[i].String(), "txhash", common.ToHex(hash))
 		}
 		return nil, ErrCrossTxCheckHash
 	}
 
 	crossTxResults, _ := common.FromHex(roundInfo.CrossTxResults)
 
-	rollupLog := &pt.CommitRollupLog{
+	rollupLog := &pt.RollupCrossTxLog{
 		CommitRound:      commit.GetCommitRound(),
 		ChainTitle:       commit.GetChainTitle(),
 		CrossTxCheckHash: checkHash,
@@ -160,14 +160,14 @@ func (a *action) commitRollup(commit *pt.CommitRollup) (*types.Receipt, error) {
 	}
 
 	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
-		Ty:  pt.TyLogParaCommitRollup,
+		Ty:  pt.TyLogParaRollupCrossTx,
 		Log: types.Encode(rollupLog),
 	})
 
 	rep, err := a.execCrossTxs(commit.GetChainTitle(), commit.GetCommitRound(), crossTxs, crossTxResults)
 	if err != nil {
 
-		clog.Error("commitRollup", "commitRound", commit.GetCommitRound(), "execCrossTxs err", err)
+		clog.Error("RollupCrossTx", "commitRound", commit.GetCommitRound(), "execCrossTxs err", err)
 		return nil, err
 	}
 
