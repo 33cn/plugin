@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/33cn/plugin/plugin/crypto/bls"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -22,6 +21,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/33cn/plugin/plugin/crypto/bls"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -39,6 +40,7 @@ const fee = 1e6
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789-=_+=/<>!@#$%^&"
 
 var r *rand.Rand
+var signType string
 
 // TxHeightOffset needed
 var TxHeightOffset int64
@@ -49,47 +51,50 @@ func main() {
 		return
 	}
 	fmt.Println("jrpc url:", os.Args[2]+":8801")
+
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	argsWithoutProg := os.Args[1:]
-	switch argsWithoutProg[0] {
+	args := os.Args[1:]
+	// 最后一个参数指定签名类型, 支持 bls
+	signType = args[len(args)-1]
+	switch args[0] {
 	case "-h": //使用帮助
 		LoadHelp()
 	case "perf":
-		if len(argsWithoutProg) != 6 {
+		if len(args) < 6 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		Perf(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4], argsWithoutProg[5])
+		Perf(args[1], args[2], args[3], args[4], args[5])
 	case "perfV2":
-		if len(argsWithoutProg) != 5 {
+		if len(args) != 5 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		PerfV2(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4])
+		PerfV2(args[1], args[2], args[3], args[4])
 	case "put":
-		if len(argsWithoutProg) != 3 {
+		if len(args) != 3 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		Put(argsWithoutProg[1], argsWithoutProg[2], "")
+		Put(args[1], args[2], "")
 	case "get":
-		if len(argsWithoutProg) != 3 {
+		if len(args) != 3 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		Get(argsWithoutProg[1], argsWithoutProg[2])
+		Get(args[1], args[2])
 	case "valnode":
-		if len(argsWithoutProg) != 4 {
+		if len(args) != 4 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		ValNode(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3])
+		ValNode(args[1], args[2], args[3])
 	case "perfOld":
-		if len(argsWithoutProg) != 6 {
+		if len(args) != 6 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		PerfOld(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4], argsWithoutProg[5])
+		PerfOld(args[1], args[2], args[3], args[4], args[5])
 	}
 }
 
@@ -107,8 +112,8 @@ func LoadHelp() {
 // Perf 性能测试
 // host grpc地址, localhost:8802
 // txsize 存证交易字节大小
-// num 单次发送交易数量
-// sleepinterval 每次发送sleep秒
+// num 单次循环总发送交易数量
+// sleepinterval 单次循环后协程等待间隔秒
 // totalduration  总持续次数
 func Perf(host, txsize, num, sleepinterval, totalduration string) {
 	var numThread int
@@ -167,7 +172,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 
 	for i := 0; i < numThread; i++ {
 		go func() {
-			_, priv := genBls()
+			_, priv := genaddress()
 			for sec := 0; durInt == 0 || sec < durInt; sec++ {
 				height := atomic.LoadInt64(&blockHeight)
 				for txs := 0; txs < numInt/numThread; txs++ {
@@ -179,7 +184,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 					tx.Expire = height + types.TxHeightFlag + types.LowAllowPackHeight
 					tx.Payload = RandStringBytes(sizeInt)
 					//交易签名
-					tx.Sign(bls.ID, priv)
+					tx.Sign(int32(getSignID()), priv)
 					txChan <- tx
 				}
 				if sleep > 0 {
@@ -558,22 +563,16 @@ func getprivkey(key string) crypto.PrivKey {
 	return priv
 }
 
-func genBls() (string, crypto.PrivKey){
-	cr, err := crypto.Load(types.GetSignName("", bls.ID), -1)
-	if err != nil {
-		panic(err)
+func getSignID() int {
+	if signType == "bls" {
+		return bls.ID
 	}
-	privto, err := cr.GenKey()
-	if err != nil {
-		panic(err)
-	}
-	addrto := address.PubKeyToAddr(address.DefaultID, privto.PubKey().Bytes())
-	fmt.Println("addr:", addrto)
-	return addrto, privto
+	return types.SECP256K1
 }
 
 func genaddress() (string, crypto.PrivKey) {
-	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
+
+	cr, err := crypto.Load(types.GetSignName("", getSignID()), -1)
 	if err != nil {
 		panic(err)
 	}
