@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	minCommitCount = 128
+	minCommitTxCount  = 128
+	minCommitBlkCount = 32
 	// 两次提交最大间隔
 	defaultMaxCommitInterval = 300 // seconds
 )
@@ -56,7 +57,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 
 	types.MustDecode(subCfg, &r.cfg)
 
-	if r.cfg.MaxCommitInterval <= 60 {
+	if r.cfg.MaxCommitInterval < 60 {
 		r.cfg.MaxCommitInterval = defaultMaxCommitInterval
 	}
 

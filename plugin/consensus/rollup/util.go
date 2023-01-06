@@ -9,42 +9,57 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (r *RollUp) getNextBatchBlocks(startHeight int64) []*types.BlockDetail {
+// 本地获取批量提交数据, 需要确保数据一致性
+func (r *RollUp) getNextBatchBlocks(startHeight int64) ([]*types.BlockDetail, bool) {
 
 	req := &types.ReqBlocks{
-		Start: startHeight,
-		End:   startHeight + minCommitCount - 1,
+		Start:    startHeight,
+		End:      startHeight + minCommitTxCount,
+		IsDetail: true,
 	}
 
 	details, err := r.base.GetAPI().GetBlocks(req)
-	for err != nil {
+	if err != nil || len(details.GetItems()) == 0 {
 		rlog.Error("getNextBatchBlocks", "req", req.String(), "err", err)
-		return nil
+		return nil, false
 	}
 
-	// 全量数据提交, 以交易为单位, 需满足最低提交数量
+	blkDetails := details.GetItems()
+	batchPrepared := false
+	// 全量数据提交模式, 以交易为单位, 满足最低提交数量原则
 	if r.cfg.FullDataCommit {
+
 		txCount := 0
-		for i, detail := range details.GetItems() {
-			txCount += len(detail.GetBlock().GetTxs())
-			if txCount >= minCommitCount {
-				return details.GetItems()[:i]
+		for i, blk := range blkDetails {
+			txCount += len(blk.GetBlock().GetTxs())
+			if txCount >= minCommitTxCount {
+				blkDetails = blkDetails[:i+1]
+				batchPrepared = true
+				break
 			}
 		}
 	} else {
-		// 精简模式, 只提交区块头数据, 以区块为单位, 需满足最低提交数量
-		if len(details.GetItems()) == minCommitCount {
-			return details.GetItems()
+		// 精简提交模式, 只提交区块头数据, 以区块为单位, 满足最低提交数量原则
+		if len(blkDetails) >= minCommitBlkCount {
+			batchPrepared = true
+			blkDetails = blkDetails[:minCommitBlkCount]
 		}
 	}
-	// 满足最大提交间隔, 触发提交
-	if len(details.GetItems()) > 0 &&
-		types.Now().Unix()-details.GetItems()[0].Block.BlockTime >= r.cfg.MaxCommitInterval {
-		return details.GetItems()
+
+	// 满足最大提交间隔原则
+	firstBlockTime := blkDetails[0].GetBlock().GetBlockTime()
+	for i := 1; batchPrepared && i < len(blkDetails); i++ {
+		if blkDetails[i].GetBlock().GetBlockTime()-firstBlockTime > r.cfg.MaxCommitInterval {
+			blkDetails = blkDetails[:i]
+			break
+		}
+	}
+	// 本地不产生区块时触发, 增加10s延迟判定, 避免临界情况导致判定不一致
+	if !batchPrepared && types.Now().Unix()-firstBlockTime > r.cfg.MaxCommitInterval+10 {
+		batchPrepared = true
 	}
 
-	// 未达到提交阈值
-	return nil
+	return blkDetails, batchPrepared
 }
 
 func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {

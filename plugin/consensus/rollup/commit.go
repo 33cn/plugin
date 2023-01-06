@@ -30,7 +30,7 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 
 	// 精简提交
 	batch := &rtypes.BlockBatch{}
-	batch.BlockHeaders = make([]*types.Header, 0, minCommitCount)
+	batch.BlockHeaders = make([]*types.Header, 0, len(details))
 	crossInfo := &pt.RollupCrossTx{}
 	crossTxHashes := make([][]byte, 0, 8)
 	crossTxRst := big.NewInt(0)
@@ -65,9 +65,9 @@ func newCommitData(header *types.Header) (*rtypes.BlockBatch, *pt.RollupCrossTx)
 
 	batch := &rtypes.BlockBatch{}
 	batch.BlockHeaders = make([]*types.Header, 0, 8)
-	batch.TxList = make([][]byte, 0, minCommitCount)
-	batch.PubKeyList = make([][]byte, 0, minCommitCount)
-	batch.TxAddrIDList = make([]byte, 0, minCommitCount)
+	batch.TxList = make([][]byte, 0, 128)
+	batch.PubKeyList = make([][]byte, 0, 128)
+	batch.TxAddrIDList = make([]byte, 0, 128)
 
 	if header != nil {
 		batch.BlockHeaders = append(batch.BlockHeaders, header)
@@ -85,7 +85,7 @@ func (r *RollUp) buildFullData(details []*types.BlockDetail, commitRound int64,
 	crossList := make([]*pt.RollupCrossTx, 0, 1)
 	batch, crossInfo := newCommitData(nil)
 
-	signs := make([]crypto.Signature, 0, minCommitCount)
+	signs := make([]crypto.Signature, 0, 128)
 	blsDriver := r.val.blsDriver
 	crossTxHashes := make([][]byte, 0, 8)
 	crossTxRst := big.NewInt(0)
@@ -175,12 +175,12 @@ func (r *RollUp) handleBuildBatch() {
 			return
 		default:
 		}
-		blockDetails := r.getNextBatchBlocks(r.nextBuildHeight)
+		blockDetails, prepared := r.getNextBatchBlocks(r.nextBuildHeight)
 		// 区块内未达到最低批量数量, 需要继续等待
-		if blockDetails == nil {
+		if !prepared {
 			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
 				"round", r.nextBuildRound, "msg", "wait more block")
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 5)
 			continue
 		}
 		batchList, crossList := r.buildCommitData(blockDetails, r.nextBuildRound, &fragIndex)

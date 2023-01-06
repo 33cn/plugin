@@ -7,12 +7,12 @@ import (
 
 // Config rollup 配置
 type Config struct {
-	CommitTxKey     string `json:"commitTxKey,omitempty"`
-	ValidatorBlsKey string `json:"validatorBlsKey,omitempty"`
+	FullDataCommit bool `json:"fullDataCommit,omitempty"`
 	// StartHeight 指定平行链启动时主链的高度
-	StartHeight       int64 `json:"startHeight,omitempty"`
-	MaxCommitInterval int64 `json:"maxCommitInterval,omitempty"`
-	FullDataCommit    bool  `json:"fullDataCommit,omitempty"`
+	StartHeight       int64  `json:"startHeight,omitempty"`
+	MaxCommitInterval int64  `json:"maxCommitInterval,omitempty"`
+	CommitTxKey       string `json:"commitTxKey,omitempty"`
+	ValidatorBlsKey   string `json:"validatorBlsKey,omitempty"`
 }
 
 type validatorSignMsgSet struct {
