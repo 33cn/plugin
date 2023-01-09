@@ -274,7 +274,7 @@ auto_ci: clean fmt_proto fmt_shell protobuf
 
 
 addupstream:
-	git remote add upstream https://github.com/33cn/plugin.git
+	git remote add upstream git@github.com:33cn/plugin.git
 	git remote -v
 
 sync:
@@ -299,7 +299,7 @@ push:
 pull:
 	@remotelist=$$(git remote | grep ${name});if [ -z $$remotelist ]; then \
 		echo ${remotelist}; \
-		git remote add ${name} https://github.com/${name}/plugin.git ; \
+		git remote add ${name} git@github.com:${name}/plugin.git ; \
 	fi;
 	git fetch ${name}
 	git checkout ${name}/${b}
