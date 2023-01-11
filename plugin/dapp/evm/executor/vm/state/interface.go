@@ -17,7 +17,6 @@ import (
 type EVMStateDB interface {
 	// CreateAccount 创建新的合约对象
 	CreateAccount(string, string, string, string)
-
 	// SubBalance 从指定地址扣除金额
 	SubBalance(string, string, uint64)
 	// AddBalance 向指定地址增加金额
@@ -82,7 +81,8 @@ type EVMStateDB interface {
 
 	// GetBlockHeight 返回当前区块高度
 	GetBlockHeight() int64
-
+	//GetAccount return contract address info
+	GetAccount(addr string) *ContractAccount
 	// GetConfig 获取系统配置
 	GetConfig() *types.Chain33Config
 }

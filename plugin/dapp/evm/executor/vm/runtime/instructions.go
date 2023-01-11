@@ -269,7 +269,18 @@ func opBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	//采用新的库unint256.Int
 	slot := callContext.stack.peek()
 	address := common.Uint256ToAddress(slot)
-	slot.SetUint64(evm.StateDB.GetBalance(address.String()))
+	if evm.CheckIsEthTx() {
+		ethUnit := big.NewInt(1e18)
+		mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
+		balance := evm.StateDB.GetBalance(address.String())
+		realBalance := new(big.Int).Mul(new(big.Int).SetUint64(balance), mulUnit)
+		bigBalance, _ := uint256.FromBig(realBalance)
+		slot.Set(bigBalance)
+
+	} else {
+		slot.SetUint64(evm.StateDB.GetBalance(address.String()))
+	}
+
 	return nil, nil
 }
 
@@ -620,7 +631,6 @@ func opGas(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 // 合约创建操作
 func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
-
 	// 从栈和内存中分别获取操作所需的参数
 	var (
 		value        = callContext.stack.pop()
@@ -724,10 +734,18 @@ func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	toAddr := common.Uint256ToAddress(&addr)
 	// Get the arguments from the memory.
 	args := callContext.memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
-	log15.Info("evm contract opCall", "toAddr", toAddr.String(), "value:", value.Uint64(), "input len", len(args), "input", common.Bytes2Hex(args))
+	log15.Info("evm contract opCall", "toAddr", toAddr.String(), "value:", value.Uint64(), "input  len", len(args), "isethtx:", evm.CheckIsEthTx())
 	if !value.IsZero() {
 		gas += params.CallStipend
+		if evm.CheckIsEthTx() {
+			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
+			ethUnit := big.NewInt(1e18)
+			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
+			bigValue, _ := uint256.FromBig(newValue)
+			value = *bigValue
+		}
 	}
+
 	// 注意，这里的处理比较特殊，出错情况下0压栈，正确情况下1压栈
 	ret, _, returnGas, err := evm.Call(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
@@ -761,7 +779,15 @@ func opCallCode(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 	if !value.IsZero() {
 		gas += params.CallStipend
+		if evm.CheckIsEthTx() {
+			// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
+			ethUnit := big.NewInt(1e18)
+			newValue := new(big.Int).Div(big.NewInt(int64(value.Uint64())), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
+			bigValue, _ := uint256.FromBig(newValue)
+			value = *bigValue
+		}
 	}
+
 	ret, returnGas, err := evm.CallCode(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
 		temp.Clear()
@@ -889,7 +915,7 @@ func makeLog(size int) executionFunc {
 			// core/state doesn't know the current block number.
 			BlockNumber: evm.BlockNumber.Uint64(),
 		})
-		log15.Info("makeLog End", "data", string(d), "data in hex", common.Bytes2Hex(d))
+		log15.Info("makeLog End", "data in hex", common.Bytes2Hex(d))
 		return nil, nil
 	}
 }
@@ -955,7 +981,16 @@ func makeSwap(size int64) executionFunc {
 // 获取自身余额
 func opSelfBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	balance := uint256.NewInt(evm.StateDB.GetBalance(callContext.contract.Address().String()))
-	callContext.stack.push(balance)
+	if evm.CheckIsEthTx() {
+		ethUnit := big.NewInt(1e18)
+		mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
+		realBalance := new(big.Int).Mul(new(big.Int).SetUint64(balance.Uint64()), mulUnit)
+		bigBalance, _ := uint256.FromBig(realBalance)
+		callContext.stack.push(bigBalance)
+	} else {
+		callContext.stack.push(balance)
+	}
+
 	return nil, nil
 }
 

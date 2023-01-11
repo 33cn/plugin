@@ -136,8 +136,15 @@ func (mdb *MemoryStateDB) AddBalance(addr, caddr string, value uint64) {
 
 // GetBalance ...
 func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
-	ac := mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
-	return uint64(ac.Balance)
+	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	var ac *types.Account
+	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
+		ac = mdb.CoinsAccount.LoadAccount(addr)
+	} else {
+		ac = mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
+	}
+	return uint64(ac.GetBalance())
 }
 
 //GetAccountNonce 获取普通地址下的nonce,用于兼容eth签名交易
@@ -439,7 +446,7 @@ func (mdb *MemoryStateDB) CanTransfer(sender string, amount uint64) bool {
 	} else {
 		senderAcc = mdb.CoinsAccount.LoadExecAccount(sender, mdb.evmPlatformAddr)
 	}
-	log15.Info("CanTransfer---------------->", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
+	log15.Info("CanTransfer", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
 		"mdb.CoinsAccount", mdb.CoinsAccount)
 
 	return senderAcc.Balance >= int64(amount)
@@ -499,9 +506,9 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		})
 	}
 
-	log15.Info("transfer successful", "paracross balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
+	log15.Info("transfer successful", "recipient", recipient, "paracross balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
 		"coins balance", mdb.CoinsAccount.LoadAccount(recipient).GetBalance(),
-		"mdb.CoinsAccount", mdb.CoinsAccount)
+		"sender", sender, "recipient", recipient, "amount:", amount)
 
 	return true
 }
@@ -668,4 +675,8 @@ func (mdb *MemoryStateDB) GetBlockHeight() int64 {
 // GetConfig 获取系统配置
 func (mdb *MemoryStateDB) GetConfig() *types.Chain33Config {
 	return mdb.api.GetConfig()
+}
+
+func (mdb *MemoryStateDB) GetApi() client.QueueProtocolAPI {
+	return mdb.api
 }

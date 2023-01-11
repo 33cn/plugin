@@ -109,8 +109,9 @@ message CheckEVMAddrResp {
 }
 
 message EstimateEVMGasReq {
-    string tx     = 1;
-    string from   = 2;
+    string tx        = 1;
+    string from      = 2;
+    bool   ethquery  = 3;
 }
 message EstimateEVMGasResp {
     uint64 gas = 1;
@@ -135,9 +136,10 @@ message EvmQueryAbiResp {
 }
 
 message EvmQueryReq {
-    string address = 1;
-    string input   = 2;
-    string caller  = 3;
+    string address   = 1;
+    string input     = 2;
+    string caller    = 3;
+    bool   ethquery  = 4;
 }
 
 message EvmQueryResp {
