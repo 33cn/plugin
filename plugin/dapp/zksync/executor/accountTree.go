@@ -67,7 +67,7 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	}
 
 	treeToContractAccount := &zt.Leaf{
-		EthAddress:  "0",
+		EthAddress:  ethFeeAddr,
 		AccountId:   zt.SystemTree2ContractAcctId,
 		Chain33Addr: "2",
 		TokenHash:   zeroHash,

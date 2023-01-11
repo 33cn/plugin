@@ -2062,7 +2062,16 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d,set mode=%d", mode, payload.Mode)
 	}
 	switch payload.Mode {
-	case zt.PauseMode, zt.NormalMode:
+	case zt.NormalMode:
+		//只有管理员可以设置normal mode,防止有可能verifier私钥被盗的场景
+		if !isSuperManager(cfg, a.fromaddr) {
+			return nil, errors.Wrapf(types.ErrNotAllow, "not manager")
+		}
+		if mode != zt.PauseMode {
+			return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d", mode)
+		}
+		return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
+	case zt.PauseMode:
 		//允许设置暂停模式，在verifier校验L2上deposit和L1的queue不一致时，立即设置pause，校验L2和L1的deposit queue一致后再恢复
 		//因为proof提交到L1可能会比较晚，防止proof被L1校验出错之前有大量deposit存入需要回滚
 		//只有管理员可以设置
@@ -2072,7 +2081,6 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		if mode > zt.PauseMode {
 			return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d", mode)
 		}
-		//pause or normal
 		return makeSetExodusModeReceipt(mode, int64(payload.GetMode())), nil
 	case zt.ExodusMode:
 		//只有管理员可以设置,Pause模式比exodus模式更灵活，唯一区别是pause mode可以恢复，这样可以腾挪资金，eoxdus设置后就不允许恢复了
