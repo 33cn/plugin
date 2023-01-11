@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -111,8 +112,9 @@ type EVM struct {
 	maxCodeSize int
 
 	// chain33配置
-	cfg     *types.Chain33Config
-	isEthTx bool
+	cfg        *types.Chain33Config
+	isEthTx    bool
+	evmChainID int32
 }
 
 // NewEVM 创建一个新的EVM实例对象
@@ -125,7 +127,11 @@ func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config, cfg *types.C
 		maxCodeSize: params.MaxCodeSize,
 		cfg:         cfg,
 	}
-
+	var subCof struct {
+		EvmChainID int32 `json:"evmChainID,omitempty"`
+	}
+	types.MustDecode(cfg.GetSubConfig().Crypto["secp256k1eth"], &subCof)
+	evm.evmChainID = subCof.EvmChainID
 	evm.Interpreter = NewInterpreter(evm, vmConfig)
 	return evm
 }
@@ -187,9 +193,10 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
-	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value, "inputsize:", len(input))
+	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value, "inputsize:", len(input), "inputData:", common.Bytes2Hex(input))
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
+		log.Error("Call", "preCheck:", err)
 		return nil, -1, gas, err
 	}
 
@@ -211,6 +218,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			// 否则，为预编译合约，创建一个新的账号
 			// 此分支先屏蔽，不需要为预编译合约创建账号也可以调用合约逻辑，因为预编译合约只有逻辑没有存储状态，可以不对应具体的账号存储
 			//evm.StateDB.CreateAccount(addr, caller.Address())
+
 		}
 	}
 
@@ -218,15 +226,12 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if evm.StateDB.HasSuicided(addr.String()) {
 		return nil, -1, gas, model.ErrDestruct
 	}
-
 	// 打快照，开始处理逻辑
 	snapshot = evm.StateDB.Snapshot()
 	to := AccountRef(addr)
-
 	// 向合约地址转账
 	evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
 	log.Info("evm call", "caller address", caller.Address().String(), "contract address", to.Address().String(), "value", value)
-
 	// 从ForkV20EVMState开始，状态数据存储发生变更，需要做数据迁移
 	cfg := evm.StateDB.GetConfig()
 	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
@@ -243,13 +248,13 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			ret, err = nil, nil // gas is unchanged
 		} else {
 			// 创建新的合约对象，包含双方地址以及合约代码，可用Gas信息
+			var bigValue = new(big.Int).SetUint64(value)
 			if evm.CheckIsEthTx() && value != 0 {
-				//把value 的精度从1e8 再次回到1e18,这里影响evm logs 的输出
-				value = big.NewInt(1).Mul(big.NewInt(int64(value)), big.NewInt(1e10)).Uint64()
+				//把value 的精度从1e8 再次回到1e18
+				bigValue = evm.conversion2EthPrecision(bigValue)
 			}
-			contract := NewContract(caller, AccountRef(addr), value, gas)
+			contract := NewContract(caller, AccountRef(addr), bigValue, gas)
 			contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
-
 			start := types.Now()
 
 			// 调试模式下启用跟踪
@@ -263,7 +268,6 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			gas = contract.Gas
 		}
 	}
-
 	// 当合约调用出错时，操作将会回滚（对数据的变更操作会被恢复），并且会消耗掉所有的gas
 	if err != nil {
 		evm.StateDB.RevertToSnapshot(snapshot)
@@ -271,6 +275,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			gas = 0
 		}
 	}
+	fmt.Println("ret:", ret, "gas:", gas, "err:", err)
 	return ret, snapshot, gas, err
 }
 
@@ -298,8 +303,14 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
 	} else {
+		var bigValue = new(big.Int).SetUint64(value)
+		if evm.CheckIsEthTx() && value != 0 {
+			//把value 的精度从1e8 再次回到1e18
+			bigValue = evm.conversion2EthPrecision(new(big.Int).SetUint64(value))
+		}
+
 		// 创建合约对象时，讲调用者和被调用者地址均设置为外部账户地址
-		contract := NewContract(caller, to, value, gas)
+		contract := NewContract(caller, to, bigValue, gas)
 		// 正常从合约地址加载合约代码
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		ret, err = run(evm, contract, input, false)
@@ -341,7 +352,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	} else {
 		// 同外部合约的创建和修改逻辑，在每次调用时，需要创建并初始化一个新的合约内存对象
 		// 需要注意，这里不同的是，需要设置合约的委托调用模式（会进行一些属性设置）
-		contract := NewContract(caller, to, 0, gas).AsDelegate()
+		contract := NewContract(caller, to, big.NewInt(0), gas).AsDelegate()
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 		// 其它逻辑同StaticCall
 		ret, err = run(evm, contract, input, false)
@@ -377,7 +388,6 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	isPrecompile := false
 	precompiles := PrecompiledContractsByzantium
 	if !evm.StateDB.Exist(addr.String()) {
-
 		//预编译分叉处理： chain33中目前只存在拜占庭和最新的黄皮书v1版本（兼容伊斯坦布尔版本）
 
 		// 是否是黄皮书v1分叉
@@ -396,7 +406,6 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 				"isPrecompile", isPrecompile)
 		}
 	}
-
 	// 如果是已经销毁状态的合约是不允许调用的
 	if evm.StateDB.HasSuicided(addr.String()) {
 		return nil, gas, model.ErrDestruct
@@ -408,13 +417,12 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 		evm.Interpreter.readOnly = true
 		defer func() { evm.Interpreter.readOnly = false }()
 	}
-
 	var (
 		to       = AccountRef(addr)
 		snapshot = evm.StateDB.Snapshot()
 	)
 
-	contract := NewContract(caller, to, 0, gas)
+	contract := NewContract(caller, to, big.NewInt(0), gas)
 	if isPrecompile {
 		ret, gas, err = RunPrecompiledContract(precompiles[addr.ToHash160()], input, gas)
 	} else {
@@ -450,7 +458,17 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value)
 
 	// 创建新的合约对象，包含双方地址以及合约代码，可用Gas信息
-	contract := NewContract(caller, AccountRef(contractAddr), value, gas)
+	var bigValue = new(big.Int).SetUint64(value)
+	if evm.CheckIsEthTx() {
+		if evm.CheckIsEthTx() && value != 0 {
+			//把value 的精度从1e8 再次回到1e18
+			bigValue = evm.conversion2EthPrecision(new(big.Int).SetUint64(value))
+			//ethUnit := big.NewInt(1e18)
+			//bigValue = big.NewInt(1).Mul(big.NewInt(int64(value)), ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
+
+		}
+	}
+	contract := NewContract(caller, AccountRef(contractAddr), bigValue, gas)
 	contract.SetCallCode(&contractAddr, common.ToHash(code), code)
 
 	// 创建一个新的账户对象（合约账户）
@@ -502,4 +520,17 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
 	p, ok := PrecompiledContractsBerlin[addr.ToHash160()]
 	return p, ok
+}
+
+//conversion2EthPrecision 把底层精度转换为eth 精度
+func (evm *EVM) conversion2EthPrecision(num *big.Int) *big.Int {
+	ethUnit := big.NewInt(1e18)
+	mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
+	return new(big.Int).Mul(num, mulUnit)
+}
+
+//ethPrecision2Chain33Standard 把eth 表示的精度值转换为底层精度值
+func (evm *EVM) ethPrecision2Chain33Standard(num *big.Int) *big.Int {
+	ethUnit := big.NewInt(1e18)
+	return new(big.Int).Div(num, ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))
 }
