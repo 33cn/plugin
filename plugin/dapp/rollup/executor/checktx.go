@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/hex"
+	"strings"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -39,6 +40,11 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		elog.Error("checkCommit null data", "commitRound", commitRound,
 			"blkHeaders", len(cp.GetBatch().GetBlockHeaders()))
 		return ErrNullCommitData
+	}
+
+	// 必须是平行链
+	if !strings.HasPrefix(cp.GetChainTitle(), types.ParaKeyX) {
+		return ErrChainTitle
 	}
 
 	status, err := r.getRollupStatus(cp.GetChainTitle())

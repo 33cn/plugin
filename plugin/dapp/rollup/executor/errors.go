@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrGetRollupStatus        = errors.New("ErrGetRollupStatus")
 	ErrNullCommitData         = errors.New("ErrNullCommitData")
+	ErrChainTitle             = errors.New("ErrChainTitle")
 	ErrInvalidCommitRound     = errors.New("ErrInvalidCommitRound")
 	ErrGetValPubs             = errors.New("ErrGetValPubs")
 	ErrInvalidValidator       = errors.New("ErrInvalidValidator")

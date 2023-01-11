@@ -6,10 +6,8 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
-	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
-	"github.com/pkg/errors"
-
 	paratypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
 func readStateDB(stateDB db.KV, key []byte, result types.Message) error {
@@ -48,7 +46,8 @@ func (r *rollup) getValidatorNodesBlsPubs(title string) ([]string, error) {
 	params := &paratypes.ReqParacrossNodeInfo{Title: title}
 	resp, err := r.GetAPI().Query(paratypes.ParaX, "GetNodeGroupStatus", params)
 	if err != nil {
-		return nil, errors.Wrap(err, "getValidatorNodesBlsPubs")
+		elog.Error("getValidatorNodesBlsPubs", "title", title, "err", err)
+		return nil, err
 	}
 
 	status := resp.(*paratypes.ParaNodeGroupStatus)

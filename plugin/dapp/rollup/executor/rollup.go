@@ -20,14 +20,12 @@ var (
 )
 
 var driverName = rolluptypes.RollupX
-
-var blsDriver crypto.Crypto
+var blsDriver, _ = crypto.Load(bls.Name, -1)
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newRollup, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
-	blsDriver, _ = crypto.Load(bls.Name, -1)
 }
 
 // InitExecType Init Exec Type
