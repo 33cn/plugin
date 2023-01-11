@@ -39,14 +39,16 @@ const (
 	TyContractToTreeNewAction = 30 //合约账户转入新的叶子
 
 	//非电路action
-	TySetVerifyKeyAction        = 102 //设置电路验证key
-	TyCommitProofAction         = 103 //提交zk proof
-	TySetVerifierAction         = 104 //设置验证者
-	TySetFeeAction              = 105 //设置手续费
-	TySetTokenSymbolAction      = 106 //设置token的symbol 以方便在合约使用
-	TyAssetTransferAction       = 107 //从tree转到zksync合约的资产账户之间转账
-	TyAssetTransferToExecAction = 108 //从tree转到zksync合约的资产转到执行器
-	TyAssetWithdrawAction       = 109 //从执行器提款到zksync合约账户
+	TySetVerifyKeyAction   = 102 //设置电路验证key
+	TyCommitProofAction    = 103 //提交zk proof
+	TySetVerifierAction    = 104 //设置验证者
+	TySetFeeAction         = 105 //设置手续费
+	TySetTokenSymbolAction = 106 //设置token的symbol 以方便在合约使用
+	TySetExodusModeAction  = 107 //设置token的symbol 以方便在合约使用
+
+	TyAssetTransferAction       = 120 //从tree转到zksync合约的资产账户之间转账
+	TyAssetTransferToExecAction = 121 //从tree转到zksync合约的资产转到执行器
+	TyAssetWithdrawAction       = 122 //从执行器提款到zksync合约账户
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
@@ -71,9 +73,11 @@ const (
 	NameSetVerifierAction    = "SetVerifier"
 	NameSetFeeAction         = "SetFee"
 	NameSetTokenSymbolAction = "SetTokenSymbol"
-	NameAssetTransfer        = "Transfer"
-	NameAssetTransfer2Exec   = "TransferToExec"
-	NameAssetWithdraw        = "Withdraw"
+	NameSetExodusMode        = "SetExodusMode"
+
+	NameAssetTransfer      = "Transfer"
+	NameAssetTransfer2Exec = "TransferToExec"
+	NameAssetWithdraw      = "Withdraw"
 )
 
 // log类型id值
@@ -98,13 +102,20 @@ const (
 	TySetVerifyKeyLog          = 202 //设置电路验证key
 	TyCommitProofLog           = 203 //提交zk proof
 	TySetVerifierLog           = 204 //设置验证者
-	TySetEthPriorityQueueId    = 205 //设置 eth上 priority queue id;
+	TySetL1PriorityId          = 205 //设置 l1 priority id;
 	TySetFeeLog                = 206
 	TyCommitProofRecordLog     = 207 //提交zk proof
 	TyLogContractAssetDeposit  = 208 //tree资产存储到contract
 	TyLogContractAssetWithdraw = 209 //contract 资产withdraw到tree
 	TyLogSetTokenSymbol        = 210 //设置电路验证key
 	TyLogSetExodusMode         = 211 //系统设置exodus mode
+	TySetL2OpQueueIdLog        = 212 //设置 L2 上的 operation 到queue
+	TySetL2OpFirstQueueIdLog   = 213 //设置 L2 上的 first queue id
+	TySetL2OpLastQueueIdLog    = 214 //设置 L2 上的 last queue id
+	TySetProofId2QueueIdLog    = 215 //设置 proofId的pubdata的最后一个op 对应的最后一个queue id
+	TyDepositRollbackLog       = 216 //deposit 回滚的log
+	TyWithdrawRollbackLog      = 217 //withdraw 回滚的log
+	TyPriority2QueIdLog        = 218 //priority id to queueId
 )
 
 const (
@@ -128,13 +139,6 @@ const ZkVerifierKey = "verifier"
 //配置的系统收交易费账户
 const ZkCfgEthFeeAddr = "ethFeeAddr"
 const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
-
-//配置的无效交易和无效证明，用于平行链zksync交易的回滚(假设proof和eth不一致，无法fix时候)
-const ZkCfgInvalidTx = "invalidTxHash"
-const ZkCfgInvalidProof = "invalidProofRootHash"
-
-//ZkParaChainInnerTitleId 平行链内部只有一个titleId，缺省为1，在主链上不同平行链有自己的titleId
-const ZkParaChainInnerTitleId = "1"
 
 //msg宽度
 const (
@@ -213,8 +217,17 @@ const (
 )
 
 const (
-	ExodusPrepareMode = 1 //逃生舱预备阶段  所有和L1相关的 onChain tx都不执行(deposit,withdraw,proxyexit)
-	ExodusClearMode   = 2 //逃生舱清算阶段 除contract2tree外,所有L2相关的tx都不允许执行，收敛最终treeRoot,保证尽快退出资产到L1
+	InitMode        = 0
+	NormalMode      = 1 //从pause模式可以恢复为normal mode
+	PauseMode       = 2 //暂停模式，管理员在监测到存款异常后可以设置暂停模式，暂停所有操作，以防止错误的deposit转账，检查正常可以恢复
+	ExodusMode      = 3 //逃生舱预备阶段，停止所有除contract2tree外的操作，不可以恢复到Normal
+	ExodusFinalMode = 4 //逃生舱最终阶段 回滚last successed proof后的deposit和withdraw操作，统计balance gap信息，收敛最终treeRoot,保证尽快退出资产到L1
+)
+
+const (
+	ModeValNo  = 0 //
+	ModeValYes = 1 //
+
 )
 
 var (
@@ -239,6 +252,7 @@ var (
 		NameWithdrawNFTACTION:    TyWithdrawNFTAction,
 		NameTransferNFTAction:    TyTransferNFTAction,
 		NameSetTokenSymbolAction: TySetTokenSymbolAction,
+		NameSetExodusMode:        TySetExodusModeAction,
 		NameAssetTransfer:        TyAssetTransferAction,
 		NameAssetTransfer2Exec:   TyAssetTransferToExecAction,
 		NameAssetWithdraw:        TyAssetWithdrawAction,
@@ -248,8 +262,8 @@ var (
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
 		TyDepositLog:               {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositLog"},
 		TyWithdrawLog:              {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog:        {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyTreeToContractLog"},
+		TyContractToTreeLog:        {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:        {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTreeToContractLog"},
 		TyTransferLog:              {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferLog"},
 		TyTransferToNewLog:         {Ty: reflect.TypeOf(TransferReceipt4L2{}), Name: "TyTransferToNewLog"},
 		TyProxyExitLog:             {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyForceExitLog"},
@@ -263,13 +277,20 @@ var (
 		TySetVerifyKeyLog:          {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:           {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:           {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
-		TySetEthPriorityQueueId:    {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		TySetL1PriorityId:          {Ty: reflect.TypeOf(ReceiptL1PriorityID{}), Name: "TySetL1PriorityId"},
 		TySetFeeLog:                {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
 		TyCommitProofRecordLog:     {Ty: reflect.TypeOf(ReceiptCommitProofRecord{}), Name: "TyCommitProofRecordLog"},
 		TyLogSetTokenSymbol:        {Ty: reflect.TypeOf(ReceiptSetTokenSymbol{}), Name: "TySetTokenSymbolLog"},
 		TyLogContractAssetWithdraw: {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetWithdraw"},
 		TyLogContractAssetDeposit:  {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogContractAssetDeposit"},
 		TyLogSetExodusMode:         {Ty: reflect.TypeOf(ReceiptExodusMode{}), Name: "TySetExodusModeLog"},
+		TySetL2OpQueueIdLog:        {Ty: reflect.TypeOf(ReceiptL2QueueIDData{}), Name: "TySetL2QueueIdLog"},
+		TySetL2OpFirstQueueIdLog:   {Ty: reflect.TypeOf(ReceiptL2FirstQueueID{}), Name: "TySetL2FirstQueueIdLog"},
+		TySetL2OpLastQueueIdLog:    {Ty: reflect.TypeOf(ReceiptL2LastQueueID{}), Name: "TySetL2LastQueueIdLog"},
+		TySetProofId2QueueIdLog:    {Ty: reflect.TypeOf(ReceiptProofId2QueueIDData{}), Name: "TySetProofId2QueueIdLog"},
+		TyDepositRollbackLog:       {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyDepositRollbackLog"},
+		TyWithdrawRollbackLog:      {Ty: reflect.TypeOf(AccountTokenBalanceReceipt{}), Name: "TyWithdrawRollbackLog"},
+		TyPriority2QueIdLog:        {Ty: reflect.TypeOf(Priority2QueueId{}), Name: "TyPriority2QueueIdLog"},
 	}
 
 	FeeMap = map[int64]string{

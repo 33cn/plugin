@@ -32,12 +32,14 @@ NFT
 3. exodus模式激活后，L2的资产由于有一部分在chain33合约中,需要先使用contract2tree转到L2，待所有合约中资产转到L2后，根据最后的tree root 更新到L1合约，
    再从L2提交exodus证明把资产从L1依次提走
 4. L2资产退出机制
-   1）首先确定最后一个L1的proofId，在L2上通过此ID找到此证明后的第一个失效交易和失效证明(失效交易是L1和L2的跨链交易比如deposit,
-   withdraw,proxyexit 这些交易状态需要在L2回滚)，可通过cmd: zksync query proof firstop 获得指定proofId后的第一个失效tx和失效proof root
-   2）L2如果是平行链，平行链配置文件设置失效交易和失效证明后，从0开始重新同步(相当于回滚)，如果平行链有自共识，设置关闭自共识，待重新同步后
-   管理员在通告上的指定时间后设置"退出清算"模式，在此模式下，只有contract2tree交易可以执行，待chain33合约中的L2资产都转回到L2上，管理员在L1设置清算root
-   3）用户根据清算root计算本账户相应token资产的退出证明，自动提交到L1退出资产。或者交易所可以通过批量退出的机制帮助用户退出资产。
-   4）L2如果是联盟链也可以通过类似失效交易和失效证明回滚的方式完成状态更新，或者通过提交到公链的证明的pubdata重新计算
+   1）L2设置exodus mode或exodus的pause mode停止除contract2tree外的所有操作，以确定最后的tree root
+   2）通知用户把contract的资产都提回到tree，超过一定期限则可以允许管理员把资产都提回到tree(system accountId=3的所有token资产为0)
+   3）管理员设置根据L1最后一个success proofId设置exodus final mode,尝试回滚success proofId后的deposit和withdraw
+       3.1) 如果此时accountId=3 任何token余额非0，则失败
+       3.2) 如果回滚deposit,withdraw失败则返回差额，当某account的deposit因为已经transfer而扣除失败时候会尝试feeId垫付，
+            如果feeId也不够，则返回失败，提示差额，差额部分需要管理员在L1存入以弥补。如果失败后，设置knowGap=1则重新忽视失败而完成回滚
+   4）在系统完成final mode后，管理员构建L2的最后的tree root(cli: zksync l2 build_tree)设置到L1后根据此最终root进行逃生舱提款
+
 
 交易费设置
 1. 除了deposit外，其他操作都需要设置交易费，因为操作都需要零知识证明，防止用户大量使用非常小的交易值而不断触发证明来作恶

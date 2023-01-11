@@ -223,7 +223,7 @@ func (e *evmxgo) ExecLocal_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Trans
 	return &types.LocalDBSet{KV: set}, nil
 }
 
-func (e *evmxgo) ExecLocal_BurntMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *evmxgo) ExecLocal_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	pay := &evmxgotypes.EvmxgoBurn{}
 	_ = copier.Copy(pay, payload)
 	return e.ExecLocal_Burn(pay, tx, receiptData, index)

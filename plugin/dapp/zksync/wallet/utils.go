@@ -37,11 +37,11 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 		payload = types.MustPBToJSON(transfer)
 	case zt.TyTransferToNewAction:
 		transferToNew := &zt.ZkTransferToNew{
-			TokenId:          tokenId,
-			Amount:           amount,
-			FromAccountId:    accountId,
-			ToEthAddress:     toEthAddress,
-			ToChain33Address: chain33Addr,
+			TokenId:         tokenId,
+			Amount:          amount,
+			FromAccountId:   accountId,
+			ToEthAddress:    toEthAddress,
+			ToLayer2Address: chain33Addr,
 		}
 		payload = types.MustPBToJSON(transferToNew)
 	case zt.TyProxyExitAction:
@@ -258,7 +258,7 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 	ethAddress, _ := new(big.Int).SetString(payload.ToEthAddress, 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 16)
+	chain33Address, _ := new(big.Int).SetString(payload.ToLayer2Address, 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.HashBitWidth)...)
 
 	copy(binaryData, pubData)

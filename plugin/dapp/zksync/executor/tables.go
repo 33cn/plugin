@@ -2,7 +2,6 @@ package executor
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/33cn/chain33/common/address"
 
@@ -71,6 +70,7 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
+//目前似乎没啥用
 var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",
@@ -172,67 +172,16 @@ func (r *CommitProofRow) isProofNeedOnChain() int {
 
 //Get 按照indexName 查询 indexValue
 func (r *CommitProofRow) Get(key string) ([]byte, error) {
-	chainTitleId := new(big.Int).SetUint64(r.ChainTitleId).String()
 	if key == "proofId" {
-		return []byte(fmt.Sprintf("%016d-%s", r.GetProofId(), chainTitleId)), nil
-	} else if key == "root" {
-		return []byte(fmt.Sprintf("%s-%s", chainTitleId, r.GetNewTreeRoot())), nil
-	} else if key == "endHeight" {
-		return []byte(fmt.Sprintf("%s-%016d", chainTitleId, r.GetBlockEnd())), nil
-	} else if key == "commitHeight" {
-		return []byte(fmt.Sprintf("%s-%016d", chainTitleId, r.GetCommitBlockHeight())), nil
-	} else if key == "onChainId" {
-		return []byte(fmt.Sprintf("%s-%016d", chainTitleId, r.GetOnChainProofId())), nil
-	}
-	return nil, types.ErrNotFound
-}
-
-var opt_history_account_tree = &table.Option{
-	Prefix:  KeyPrefixLocalDB,
-	Name:    "historyTree",
-	Primary: "proofId_accountId",
-	Index:   []string{"proofId"},
-}
-
-// NewHistoryAccountTreeTable ...
-func NewHistoryAccountTreeTable(kvdb db.KV) *table.Table {
-	rowmeta := NewHistoryAccountTreeRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_history_account_tree)
-	if err != nil {
-		panic(err)
-	}
-	return table
-}
-
-// HistoryAccountTreeRow table meta 结构
-type HistoryAccountTreeRow struct {
-	*zt.HistoryLeaf
-}
-
-func NewHistoryAccountTreeRow() *HistoryAccountTreeRow {
-	return &HistoryAccountTreeRow{HistoryLeaf: &zt.HistoryLeaf{}}
-}
-
-//CreateRow 新建数据行
-func (r *HistoryAccountTreeRow) CreateRow() *table.Row {
-	return &table.Row{Data: &zt.HistoryLeaf{}}
-}
-
-//SetPayload 设置数据
-func (r *HistoryAccountTreeRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*zt.HistoryLeaf); ok {
-		r.HistoryLeaf = txdata
-		return nil
-	}
-	return types.ErrTypeAsset
-}
-
-//Get 按照indexName 查询 indexValue
-func (r *HistoryAccountTreeRow) Get(key string) ([]byte, error) {
-	if key == "proofId_accountId" {
-		return []byte(fmt.Sprintf("%016d.%16d", r.GetProofId(), r.GetAccountId())), nil
-	} else if key == "proofId" {
 		return []byte(fmt.Sprintf("%016d", r.GetProofId())), nil
+	} else if key == "root" {
+		return []byte(fmt.Sprintf("%s", r.GetNewTreeRoot())), nil
+	} else if key == "endHeight" {
+		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
+	} else if key == "commitHeight" {
+		return []byte(fmt.Sprintf("%016d", r.GetCommitBlockHeight())), nil
+	} else if key == "onChainId" {
+		return []byte(fmt.Sprintf("%016d", r.GetOnChainProofId())), nil
 	}
 	return nil, types.ErrNotFound
 }

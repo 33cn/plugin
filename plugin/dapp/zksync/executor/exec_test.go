@@ -443,10 +443,10 @@ func TestWithdraw(t *testing.T) {
 	//calcChain33Addr= 19694183066356799104974294716313078444659172842638956126168373945465009608401
 
 	//测试提币
-	receipt, localReceipt, err = withdraw(zksyncHandle, acc1privkey, accountID, tokenId, "200")
+	receipt, _, err = withdraw(zksyncHandle, acc1privkey, accountID, tokenId, "200")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -473,10 +473,10 @@ func TestTransfer(t *testing.T) {
 
 	queueId := uint64(0)
 	tokenId := uint64(0)
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -504,17 +504,17 @@ func TestTransfer(t *testing.T) {
 	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
 	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
 	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	receipt, _, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//继续发送交易
 	fromAccountId := accountID
 	toAccountId := accountID + 1
-	receipt, localReceipt, err = transfer(zksyncHandle, acc1privkey, fromAccountId, toAccountId, tokenId, "200")
+	receipt, _, err = transfer(zksyncHandle, acc1privkey, fromAccountId, toAccountId, tokenId, "200")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	//确认发送者的balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -550,10 +550,10 @@ func TestTransfer2New(t *testing.T) {
 
 	queueId := uint64(0)
 	tokenId := uint64(0)
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -577,10 +577,10 @@ func TestTransfer2New(t *testing.T) {
 	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
 	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
 	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	receipt, _, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//确认发送者的balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -619,10 +619,10 @@ func TestTree2contract(t *testing.T) {
 	queueId := uint64(0)
 	tokenId := uint64(0)
 
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -654,10 +654,10 @@ func TestTree2contract(t *testing.T) {
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 
 	//测试将L2账户余额转入到合约
-	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
+	receipt, _, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "10000000000")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -698,10 +698,10 @@ func TestContract2Tree(t *testing.T) {
 	queueId := uint64(0)
 	tokenId := uint64(0)
 
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "2000000000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "2000000000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -737,10 +737,10 @@ func TestContract2Tree(t *testing.T) {
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
 
 	//测试将L2账户余额转入到合约 1 00 0000 0000 0000 0000
-	receipt, localReceipt, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "1000000000000000000")
+	receipt, _, err = tree2contract(zksyncHandle, acc1privkey, accountID, tokenId, "1000000000000000000")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -762,10 +762,10 @@ func TestContract2Tree(t *testing.T) {
 	fmt.Println("accountInfo =", accountInfo)
 
 	//测试将合约余额转回到L2账户余额
-	receipt, localReceipt, err = contract2tree(zksyncHandle, acc1privkey, accountID, symbol, "90")
+	receipt, _, err = contract2tree(zksyncHandle, acc1privkey, accountID, symbol, "90")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	//确认L2账户balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -918,10 +918,10 @@ func TestProxyExit(t *testing.T) {
 	assert.Nil(t, err)
 
 	//测试提币
-	receipt, localReceipt, err = proxyExit(zksyncHandle, acc1privkey, targetAccountID, proxyAccountID, tokenId)
+	receipt, _, err = proxyExit(zksyncHandle, acc1privkey, targetAccountID, proxyAccountID, tokenId)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), targetAccountID, tokenId)
 	assert.Nil(t, err)
@@ -961,10 +961,10 @@ func TestMintNFT(t *testing.T) {
 
 	queueId := uint64(0)
 	tokenId := uint64(0)
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -986,10 +986,10 @@ func TestMintNFT(t *testing.T) {
 
 	//NFT 铸币
 	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
-	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
+	receipt, _, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//1.检查交易费变动，确认铸币者的balance,扣除了交易费
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -1046,10 +1046,10 @@ func TestMintNFT(t *testing.T) {
 	// zkAddr0: 12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d *** l2addr0: 27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97 *** key: 0x9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4
 	queueId = uint64(1)
 	tokenId = uint64(0)
-	receipt, localReceipt, err = deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97")
+	receipt, _, err = deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "27f272f1adf1c12e0ea7c48d8ace0370610952f17666bdb11ea5a8d7ab980d97")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID = uint64(5)
 	//确认balance
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -1067,10 +1067,10 @@ func TestMintNFT(t *testing.T) {
 
 	//NFT 铸币
 	contentHash = "9d4f8ab11361be596468b265cb66946c87873d4a119713fd0c3d8302eae0a8e4"
-	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
+	receipt, _, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	//1.检查交易费变动，确认铸币者的balance,扣除了交易费
 	acc4token1Balance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
 	assert.Nil(t, err)
@@ -1140,10 +1140,10 @@ func TestWithdrawNFT(t *testing.T) {
 
 	queueId := uint64(0)
 	tokenId := uint64(0)
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -1165,10 +1165,10 @@ func TestWithdrawNFT(t *testing.T) {
 
 	//NFT 铸币
 	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
-	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
+	receipt, _, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	nftTokenId := uint64(258)
 	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
@@ -1179,10 +1179,10 @@ func TestWithdrawNFT(t *testing.T) {
 
 	//NFT 提币
 
-	receipt, localReceipt, err = withdrawNFT(zksyncHandle, acc1privkey, accountID, nftTokenId, 1)
+	receipt, _, err = withdrawNFT(zksyncHandle, acc1privkey, accountID, nftTokenId, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	tokenBalance, err = GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
 	assert.Nil(t, err)
@@ -1207,10 +1207,10 @@ func TestTransferNFT(t *testing.T) {
 
 	queueId := uint64(0)
 	tokenId := uint64(0)
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -1234,26 +1234,26 @@ func TestTransferNFT(t *testing.T) {
 	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
 	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
 	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	receipt, _, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	//NFT 铸币
 	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
-	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
+	receipt, _, err = mintNFT(zksyncHandle, acc1privkey, accountID, accountID, contentHash)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	//NFT 转币操作
 	nftTokenId := uint64(258)
 	fromAccountID := accountID
 	toAccountID := accountID + 1
-	receipt, localReceipt, err = transferNFT(zksyncHandle, acc1privkey, fromAccountID, toAccountID, nftTokenId, 1)
+	receipt, _, err = transferNFT(zksyncHandle, acc1privkey, fromAccountID, toAccountID, nftTokenId, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
 	assert.Nil(t, err)
@@ -1284,10 +1284,10 @@ func TestNFTMisc(t *testing.T) {
 
 	queueId := uint64(0)
 	tokenId := uint64(0)
-	receipt, localReceipt, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
+	receipt, _, err := deposit(zksyncHandle, mpriKey, tokenId, queueId, "1000000000000", "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57", "2b8a83399ffc86cc88f0493f17c9698878dcf7caf0bf04a3a5321542a7a416d1")
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 	accountID := uint64(firstUserAccoutID)
 	//确认balance
 	acc4token1Balance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, tokenId)
@@ -1307,10 +1307,10 @@ func TestNFTMisc(t *testing.T) {
 	toEthAddr := "12a0e25e62c1dbd32e505446062b26aecb65f028"
 	toL2Chain33Addr := "2afff20cc3c20f9def369626463fb027ebeba0bd976025f68316bb8eab55d48c"
 	//toAddrprivkey := "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-	receipt, localReceipt, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
+	receipt, _, err = transfer2New(zksyncHandle, acc1privkey, tokenId, accountID, "200", toEthAddr, toL2Chain33Addr)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	//设置公钥,给账户４
 	acc4privkeySli, err := chain33Common.FromHex("0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115")
@@ -1325,16 +1325,16 @@ func TestNFTMisc(t *testing.T) {
 	fromAccountID := accountID
 	toAccountID := accountID + 1
 	contentHash := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
-	receipt, localReceipt, err = mintNFT(zksyncHandle, acc1privkey, accountID, toAccountID, contentHash)
+	receipt, _, err = mintNFT(zksyncHandle, acc1privkey, accountID, toAccountID, contentHash)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	//NFT 转币操作
-	receipt, localReceipt, err = transferNFT(zksyncHandle, acc4privkey, toAccountID, fromAccountID, nftTokenId, 1)
+	receipt, _, err = transferNFT(zksyncHandle, acc4privkey, toAccountID, fromAccountID, nftTokenId, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, receipt.Ty, int32(types.ExecOk))
-	assert.Greater(t, len(localReceipt.KV), 0)
+	assert.Greater(t, len(receipt.KV), 0)
 
 	tokenBalance, err := GetTokenByAccountIdAndTokenIdInDB(zksyncHandle.GetStateDB(), accountID, nftTokenId)
 	assert.Nil(t, err)
@@ -1351,11 +1351,11 @@ func TestNFTMisc(t *testing.T) {
 
 func deposit(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, queueId uint64, amount, ethAddress, chain33Addr string) (*types.Receipt, *types.LocalDBSet, error) {
 	deposit := &zksyncTypes.ZkDeposit{
-		TokenId:            tokenId,
-		Amount:             amount,
-		EthAddress:         ethAddress,
-		Chain33Addr:        chain33Addr,
-		EthPriorityQueueId: int64(queueId),
+		TokenId:      tokenId,
+		Amount:       amount,
+		EthAddress:   ethAddress,
+		Chain33Addr:  chain33Addr,
+		L1PriorityId: int64(queueId),
 	}
 
 	action := &zksyncTypes.ZksyncAction{
@@ -1563,11 +1563,11 @@ func transfer(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, fromAccoun
 
 func transfer2New(zksyncHandle *zksync, privateKey chain33Crypto.PrivKey, tokenId, fromAccountId uint64, amount, toEthAddress, toChain33Address string) (*types.Receipt, *types.LocalDBSet, error) {
 	transfer2New := &zksyncTypes.ZkTransferToNew{
-		TokenId:          tokenId,
-		Amount:           amount,
-		FromAccountId:    fromAccountId,
-		ToEthAddress:     toEthAddress,
-		ToChain33Address: toChain33Address,
+		TokenId:         tokenId,
+		Amount:          amount,
+		FromAccountId:   fromAccountId,
+		ToEthAddress:    toEthAddress,
+		ToLayer2Address: toChain33Address,
 	}
 
 	action := &zksyncTypes.ZksyncAction{

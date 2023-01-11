@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,26 +18,22 @@ import (
 
 func TestFindExponent(t *testing.T) {
 	s := "12304"
-	r, err := ZkFindExponentPart(s)
-	assert.Nil(t, err)
+	r := ZkFindExponentPart(s)
 	assert.True(t, r == 0)
 
 	s = "123040"
-	r, err = ZkFindExponentPart(s)
-	assert.Nil(t, err)
+	r = ZkFindExponentPart(s)
 	assert.True(t, r == 1)
 
 	s = "0"
-	r, err = ZkFindExponentPart(s)
-	assert.Nil(t, err)
+	r = ZkFindExponentPart(s)
 	assert.True(t, r == 0)
 
 	s = "12"
 	for i := 0; i < 33; i++ {
 		s += "0"
 	}
-	r, err = ZkFindExponentPart(s)
-	assert.Nil(t, err)
+	r = ZkFindExponentPart(s)
 	assert.True(t, r == 31)
 	//fmt.Println("s",s)
 	//fmt.Println("s.len",len(s),"exp",r,"s",s[0:len(s)-r])
@@ -45,20 +42,17 @@ func TestFindExponent(t *testing.T) {
 
 func TestFindManExpPart(t *testing.T) {
 	s := "12304"
-	m, e, err := ZkTransferManExpPart(s)
-	assert.Nil(t, err)
+	m, e := ZkTransferManExpPart(s)
 	assert.True(t, m == s)
 	assert.True(t, e == 0)
 
 	s = "123040"
-	m, e, err = ZkTransferManExpPart(s)
-	assert.Nil(t, err)
+	m, e = ZkTransferManExpPart(s)
 	assert.True(t, m == "12304")
 	assert.True(t, e == 1)
 
 	s = "0"
-	m, e, err = ZkTransferManExpPart(s)
-	assert.Nil(t, err)
+	m, e = ZkTransferManExpPart(s)
 	assert.True(t, m == "0")
 	assert.True(t, e == 0)
 
@@ -66,8 +60,7 @@ func TestFindManExpPart(t *testing.T) {
 	for i := 0; i < 31; i++ {
 		s += "0"
 	}
-	m, e, err = ZkTransferManExpPart(s)
-	assert.Nil(t, err)
+	m, e = ZkTransferManExpPart(s)
 	assert.True(t, m == "12")
 	assert.True(t, e == 31)
 
@@ -75,8 +68,7 @@ func TestFindManExpPart(t *testing.T) {
 	for i := 0; i < 30; i++ {
 		s += "0"
 	}
-	m, e, err = ZkTransferManExpPart(s)
-	assert.Nil(t, err)
+	m, e = ZkTransferManExpPart(s)
 	assert.True(t, m == "12")
 	assert.True(t, e == 30)
 
@@ -84,8 +76,21 @@ func TestFindManExpPart(t *testing.T) {
 	for i := 0; i < 32; i++ {
 		s += "0"
 	}
-	m, e, err = ZkTransferManExpPart(s)
-	assert.Nil(t, err)
+	m, e = ZkTransferManExpPart(s)
 	assert.True(t, m == "120")
 	assert.True(t, e == 31)
+}
+
+func TestDecodePacVal(t *testing.T) {
+	val := "0d02"
+	bVal, err := hex.DecodeString(val)
+	assert.Nil(t, err)
+	rst := DecodePacVal(bVal, PacExpBitWidth)
+	assert.Equal(t, "10400", rst)
+
+	val = "002e"
+	bVal, err = hex.DecodeString(val)
+	assert.Nil(t, err)
+	rst = DecodePacVal(bVal, PacExpBitWidth)
+	assert.Equal(t, "100000000000000", rst)
 }

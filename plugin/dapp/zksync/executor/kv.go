@@ -48,41 +48,30 @@ func GetAccountTreeKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"accountTree"))
 }
 
-func getHeightKey(height int64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
+func getVerifyKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-verifyKey"))
 }
 
-func getVerifyKey(chainTitleId string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-verifyKey"))
+func getVerifier() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-"+zt.ZkVerifierKey))
 }
 
-func getVerifier(chainTitleId string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-"+zt.ZkVerifierKey))
+func getLastOnChainProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-lastOnChainProofId"))
 }
 
-func getLastProofKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
-}
-
-func getLastOnChainProofIdKey(chainTitleId string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastOnChainProofId"))
-}
-
-func getValidatorsKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"validators"))
-}
-
-func getEthPriorityQueueKey(chainID uint32) []byte {
-	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
+//last eth priority id key
+func getEthPriorityQueueKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"priorityQueue"))
 }
 
 //特意把title放后面，方便按id=1搜索所有的chain
-func getProofIdCommitProofKey(chainTitleId string, proofId uint64) []byte {
-	return []byte(fmt.Sprintf("%016d-%s", proofId, chainTitleId))
+func getProofIdCommitProofKey(proofId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d", proofId))
 }
 
-func getRootCommitProofKey(chainTitleId, root string) []byte {
-	return []byte(fmt.Sprintf("%s-%s", chainTitleId, root))
+func getRootCommitProofKey(root string) []byte {
+	return []byte(fmt.Sprintf("%s", root))
 }
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
@@ -111,14 +100,39 @@ func GetTokenSymbolIdKey(symbol string) []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"tokenSym-"+symbol))
 }
 
-func getLastProofIdKey(chainTitleId string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-lastProofId"))
+func getLastProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-lastProof"))
 }
 
-func getMaxRecordProofIdKey(chainTitleId string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chainTitleId+"-maxRecordProofId"))
+func getMaxRecordProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-maxRecordProofId"))
 }
 
-func getProofIdKey(chainTitleId string, id uint64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+chainTitleId+"-ProofId", id))
+func getProofIdKey(id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"-ProofId", id))
+}
+
+//the first L2 op that not be verified by proof
+func getL2FirstQueueIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-L2FirstQueId"))
+}
+
+//the last op that queued to L2, 从0开始
+func getL2LastQueueIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"-L2LastQueId"))
+}
+
+//the specific L2 op queue id data key
+func getL2QueueIdKey(id int64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"-L2QueueId", id))
+}
+
+//the proof id to the end first queue id key, the end first queue id == last pubdata's operation
+func getProofId2QueueIdKey(proofID uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"-proof2queueId", proofID))
+}
+
+//the proof id to the end first queue id key, the end first queue id == last pubdata's operation
+func getL1PriorityId2QueueIdKey(priorityId int64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"-priority2QueId", priorityId))
 }

@@ -286,8 +286,9 @@ func setMinerTxResultFork(cfg *types.Chain33Config, status *pt.ParacrossNodeStat
 	}
 
 	//有tx且全部是user.p.x.paracross的commit tx时候是空块，发送时候需要等有实际交易时候再发
+	//如果当前区块除了minerTx没有交易，len(allTxHash)=0, 也认为是没有实际的交易
 	status.NonCommitTxCounts = 1
-	if len(allTxHashs) != 0 && len(allTxHashs) == len(isCommitTx) {
+	if len(allTxHashs) == len(isCommitTx) {
 		status.NonCommitTxCounts = 0
 	}
 

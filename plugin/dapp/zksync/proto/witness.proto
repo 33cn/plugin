@@ -98,6 +98,12 @@ message ZkFee {
   uint64 tokenID    = 3; //默认是操作的币种，如果不同，则在此设置，比如NFT的交换
 }
 
+//optional, 记录operation的queue对应的tx的block height和txIndex，方便定位
+message OpBlockInfo {
+  int64 height    = 1;
+  int32 txIndex    = 2;
+}
+
 message ZkDepositWitnessInfo {
   uint64    accountID     = 1;
   uint64    tokenID       = 3;
@@ -106,7 +112,8 @@ message ZkDepositWitnessInfo {
   string    layer2Addr    = 6;
   ZkSignature signature = 7;
   //记录deposit或fullExit对应的eth priorityID，方便查询对应区块高度和证明ID
-  int64 ethPriorityID = 8;
+  int64 l1PriorityID = 8;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkWithdrawWitnessInfo {
@@ -116,6 +123,7 @@ message ZkWithdrawWitnessInfo {
   string ethAddress = 4;
   ZkSignature signature = 5;
   ZkFee fee    = 6;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkTransferWitnessInfo {
@@ -125,6 +133,7 @@ message ZkTransferWitnessInfo {
   uint64 toAccountID = 4;
   ZkSignature signature = 5;
   ZkFee fee    = 6;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkTransferToNewWitnessInfo {
@@ -136,6 +145,7 @@ message ZkTransferToNewWitnessInfo {
   string layer2Addr = 6;
   ZkSignature signature = 7;
   ZkFee fee    = 8;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkProxyExitWitnessInfo {
@@ -146,8 +156,7 @@ message ZkProxyExitWitnessInfo {
   ZkSignature signature   = 5;
   string    ethAddress    = 7;
   ZkFee fee      = 8;
-  //记录deposit或fullExit对应的eth priorityID，方便查询对应区块高度和证明ID
-  int64 ethPriorityID = 9;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkSetPubKeyWitnessInfo {
@@ -155,6 +164,7 @@ message ZkSetPubKeyWitnessInfo {
   ZkPubKey  pubKey = 2;
   uint64    pubKeyTy = 3;
   ZkSignature signature = 4;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkFullExitWitnessInfo {
@@ -164,6 +174,7 @@ message ZkFullExitWitnessInfo {
   string    ethAddress     = 4;
   ZkSignature signature   = 5;
   ZkFee fee    = 6;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkContractToTreeWitnessInfo {
@@ -172,6 +183,7 @@ message ZkContractToTreeWitnessInfo {
   uint64 accountID = 3;
   ZkSignature signature = 4;
   ZkFee fee    = 6;
+  OpBlockInfo blockInfo = 9;
 }
 
 //直接产生新的tree地址
@@ -184,6 +196,7 @@ message ZkContractToTreeNewWitnessInfo {
   string layer2Addr = 6;
   ZkSignature signature = 7;
   ZkFee fee    = 8;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkTreeToContractWitnessInfo {
@@ -192,6 +205,7 @@ message ZkTreeToContractWitnessInfo {
   uint64 accountID = 3;
   ZkSignature signature = 4;
   ZkFee fee    = 5;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkFeeWitnessInfo {
@@ -208,33 +222,36 @@ message ZkMintNFTWitnessInfo {
   repeated string contentHash = 4;
   uint64    newNFTTokenID     = 5;
   uint64    createSerialID = 6;
-  string    amount        = 7;
+  uint64    amount        = 7;
   ZkSignature signature   = 8;
   ZkFee fee    = 9;
+  OpBlockInfo blockInfo = 10;
 }
 
 
 message ZkWithdrawNFTWitnessInfo {
   uint64    fromAcctID    = 1;
   uint64    NFTTokenID     = 2;
-  string    withdrawAmount = 3;
+  uint64    withdrawAmount = 3;
   uint64    creatorAcctID = 4;
   uint64    ercProtocol   = 5;
   repeated string contentHash = 6;
   uint64    creatorSerialID = 7;
-  string    initMintAmount        = 8;
+  uint64    initMintAmount        = 8;
   ZkSignature signature   = 9;
   string    ethAddress     = 11;
   ZkFee fee    = 12;
+  OpBlockInfo blockInfo = 15;
 }
 
 message ZkTransferNFTWitnessInfo {
   uint64 fromAccountID = 1;
   uint64 recipientID = 2;
   uint64 NFTTokenID = 3;
-  string amount     = 4;
+  uint64 amount     = 4;
   ZkSignature signature = 6;
   ZkFee fee    = 7;
+  OpBlockInfo blockInfo = 9;
 }
 
 message ZkSwapOrderInfo {
@@ -253,6 +270,7 @@ message ZkSwapWitnessInfo {
   ZkSwapOrderInfo left = 5;
   ZkSwapOrderInfo right = 6;
   ZkFee fee    = 7;
+  OpBlockInfo blockInfo = 9;
 }
 
 message OperationSpecialInfo {
@@ -281,8 +299,13 @@ message ZkOperation {
   OperationSpecialInfo op = 2;
 }
 
+message ZkBatchOperation {
+  repeated  ZkOperation ops = 1;
+}
+
 message ZkProofWitness {
   AccountWitness accountWitness       = 1;
   TokenWitness   tokenWitness         = 2;
   string treeRoot = 3;
 }
+

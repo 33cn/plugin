@@ -41,6 +41,7 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	return ethAddrDecimal, chain33AddrDecimal
 }
 
+//由于ethAddr+chain33Addr 唯一确定一个accountId,所以设置初始账户的chain33Addr不相同
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	zeroHash := zt.Str2Byte("0")
 	defaultAccount := &zt.Leaf{
@@ -75,10 +76,10 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 }
 
 //获取系统初始root，如果未设置fee账户，缺省采用配置文件，
-func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, chain33AddrDecimal string) string {
+func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, layer2AddrDecimal string) string {
 	var feeEth, fee33 string
-	if len(ethAddrDecimal) > 0 && len(chain33AddrDecimal) > 0 {
-		feeEth, fee33 = ethAddrDecimal, chain33AddrDecimal
+	if len(ethAddrDecimal) > 0 && len(layer2AddrDecimal) > 0 {
+		feeEth, fee33 = ethAddrDecimal, layer2AddrDecimal
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
@@ -264,7 +265,7 @@ func updateLeafOpt(statedb dbm.KV, leaf *zt.Leaf, tokenId uint64, option int32) 
 func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32, statedb dbm.KV, leaf *zt.Leaf, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
 	var kvs []*types.KeyValue
 	var log *types.ReceiptLog
-	balancekv, balancehistory, err := updateTokenBalance(accountID, tokenID, amount, option, statedb)
+	balancekv, balanceHistory, err := updateTokenBalance(accountID, tokenID, amount, option, statedb)
 	if nil != err {
 		return nil, nil, nil, err
 	}
@@ -282,8 +283,8 @@ func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32
 	l2Log.Chain33Addr = leaf.Chain33Addr
 	l2Log.TokenId = tokenID
 	l2Log.AccountId = accountID
-	l2Log.BalanceBefore = balancehistory.before
-	l2Log.BalanceAfter = balancehistory.after
+	l2Log.BalanceBefore = balanceHistory.before
+	l2Log.BalanceAfter = balanceHistory.after
 
 	if makeEncode {
 		log = &types.ReceiptLog{
@@ -335,6 +336,11 @@ func getNewTree() *merkletree.Tree {
 	return merkletree.New(mimc.NewMiMC(zt.ZkMimcHashSeed))
 }
 
+func getNewTreeWithHash(h hash.Hash) *merkletree.Tree {
+	h.Reset()
+	return merkletree.New(h)
+}
+
 func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 	var tree zt.AccountTree
 	if info != nil {
@@ -358,10 +364,6 @@ func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 }
 
 func GetLeafByAccountId(db dbm.KV, accountId uint64) (*zt.Leaf, error) {
-	if accountId <= 0 {
-		return nil, nil
-	}
-
 	val, err := db.Get(GetAccountIdPrimaryKey(accountId))
 	if err != nil {
 		if err.Error() == types.ErrNotFound.Error() {
@@ -443,52 +445,6 @@ func GetLeafByChain33AndEthAddress(db dbm.KV, chain33Addr, ethAddress string) (*
 	return &leaf, nil
 }
 
-func GetLeavesByStartAndEndIndex(db dbm.KV, startIndex uint64, endIndex uint64) ([]*zt.Leaf, error) {
-	leaves := make([]*zt.Leaf, 0)
-	for i := startIndex; i <= endIndex; i++ {
-		leaf, err := GetLeafByAccountId(db, i)
-		if err != nil {
-			return nil, err
-		}
-		leaves = append(leaves, leaf)
-	}
-	return leaves, nil
-}
-
-func GetAllRoots(db dbm.KV, endIndex uint64, info *TreeUpdateInfo) ([]*zt.RootInfo, error) {
-	roots := make([]*zt.RootInfo, 0)
-	for i := uint64(1); i <= endIndex; i++ {
-		rootInfo, err := GetRootByStartIndex(db, (i-1)*1024+1, info)
-		if err != nil {
-			return nil, err
-		}
-		roots = append(roots, rootInfo)
-	}
-	return roots, nil
-}
-
-func GetRootByStartIndex(db dbm.KV, index uint64, info *TreeUpdateInfo) (*zt.RootInfo, error) {
-	var rootInfo zt.RootInfo
-	if val, ok := info.updateMap[string(GetRootIndexPrimaryKey(index))]; ok {
-		err := types.Decode(val, &rootInfo)
-		if err != nil {
-			return nil, err
-		}
-		return &rootInfo, nil
-	}
-
-	val, err := db.Get(GetRootIndexPrimaryKey(index))
-	if err != nil {
-		return nil, err
-	}
-
-	err = types.Decode(val, &rootInfo)
-	if err != nil {
-		return nil, err
-	}
-	return &rootInfo, nil
-}
-
 func GetTokenByAccountIdAndTokenId(db dbm.KV, accountId uint64, tokenId uint64) (*zt.TokenBalance, error) {
 	val, err := db.Get(GetTokenPrimaryKey(accountId, tokenId))
 	if err != nil {
@@ -541,34 +497,6 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	return h.Sum(nil)
 }
 
-func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
-	h.Write(accountIdBytes[:])
-	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
-	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
-
-	getLeafPubKeyHash(h, leaf.GetPubKey())
-	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
-	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
-	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
-
-	h.Write(zt.Str2Byte(getHistoryTokenHash(leaf.AccountId, leaf.Tokens)))
-	return h.Sum(nil)
-}
-
-func getHistoryTokenHash(accountId uint64, tokens []*zt.TokenBalance) string {
-	if (accountId == zt.SystemFeeAccountId || accountId == zt.SystemNFTAccountId) && len(tokens) <= 0 {
-		return "0"
-	}
-
-	tokenTree := getNewTree()
-	for _, token := range tokens {
-		tokenTree.Push(getTokenBalanceHash(token))
-	}
-	return zt.Byte2Str(tokenTree.Root())
-}
-
 func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
 	if pubKey != nil {
 		h.Write(zt.Str2Byte(pubKey.GetX()))
@@ -578,26 +506,6 @@ func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
 
 	h.Write(zt.Str2Byte("0")) //X
 	h.Write(zt.Str2Byte("0")) //Y
-}
-
-func getTokenRootHash(db dbm.KV, accountId uint64, tokenIds []uint64) (string, error) {
-	tree := getNewTree()
-	for _, tokenId := range tokenIds {
-		token, err := GetTokenByAccountIdAndTokenId(db, accountId, tokenId)
-		if err != nil {
-			return "", err
-		}
-		tree.Push(getTokenBalanceHash(token))
-	}
-	return zt.Byte2Str(tree.Root()), nil
-}
-
-func getTokenBalanceHash(token *zt.TokenBalance) []byte {
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	tokenIdBytes := new(fr.Element).SetUint64(token.GetTokenId()).Bytes()
-	h.Write(tokenIdBytes[:])
-	h.Write(zt.Str2Byte(token.Balance))
-	return h.Sum(nil)
 }
 
 func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {

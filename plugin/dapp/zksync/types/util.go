@@ -78,10 +78,10 @@ func SplitNFTContent(contentHash string) (*big.Int, *big.Int, string, error) {
 }
 
 //ZkFindExponentPart 找到一个数的指数数量，最大31个0，也就是10^31,循环div 10， 找到最后一个余数非0
-func ZkFindExponentPart(s string) (int, error) {
+func ZkFindExponentPart(s string) int {
 	//如果位数很少，直接返回0
 	if len(s) <= 1 {
-		return 0, nil
+		return 0
 	}
 
 	count := 0
@@ -94,18 +94,15 @@ func ZkFindExponentPart(s string) (int, error) {
 
 	//最大不会超过（MaxExponentVal-1）,如果超过MaxExponentVal个0，只截取到MaxExponentVal-1个
 	if count > MaxExponentVal-1 {
-		return MaxExponentVal - 1, nil
+		return MaxExponentVal - 1
 	}
-	return count, nil
+	return count
 }
 
 //ZkTransferManExpPart 获取s的man和exp部分，exp部分只统计0的个数，man部分为尾部去掉0部分
-func ZkTransferManExpPart(s string) (string, int, error) {
-	exp, err := ZkFindExponentPart(s)
-	if err != nil {
-		return "", 0, err
-	}
-	return s[0 : len(s)-exp], exp, nil
+func ZkTransferManExpPart(s string) (string, int) {
+	exp := ZkFindExponentPart(s)
+	return s[0 : len(s)-exp], exp
 }
 
 func GetOpChunkNum(opType uint32) (int, error) {
