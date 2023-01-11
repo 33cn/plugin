@@ -446,8 +446,7 @@ func (mdb *MemoryStateDB) CanTransfer(sender string, amount uint64) bool {
 	} else {
 		senderAcc = mdb.CoinsAccount.LoadExecAccount(sender, mdb.evmPlatformAddr)
 	}
-	log15.Info("CanTransfer", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
-		"mdb.CoinsAccount", mdb.CoinsAccount)
+	log15.Info("CanTransfer", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr)
 
 	return senderAcc.Balance >= int64(amount)
 }
@@ -507,7 +506,7 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 	}
 
 	log15.Info("transfer successful", "recipient", recipient, "paracross balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
-		"coins balance", mdb.CoinsAccount.LoadAccount(recipient).GetBalance(),
+		"recipient coins balance", mdb.CoinsAccount.LoadAccount(recipient).GetBalance(),
 		"sender", sender, "recipient", recipient, "amount:", amount)
 
 	return true
