@@ -5,7 +5,6 @@
 package runtime
 
 import (
-	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -275,7 +274,6 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			gas = 0
 		}
 	}
-	fmt.Println("ret:", ret, "gas:", gas, "err:", err)
 	return ret, snapshot, gas, err
 }
 
