@@ -2,6 +2,8 @@ module github.com/33cn/plugin
 
 go 1.16
 
+replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20230112083411-49afce0eedbe
+
 require (
 	github.com/33cn/chain33 v1.67.6-0.20230112071001-d0b568a382c4
 	github.com/BurntSushi/toml v0.3.1
