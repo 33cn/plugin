@@ -66,6 +66,10 @@ func (r *RollUp) createTx(exec, action string, payload []byte) (*types.Transacti
 		ActionName: action,
 	}
 	reply, err := r.mainChainGrpc.CreateTransaction(r.ctx, req)
+	if err != nil {
+		rlog.Error("createTx", "exec", exec, "action", action, "err", err)
+		return nil, err
+	}
 	tx := &types.Transaction{}
 	err = types.Decode(reply.GetData(), tx)
 	return tx, err

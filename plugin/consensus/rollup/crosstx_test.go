@@ -82,8 +82,9 @@ func TestPullCrossTx(t *testing.T) {
 	h.ru.ctx = context.Background()
 	txs := util.GenNoneTxs(cfg, node.GetGenesisKey(), 20)
 	for i := 0; i < len(txs); i++ {
-		node.GetAPI().SendTx(txs[i])
-		node.WaitHeight(int64(i + 1))
+		_, err = node.GetAPI().SendTx(txs[i])
+		require.Nil(t, err)
+		require.Nil(t, node.WaitHeightTimeout(int64(i+1), 5))
 	}
 
 	go h.pullCrossTx()

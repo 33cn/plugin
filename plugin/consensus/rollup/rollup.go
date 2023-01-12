@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/33cn/chain33/queue"
+
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/rpc/grpcclient"
 	"github.com/33cn/chain33/system/consensus"
@@ -33,8 +35,8 @@ type RollUp struct {
 	initFragIndex   int32
 	cfg             Config
 
-	initDone chan struct{}
-
+	initDone             chan struct{}
+	client               queue.Client
 	ctx                  context.Context
 	cancel               context.CancelFunc
 	base                 *consensus.BaseClient
@@ -68,6 +70,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	r.lastFeeRate = 100000
 	r.cross = &crossTxHandler{}
 	r.base = base
+	r.client = base.GetQueueClient()
 
 	var err error
 	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)

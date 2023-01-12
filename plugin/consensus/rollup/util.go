@@ -63,20 +63,23 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) ([]*types.BlockDetail, bo
 }
 
 func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {
-	msg := r.base.GetQueueClient().NewMessage("p2p", ty, data)
-	err := r.base.GetQueueClient().Send(msg, true)
+	msg := r.client.NewMessage("p2p", ty, data)
+	err := r.client.Send(msg, true)
 	if err != nil {
 		return errors.Wrapf(err, "ty=%d", ty)
 	}
-	resp, err := r.base.GetQueueClient().WaitTimeout(msg, time.Second*5)
+	resp, err := r.client.WaitTimeout(msg, time.Second*5)
 	if err != nil {
 		return errors.Wrapf(err, "wait ty=%d", ty)
 	}
-
-	if resp.GetData().(*types.Reply).IsOk {
-		return nil
+	reply, ok := resp.GetData().(*types.Reply)
+	if !ok {
+		return types.ErrTypeAsset
 	}
-	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
+	if !reply.GetIsOk() {
+		return errors.New(string(reply.GetMsg()))
+	}
+	return nil
 }
 
 func shortHash(hash []byte) string {

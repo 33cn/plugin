@@ -6,7 +6,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/system/consensus"
 	"github.com/33cn/chain33/types"
-	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
 const (
@@ -15,13 +15,18 @@ const (
 
 func (r *RollUp) SubMsg(msg *queue.Message) {
 
+	if msg == nil {
+		rlog.Error("SubMsg", "err", "receive nil msg")
+		return
+	}
 	data, ok := msg.Data.(*types.TopicData)
 	if msg.Ty != types.EventReceiveSubData || !ok {
-
+		rlog.Error("SubMsg", "ty", msg.Ty, "ok", ok, "err", "receive invalid msg")
 		return
 	}
 
 	if data.Topic != psValidatorSignTopic {
+		rlog.Error("SubMsg", "topic", data.Topic, "receive invalid topic")
 		return
 	}
 
@@ -68,7 +73,7 @@ func (r *RollUp) handleSubMsg() {
 
 		case data := <-r.subChan:
 
-			signMsg := &rolluptypes.ValidatorSignMsg{}
+			signMsg := &rtypes.ValidatorSignMsg{}
 			err := types.Decode(data.GetData(), signMsg)
 			if err != nil {
 				rlog.Error("handleSubMsg", "from", data.From, "decode err", err)
@@ -76,7 +81,7 @@ func (r *RollUp) handleSubMsg() {
 			}
 
 			if !r.val.validateSignMsg(signMsg) {
-				rlog.Error("handleSubMsg", "from", data.From, "decode err", err)
+				rlog.Error("handleSubMsg", "err", "validate sign err")
 				break
 			}
 
