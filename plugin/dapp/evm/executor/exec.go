@@ -149,7 +149,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		}
 		ret = visiableOut
 		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), common.Bytes2Hex(ret))
-		log.Error("evm contract exec error", "error info", vmerr)
+		log.Error("innerExec evm contract exec error", "error info", vmerr)
 		return receipt, vmerr
 	}
 
