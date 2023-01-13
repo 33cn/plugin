@@ -82,18 +82,6 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	var lo uint64 = 21000
 	var hi uint64 = evmtypes.MaxGasLimit
 	var cap = hi
-	//get coins balance
-	if evm.mStateDB != nil && !evm.GetAPI().GetConfig().IsPara() {
-		fromBalance := evm.mStateDB.GetBalance(from.String())
-		if fromBalance-msg.Value() > 0 {
-			hi = fromBalance - msg.Value()
-			if hi > evmtypes.MaxGasLimit {
-				cap = hi
-			}
-
-		}
-	}
-
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(evm.NewEVMContext(msg, tx.Hash()), evm.mStateDB, *evm.vmCfg, evm.GetAPI().GetConfig())
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
@@ -117,6 +105,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		index := 0
 		receipt, err := evm.innerExec(msg, tx.Hash(), sigType, index, evmtypes.MaxGasLimit, true)
 		if err != nil {
+			log.Info("Query_EstimateGas", "err:", err)
 			if strings.Contains(err.Error(), "out of gas") || strings.Contains(err.Error(), model.ErrIntrinsicGas.Error()) {
 				return false, nil, nil
 			}
