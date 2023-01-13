@@ -2101,7 +2101,11 @@ func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error)
 		if mode != zt.ExodusMode && mode != zt.PauseMode {
 			return nil, errors.Wrapf(types.ErrNotAllow, "current mode=%d", mode)
 		}
-		return a.procExodusRollbackMode(payload)
+		receipt, err := a.procExodusRollbackMode(payload)
+		if err != nil {
+			return nil, err
+		}
+		return mergeReceipt(receipt, makeSetExodusModeReceipt(mode, int64(payload.GetMode()))), nil
 	}
 	return nil, nil
 }
