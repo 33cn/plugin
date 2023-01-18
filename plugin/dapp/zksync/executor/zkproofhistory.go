@@ -51,6 +51,7 @@ func getInitHistoryLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.HistoryLeaf {
 		}
 		historyLeaf = append(historyLeaf, history)
 	}
+	panic("check the init leaf id=3 token hash")
 	return historyLeaf
 }
 
@@ -83,14 +84,16 @@ func BuildStateDbHistoryAccount(db dbm.KV, reqRootHash string) (*zt.HistoryAccou
 			ProxyPubKeys: leaf.ProxyPubKeys,
 		}
 		for _, tokenId := range leaf.TokenIds {
-			tokenBalance, err := GetTokenByAccountIdAndTokenId(db, id, tokenId)
+			token, err := GetTokenByAccountIdAndTokenId(db, id, tokenId)
 			if err != nil {
+				zklog.Error("BuildStateDbHistoryAccount.getTokenErr", "acctId", id, "tokenId", tokenId, "err", err)
 				return nil, errors.Wrapf(err, "GetTokenByAccountId=%d,TokenId=%d", id, tokenId)
 			}
-			if tokenBalance == nil {
+			if token == nil {
+				zklog.Error("BuildStateDbHistoryAccount.tokenNotFound", "acctId", id, "tokenId", tokenId)
 				return nil, errors.Wrapf(types.ErrNotFound, "GetTokenByAccountId=%d,TokenId=%d", id, tokenId)
 			}
-			history.Tokens = append(history.Tokens, tokenBalance)
+			history.Tokens = append(history.Tokens, token)
 		}
 		accountMap[id] = history
 	}
@@ -925,12 +928,12 @@ func getHistoryLeafHash(leaf *zt.HistoryLeaf, h hash.Hash) []byte {
 }
 
 func getHistoryTokenHash(accountId uint64, tokens []*zt.TokenBalance, h hash.Hash) string {
-	if (accountId == zt.SystemFeeAccountId || accountId == zt.SystemNFTAccountId) && len(tokens) <= 0 {
+	if (accountId <= zt.SystemTree2ContractAcctId) && len(tokens) <= 0 {
 		return "0"
 	}
 	var tokenHashes [][]byte
 	for _, token := range tokens {
-		tokenHashes = append(tokenHashes, getTokenBalanceHash(token, h))
+		tokenHashes = append(tokenHashes, getTokenBalanceHash(h, token))
 	}
 
 	tokenTree := getNewTreeWithHash(h)
@@ -942,7 +945,7 @@ func getHistoryTokenHash(accountId uint64, tokens []*zt.TokenBalance, h hash.Has
 	return root
 }
 
-func getTokenBalanceHash(token *zt.TokenBalance, h hash.Hash) []byte {
+func getTokenBalanceHash(h hash.Hash, token *zt.TokenBalance) []byte {
 	h.Reset()
 	tokenIdBytes := new(fr.Element).SetUint64(token.GetTokenId()).Bytes()
 	h.Write(tokenIdBytes[:])
@@ -1004,7 +1007,7 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 	//token proof
 	var tokenHashes [][]byte
 	for _, token := range targetLeaf.Tokens {
-		tokenHashes = append(tokenHashes, getTokenBalanceHash(token, h))
+		tokenHashes = append(tokenHashes, getTokenBalanceHash(h, token))
 	}
 	tokenMerkleProof, err := getMerkleTreeProof(uint64(tokenIndex), tokenHashes, h)
 	if err != nil {

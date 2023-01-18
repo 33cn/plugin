@@ -52,11 +52,15 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	}
 
 	//default system FeeAccount
+	//feeAcct需要预设置缺省tokenId=0,balance=0,为了和deposit流程保持一致,deposit都会先有token更新再有pubkey更新
+	//不然在token=null场景下设置pubkey,电路会计算出错，因为rhs部分会计算token tree part
+	//缺省电路token tree都是0,会把token=0作为一个新node计算,而预设tokenId就可以解决这个问题
 	feeAccount := &zt.Leaf{
 		EthAddress:  ethFeeAddr,
 		AccountId:   zt.SystemFeeAccountId,
 		Chain33Addr: chain33FeeAddr,
 		TokenHash:   zeroHash,
+		TokenIds:    []uint64{0},
 	}
 	//default NFT system account
 	NFTAccount := &zt.Leaf{
@@ -83,12 +87,14 @@ func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, layer2AddrDecimal
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
+	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
 
 	leafs := getInitAccountLeaf(feeEth, fee33)
-	merkleTree := getNewTree()
+	getInitLeafTokenHash(h, leafs)
 
+	merkleTree := getNewTreeWithHash(h)
 	for _, l := range leafs {
-		merkleTree.Push(getLeafHash(l))
+		merkleTree.Push(getLeafHash(h, l))
 	}
 	tree := &zt.AccountTree{
 		SubTrees: make([]*zt.SubTree, 0),
@@ -103,6 +109,23 @@ func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, layer2AddrDecimal
 	}
 
 	return zt.Byte2Str(tree.SubTrees[len(tree.SubTrees)-1].RootHash)
+}
+
+func getInitLeafTokenHash(h hash.Hash, leafs []*zt.Leaf) {
+	for _, leaf := range leafs {
+		if len(leaf.TokenIds) > 0 {
+			if len(leaf.TokenIds) > 1 {
+				panic("init token list should only one")
+			}
+			token := &zt.TokenBalance{TokenId: leaf.TokenIds[0], Balance: "0"}
+			tokenHash := getTokenBalanceHash(h, token)
+			//leaf.tokenHash 是对所有tokenTree做的一个hash，如果只有一个节点，也是对这一个节点做hash
+			tree := getNewTreeWithHash(h)
+			tree.Push(tokenHash)
+			leaf.TokenHash = tree.Root()
+		}
+	}
+	h.Reset()
 }
 
 func NewInitAccount(ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, error) {
@@ -124,30 +147,23 @@ func NewInitAccount(ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, error
 			Value: types.Encode(leaf),
 		}
 		kvs = append(kvs, kv)
+
+		//对有tokenIds的leaf增加到db
+		if len(leaf.TokenIds) > 0 {
+			token := &zt.TokenBalance{
+				TokenId: leaf.TokenIds[0],
+				Balance: "0",
+			}
+
+			kv = &types.KeyValue{
+				Key:   GetTokenPrimaryKey(leaf.AccountId, token.TokenId),
+				Value: types.Encode(token),
+			}
+			kvs = append(kvs, kv)
+		}
 	}
 
 	return kvs, nil
-}
-
-func deposit2NewAccount(accountId uint64, tokenId uint64, amount string) (*types.KeyValue, *balancehistory, error) {
-	token := &zt.TokenBalance{
-		TokenId: tokenId,
-		Balance: amount,
-	}
-	//如果NFTAccountId第一次初始化token，因为缺省初始balance为（SystemNFTTokenId+1),这里add时候默认为+2
-	if accountId == zt.SystemNFTAccountId && tokenId == zt.SystemNFTTokenId {
-		token.Balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 2).String()
-	}
-	balanceInfoPtr := &balancehistory{}
-	balanceInfoPtr.before = "0"
-	balanceInfoPtr.after = token.Balance
-
-	kv := &types.KeyValue{
-		Key:   GetTokenPrimaryKey(accountId, tokenId),
-		Value: types.Encode(token),
-	}
-
-	return kv, balanceInfoPtr, nil
 }
 
 func updateTokenBalance(accountId uint64, tokenId uint64, amount string, option int32, statedb dbm.KV) (*types.KeyValue, *balancehistory, error) {
@@ -198,7 +214,7 @@ func updateTokenBalance(accountId uint64, tokenId uint64, amount string, option 
 	return kv, balanceInfoPtr, nil
 }
 
-func AddNewLeafOpt(statedb dbm.KV, ethAddress string, tokenId, accountId uint64, amount string, chain33Addr string) ([]*types.KeyValue, error) {
+func AddNewLeafOpt(ethAddress string, tokenId, accountId uint64, amount string, chain33Addr string) []*types.KeyValue {
 	var kvs []*types.KeyValue
 
 	leaf := &zt.Leaf{
@@ -233,7 +249,7 @@ func AddNewLeafOpt(statedb dbm.KV, ethAddress string, tokenId, accountId uint64,
 	}
 	kvs = append(kvs, kv)
 
-	return kvs, nil
+	return kvs
 }
 
 func updateLeafOpt(statedb dbm.KV, leaf *zt.Leaf, tokenId uint64, option int32) ([]*types.KeyValue, error) {
@@ -298,17 +314,12 @@ func applyL2AccountUpdate(accountID, tokenID uint64, amount string, option int32
 func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress, chain33Addr string, statedb dbm.KV, makeEncode bool) ([]*types.KeyValue, *types.ReceiptLog, *zt.AccountTokenBalanceReceipt, error) {
 	var kvs []*types.KeyValue
 	var log *types.ReceiptLog
-	balancekv, balancehistory, err := deposit2NewAccount(accountID, tokenID, amount)
-	if nil != err {
-		return nil, nil, nil, err
+	//如果NFTAccountId第一次初始化token，因为缺省初始balance为（SystemNFTTokenId+1),这里add时候默认为+2
+	if accountID == zt.SystemNFTAccountId && tokenID == zt.SystemNFTTokenId {
+		amount = new(big.Int).SetUint64(zt.SystemNFTTokenId + 2).String()
 	}
-	kvs = append(kvs, balancekv)
 
-	addLeafKvs, err := AddNewLeafOpt(statedb, ethAddress, tokenID, accountID, amount, chain33Addr)
-	if nil != err {
-		return nil, nil, nil, err
-	}
-	kvs = append(kvs, addLeafKvs...)
+	kvs = append(kvs, AddNewLeafOpt(ethAddress, tokenID, accountID, amount, chain33Addr)...)
 
 	//设置新账户的ID.
 	newAccountKV := CalcNewAccountIDkv(int64(accountID))
@@ -319,8 +330,8 @@ func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress, chain33
 	l2Log.Chain33Addr = chain33Addr
 	l2Log.TokenId = tokenID
 	l2Log.AccountId = accountID
-	l2Log.BalanceBefore = balancehistory.before
-	l2Log.BalanceAfter = balancehistory.after
+	l2Log.BalanceBefore = "0"
+	l2Log.BalanceAfter = amount
 
 	//为了避免不必要的计算，在transfer等场景中，该操作在函数外部进行
 	if makeEncode {
@@ -481,8 +492,9 @@ func GetTokenByAccountIdAndTokenIdInDB(db dbm.KV, accountId uint64, tokenId uint
 	return &token, nil
 }
 
-func getLeafHash(leaf *zt.Leaf) []byte {
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+func getLeafHash(h hash.Hash, leaf *zt.Leaf) []byte {
+	//h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h.Reset()
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
 	h.Write(accountIdBytes[:])
 	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
@@ -494,7 +506,9 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
 
 	h.Write(leaf.GetTokenHash())
-	return h.Sum(nil)
+	sum := h.Sum(nil)
+	h.Reset()
+	return sum
 }
 
 func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
