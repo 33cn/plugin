@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.67.6"></a>
+## [1.67.6](https://github.com/33cn/plugin/compare/v1.67.5...v1.67.6) (2023-01-31)
+
+
+### Bug Fixes
+
+* add return for get evm tx recevier ([533f35a](https://github.com/33cn/plugin/commit/533f35a))
+
 <a name="1.67.5"></a>
 ## [1.67.5](https://github.com/33cn/plugin/compare/v1.67.4...v1.67.5) (2023-01-16)
 
