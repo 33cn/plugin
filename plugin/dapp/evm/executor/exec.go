@@ -279,8 +279,8 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 		from = *fromPtr
 	}
 
-	addressFork := evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMMixAddress)
-	to := getReceiver(&action, addressFork)
+	mixAddressFork := evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMMixAddress)
+	to := getReceiver(&action, mixAddressFork)
 	if to == nil {
 		return msg, types.ErrInvalidAddress
 	}
@@ -366,12 +366,12 @@ func getCaller(tx *types.Transaction) common.Address {
 }
 
 // 从交易信息中获取交易目标地址，在创建合约交易中，此地址为空
-func getReceiver(action *evmtypes.EVMContractAction, addressFork bool) *common.Address {
+func getReceiver(action *evmtypes.EVMContractAction, mixAddressFork bool) *common.Address {
 	if action.ContractAddr == "" {
 		return nil
 	}
-	if addressFork {
-		common.StringToAddress(action.ContractAddr)
+	if mixAddressFork {
+		return common.StringToAddress(action.ContractAddr)
 	}
 	return common.StringToAddressLegacy(action.ContractAddr)
 }
