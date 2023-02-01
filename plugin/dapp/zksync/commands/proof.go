@@ -26,7 +26,7 @@ func queryProofCmd() *cobra.Command {
 	cmd.AddCommand(getProof2QueueInfoCmd())
 	cmd.AddCommand(getExistProofCmd())
 	cmd.AddCommand(getLastOnChainCommitProofCmd())
-
+	cmd.AddCommand(buildTreeCmd())
 	return cmd
 }
 
@@ -488,6 +488,43 @@ func getLastOnChainCommitProof(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&types.ReqNil{})
 
 	var resp zt.LastOnChainProof
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func buildTreeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "build_tree",
+		Short: "build db account tree for exodus proof,return tree roothash",
+		Run:   buildTree,
+	}
+	buildTreeFlag(cmd)
+	return cmd
+}
+
+func buildTreeFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("proofId", "i", 0, "target proof id to build tree")
+	cmd.Flags().StringP("root", "r", "", "matched proof root to id")
+
+}
+
+func buildTree(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	proofId, _ := cmd.Flags().GetUint64("proofId")
+	root, _ := cmd.Flags().GetString("root")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.CommitProofState{
+		ProofId:     proofId,
+		NewTreeRoot: root,
+	}
+
+	params.FuncName = "BuildHistoryAccounts"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.ReplyString
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

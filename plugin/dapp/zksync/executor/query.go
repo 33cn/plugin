@@ -393,12 +393,24 @@ func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Mess
 }
 
 //Query_BuildHistoryAccounts 获取statedb中的tree账户信息构建merkel tree，返回tree roothash
-func (z *zksync) Query_BuildHistoryAccounts(in *types.ReqNil) (types.Message, error) {
-	accts, err := BuildStateDbHistoryAccount(z.GetStateDB(), "")
+func (z *zksync) Query_BuildHistoryAccounts(in *zt.CommitProofState) (types.Message, error) {
+	if in == nil || in.ProofId == 0 {
+		accts, err := BuildStateDbHistoryAccount(z.GetStateDB(), "")
+		if err != nil {
+			return nil, err
+		}
+		var resp types.ReplyString
+		resp.Data = accts.RootHash
+		return &resp, nil
+	}
+	feeAddrs, _ := z.Query_GetCfgFeeAddr(nil)
+
+	accts, err := BuildHistoryAccountByProof(z.GetStateDB(), in.ProofId, in.NewTreeRoot, feeAddrs.(*zt.ZkFeeAddrs))
 	if err != nil {
 		return nil, err
 	}
 	var resp types.ReplyString
 	resp.Data = accts.RootHash
 	return &resp, nil
+
 }
