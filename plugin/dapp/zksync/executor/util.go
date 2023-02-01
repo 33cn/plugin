@@ -27,6 +27,7 @@ func GetL2FirstQueueId(db dbm.KV) (int64, error) {
 	return id.Data, nil
 }
 
+//L2 queue id 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
 func GetL2LastQueueId(db dbm.KV) (int64, error) {
 	key := getL2LastQueueIdKey()
 	r, err := db.Get(key)

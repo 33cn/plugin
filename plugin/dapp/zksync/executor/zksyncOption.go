@@ -180,7 +180,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//L2 queue 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
+//L2 queue id 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
 func setL2QueueData(db dbm.KV, ops []*zt.ZkOperation) (*types.Receipt, int64, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk}
 	//add deposit queue
