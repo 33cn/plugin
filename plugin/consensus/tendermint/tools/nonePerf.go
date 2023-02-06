@@ -42,6 +42,12 @@ const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567
 var r *rand.Rand
 var signType string
 
+var (
+	log      = log15.New()
+	testExec = "none"
+	execAddr = address.ExecAddress(testExec)
+)
+
 // TxHeightOffset needed
 var TxHeightOffset int64
 
@@ -50,12 +56,18 @@ func main() {
 		LoadHelp()
 		return
 	}
-	fmt.Println("jrpc url:", os.Args[2]+":8801")
+	fmt.Println("grpc url:", os.Args[2])
 
+	// 指定设置交易执行器为平行链
+	if strings.Contains(os.Args[0], "para") {
+		testExec = "user.p.para.none"
+		execAddr = address.ExecAddress(testExec)
+	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	args := os.Args[1:]
 	// 最后一个参数指定签名类型, 支持 bls
 	signType = args[len(args)-1]
+
 	switch args[0] {
 	case "-h": //使用帮助
 		LoadHelp()
@@ -208,19 +220,9 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 				txPool.Put(tx)
 				atomic.AddInt64(&total, 1)
 				if err != nil {
-					if strings.Contains(err.Error(), "ErrTxExpire") {
-						continue
-					}
-					if strings.Contains(err.Error(), "ErrMemFull") {
-						time.Sleep(time.Second)
-						continue
-					}
-
 					log.Error("sendtx", "err", err)
 					time.Sleep(time.Second)
-					//conn.Close()
-					//conn = newGrpcConn(ip)
-					//gcli = types.NewChain33Client(conn)
+
 				} else {
 					atomic.AddInt64(&success, 1)
 				}
@@ -374,11 +376,6 @@ func PerfV2(host, txsize, sleepinterval, duration string) {
 	log.Info("sendtx success tx", "success", success)
 }
 
-var (
-	log      = log15.New()
-	execAddr = address.ExecAddress("user.write")
-)
-
 func getHeight(gcli types.Chain33Client) (int64, error) {
 	header, err := gcli.GetLastHeader(context.Background(), &types.ReqNil{})
 	if err != nil {
@@ -390,7 +387,7 @@ func getHeight(gcli types.Chain33Client) (int64, error) {
 
 var txPool = sync.Pool{
 	New: func() interface{} {
-		tx := &types.Transaction{Execer: []byte("user.write")}
+		tx := &types.Transaction{Execer: []byte(testExec)}
 		return tx
 	},
 }
