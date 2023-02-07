@@ -38,8 +38,8 @@ func TestAccountHash(t *testing.T) {
 	pubkey.X = "110829526890202442231796950896186450339098004198300292113013256946470504791"
 	pubkey.Y = "12207062062295480868601430817261127111444831355336859496235449885847711361351"
 	//leaf.PubKey = &pubkey
-
-	hash := getLeafHash(&leaf)
+	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	hash := getLeafHash(mimcHash, &leaf)
 	var f fr.Element
 	f.SetBytes(hash)
 	t.Log("hash", f.String())
