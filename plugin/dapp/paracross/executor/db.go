@@ -85,7 +85,7 @@ func getBlockHash(api client.QueueProtocolAPI, height int64) (*types.ReplyHash, 
 
 func getBlockByHeight(api client.QueueProtocolAPI, height int64) (*types.BlockDetail, error) {
 
-	blockDetails, err := api.GetBlocks(&types.ReqBlocks{Start: height, End: height})
+	blockDetails, err := api.GetBlocks(&types.ReqBlocks{Start: height, End: height, IsDetail: true})
 	if err != nil {
 		clog.Error("getBlockByHeight", "height", height, "err", err.Error())
 		return nil, err

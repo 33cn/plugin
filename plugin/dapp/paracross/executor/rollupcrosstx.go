@@ -4,13 +4,14 @@ import (
 	"encoding/hex"
 	"errors"
 
+	rexec "github.com/33cn/plugin/plugin/dapp/rollup/executor"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
 //Exec_RollupCrossTx exec commit rollup
@@ -41,7 +42,7 @@ func (p *Paracross) ExecLocal_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.
 		return nil, types.ErrDecode
 	}
 
-	crossTxHashes, crossTxs, err := getRollupCrossTxs(p.GetAPI(), commit.GetTxIndices())
+	crossTxHashes, crossTxs, err := getRollupCrossTxs(p.GetAPI(), commit.GetChainTitle(), commit.GetTxIndices())
 
 	if err != nil {
 		clog.Error("ExecLocal_RollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
@@ -77,27 +78,6 @@ func (p *Paracross) ExecDelLocal_RollupCrossTx(_ *pt.RollupCrossTx, tx *types.Tr
 	return dbSet, nil
 }
 
-func (a *action) getRollupStatus(title string) (*rtypes.RollupStatus, error) {
-
-	req := &rtypes.ChainTitle{Value: title}
-
-	reply, err := a.api.Query(rtypes.RollupX, "GetRollupStatus", req)
-	status := reply.(*rtypes.RollupStatus)
-	return status, err
-}
-
-func (a *action) getRollupCommitRound(title string, commitRound int64) (*rtypes.CommitRoundInfo, error) {
-
-	req := &rtypes.ReqGetCommitRound{
-		CommitRound: commitRound,
-		ChainTitle:  title,
-	}
-
-	reply, err := a.api.Query(rtypes.RollupX, "GetCommitRoundInfo", req)
-	status := reply.(*rtypes.CommitRoundInfo)
-	return status, err
-}
-
 var (
 	ErrInvalidCommitRound   = errors.New("ErrInvalidCommitRound")
 	ErrInvalidChain         = errors.New("ErrInvalidChain")
@@ -107,12 +87,13 @@ var (
 )
 
 func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error) {
-	clog.Debug("rollupCrossTx", "title", commit.GetChainTitle(), "commitRound", commit.GetCommitRound())
+	clog.Debug("rollupCrossTx", "title", commit.GetChainTitle(),
+		"commitRound", commit.GetCommitRound(), "txHash", common.ToHex(a.txhash))
 	if a.api.GetConfig().IsPara() {
 		return nil, ErrInvalidChain
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	status, err := a.getRollupStatus(commit.GetChainTitle())
+	status, err := rexec.GetRollupStatus(a.db, commit.GetChainTitle())
 
 	if err != nil || status.CommitRound != commit.GetCommitRound() {
 
@@ -121,13 +102,13 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 		return nil, ErrInvalidCommitRound
 	}
 
-	roundInfo, err := a.getRollupCommitRound(commit.GetChainTitle(), commit.GetCommitRound())
+	roundInfo, err := rexec.GetRoundInfo(a.db, commit.GetChainTitle(), commit.GetCommitRound())
 	if err != nil {
 		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCommitRound err", err)
 		return nil, ErrGetRollupCommitRound
 	}
 
-	crossTxHashes, crossTxs, err := getRollupCrossTxs(a.api, commit.GetTxIndices())
+	crossTxHashes, crossTxs, err := getRollupCrossTxs(a.api, commit.GetChainTitle(), commit.GetTxIndices())
 
 	if err != nil {
 		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
@@ -174,7 +155,7 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 	return mergeReceipt(receipt, rep), nil
 }
 
-func getRollupCrossTxs(api client.QueueProtocolAPI, idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
+func getRollupCrossTxs(api client.QueueProtocolAPI, paraTitle string, idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
 
 	blkCrossTxCache := make(map[int64][]*types.Transaction, len(idxArr)/2)
 	crossTxs := make([]*types.Transaction, 0, len(idxArr))
@@ -192,10 +173,13 @@ func getRollupCrossTxs(api client.QueueProtocolAPI, idxArr []*pt.CrossTxIndex) (
 				return nil, nil, err
 			}
 
-			blkCrossTxs = FilterParaCrossTxs(FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, cfg.GetTitle())))
+			blkCrossTxs = FilterParaCrossTxs(FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, paraTitle)))
 			blkCrossTxCache[txIdx.BlockHeight] = blkCrossTxs
 		}
-
+		if int(txIdx.FilterIndex) >= len(blkCrossTxs) {
+			clog.Error("getRollupCrossTxs invalid filter index", "paraTitle", paraTitle)
+			return nil, nil, types.ErrInvalidParam
+		}
 		crossTx := blkCrossTxs[txIdx.FilterIndex]
 		crossTxs = append(crossTxs, crossTx)
 		crossTxHashes = append(crossTxHashes, crossTx.Hash())
