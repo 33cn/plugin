@@ -126,9 +126,9 @@ func TestAggreSign(t *testing.T) {
 
 	val, valPubs, _ := newTestVal()
 
-	pubs, sign := val.aggregateSign(nil)
+	pubs, _ := val.aggregateSign(nil)
 	signSet := &validatorSignMsgSet{}
-	pubs, sign = val.aggregateSign(signSet)
+	pubs, sign := val.aggregateSign(signSet)
 	require.Nil(t, pubs)
 	require.Nil(t, sign)
 
@@ -148,13 +148,13 @@ func TestAggreSign(t *testing.T) {
 
 	// 有2个节点, 签名数量不足
 	val.validators["other-node"] = 1
-	pubs, sign = val.aggregateSign(signSet)
+	pubs, _ = val.aggregateSign(signSet)
 	require.Nil(t, pubs)
 
 	// 包含非法签名, 正确签名数量不足
 	errSign := &rtypes.ValidatorSignMsg{MsgHash: []byte("err-hash")}
 	signSet.others = append(signSet.others, errSign)
-	pubs, sign = val.aggregateSign(signSet)
+	pubs, _ = val.aggregateSign(signSet)
 	require.Nil(t, pubs)
 	require.Equal(t, 0, len(signSet.others))
 
