@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/client"
+
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 
 	"github.com/33cn/chain33/types"
@@ -52,10 +54,10 @@ func (h *crossTxHandler) addMainChainCrossTx(mainHeight int64, filterTxs []*type
 }
 
 // 从缓存中删除平行链已打包执行的跨链交易, 返回跨链交易在主链区块的索引信息
-func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) []*pt.CrossTxIndex {
+func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) ([]*pt.CrossTxIndex, error) {
 
 	if len(hashList) <= 0 {
-		return nil
+		return nil, nil
 	}
 	h.lock.Lock()
 	defer h.lock.Unlock()
@@ -67,7 +69,7 @@ func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) []*pt.CrossTxInd
 		info, ok := h.txIdxCache[short]
 		if !ok {
 			rlog.Error("removePackedCrossTx not exist", "hash", hex.EncodeToString(hash))
-			continue
+			return nil, types.ErrNotFound
 		}
 
 		// 缓存移除
@@ -76,7 +78,7 @@ func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) []*pt.CrossTxInd
 
 	}
 
-	return idxList
+	return idxList, nil
 }
 
 // 刷新平行链同步主链跨链交易区块高度, 根据缓存中跨链交易记录决定
@@ -130,8 +132,8 @@ func (h *crossTxHandler) removeErrTxs(errList []*types.Transaction) {
 }
 
 const (
-	reservedMainHeight  = 12
-	maxPullIntervalOnce = 128
+	defaultReservedMainHeight = 12
+	maxPullIntervalOnce       = 128
 )
 
 func (h *crossTxHandler) pullCrossTx() {
@@ -153,10 +155,10 @@ func (h *crossTxHandler) pullCrossTx() {
 		}
 
 		// 预留一定高度, 降低回滚概率
-		end := mainHeader.Height - reservedMainHeight
+		end := mainHeader.Height - defaultReservedMainHeight
 		if end < start {
 			rlog.Debug("pullCrossTx wait for reserved block 1m")
-			time.Sleep(time.Minute)
+			time.Sleep(time.Second * 5)
 			continue
 		}
 
@@ -196,14 +198,13 @@ func (h *crossTxHandler) send2Mempool(mainHeight int64, txs []*types.Transaction
 				"txHash", hex.EncodeToString(tx.Hash()))
 			continue
 		}
-		reply, err := h.ru.base.GetAPI().SendTx(tx)
-		if err != nil || !reply.GetIsOk() {
+		api := h.ru.base.GetAPI().(*client.QueueProtocol)
+		// 发送至mempool失败, 可能情况是该交易已经打包但未提交状态, 此时节点重启
+		_, err := api.SendTx2Mempool(tx)
+		if err != nil {
 			errTxs = append(errTxs, tx)
-			rlog.Error("send2Mempool error", "mainHeight", mainHeight, "txHash", hex.EncodeToString(tx.Hash()),
-				"err", err, "reply msg", string(reply.GetMsg()))
+			rlog.Error("send2Mempool error", "mainHeight", mainHeight,
+				"txHash", hex.EncodeToString(tx.Hash()), "err", err)
 		}
 	}
-
-	h.removeErrTxs(errTxs)
-
 }

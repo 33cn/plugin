@@ -2,6 +2,7 @@ package rollup
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/big"
 	"time"
 
@@ -56,7 +57,12 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 		batch.CrossTxResults = crossTxRst.Bytes()
 		batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
 	}
-	crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
+	var err error
+	crossInfo.TxIndices, err = r.cross.removePackedCrossTx(crossTxHashes)
+	if err != nil {
+		rlog.Error("buildCommitData", "round", commitRound, "removePackedCrossTx err", err)
+		return nil, nil
+	}
 
 	return []*rtypes.BlockBatch{batch}, []*pt.RollupCrossTx{crossInfo}
 }
@@ -106,7 +112,11 @@ func (r *RollUp) buildFullData(details []*types.BlockDetail, commitRound int64,
 			batch.CrossTxResults = crossTxRst.Bytes()
 			batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
 		}
-		crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
+		crossInfo.TxIndices, err = r.cross.removePackedCrossTx(crossTxHashes)
+		if err != nil {
+			rlog.Error("buildFullData", "round", commitRound, "removePackedCrossTx err", err)
+			return err
+		}
 		batchList = append(batchList, batch)
 		crossList = append(crossList, crossInfo)
 		return nil
@@ -177,13 +187,24 @@ func (r *RollUp) handleBuildBatch() {
 		}
 		blockDetails, prepared := r.getNextBatchBlocks(r.nextBuildHeight)
 		// 区块内未达到最低批量数量, 需要继续等待
-		if !prepared {
+		if !prepared || len(blockDetails) == 0 {
 			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
-				"round", r.nextBuildRound, "msg", "wait more block")
+				"round", r.nextBuildRound, "msg", "wait more local block")
 			time.Sleep(time.Second * 5)
 			continue
 		}
+
 		batchList, crossList := r.buildCommitData(blockDetails, r.nextBuildRound, &fragIndex)
+		if len(batchList) == 0 {
+			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
+				"round", r.nextBuildRound, "msg", "buildCommitData nil")
+			time.Sleep(time.Second * 2)
+			continue
+		}
+
+		rlog.Debug("handleBuildBatch commit height",
+			"start", blockDetails[0].GetBlock().GetHeight(),
+			"end", blockDetails[len(blockDetails)-1].GetBlock().GetHeight())
 
 		for i, blkBatch := range batchList {
 			crossInfo := crossList[i]
@@ -245,7 +266,7 @@ func (r *RollUp) handleCommit() {
 		if err := r.commit2MainChain(commit); err != nil {
 			rlog.Error("handleCommit", "round", commitRound,
 				"crossTx", len(commit.crossTx.TxIndices), "err", err)
-			time.Sleep(time.Second)
+			time.Sleep(time.Second * 2)
 			continue
 		}
 
@@ -277,7 +298,8 @@ func (r *RollUp) commit2MainChain(info *commitInfo) error {
 		}
 		tx = gtx.Tx()
 	}
-
+	rlog.Debug("commit2MainChain", "round", info.cp.GetCommitRound(),
+		"crossLen", len(info.crossTx.GetTxIndices()), "txHash", hex.EncodeToString(tx.Hash()))
 	err = r.sendTx2MainChain(tx)
 	if err != nil {
 		return errors.Wrap(err, "sendTx2MainChain")

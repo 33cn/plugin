@@ -51,8 +51,9 @@ type RollUp struct {
 }
 
 // Init init
-func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config, subCfg []byte) {
+func (r *RollUp) Init(base *consensus.BaseClient, subCfg []byte) {
 
+	chainCfg := base.GetAPI().GetConfig()
 	if !chainCfg.IsPara() {
 		return
 	}
@@ -73,7 +74,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, chainCfg *types.Chain33Config,
 	r.client = base.GetQueueClient()
 
 	var err error
-	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, chainCfg.GetModuleConfig().RPC.MainChainGrpcAddr)
+	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, "")
 	if err != nil {
 		panic("init main chain grpc client err:" + err.Error())
 	}
@@ -96,7 +97,9 @@ func (r *RollUp) initJob() {
 	r.val.init(r.cfg, valPubs, status)
 	r.nextBuildRound = status.CommitRound + 1
 	r.initFragIndex = status.BlockFragIndex
+	// 初始提交从高度1开始
 	r.nextBuildHeight = status.CommitBlockHeight + 1
+	// 最近一个区块被分段提交, 需要处理剩余数据, 构建高度不变
 	if status.BlockFragIndex > 0 {
 		r.nextBuildHeight = status.CommitBlockHeight
 	}

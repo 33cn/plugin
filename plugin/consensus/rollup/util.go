@@ -17,7 +17,11 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) ([]*types.BlockDetail, bo
 		End:      startHeight + minCommitTxCount,
 		IsDetail: true,
 	}
-
+	header, err := r.base.GetAPI().GetLastHeader()
+	if err != nil || header.GetHeight() < startHeight {
+		rlog.Debug("getNextBatchBlocks", "startHeight", startHeight, "err", err)
+		return nil, false
+	}
 	details, err := r.base.GetAPI().GetBlocks(req)
 	if err != nil || len(details.GetItems()) == 0 {
 		rlog.Error("getNextBatchBlocks", "req", req.String(), "err", err)
@@ -45,18 +49,18 @@ func (r *RollUp) getNextBatchBlocks(startHeight int64) ([]*types.BlockDetail, bo
 			blkDetails = blkDetails[:minCommitBlkCount]
 		}
 	}
-
-	// 满足最大提交间隔原则
 	firstBlockTime := blkDetails[0].GetBlock().GetBlockTime()
+	// 本地不产生区块时触发, 增加10s延迟判定, 避免临界情况导致判定不一致
+	if !batchPrepared && types.Now().Unix()-firstBlockTime > r.cfg.MaxCommitInterval+10 {
+		batchPrepared = true
+	}
+
+	// 提交间隔共识, 单次提交首尾区块时间间隔限制最大值
 	for i := 1; batchPrepared && i < len(blkDetails); i++ {
 		if blkDetails[i].GetBlock().GetBlockTime()-firstBlockTime > r.cfg.MaxCommitInterval {
 			blkDetails = blkDetails[:i]
 			break
 		}
-	}
-	// 本地不产生区块时触发, 增加10s延迟判定, 避免临界情况导致判定不一致
-	if !batchPrepared && types.Now().Unix()-firstBlockTime > r.cfg.MaxCommitInterval+10 {
-		batchPrepared = true
 	}
 
 	return blkDetails, batchPrepared

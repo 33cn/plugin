@@ -9,10 +9,11 @@ import (
 type Config struct {
 	FullDataCommit bool `json:"fullDataCommit,omitempty"`
 	// StartHeight 指定平行链启动时主链的高度
-	StartHeight       int64  `json:"startHeight,omitempty"`
-	MaxCommitInterval int64  `json:"maxCommitInterval,omitempty"`
-	CommitTxKey       string `json:"commitTxKey,omitempty"`
-	ValidatorBlsKey   string `json:"validatorBlsKey,omitempty"`
+	StartHeight        int64  `json:"startHeight,omitempty"`
+	MaxCommitInterval  int64  `json:"maxCommitInterval,omitempty"`
+	CommitTxKey        string `json:"commitTxKey,omitempty"`
+	ValidatorBlsKey    string `json:"validatorBlsKey,omitempty"`
+	ReservedMainHeight int64  `json:"reservedMainHeight,omitempty"`
 }
 
 type validatorSignMsgSet struct {
