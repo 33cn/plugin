@@ -55,6 +55,9 @@ grpcBindAddr="localhost:8902"
 whitelist=["127.0.0.1"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
+[rpc.sub.parachain]
+#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.33.cn”
+mainChainGrpcAddr=""
 [mempool]
 name="timeline"
 poolCacheSize=10240
@@ -87,8 +90,6 @@ coinReward = 18
 coinDevFund = 12
 minerMode="normal"
 [consensus.sub.para]
-#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“101.37.227.226:8802,39.97.20.242:8802,47.107.15.126:8802,jiedian2.33.cn”
-ParaRemoteGrpcClient=""
 #主链指定高度的区块开始同步
 startHeight=1
 #打包时间间隔，单位秒

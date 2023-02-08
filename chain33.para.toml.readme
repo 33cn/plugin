@@ -72,6 +72,13 @@ whitelist=["127.0.0.1"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
 
+[rpc.sub.parachain]
+#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
+#mainChainGrpcAddr="jiedian2.bityuan.com,cloud.bityuan.com"
+mainChainGrpcAddr="localhost:8802"
+#配置grpc负载均衡为sync模式
+useGrpcLBSync=false
+
 #兼容支持ETH 部分RPC接口
 [rpc.sub.eth]
 enable=false
@@ -120,9 +127,6 @@ halvePeriod=1000
 
 
 [consensus.sub.para]
-#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
-#ParaRemoteGrpcClient="cloud.bityuan.com,jiedian2.bityuan.com"
-ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
 #主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
