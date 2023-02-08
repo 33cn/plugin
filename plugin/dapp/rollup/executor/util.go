@@ -19,20 +19,22 @@ func readStateDB(stateDB db.KV, key []byte, result types.Message) error {
 	return types.Decode(val, result)
 }
 
-func (r *rollup) getRollupStatus(title string) (*rolluptypes.RollupStatus, error) {
+// GetRollupStatus get rollup status
+func GetRollupStatus(kv db.KV, title string) (*rolluptypes.RollupStatus, error) {
 
 	status := &rolluptypes.RollupStatus{}
-	err := readStateDB(r.GetStateDB(), formatRollupStatusKey(title), status)
+	err := readStateDB(kv, formatRollupStatusKey(title), status)
 	if err == types.ErrNotFound {
 		return status, nil
 	}
 	return status, err
 }
 
-func (r *rollup) getRoundInfo(title string, round int64) (*rolluptypes.CommitRoundInfo, error) {
+// GetRoundInfo get round info
+func GetRoundInfo(kv db.KV, title string, round int64) (*rolluptypes.CommitRoundInfo, error) {
 
 	info := &rolluptypes.CommitRoundInfo{}
-	err := readStateDB(r.GetStateDB(), formatCommitRoundInfoKey(title, round), info)
+	err := readStateDB(kv, formatCommitRoundInfoKey(title, round), info)
 	return info, err
 }
 

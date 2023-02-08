@@ -47,7 +47,7 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		return ErrChainTitle
 	}
 
-	status, err := r.getRollupStatus(cp.GetChainTitle())
+	status, err := GetRollupStatus(r.GetStateDB(), cp.GetChainTitle())
 	if err != nil {
 		elog.Error("checkCommit", "title", cp.GetChainTitle(),
 			"commitRound", commitRound, "getRollupStatus err", err)
@@ -55,33 +55,29 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 	}
 
 	// 检查提交是否有序, 区块高度及区块哈希
-	errorOrder := func(cause string) error {
+	errorOrder := func(cause string, checkHeight int64) error {
 		elog.Error("checkCommit", "title", cp.GetChainTitle(),
-			"commitRound", commitRound, "cause", cause,
+			"commitRound", commitRound, "cause", cause, "checkHeight", checkHeight,
 			"status", status.String())
 		return ErrOutOfOrderCommit
 	}
 
 	if commitRound != status.CommitRound+1 {
-		return errorOrder("commit round")
+		return errorOrder("commit round", 0)
 	}
 
-	var parentHash string
-	var parentHeight int64
+	parentHash := status.CommitBlockHash
+	parentHeight := status.CommitBlockHeight
 
-	// 首次提交无状态数据记录, 信息为空
+	// 首次提交无状态数据记录, 父区块哈希值提前设定
 	if len(status.CommitBlockHash) == 0 {
 		parentHash = common.ToHex(cp.GetBatch().GetBlockHeaders()[0].ParentHash)
-		parentHeight = -1
-	} else {
-		parentHash = status.CommitBlockHash
-		parentHeight = status.CommitBlockHeight
 	}
 
 	// 区块数据过大被分割情况, 分割区块的区块头信息会被重复提交
 	if status.GetBlockFragIndex() > 0 {
 		if status.CommitBlockHash != calcBlockHash(cp.GetBatch().GetBlockHeaders()[0]) {
-			return errorOrder("fragment block hash")
+			return errorOrder("fragment block hash", cp.GetBatch().GetBlockHeaders()[0].GetHeight())
 		}
 		parentHash = common.ToHex(cp.GetBatch().GetBlockHeaders()[0].ParentHash)
 		parentHeight = status.CommitBlockHeight - 1
@@ -90,11 +86,14 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 	for _, header := range cp.GetBatch().GetBlockHeaders() {
 
 		if common.ToHex(header.GetParentHash()) != parentHash {
-			return errorOrder("block hash")
+
+			elog.Error("checkCommit", "height", header.GetHeight(),
+				"expectHash", parentHash, "actualHash", common.ToHex(header.GetParentHash()))
+			return errorOrder("block hash", header.GetHeight())
 		}
 		parentHash = calcBlockHash(header)
 		if parentHeight+1 != header.GetHeight() {
-			return errorOrder("block height")
+			return errorOrder("block height", header.GetHeight())
 		}
 		parentHeight++
 	}

@@ -45,7 +45,7 @@ func Test_checkCommit(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api.On("GetConfig").Return(cfg)
 	r.SetStateDB(state)
-	header := &types.Header{}
+	header := &types.Header{Height: 1}
 	cp.Batch = &rtypes.BlockBatch{BlockHeaders: []*types.Header{header}}
 	require.Equal(t, ErrChainTitle, r.checkCommit(cp))
 	cp.ChainTitle = title

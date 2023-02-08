@@ -20,7 +20,7 @@ func (r *rollup) Query_GetRollupStatus(title *rtypes.ChainTitle) (types.Message,
 	if title.GetValue() == "" {
 		return nil, ErrChainTitle
 	}
-	return r.getRollupStatus(title.GetValue())
+	return GetRollupStatus(r.GetStateDB(), title.GetValue())
 }
 
 func (r *rollup) Query_GetCommitRoundInfo(req *rtypes.ReqGetCommitRound) (types.Message, error) {
@@ -29,5 +29,5 @@ func (r *rollup) Query_GetCommitRoundInfo(req *rtypes.ReqGetCommitRound) (types.
 		return nil, ErrChainTitle
 	}
 
-	return r.getRoundInfo(req.GetChainTitle(), req.GetCommitRound())
+	return GetRoundInfo(r.GetStateDB(), req.GetChainTitle(), req.GetCommitRound())
 }

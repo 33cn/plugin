@@ -17,7 +17,7 @@ func (r *rollup) Exec_Commit(cp *rolluptypes.CheckPoint, tx *types.Transaction, 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
 	commitRound := cp.GetCommitRound()
-	status, err := r.getRollupStatus(cp.GetChainTitle())
+	status, err := GetRollupStatus(r.GetStateDB(), cp.GetChainTitle())
 	if err != nil {
 		elog.Error("Exec_CommitBatch", "title", cp.GetChainTitle(),
 			"round", commitRound, "get status err", err)
