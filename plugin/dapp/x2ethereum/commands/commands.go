@@ -8,8 +8,8 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	types2 "github.com/33cn/chain33/rpc/types"
-	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common/commands"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebcli/buildflags"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/utils"
 	types3 "github.com/33cn/plugin/plugin/dapp/x2ethereum/types"

@@ -11,8 +11,9 @@ import (
 	"os"
 	"sort"
 
-	log "github.com/33cn/chain33/common/log/log15"
 	"reflect"
+
+	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -55,7 +56,7 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 	if err != nil {
 		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
 	}
-	common.InitEvmAddressTypeOnce(driver)
+	common.InitEvmAddressDriver(driver)
 }
 
 // Init 初始化本合约对象
@@ -65,7 +66,8 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	initEvmSubConfig(sub, enableHeight)
 	driverName = name
 	drivers.Register(cfg, driverName, newEVMDriver, enableHeight)
-	EvmAddress = address.ExecAddress(cfg.ExecName(name))
+	// 格式化为配置地址格式
+	EvmAddress = common.StringToAddress(address.ExecAddress(cfg.ExecName(name))).String()
 	// 初始化硬分叉数据
 	state.InitForkData()
 	InitExecType()

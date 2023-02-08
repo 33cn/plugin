@@ -3,14 +3,15 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"math/big"
+	"strings"
+	"testing"
+
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	vcomm "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"math/big"
-	"strings"
-	"testing"
 
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	ctypes "github.com/33cn/chain33/types"
@@ -186,7 +187,7 @@ func initEvmExeccutor(t *testing.T, api *apimock.QueueProtocolAPI) *EVMExecutor 
 	driver, err := address.LoadDriver(2, -1)
 	assert.Equal(t, nil, err)
 
-	vcomm.InitEvmAddressTypeOnce(driver)
+	vcomm.InitEvmAddressDriver(driver)
 	var exec = NewEVMExecutor()
 	exec.SetAPI(api)
 	statDB, err := dbm.NewGoMemDB("state", "state", 1024)

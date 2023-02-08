@@ -114,11 +114,11 @@ dep:
 
 linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
-	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086
 
 linter_test: ## Use gometalinter check code, for local test
 	@./golinter.sh "test" "${p}"
-	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2294
 
 ineffassign:
 	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign ./...
@@ -274,7 +274,7 @@ auto_ci: clean fmt_proto fmt_shell protobuf
 
 
 addupstream:
-	git remote add upstream https://github.com/33cn/plugin.git
+	git remote add upstream git@github.com:33cn/plugin.git
 	git remote -v
 
 sync:
@@ -299,7 +299,7 @@ push:
 pull:
 	@remotelist=$$(git remote | grep ${name});if [ -z $$remotelist ]; then \
 		echo ${remotelist}; \
-		git remote add ${name} https://github.com/${name}/plugin.git ; \
+		git remote add ${name} git@github.com:${name}/plugin.git ; \
 	fi;
 	git fetch ${name}
 	git checkout ${name}/${b}

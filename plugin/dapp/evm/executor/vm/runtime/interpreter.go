@@ -31,7 +31,7 @@ type Config struct {
 	JumpTable [256]*operation
 }
 
-// EVMInterpreter 解释器接结构定义
+// Interpreter  解释器接结构定义
 type Interpreter struct {
 	evm *EVM
 	cfg Config
@@ -83,7 +83,6 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 	// 每次递归调用，深度加1
 	in.evm.depth++
 	defer func() { in.evm.depth-- }()
-
 	// Make sure the readOnly is only set if we aren't in readOnly yet.
 	// This makes also sure that the readOnly flag isn't removed for child calls.
 	if readOnly && !in.readOnly {
@@ -142,7 +141,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			}
 		}()
 	}
-	// 遍历合约代码中的指令执行，知道遇到特殊指令（停止、自毁、暂停、恢复、返回）
+	// 遍历合约代码中的指令执行，直到遇到特殊指令（停止、自毁、暂停、恢复、返回）
 	steps := 0
 	for {
 		steps++
@@ -156,11 +155,13 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 
 		// 从合约代码中获取具体操作指令
 		op = contract.GetOp(pc)
+
 		operation := in.cfg.JumpTable[op]
 		if operation == nil {
 			log15.Error("can't found operation:%s", op)
 			return nil, &ErrInvalidOpCode{opcode: op}
 		}
+
 		// Validate stack
 		if sLen := stack.len(); sLen < operation.minStack {
 			return nil, &ErrStackUnderflow{stackLen: sLen, required: operation.minStack}
@@ -205,9 +206,10 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
 			cost += dynamicCost // total cost, for debug tracing
 			if err != nil || !contract.UseGas(dynamicCost) {
+
 				log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 					"CallerAddress=", contract.CallerAddress.String(),
-					"caller=", contract.caller.Address().String())
+					"caller=", contract.caller.Address().String(), "dynamicCost", dynamicCost)
 				return nil, ErrOutOfGas
 			}
 		}

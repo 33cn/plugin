@@ -234,12 +234,11 @@ func gasCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memorySize
 	if gas, overflow = math.SafeAdd(gas, memoryGas); overflow {
 		return 0, ErrGasUintOverflow
 	}
-
 	evm.callGasTemp, err = callGas(true, contract.Gas, gas, stack.Back(0))
 	if err != nil {
 		return 0, err
 	}
-	log15.Info("evm opCall gasCall", "gas", gas, "callGasTemp", evm.callGasTemp)
+	log15.Info("evm opCall gasCall", " contract.Gas", contract.Gas, "gas", gas, "callGasTemp", evm.callGasTemp, "memoryGas:", memoryGas)
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
 		return 0, ErrGasUintOverflow
 	}
@@ -296,18 +295,18 @@ func gasStaticCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memo
 	if err != nil {
 		return 0, err
 	}
-	log15.Info("gasStaticCall", "gas", gas, "contract.Gas", contract.Gas)
+	log15.Debug("gasStaticCall", "gas", gas, "contract.Gas", contract.Gas)
 	//todo:此处需要完善 by hzj on 20210331
 	evm.callGasTemp, err = callGas(true, contract.Gas, gas, stack.Back(0))
 	if err != nil {
 		return 0, err
 	}
-	log15.Info("gasStaticCall", "gas", gas, "evm.callGasTemp", evm.callGasTemp)
+	log15.Debug("gasStaticCall", "gas", gas, "evm.callGasTemp", evm.callGasTemp)
 	var overflow bool
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
 		return 0, ErrGasUintOverflow
 	}
-	log15.Info("gasStaticCall", "gas after", gas)
+	log15.Debug("gasStaticCall", "gas after", gas)
 	return gas, nil
 }
 

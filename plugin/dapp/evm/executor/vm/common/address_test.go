@@ -6,7 +6,10 @@ package common
 
 import (
 	"encoding/hex"
+	"strings"
 	"testing"
+
+	"github.com/33cn/chain33/system/address/btc"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/address/eth"
@@ -67,7 +70,7 @@ func TestNewContractAddress(t *testing.T) {
 
 	ethdriver, err := address.LoadDriver(eth.ID, -1)
 	assert.Equal(t, nil, err)
-	InitEvmAddressTypeOnce(ethdriver)
+	InitEvmAddressDriver(ethdriver)
 	ab, _ := common.FromHex("0xd83b69C56834E85e023B1738E69BFA2F0dd52905")
 	addr = BytesToAddress(ab)
 	nonce := 0x13
@@ -75,4 +78,36 @@ func TestNewContractAddress(t *testing.T) {
 	addr3 := NewEvmContractAddress(addr, uint64(nonce))
 	t.Log("addr3", addr3)
 	assert.Equal(t, "0xdcadbe74054cdb2733ba95875339afad7af9fdf4", addr3.String())
+}
+
+func TestStringToAddress(t *testing.T) {
+
+	lock.Lock()
+	defer lock.Unlock()
+	driver := evmAddressDriver
+	evmAddressDriver, _ = address.LoadDriver(btc.NormalAddressID, -1)
+	// evm为比特币地址类型时
+	btcAddr := "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+	ethAddr := "0xdcadbe74054CDB2733ba95875339afad7af9fdf4"
+	a := StringToAddress(btcAddr)
+	assert.NotNil(t, a)
+	assert.Equal(t, btcAddr, a.String())
+
+	a = StringToAddress(ethAddr)
+	assert.NotNil(t, a)
+	assert.Equal(t, "1M7qo9PADK9cJqB5sM2bzdpvn4gXCchTo7", a.String())
+	a = StringToAddressLegacy(ethAddr)
+	assert.NotNil(t, a)
+	assert.Equal(t, "1M7qo9PADK9cJqB5sM2bzdpvn4gXCchTo7", a.String())
+
+	// evm调整为 eth地址类型
+	evmAddressDriver, _ = address.LoadDriver(eth.ID, -1)
+	a = StringToAddress(btcAddr)
+	assert.NotNil(t, a)
+	assert.Equal(t, "0x245afbf176934ccdd7ca291a8dddaa13c8184822", a.String())
+
+	a = StringToAddress(ethAddr)
+	assert.NotNil(t, a)
+	assert.Equal(t, strings.ToLower(ethAddr), a.String())
+	evmAddressDriver = driver
 }

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build go1.9
 // +build go1.9
 
 /*
@@ -14,6 +15,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	frameVersion "github.com/33cn/chain33/common/version"
 	_ "github.com/33cn/chain33/system"
@@ -29,11 +31,11 @@ var (
 func main() {
 	flag.Parse()
 	if *versionCmd {
-		fmt.Println(fmt.Sprintf("Build time: %s", version.BuildTime))
-		fmt.Println(fmt.Sprintf("System version: %s", version.Platform))
-		fmt.Println(fmt.Sprintf("Golang version: %s", version.GoVersion))
-		fmt.Println(fmt.Sprintf("plugin version: %s", version.GetVersion()))
-		fmt.Println(fmt.Sprintf("chain33 frame version: %s", frameVersion.GetVersion()))
+		fmt.Fprintln(os.Stdout, "Build time:", version.BuildTime)
+		fmt.Fprintln(os.Stdout, "System version:", version.Platform)
+		fmt.Fprintln(os.Stdout, "Golang version:", version.GoVersion)
+		fmt.Fprintln(os.Stdout, "plugin version:", version.GetVersion())
+		fmt.Fprintln(os.Stdout, "chain33 frame version:", frameVersion.GetVersion())
 		return
 	}
 	cli.RunChain33("", "")

@@ -7,10 +7,12 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
+	"math"
 	"strings"
 	"sync/atomic"
 
 	"github.com/33cn/chain33/account"
+	"github.com/ethereum/go-ethereum/params"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -36,7 +38,6 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		atomic.StoreInt32(&evm.vmCfg.Debug, int32(conf.GInt("evmDebugEnable")))
 		evmDebugInited = true
 	}
-
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
 	return receipt, err
 }
@@ -44,15 +45,28 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
+	cfg := evm.GetAPI().GetConfig()
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
-	cfg := evm.GetAPI().GetConfig()
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
-	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
-		"data size:", len(msg.Data()), "readOnly", readOnly)
+	//coins转账，para数据作为备注交易
+	isTransferNote := strings.Compare(msg.To().String(), EvmAddress) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
+
+	//加上固有消费的gas
+	gas, err := intrinsicGas(msg, isCreate, true)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value())
+	if msg.GasLimit() < gas {
+		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
+	}
+
+	context.GasLimit = msg.GasLimit() - gas
 	var (
 		ret             []byte
 		vmerr           error
@@ -63,9 +77,15 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		contractAddrStr string
 	)
 
-	if isTransferOnly {
+	if isTransferOnly || isTransferNote {
 		caller := msg.From()
-		receiver := common.BytesToAddress(msg.Para())
+		var receiver common.Address
+		if isTransferNote { //payload 数据作为备注信息，evm 不执行
+			receiver = common.BytesToAddress(msg.To().Bytes())
+		} else {
+			receiver = common.BytesToAddress(msg.Para())
+		}
+
 		if !evm.mStateDB.CanTransfer(caller.String(), msg.Value()) {
 			log.Error("innerExec", "Not enough balance to be transferred from", caller.String(), "amout", msg.Value())
 			return nil, types.ErrNoBalance
@@ -78,13 +98,13 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
-		if types.IsEthSignID(int32(sigType)) {
+		if types.IsEthSignID(sigType) {
 			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
 			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
+
 		} else {
 			contractAddr = evm.createContractAddress(msg.From(), txHash)
 		}
-
 		contractAddrStr = contractAddr.String()
 		if !env.StateDB.Empty(contractAddrStr) {
 			return receipt, model.ErrContractAddressCollision
@@ -94,22 +114,18 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	} else {
 		contractAddr = *msg.To()
 		contractAddrStr = contractAddr.String()
-		if !env.StateDB.Exist(contractAddrStr) {
-			log.Error("innerExec", "Contract not exist for address", contractAddrStr)
-			return receipt, model.ErrContractNotExist
-		}
-		log.Info("innerExec", "Contract exist for address", contractAddrStr)
 	}
 
+	//	evm
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
-
 	if isCreate {
-
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
 		log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
+		//设置eth 签名交易标签，如果msg.Value 不为0，则在evm 合约执行中从精度1e8转换为1e18
+		env.SetEthTxFlag(types.IsEthSignID(sigType))
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), callPara, context.GasLimit, msg.Value())
 	}
 	// 打印合约中生成的日志
@@ -120,7 +136,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	if isCreate {
 		logMsg = "create contract details:"
 	}
-	log.Debug(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "return data", common.Bytes2Hex(ret))
+	log.Info(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "leftOverGas:", leftOverGas)
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
 		var visiableOut []byte
@@ -132,9 +148,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			visiableOut = append(visiableOut, ret[i])
 		}
 		ret = visiableOut
-		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), string(ret))
-		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
-
+		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), common.Bytes2Hex(ret))
+		log.Error("innerExec evm contract exec error", "error info", vmerr)
 		return receipt, vmerr
 	}
 
@@ -156,15 +171,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	// 从状态机中获取数据变更和变更日志
 	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}
-	//// 这里进行ABI调用结果格式化
-	//if len(methodName) > 0 && len(msg.Para()) > 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
-	//	jsonRet, err := abi.Unpack(ret, methodName, evm.mStateDB.GetAbi(msg.To().String()))
-	//	if err != nil {
-	//		// 这里出错不影响整体执行，只打印错误信息
-	//		log.Error("unpack evm return error", "error", err)
-	//	}
-	//	contractReceipt.JsonRet = jsonRet
-	//}
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddrStr)...)
 
@@ -177,7 +183,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	}
 
 	receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
-
 	// 返回之前，把本次交易在区块中生成的合约日志集中打印出来
 	if evm.mStateDB != nil {
 		evm.mStateDB.WritePreimages(evm.GetHeight())
@@ -192,7 +197,52 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
 			"created contract address", contractAddrStr)
 	}
+
 	return receipt, nil
+}
+
+//intrinsicGas 计算固定gas消费
+func intrinsicGas(msg *common.Message, isContractCreation bool, isEIP2028 bool) (uint64, error) {
+	var data []byte
+	if isContractCreation {
+		data = msg.Data()
+	} else {
+		data = msg.Para()
+	}
+	// Set the starting gas for the raw transaction
+	var gas uint64
+	if isContractCreation {
+		gas = params.TxGasContractCreation
+	} else {
+		gas = params.TxGas
+	}
+	// Bump the required gas by the amount of transactional data
+	if len(data) > 0 {
+		// Zero and non-zero bytes are priced differently
+		var nz uint64
+		for _, byt := range data {
+			if byt != 0 {
+				nz++
+			}
+		}
+		// Make sure we don't exceed uint64 for all data combinations
+		nonZeroGas := params.TxDataNonZeroGasFrontier
+		if isEIP2028 {
+			nonZeroGas = params.TxDataNonZeroGasEIP2028
+		}
+		if (math.MaxUint64-gas)/nonZeroGas < nz {
+			return 0, model.ErrGasUintOverflow
+		}
+		gas += nz * nonZeroGas
+
+		z := uint64(len(data)) - nz
+		if (math.MaxUint64-gas)/params.TxDataZeroGas < z {
+			return 0, model.ErrGasUintOverflow
+		}
+		gas += z * params.TxDataZeroGas
+	}
+
+	return gas, nil
 }
 
 // CheckInit 检查是否初始化数据库
@@ -229,7 +279,8 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 		from = *fromPtr
 	}
 
-	to := getReceiver(&action)
+	mixAddressFork := evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMMixAddress)
+	to := getReceiver(&action, mixAddressFork)
 	if to == nil {
 		return msg, types.ErrInvalidAddress
 	}
@@ -315,9 +366,12 @@ func getCaller(tx *types.Transaction) common.Address {
 }
 
 // 从交易信息中获取交易目标地址，在创建合约交易中，此地址为空
-func getReceiver(action *evmtypes.EVMContractAction) *common.Address {
+func getReceiver(action *evmtypes.EVMContractAction, mixAddressFork bool) *common.Address {
 	if action.ContractAddr == "" {
 		return nil
 	}
-	return common.StringToAddress(action.ContractAddr)
+	if mixAddressFork {
+		return common.StringToAddress(action.ContractAddr)
+	}
+	return common.StringToAddressLegacy(action.ContractAddr)
 }

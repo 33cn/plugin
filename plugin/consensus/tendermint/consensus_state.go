@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
+	siasync "github.com/NebulousLabs/Sia/sync"
 )
 
 //-----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ type ConsensusState struct {
 	blockExec *BlockExecutor
 
 	// internal state
-	mtx sync.Mutex
+	mtx siasync.TryMutex
 	ttypes.RoundState
 	state State // State until height-1.
 
@@ -144,6 +144,20 @@ func (cs *ConsensusState) IsRunning() bool {
 }
 
 //----------------------------------------
+
+// QueryRoundState returns a copy of the internal consensus state.
+func (cs *ConsensusState) QueryRoundState() *ttypes.RoundState {
+	if cs == nil {
+		return nil
+	}
+	if !cs.mtx.TryLockTimed(time.Millisecond * 500) {
+		return nil
+	}
+	defer cs.mtx.Unlock()
+
+	rs := cs.RoundState
+	return &rs
+}
 
 // GetState returns a copy of the chain state.
 func (cs *ConsensusState) GetState() State {

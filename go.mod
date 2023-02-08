@@ -5,12 +5,13 @@ go 1.16
 replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20230112114353-4923f2a93591
 
 require (
-	github.com/33cn/chain33 v1.67.4-0.20220722090050-f04f8bab7f42
+	github.com/33cn/chain33 v1.67.6-0.20230202063800-bec7bd8482fe
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
 	github.com/NebulousLabs/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
 	github.com/NebulousLabs/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
+	github.com/OneOfOne/xxhash v1.2.5 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta

@@ -144,7 +144,7 @@ mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
 #不可为0，主链Local时候需特殊配置
 mainLoopCheckCommitTxDoneForkHeight=4320000
-#无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
+#无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，格式[blockHeight:interval],比如["0:50","1000:100"],blockHeight为平行链高度
 emptyBlockInterval=["0:50"]
 
 #平行链共识节点聚合签名配置
@@ -188,6 +188,8 @@ enableMemVal=true
 tkCloseCacheLen=100000
 # 该参数针对平行链，如果平行链的ForkKvmvccmavl高度不为0,需要开启此功能,开启此功能需要从0开始执行区块
 enableEmptyBlockHandle=false
+# 保存区块相关数据时，同时保存kv
+enableSaveBlockKVs=true
 
 [wallet]
 minFee=100000
@@ -216,6 +218,10 @@ tokenApprs=[]
 [exec.sub.paracross]
 #平行链自共识停止n个空块的对应主链高度后，超级账户可以直接参与投票,这个高度只在主链有效
 paraConsensusStopBlocks=30000
+#是否关闭自共识,缺省开启自共识校验
+closeSelfConsensus=false
+#平行链在构建区块时候配置丢弃tx list
+discardTxs=[""]
 
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
@@ -241,7 +247,18 @@ mixApprs=[]
 
 [exec.sub.zksync]
 #管理员列表
-managers=[]
+manager=[
+    "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
+    "0x991fb09dc31a44b3177673f330c582ac2ea168e0"
+]
+#运营方配置收交易费地址,要求16进制
+#可把二层交易费提取到ETH的地址,注意:真实场景需替换
+ethFeeAddr="0x832367164346888E248bd58b9A5f480299F1e88d"
+#二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址,真实场景需替换
+layer2FeeAddr="2930ef48b2d018955359a77fe58a68be0c536480c57ee5a84f6c96e3ff4fa7dc"
+
+
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -337,6 +354,8 @@ ForkParaRootHash=0
 ForkParaAutonomySuperGroup=-1
 #平行链支持自由注册，主链上申请者或超级管理员或社区任其一即可注册，平行链默认开启
 ForkParaFreeRegister=0
+#主链paracross合约fork后执行自己的checkTx检查，代替drivebase的检查
+ForkParaCheckTx=0
 
 [fork.sub.evm]
 Enable=0
@@ -346,6 +365,8 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+# EVM兼容base58及16进制地址混合调用处理
+ForkEVMMixAddress=0
 
 [fork.sub.blackwhite]
 Enable=0

@@ -26,7 +26,7 @@ import (
 var (
 	// 地址驱动, 适配chain33和evm间的地址格式差异
 	evmAddressDriver address.Driver
-	once             sync.Once
+	lock             sync.RWMutex
 )
 
 // 设置默认值, btc地址格式
@@ -34,15 +34,17 @@ func init() {
 	evmAddressDriver, _ = address.LoadDriver(btc.NormalAddressID, -1)
 }
 
-// InitEvmAddressType 基于配置初始化
-func InitEvmAddressTypeOnce(driver address.Driver) {
-	once.Do(func() {
-		evmAddressDriver = driver
-	})
+// InitEvmAddressDriver 初始化地址类型
+func InitEvmAddressDriver(driver address.Driver) {
+	lock.Lock()
+	defer lock.Unlock()
+	evmAddressDriver = driver
 }
 
 // GetEvmAddressDriver get driver
 func GetEvmAddressDriver() address.Driver {
+	lock.RLock()
+	defer lock.RUnlock()
 	return evmAddressDriver
 }
 
@@ -190,8 +192,9 @@ func BytesToHash160Address(b []byte) Hash160Address {
 	return h
 }
 
-// StringToAddress 字符串转换为地址
-func StringToAddress(s string) *Address {
+// StringToAddressLegacy 字符串转换为地址
+// Deprecated
+func StringToAddressLegacy(s string) *Address {
 	raw, err := evmAddressDriver.FromString(s)
 	if err != nil {
 		//检查是否是十六进制地址数据
@@ -202,6 +205,25 @@ func StringToAddress(s string) *Address {
 		}
 	}
 	a := &Address{}
+	a.SetBytes(raw)
+	return a
+}
+
+// StringToAddress try convert string to Address
+func StringToAddress(addr string) *Address {
+
+	a := &Address{}
+	// 以太坊地址类型直接解析
+	if address.IsEthAddress(addr) {
+		a.SetBytes(common.HexToAddress(addr).Bytes())
+		return a
+	}
+	// 其他地址类型,尝试用框架地址驱动解析
+	raw, err := address.GetDefaultAddressDriver().FromString(addr)
+	if err != nil {
+		log15.Error("decode address from string error", "addr:", addr)
+		return nil
+	}
 	a.SetBytes(raw)
 	return a
 }

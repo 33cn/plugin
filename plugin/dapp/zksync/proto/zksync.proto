@@ -1,66 +1,87 @@
 syntax = "proto3";
 import "witness.proto";
 import "common.proto";
+import "transaction.proto";
 
 package types;
-option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
+option go_package = "../types";
 
 message ZksyncAction {
   oneof value {
-    ZkDeposit  deposit = 1;
-    ZkWithdraw withdraw = 2;
-    ZkContractToTree contractToTree = 3;
-    ZkTreeToContract treeToContract = 4;
-    ZkTransfer transfer = 5;
-    ZkTransferToNew transferToNew = 6;
-    ZkForceExit forceExit = 7;
-    ZkSetPubKey setPubKey = 8;
-    ZkFullExit  fullExit = 9;
-    ZkSwap  swap = 10;
-    ZkVerifyKey         setVerifyKey = 11;
-    ZkCommitProof         commitProof  = 12;
-    ZkVerifier  setVerifier = 13;
-    ZkSetFee    setFee = 14;
+    ZkDeposit  deposit          = 1;
+    ZkWithdraw zkWithdraw         = 2;
+    ZkTransfer zkTransfer           = 3;
+    ZkTransferToNew transferToNew = 4;
+    ZkProxyExit proxyExit         = 5;
+    ZkSetPubKey setPubKey         = 6;
+    ZkFullExit  fullExit          = 7;
+    ZkSwap  swap                  = 8;
+    ZkContractToTree contractToTree = 9;
+    ZkTreeToContract treeToContract = 10;
+
+    ZkMintNFT     mintNFT       = 12;
+    ZkWithdrawNFT withdrawNFT   = 13;
+    ZkTransferNFT transferNFT   = 14;
+
+    ZkVerifyKey         setVerifyKey = 31;
+    ZkCommitProof       commitProof  = 32;
+    ZkVerifier          setVerifier  = 33;
+    ZkSetFee            setFee       = 34;
+    ZkTokenSymbol       setTokenSymbol = 35;
+    ZkExodusMode        setExodusMode  = 36;
+
+    types.AssetsTransfer        transfer        = 40;
+    types.AssetsWithdraw        withdraw        = 41;
+    types.AssetsTransferToExec  transferToExec  = 42;
   }
 
   int32 ty = 15;
 }
 
+message ZkTokenSymbol {
+  string id = 1;
+  string symbol = 2;
+  uint32 decimal = 3;
+}
 
 //某个token的余额
 message TokenBalance {
   uint64 tokenId = 1;
   string balance = 2;
+  bytes tokenHash = 3;
 }
 
 message AccountTree {
   uint64 index = 1;//当前的叶子索引
   uint64 totalIndex = 2;  //总计叶子索引
   uint64 maxCurrentIndex = 3;  //当前索引最大值，超过最大值会进行归档
-  repeated SubTree subTrees = 8; //当前未归档的子树
+  repeated SubTree subTrees = 4; //当前未归档的子树
 }
 
 message Leaf {
-  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
-  string ethAddress = 5; //账户对应的以太坊地址
-  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
-  string chain33Addr = 7; //chain33地址
-  string tokenHash = 8; //叶子下token的hash
-  repeated uint64 tokenIds = 9; //叶子下拥有的tokenId
+  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
+  string ethAddress = 2; //账户对应的以太坊地址
+  ZkPubKey pubKey = 3; //eddsa公钥，用于验证身份
+  string chain33Addr = 4; //chain33地址
+  bytes tokenHash = 5; //叶子下token的hash
+  repeated uint64 tokenIds = 6; //叶子下拥有的tokenId
+  AccountProxyPubKeys proxyPubKeys = 7; //eddsa代理公钥，用于验证代理者的身份
+  bytes leafHash = 8;
 }
 
 message HistoryLeaf {
-  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
-  string ethAddress = 5; //账户对应的以太坊地址
-  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
-  string chain33Addr = 7; //chain33地址
-  string tokenHash = 8; //叶子下token的hash
-  repeated TokenBalance tokens = 9; //叶子下拥有的token
-  uint64 proofId = 10; //账户状态所在的proofId
+  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
+  string ethAddress = 2; //账户对应的以太坊地址
+  ZkPubKey pubKey = 3; //eddsa公钥，用于验证身份
+  string chain33Addr = 4; //chain33地址
+  string tokenHash = 5; //叶子下token的hash
+  repeated TokenBalance tokens = 6; //叶子下拥有的token
+  uint64 proofId = 7; //账户状态所在的proofId
+  AccountProxyPubKeys proxyPubKeys = 8; //eddsa代理公钥，用于验证代理者的身份
 }
 
 message RootInfo {
-  string rootHash = 1; //归档Merkle Tree的根hash
+  bytes rootHash = 1; //归档Merkle Tree的根hash
   int32 height = 2; //归档的高度
   uint64 startIndex = 3; //开始的全局index
 }
@@ -70,18 +91,15 @@ message SubTree {
   bytes rootHash = 2; //子树的根hash
 }
 
-message MerkleTreeProof {
-  string rootHash = 1;
-  repeated string proofSet = 2;
-  repeated string helpers = 3;
-}
+
+
 
 message ZkDeposit {
   uint64 tokenId = 1;
   string amount = 2;
   string ethAddress = 3;
   string chain33Addr = 4;
-  int64 ethPriorityQueueId = 5; //需要在合约保证id连续
+  int64  l1PriorityId = 5; //需要在合约保证id连续
   ZkSignature signature = 6;
 
 }
@@ -93,18 +111,25 @@ message ZkWithdraw {
   ZkSignature signature = 4;
 }
 
+//从chain33合约提款到二层
 message ZkContractToTree {
-  uint64 tokenId = 1;
+  string tokenSymbol = 1;
   string amount = 2;
-  uint64 accountId = 3;
+  uint64 toAccountId = 3;
+  string toEthAddr = 4;
+  string toLayer2Addr = 5;
   ZkSignature signature = 6;
+  string fromExec = 7;
 }
 
+//从二层铸造到chain33合约
 message ZkTreeToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  ZkSignature signature = 4;
+  uint64 toAcctId = 4;  //缺省的systemTree2ContractId， 这里设置是为了签名需要和电路验证，也防止重放
+  ZkSignature signature = 5;
+  string toExec = 6;
 }
 
 message ZkTransfer {
@@ -120,7 +145,7 @@ message ZkTransferToNew {
   string amount = 2;
   uint64 fromAccountId = 3;
   string toEthAddress = 4;
-  string toChain33Address = 5;
+  string toLayer2Address = 5;
   ZkSignature signature = 6;
 }
 
@@ -130,10 +155,19 @@ message ZkForceExit {
   ZkSignature signature = 3;
 }
 
+message ZkProxyExit {
+  uint64 tokenId = 1;
+  uint64 proxyId = 2; //代理id，扣手续费
+  uint64 targetId = 3; //目标id
+  ZkSignature signature = 4;
+  ZkFee fee    = 5;
+}
+
 message ZkSetPubKey {
   uint64 accountId = 1;
   ZkPubKey  pubKey = 2;
-  ZkSignature signature = 3;
+  uint64    pubKeyTy = 3;
+  ZkSignature signature = 4;
 }
 
 message ZkFullExit {
@@ -147,6 +181,44 @@ message ZkSwap {
   ZkSignature signature = 1;
 }
 
+
+message ZkMintNFT {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  string contentHash = 3;
+  uint64 ercProtocol = 4;
+  uint64 amount      = 5;
+  ZkSignature signature = 6;
+}
+
+message ZkWithdrawNFT {
+  uint64 fromAccountId = 1;
+  uint64 NFTTokenId = 2;
+  uint64 amount     = 3;
+
+  ZkSignature signature = 5;
+}
+
+message ZkTransferNFT {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  uint64 NFTTokenId = 3;
+  uint64 amount     = 4;
+
+  ZkSignature signature = 6;
+}
+
+message ZkNFTTokenStatus {
+  uint64 Id = 1;
+  uint64 creatorId = 2;
+  string creatorEthAddr = 3;
+  uint64 creatorSerialId = 4;
+  uint64 ercProtocol = 5;
+  uint64 mintAmount = 6;
+  string contentHash = 7;
+  uint64 burnedAmount = 8; //是否提取到了L1
+}
+
 //电路验证key
 message ZkVerifyKey {
   string key = 1;
@@ -155,6 +227,11 @@ message ZkVerifyKey {
 message ReceiptSetVerifyKey {
   ZkVerifyKey prev = 1;
   ZkVerifyKey current = 2;
+}
+
+message ZkFeeAddrs {
+  string ethFeeAddr   = 1;
+  string l2FeeAddr    = 2;
 }
 
 //commit proof tx data
@@ -171,9 +248,14 @@ message ZkCommitProof {
   string proof       = 9;
   //all tx pub datas
   repeated string pubDatas = 10;
-  repeated string priorityPubDatas = 11;
+  repeated string onChainPubDatas = 11;
 
   uint64 proofId = 12;
+  //包含onChainPubdata的proof排序
+  uint64 onChainProofId = 13;
+  //commit时候的blockHeight,localdb会填充
+  int64  commitBlockHeight = 14;
+
 }
 
 //commit proof stat, pubdata保存到localdb
@@ -190,11 +272,26 @@ message CommitProofState {
   string proof       = 9;
 
   uint64 proofId = 10;
+  uint64 onChainProofId = 11;
+  //commit时候的blockHeight
+  int64  commitBlockHeight = 12;
+  //all tx pub datas, record proof 的验证需要用到
+  repeated string pubDatas = 14;
+
 }
 
 message ReceiptCommitProof {
   CommitProofState prev = 1;
   CommitProofState current = 2;
+}
+
+message ReceiptCommitProofRecord {
+  CommitProofState proof = 1;
+}
+
+message QueryProofInfo {
+  ZkCommitProof proof = 1;
+  ProofId2QueueIdData queues = 2;
 }
 
 //电路验证者名单
@@ -227,13 +324,7 @@ message RelayerOperators {
   repeated string operators   = 1;
 }
 
-// leaf merkle proof票据日志
-message ZkReceiptLeaf {
-  Leaf leaf = 1;
-  TokenBalance token = 2;
-  MerkleTreeProof treeProof = 3;
-  MerkleTreeProof tokenProof = 4;
-}
+
 
 message ZkQueryReq {
   uint64 accountId = 1;
@@ -246,6 +337,8 @@ message ZkQueryReq {
   uint64 tokenId = 8;
   string txHash = 9;
   uint64 proofId = 10;
+  uint32 opType = 11;
+  uint32 decimal = 12; //是否以decimal show
 }
 
 message ZkQueryResp {
@@ -271,26 +364,167 @@ message ZkQueryProofResp {
   repeated OperationInfo operationInfos = 1;
 }
 
-message ZkOperation {
-
-  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
-  uint64 tokenId = 2;
-  string amount = 3;
-  string ethAddress = 5; //账户对应的以太坊地址
-  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
-  string chain33Addr = 7; //chain33地址
-  uint64 toAccountId = 4;
-
-  int32 ty = 8;
+//query committed proof info
+message ZkFetchProofList {
+  uint64 proofId = 1;
+  uint64 onChainProofId = 2;
+  bool reqOnChainProof = 3; //
+  bool reqLatestProof = 4; //请求截止高度之前的最新的proof，适用于获取最新proof场景
+  uint64 endHeight = 5; //截止高度
 }
 
-message EthPriorityQueueID {
-  string ID = 1;
+//NFT content hash切分成两部分
+message ZkContentHash {
+  string part1 = 1;
+  string part2 = 2;
 }
 
-message ReceiptEthPriorityQueueID {
+message ZkOpNFTData {
+  uint64 tokenId = 1;
+  uint64 creatorId = 2;  //for withdraw NFT
+  uint64 creatorSerialId = 3; //for withdraw NFT
+  uint64 ercProtocol = 4;
+  string mintAmount = 5;
+  string amount = 6;
+  ZkContentHash content = 7;
+}
+
+//swapData: from maker pov
+message ZkOpSwapData {
+  uint64 tokenId = 1;
+  string amount  = 2;
+  string fee     = 3;
+}
+
+message ZkOpFeeData {
+  uint64 tokenId = 1;
+  string fee     = 2;
+}
+
+message ZkSetPubKeyData {
+   uint64 ty = 1; //set type, self or proxy
+   ZkPubKey pubKey = 7; //eddsa公钥，用于验证身份
+}
+
+message L1PriorityID {
+  string ID = 1; //需要为string，不能为int64,因为db不支持ID=0的时候
+}
+
+message ReceiptL1PriorityID {
   int64 prev = 1;
   int64 current = 2;
+}
+
+message MerkleTreeProof {
+  string rootHash = 1;
+  repeated string proofSet = 2;
+  repeated string helpers = 3;
+}
+// leaf merkle proof票据日志
+message ZkReceiptLeaf {
+  Leaf leaf = 1;
+  TokenBalance token = 2;
+  MerkleTreeProof treeProof = 3;
+  MerkleTreeProof tokenProof = 4;
+}
+
+message ZkAcctRollbackInfo{
+  uint64 accountId = 1;
+  uint64 tokenId   = 2;
+  string balance   = 3;
+  string needRollback = 4;
+  string gap = 5; //gap=needRollback-balance
+}
+
+message ZkExodusRollbackModeParm {
+  uint64 lastSuccessProofId = 1; //在回滚模式时候，设置此在l1上最后success的proofId，系统根据此Id对应queueId回滚一些deposit,withdraw操作
+  //回滚lastSuccessProofId后的所有deposit的策略
+  //1. 如果某deposit已经转走交易，余额不够无法rollback扣减,则尝试从交易所交易费垫付扣除，保证L2和L1此token资产总额相等
+  //2. 如果交易所的交易费也不够扣减，则扣光后统计差额，差额需要管理员在L1存款补充被忽略掉的deposit资产金额，不然会导致最后从L1逃生舱执行不成功
+  uint32  knownBalanceGap = 2; //是否已知晓差额统计的错误报告，缺省不忽略，如果不需要L1补充，则直接rollback成功，若需要L1补充，知晓差额后，设置为1完成回滚
+}
+
+
+message ZkExodusMode {
+  uint32 mode = 1;
+  oneof value {
+    ZkExodusRollbackModeParm rollback = 2;
+  }
+
+}
+
+message ReceiptExodusMode {
+  int64 prev = 1;
+  int64 current = 2;
+}
+
+message ReceiptSetTokenSymbol {
+  ZkTokenSymbol pre = 1;
+  ZkTokenSymbol cur = 2;
+}
+
+
+message LastOnChainProof {
+  uint64 proofId = 1;
+  uint64 onChainProofId = 2;
+}
+
+message HistoryAccountProofInfo {
+  string   rootHash = 1;
+  repeated HistoryLeaf leaves = 2;
+  repeated bytes leafHashes = 3;
+}
+
+message ZkReqExistenceProof{
+  uint64 accountId = 1;
+  uint64 tokenId   = 2;
+  string rootHash  = 3;
+}
+
+message ZkQueryTxOperationReq {
+  uint64 startBlockHeight = 1; //起始高度
+  uint64 startIndex = 2; //块中交易的序号
+  uint32 opIndex = 3; //交易操作快照片序号：目前是0，1。
+  uint32 count = 4;//获取交易操作数量：默认值是：100000 = types.MaxTxsPerBlock
+  uint32 blockOffset = 5;//高度偏移：以块高度为偏移单位，计算错误时，最多是固定块的交易证明错误。块中的交易不变，proof数量不变，即proofID也不变。
+  uint32 maturity = 6;//成熟度：最新高度-成熟度 = endBlockHeigh
+}
+
+message ZkExodusBatchProofReq {
+  uint64 startAccountId  = 1;
+  uint64 endAccountId = 2;
+  uint64 tokenId = 3;
+  string rootHash = 4;
+}
+
+//记录L2 的所有operation 到queue，以和proof校验
+message ReceiptL2LastQueueID {
+  int64 prev = 1;
+  int64 current = 2;
+}
+message ReceiptL2FirstQueueID {
+  int64 prev = 1;
+  int64 current = 2;
+}
+
+message ReceiptL2QueueIDData {
+  int64 id = 1;
+  ZkOperation op = 2;
+}
+
+message ProofId2QueueIdData{
+  uint64 proofId = 1;
+  int64 firstQueueId = 2;
+  int64 lastQueueId = 3;
+}
+
+message ReceiptProofId2QueueIDData {
+  ProofId2QueueIdData data = 1;
+}
+
+message Priority2QueueId {
+  int64 priorityId = 1;
+  int64 queueId = 2;
 }
 
 service zksync{}

@@ -1,5 +1,29 @@
 changelog
 
+<a name="1.67.6"></a>
+## [1.67.6](https://github.com/33cn/plugin/compare/v1.67.5...v1.67.6) (2023-01-31)
+
+
+### Bug Fixes
+
+* add return for get evm tx recevier ([533f35a](https://github.com/33cn/plugin/commit/533f35a))
+
+<a name="1.67.5"></a>
+## [1.67.5](https://github.com/33cn/plugin/compare/v1.67.4...v1.67.5) (2023-01-16)
+
+
+### Bug Fixes
+
+* add evm mix address fork ([7fecaf4](https://github.com/33cn/plugin/commit/7fecaf4))
+
+<a name="1.67.4"></a>
+## [1.67.4](https://github.com/33cn/plugin/compare/v1.67.3...v1.67.4) (2022-10-11)
+
+
+### Bug Fixes
+
+* update chain33 patch version ([385028c](https://github.com/33cn/plugin/commit/385028c))
+
 <a name="1.67.3"></a>
 ## [1.67.3](https://github.com/33cn/plugin/compare/v1.67.2...v1.67.3) (2022-05-27)
 

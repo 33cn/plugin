@@ -64,6 +64,15 @@ func (c *Paracross) GetDriverName() string {
 	return pt.ParaX
 }
 
+// CheckTx ...
+func (c *Paracross) CheckTx(tx *types.Transaction, index int) error {
+	//fork之后不对tx的tx.exec==tx.to做限制，支持transfer2Exec的场景
+	if c.GetAPI().GetConfig().IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkParaCheckTx) {
+		return nil
+	}
+	return c.DriverBase.CheckTx(tx, index)
+}
+
 func (c *Paracross) checkTxGroup(tx *types.Transaction, index int) ([]*types.Transaction, error) {
 	if tx.GroupCount >= 2 {
 		txs, err := c.GetTxGroup(index)

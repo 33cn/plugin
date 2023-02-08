@@ -788,17 +788,21 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 
 	//parallel chain not need to process cross commit tx here
 	if cfg.IsPara() {
-		//平行链自共识校验
-		selfBlockHash, err := getBlockHash(a.api, nodeStatus.Height)
-		if err != nil {
-			clog.Error("paracross.CommitDone getBlockHash", "err", err, "commit tx height", nodeStatus.Height, "tx", common.ToHex(a.txhash))
-			return nil, err
-		}
-		//说明本节点blockhash和共识hash不一致，需要停止本节点执行
-		if !bytes.Equal(selfBlockHash.Hash, nodeStatus.BlockHash) {
-			clog.Error("paracross.CommitDone mosthash not match", "height", nodeStatus.Height,
-				"blockHash", common.ToHex(selfBlockHash.Hash), "mosthash", common.ToHex(nodeStatus.BlockHash))
-			return nil, types.ErrConsensusHashErr
+		confPara := types.ConfSub(cfg, pt.ParaX)
+		//如果关掉则不进行自共识
+		if !confPara.IsEnable("closeSelfConsensus") {
+			//平行链自共识校验
+			selfBlockHash, err := getBlockHash(a.api, nodeStatus.Height)
+			if err != nil {
+				clog.Error("paracross.CommitDone getBlockHash", "err", err, "commit tx height", nodeStatus.Height, "tx", common.ToHex(a.txhash))
+				return nil, err
+			}
+			//说明本节点blockhash和共识hash不一致，需要停止本节点执行
+			if !bytes.Equal(selfBlockHash.Hash, nodeStatus.BlockHash) {
+				clog.Error("paracross.CommitDone mosthash not match", "height", nodeStatus.Height,
+					"blockHash", common.ToHex(selfBlockHash.Hash), "mosthash", common.ToHex(nodeStatus.BlockHash))
+				return nil, types.ErrConsensusHashErr
+			}
 		}
 
 		//平行连进行奖励分配

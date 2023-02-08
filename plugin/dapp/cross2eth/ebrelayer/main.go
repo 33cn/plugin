@@ -85,17 +85,17 @@ func main() {
 
 	ethRelayerCnt := len(cfg.EthRelayerCfg)
 	chain33MsgChan2Eths := make(map[string]chan<- *events.Chain33Msg)
-	ethBridgeClaimChan := make(chan *ebrelayerTypes.EthBridgeClaim, 100)
-	txRelayAckChan2Chain33 := make(chan *ebrelayerTypes.TxRelayAck, 100)
+	ethBridgeClaimChan := make(chan *ebrelayerTypes.EthBridgeClaim, 1000)
+	txRelayAckChan2Chain33 := make(chan *ebrelayerTypes.TxRelayAck, 1000)
 	txRelayAckChan2Eth := make(map[string]chan<- *ebrelayerTypes.TxRelayAck)
 
 	//启动多个以太坊系中继器
 	ethRelayerServices := make(map[string]*ethRelayer.Relayer4Ethereum)
 	for i := 0; i < ethRelayerCnt; i++ {
-		chain33MsgChan := make(chan *events.Chain33Msg, 100)
+		chain33MsgChan := make(chan *events.Chain33Msg, 1000)
 		chain33MsgChan2Eths[cfg.EthRelayerCfg[i].EthChainName] = chain33MsgChan
 
-		txRelayAckRecvChan := make(chan *ebrelayerTypes.TxRelayAck, 100)
+		txRelayAckRecvChan := make(chan *ebrelayerTypes.TxRelayAck, 1000)
 		txRelayAckChan2Eth[cfg.EthRelayerCfg[i].EthChainName] = txRelayAckRecvChan
 
 		ethStartPara := &ethRelayer.EthereumStartPara{

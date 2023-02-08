@@ -599,6 +599,26 @@ function para_cross_transfer_from_parachain() {
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     check_cross_transfer_game_balance "100.0000" "50.0000" "${hash}"
+
+    echo "========== #5. transfer main asset exec=paracross symbol=user.p.game.coins.para to trade ======"
+    hash=$(${CLI}  send  para transfer_exec -a 8 -e trade -s user.p.game.coins.para -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    balance=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e trade | jq -r ".balance")
+    if [ "${balance}" != 8.0000 ];then
+      echo "asset balance in trade=$balance"
+      exit 1
+    fi
+        echo "========== #6. withdraw main asset exec=paracross symbol=user.p.game.coins.para from trade ======"
+    hash=$(${CLI}  send  para withdraw -a 7 -e trade -s user.p.game.coins.para -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    balance=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e trade | jq -r ".balance")
+    if [ "${balance}" != 1.0000 ];then
+      echo "asset balance in trade=$balance"
+      exit 1
+    fi
+
 }
 
 function check_cross_transfer_para_balance() {

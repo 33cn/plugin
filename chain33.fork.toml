@@ -25,7 +25,6 @@ ForkTicketFundAddrV1=3350000
 ForkRootHash=4500000
 #地址key格式化, 主要针对eth地址
 ForkFormatAddressKey=0
-
 [fork.sub.none]
 ForkUseTimeDelay=0
 
@@ -78,6 +77,8 @@ ForkEVMFrozen=1300000
 ForkEVMYoloV1=9500000
 # EVM合约支持交易组
 ForkEVMTxGroup=0
+# EVM兼容base58及16进制地址混合调用处理
+ForkEVMMixAddress=0
 
 [fork.sub.evmxgo]
 Enable=0
