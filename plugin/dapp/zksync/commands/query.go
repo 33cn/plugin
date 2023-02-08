@@ -255,6 +255,7 @@ func queryL2QueueCmd() *cobra.Command {
 	cmd.AddCommand(getL2LastQueueIdCmd())
 	cmd.AddCommand(getL2BatchQueueInfoCmd())
 	cmd.AddCommand(getL2ExodusModeCmd())
+	cmd.AddCommand(getL2TotalDepositCmd())
 
 	return cmd
 }
@@ -539,6 +540,40 @@ func getVerifier(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.ZkVerifier
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getL2TotalDepositCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "total_deposit",
+		Short: "get l2 total deposit",
+		Run:   getL2TotalDeposit,
+	}
+	getL2TotalDepositFlag(cmd)
+	return cmd
+}
+
+func getL2TotalDepositFlag(cmd *cobra.Command) {
+	cmd.Flags().Int32P("tokenId", "t", 0, "token id")
+	_ = cmd.MarkFlagRequired("tokenId")
+}
+
+func getL2TotalDeposit(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	tokenId, _ := cmd.Flags().GetInt32("tokenId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		TokenId: uint64(tokenId),
+	}
+
+	params.FuncName = "GetTotalDeposit"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkTotalDeposit
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

@@ -528,3 +528,10 @@ message Priority2QueueId {
 }
 
 service zksync{}
+
+message ZkTotalDeposit {
+  string tokenId = 1;
+  string symbol  = 2;
+  uint32 decimal = 3;
+  string balance = 4;
+}

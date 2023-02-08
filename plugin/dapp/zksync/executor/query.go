@@ -414,3 +414,31 @@ func (z *zksync) Query_BuildHistoryAccounts(in *zt.CommitProofState) (types.Mess
 	return &resp, nil
 
 }
+
+// Query_GetTotalDeposit 根据id获取当前symbol l2 全部存款
+func (z *zksync) Query_GetTotalDeposit(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	//根据id查询symbol
+	idStr := new(big.Int).SetUint64(in.TokenId).String()
+	info, err := GetTokenByTokenId(z.GetStateDB(), idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	totalBalance := new(big.Int)
+	lastAccountID, err := getLatestAccountID(z.GetStateDB())
+	if err != nil {
+		return nil, errors.Wrapf(err, "getLatestAccountID")
+	}
+	for id := uint64(zt.SystemDefaultAcctId); id <= uint64(lastAccountID); id++ {
+		token, _ := GetTokenByAccountIdAndTokenId(z.GetStateDB(), id, in.TokenId)
+		if token != nil {
+			balance, _ := new(big.Int).SetString(token.Balance, 10)
+			totalBalance = new(big.Int).Add(totalBalance, balance)
+		}
+	}
+
+	return &zt.ZkTotalDeposit{TokenId: info.Id, Symbol: info.Symbol, Decimal: info.Decimal, Balance: totalBalance.String()}, nil
+}
