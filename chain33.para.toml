@@ -402,6 +402,9 @@ Enable=0
 [fork.sub.vote]
 Enable=0
 
+[fork.sub.rollup]
+Enable=-1
+
 [fork.sub.accountmanager]
 Enable=0
 

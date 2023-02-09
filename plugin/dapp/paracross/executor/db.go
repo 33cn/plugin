@@ -83,9 +83,9 @@ func getBlockHash(api client.QueueProtocolAPI, height int64) (*types.ReplyHash, 
 	return hash, nil
 }
 
-func getBlockByHeight(api client.QueueProtocolAPI, height int64) (*types.BlockDetail, error) {
+func getBlockByHeight(api client.QueueProtocolAPI, height int64, withDetail bool) (*types.BlockDetail, error) {
 
-	blockDetails, err := api.GetBlocks(&types.ReqBlocks{Start: height, End: height, IsDetail: true})
+	blockDetails, err := api.GetBlocks(&types.ReqBlocks{Start: height, End: height, IsDetail: withDetail})
 	if err != nil {
 		clog.Error("getBlockByHeight", "height", height, "err", err.Error())
 		return nil, err
@@ -99,7 +99,7 @@ func getBlockByHeight(api client.QueueProtocolAPI, height int64) (*types.BlockDe
 }
 
 func getBlockInfo(api client.QueueProtocolAPI, height int64) (*types.Block, error) {
-	detail, err := getBlockByHeight(api, height)
+	detail, err := getBlockByHeight(api, height, false)
 	if err != nil {
 		clog.Error("paracross.Commit getBlockInfo", "height", height, "err", err.Error())
 	}

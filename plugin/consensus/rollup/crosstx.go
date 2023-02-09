@@ -200,7 +200,7 @@ func (h *crossTxHandler) send2Mempool(mainHeight int64, txs []*types.Transaction
 		}
 		api := h.ru.base.GetAPI().(*client.QueueProtocol)
 		// 发送至mempool失败, 可能情况是该交易已经打包但未提交状态, 此时节点重启
-		_, err := api.SendTx2Mempool(tx)
+		_, err := api.Send2Mempool(tx)
 		if err != nil {
 			errTxs = append(errTxs, tx)
 			rlog.Error("send2Mempool error", "mainHeight", mainHeight,

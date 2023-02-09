@@ -168,7 +168,7 @@ func getRollupCrossTxs(api client.QueueProtocolAPI, paraTitle string, idxArr []*
 		if !ok {
 
 			// get block from blockchain
-			detail, err := getBlockByHeight(api, txIdx.BlockHeight)
+			detail, err := getBlockByHeight(api, txIdx.BlockHeight, true)
 			if err != nil {
 				return nil, nil, err
 			}
