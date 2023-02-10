@@ -93,6 +93,12 @@ func (r *RollUp) initJob() {
 		valPubs = r.getValidatorPubKeys()
 		status = r.getRollupStatus()
 	}
+	// 等待同步
+	for !r.isChainSync() {
+		rlog.Info("Init rollup wait chain sync block...")
+		time.Sleep(5 * time.Second)
+	}
+
 	r.val = &validator{}
 	r.val.init(r.cfg, valPubs, status)
 	r.nextBuildRound = status.CommitRound + 1

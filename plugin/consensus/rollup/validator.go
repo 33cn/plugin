@@ -74,6 +74,11 @@ func (v *validator) isMyCommitTurn(maxCommitInterval int64) (int64, bool) {
 		return nextCommitRound, true
 	}
 
+	// 首次提交不检查超时
+	if nextCommitRound <= 1 {
+		return -1, false
+	}
+
 	waitTime := types.Now().Unix() - v.status.Timestamp
 	// 预计超时情况, 触发由上一个提交者代理提交
 	if waitTime >= maxCommitInterval+120 && v.status.CommitAddr == v.commitAddr {

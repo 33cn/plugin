@@ -86,6 +86,18 @@ func (r *RollUp) sendP2PMsg(ty int64, data interface{}) error {
 	return nil
 }
 
+func (r *RollUp) isChainSync() bool {
+
+	reply, err := r.base.GetAPI().IsSync()
+
+	if err != nil {
+		rlog.Error("isChainSync", "err", err)
+		return false
+	}
+
+	return reply.GetIsOk()
+}
+
 func shortHash(hash []byte) string {
 	return types.CalcTxShortHash(hash)
 }
