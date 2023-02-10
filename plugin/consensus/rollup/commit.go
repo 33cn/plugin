@@ -202,7 +202,7 @@ func (r *RollUp) handleBuildBatch() {
 			continue
 		}
 
-		rlog.Debug("handleBuildBatch commit height",
+		rlog.Debug("handleBuildBatch commit height", "nextBuildRound", r.nextBuildRound,
 			"start", blockDetails[0].GetBlock().GetHeight(),
 			"end", blockDetails[len(blockDetails)-1].GetBlock().GetHeight())
 
@@ -250,14 +250,14 @@ func (r *RollUp) handleCommit() {
 
 		nextCommitRound, ok := r.val.isMyCommitTurn(r.cfg.MaxCommitInterval)
 		if !ok || nextCommitRound <= alreadyCommitRound {
-			time.Sleep(time.Second)
+			time.Sleep(2 * time.Second)
 			continue
 		}
 		commit := r.cache.getPreparedCommit(nextCommitRound, r.val.aggregateSign)
 		// cache中不存在或 验证者签名数量未达到要求, 需要继续等待
 		if commit == nil {
 			rlog.Debug("handleCommit not ready", "round", nextCommitRound)
-			time.Sleep(time.Second)
+			time.Sleep(2 * time.Second)
 			continue
 		}
 
