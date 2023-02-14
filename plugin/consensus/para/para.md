@@ -19,3 +19,19 @@
  1. 主节点切换， 老的blockhash在新的节点上找不到，平行链所有节点都找不到场景，会无限循环查找，直到切换新主节点 
  1. 系统重启，主节点切换场景
 
+# 平行链共识状态
+>通过log查看当前共识的状态
+```
+    //para is not Sync, isMiner=0
+    para commitMsg---status     module=para chainHeight=7573 sendingHeight=7570 consensHeight=7570 isSendingTx=false sync=true
+```
+1. 通过此日志可以看当前平行链是否开启共识和共识高度
+1. sync=true/false, 表明平行链节点是否跟主链同步，或者钱包是否导入等，如果是false，在这个log前面可以看到原因,比如isMiner=0
+   说明没有把共识账户导入钱包
+1. chainHeight=7573 表明当前平行链高度
+1. sendingHeight=7570 当前正在发送共识的高度
+1. consensHeight=7570 已经达成共识的高度
+1. isSendingTx=false 是否正在发送共识tx
+1. 如果都是空块的共识tx，会推迟发送，但是凑齐20个会发送一次
+
+   

@@ -1318,6 +1318,8 @@ func isInHitHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error)
 
 //命中高度
 //s: para.hit.10.100, title=user.p.para.
+//在有设置ParaCrossStatusBitMapVerLen的老版本之前，有些共识tx对应的区块没有跨链tx，分片查询很浪费时间，这里统计出来后，
+//增加到配置文件里直接忽略相应高度。采用新的BitMap版本后，主链可以根据版本号判断有没有跨链tx，没有则直接退出，不需要再去区块中检查了。
 func checkIsIgnoreHeight(heightList []string, status *pt.ParacrossNodeStatus) (bool, error) {
 	if len(heightList) <= 0 {
 		return false, nil
@@ -1380,6 +1382,8 @@ func getCrossTxsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatu
 		}
 	}
 
+	//在有设置ParaCrossStatusBitMapVerLen的老版本之前，有些共识tx对应的区块没有跨链tx，分片查询很浪费时间，这里统计出来后，
+	//增加到配置文件里直接忽略相应高度。采用新的BitMap版本后，主链可以根据版本号判断有没有跨链tx，没有则直接退出，不需要再去区块中检查了。
 	//para.hit.6.8, para.ignore.1-10, 比如高度7， 如果命中则继续处理，如果没命中，检查是否在ignore列表，如果在直接退出，否则继续处理
 	//零散的命中列表可以减少忽略高度列表的范围
 	//此平行链高度在忽略检查跨链交易列表中,则直接退出
