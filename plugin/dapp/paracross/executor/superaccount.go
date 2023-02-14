@@ -1013,15 +1013,15 @@ func (a *action) checkApproveOpNew(config *pt.ParaNodeGroupConfig, status *pt.Pa
 	return errors.Wrapf(types.ErrNotAllow, "from Addr=%s not applier=%s or manager", a.fromaddr, status.FromAddr)
 }
 
+//核查approve的条件，最新的分叉版本开启了自由注册模式，只要申请者和approve者是同一个用户即可
 func (a *action) checkApproveOp(config *pt.ParaNodeGroupConfig, status *pt.ParaNodeGroupStatus) error {
 	cfg := a.api.GetConfig()
-	//开启自由注册的检查
+	//最新版本开启自由注册的检查，只要申请者和approve者是同一个用户即可
 	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaFreeRegister) {
 		return a.checkApproveOpNew(config, status)
 	}
-	//自由注册之前的检查
+	//自由注册之前的检查，之前曾经需要atonomy投票，然后获取投票id来审查通过
 	return a.checkApproveOpOld(config)
-
 }
 
 // NodeGroupApprove super addr approve the node group apply
