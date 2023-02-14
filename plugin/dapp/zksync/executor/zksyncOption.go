@@ -138,6 +138,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			}
 			kvs = append(kvs, kvs4InitAccount...)
 
+			//第一笔存款不允许是SystemFeeAddr，简单处理
+			if payload.EthAddress == ethFeeAddr && payload.Chain33Addr == chain33FeeAddr {
+				return nil, errors.Wrapf(types.ErrInvalidParam, "first deposit with systemFeeAddr not allow")
+			}
 			//对于首次进行存款的用户，其账户ID从SystemNFTAccountId后开始进行连续分配
 			accountID = zt.SystemTree2ContractAcctId + 1
 		} else {
