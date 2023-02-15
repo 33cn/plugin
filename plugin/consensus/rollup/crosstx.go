@@ -1,7 +1,6 @@
 package rollup
 
 import (
-	"bytes"
 	"encoding/hex"
 	"sync"
 	"time"
@@ -41,15 +40,21 @@ func (h *crossTxHandler) addMainChainCrossTx(mainHeight int64, filterTxs []*type
 
 	h.pulledHeight = mainHeight
 	timestamp := types.Now().Unix()
-	for idx, tx := range filterTxs {
+	filterIdx := int32(0)
+	for _, tx := range filterTxs {
+		// 只记录跨链交易索引信息
+		if !isCrossChainTx(tx) {
+			continue
+		}
 		info := &crossTxInfo{
 			enterTimestamp: timestamp,
 			txIndex: &pt.CrossTxIndex{
 				BlockHeight: mainHeight,
-				FilterIndex: int32(idx),
+				FilterIndex: filterIdx,
 			},
 		}
 		h.txIdxCache[shortHash(tx.Hash())] = info
+		filterIdx++
 	}
 }
 
@@ -186,23 +191,20 @@ func (h *crossTxHandler) pullCrossTx() {
 
 func (h *crossTxHandler) send2Mempool(mainHeight int64, txs []*types.Transaction) {
 
-	if len(txs) == 0 {
-		return
-	}
-	var errTxs []*types.Transaction
-	for _, tx := range txs {
+	for i := 0; i < len(txs); i++ {
 
-		// 交易组情况, 只需要第一笔发送至mempool
-		if tx.GroupCount > 0 && !bytes.Equal(tx.Hash(), tx.Header) {
-			rlog.Debug("send2Mempool txgroup", "mainHeight", mainHeight,
-				"txHash", hex.EncodeToString(tx.Hash()))
-			continue
+		tx := txs[i]
+		// 交易组情况, 组装
+		if tx.GetGroupCount() > 1 {
+			gtxs := &types.Transactions{Txs: txs[i : i+int(tx.GetGroupCount())]}
+			tx = gtxs.Tx()
+			i += int(tx.GetGroupCount()) - 1
 		}
+		// 平行链发送交易有转发主链逻辑, 指定转发到mempool需要调用特定接口
 		api := h.ru.base.GetAPI().(*client.QueueProtocol)
-		// 发送至mempool失败, 可能情况是该交易已经打包但未提交状态, 此时节点重启
 		_, err := api.Send2Mempool(tx)
+		// 发送至mempool失败, 可能情况是该交易已经打包但未提交状态, 此时节点重启导致
 		if err != nil {
-			errTxs = append(errTxs, tx)
 			rlog.Error("send2Mempool error", "mainHeight", mainHeight,
 				"txHash", hex.EncodeToString(tx.Hash()), "err", err)
 		}

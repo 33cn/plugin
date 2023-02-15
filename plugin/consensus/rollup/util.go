@@ -1,7 +1,11 @@
 package rollup
 
 import (
+	"encoding/hex"
+	"strings"
 	"time"
+
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 
 	"github.com/33cn/plugin/plugin/dapp/paracross/executor"
 
@@ -106,8 +110,53 @@ func filterParaTx(cfg *types.Chain33Config, detail *types.ParaTxDetail) []*types
 	return executor.FilterTxsForPara(cfg, detail)
 }
 
-func filterParaCrossTx(txs []*types.Transaction) []*types.Transaction {
-	return executor.FilterParaCrossTxs(txs)
+// 检测是否跨链交易
+func isCrossChainTx(tx *types.Transaction) bool {
+
+	execer := string(tx.GetExecer())
+	if strings.HasSuffix(execer, pt.ParaX) && types.IsParaExecName(execer) {
+		return true
+	}
+	return false
+}
+
+// 检测为包含跨链交易的交易组
+func isCrossChainGroupTx(txs ...*types.Transaction) bool {
+
+	for _, tx := range txs {
+		if isCrossChainTx(tx) {
+			return true
+		}
+	}
+	return false
+}
+
+// 平行链交易过滤出跨链交易, 解析交易组情况
+func filterParaCrossTx(paraTxs []*types.Transaction) []*types.Transaction {
+
+	if len(paraTxs) <= 0 {
+		return nil
+	}
+	crossTxs := make([]*types.Transaction, 0, len(paraTxs))
+	for i := 0; i < len(paraTxs); i++ {
+
+		groupCount := int(paraTxs[i].GetGroupCount())
+		// 交易组情况, 如果其中包含跨链交易,将交易组所有交易添加
+		if groupCount > 1 && groupCount+i <= len(paraTxs) {
+
+			if isCrossChainGroupTx(paraTxs[i : groupCount+i]...) {
+				rlog.Info("filterParaCrossTx", "groupCount", groupCount, "group tx hash", hex.EncodeToString(paraTxs[i].Hash()))
+				crossTxs = append(crossTxs, paraTxs[i:groupCount+i]...)
+			}
+			i += groupCount - 1
+		} else if isCrossChainTx(paraTxs[i]) {
+			rlog.Info("filterParaCrossTx", "cross tx hash", hex.EncodeToString(paraTxs[i].Hash()))
+			crossTxs = append(crossTxs, paraTxs[i])
+		}
+	}
+
+	return crossTxs
+
 }
 
 func calcCrossTxCheckHash(hashList [][]byte) []byte {

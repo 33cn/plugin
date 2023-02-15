@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/system/consensus"
+
 	"github.com/33cn/chain33/rpc/grpcclient"
 	_ "github.com/33cn/chain33/system/consensus/init"
 	_ "github.com/33cn/chain33/system/dapp/init"
@@ -19,7 +23,7 @@ import (
 )
 
 func newTestHandler() *crossTxHandler {
-	ru := &RollUp{}
+	ru := &RollUp{base: &consensus.BaseClient{}}
 	h := &crossTxHandler{}
 	h.init(ru, &rtypes.RollupStatus{})
 	return h
@@ -30,11 +34,12 @@ func TestCrossTxHandler(t *testing.T) {
 	h := newTestHandler()
 
 	tx := &types.Transaction{Payload: []byte("test")}
+	tx1 := &types.Transaction{Execer: []byte("user.p.test.paracross")}
 	h.addMainChainCrossTx(2, nil)
 	require.Equal(t, 0, len(h.txIdxCache))
-	h.addMainChainCrossTx(2, []*types.Transaction{tx})
+	h.addMainChainCrossTx(2, []*types.Transaction{tx, tx, tx1})
 	require.Equal(t, 1, len(h.txIdxCache))
-	idxArr, err := h.removePackedCrossTx([][]byte{tx.Hash()})
+	idxArr, err := h.removePackedCrossTx([][]byte{tx1.Hash()})
 	require.Nil(t, err)
 	require.Equal(t, 0, len(h.txIdxCache))
 	require.Equal(t, 1, len(idxArr))
@@ -49,7 +54,7 @@ func TestCrossTxHandler(t *testing.T) {
 func TestRefreshSyncedHeight(t *testing.T) {
 
 	h := newTestHandler()
-	tx := &types.Transaction{Payload: []byte("test")}
+	tx := &types.Transaction{Execer: []byte("user.p.test.paracross")}
 	h.addMainChainCrossTx(2, []*types.Transaction{tx})
 	require.Equal(t, 1, len(h.txIdxCache))
 	info := h.txIdxCache[shortHash(tx.Hash())]
@@ -62,7 +67,7 @@ func TestRefreshSyncedHeight(t *testing.T) {
 func TestRemoveErrTx(t *testing.T) {
 
 	h := newTestHandler()
-	tx := &types.Transaction{Payload: []byte("test")}
+	tx := &types.Transaction{Execer: []byte("user.p.test.paracross")}
 	h.addMainChainCrossTx(2, []*types.Transaction{tx})
 	require.Equal(t, 1, len(h.txIdxCache))
 
@@ -105,4 +110,38 @@ func TestPullCrossTx(t *testing.T) {
 		}
 		time.Sleep(time.Millisecond)
 	}
+}
+
+func Test_send2Mempool(t *testing.T) {
+
+	h := newTestHandler()
+
+	q := queue.New("test")
+	defer q.Close()
+	api, _ := client.New(q.Client(), nil)
+	h.ru.base.SetAPI(api)
+	var expectTxs []*types.Transaction
+	go func() {
+		cli := q.Client()
+		cli.Sub("mempool")
+		count := 0
+		for msg := range cli.Recv() {
+			tx, ok := msg.GetData().(*types.Transaction)
+			require.True(t, ok)
+			require.Equal(t, expectTxs[count].Header, tx.Header)
+			require.Equal(t, expectTxs[count].Hash(), tx.Hash())
+			count++
+			msg.Reply(&queue.Message{})
+		}
+	}()
+
+	tx1 := &types.Transaction{Execer: []byte("user.p.test.coins"), Payload: []byte("test-tx1")}
+	tx2 := &types.Transaction{Execer: []byte("user.p.test.paracross"), Payload: []byte("test-tx2")}
+	tx3 := &types.Transaction{Execer: []byte("user.p.test.paracross")}
+
+	txs, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, 100)
+	require.Nil(t, err)
+
+	expectTxs = []*types.Transaction{txs.Tx(), tx3}
+	h.send2Mempool(0, []*types.Transaction{tx1, tx2, tx3})
 }
