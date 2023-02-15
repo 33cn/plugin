@@ -38,8 +38,12 @@ func GetRoundInfo(kv db.KV, title string, round int64) (*rolluptypes.CommitRound
 	return info, err
 }
 
-func calcBlockHash(header *types.Header) string {
-	return common.ToHex(common.Sha256(types.Encode(header)))
+func sha256Hash(h *types.Header) []byte{
+	return common.Sha256(types.Encode(h))
+}
+
+func calcBlockHash(h *types.Header) string {
+	return common.ToHex(sha256Hash(h))
 }
 
 // 基于平行链质押逻辑

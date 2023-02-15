@@ -65,6 +65,7 @@ message CommitRoundInfo {
     int32  commitTxCount    = 4;
     string crossTxCheckHash = 5;
     string crossTxResults   = 6;
+    string blockRootHash    = 7;
 }
 
 message ReqGetCommitRound {

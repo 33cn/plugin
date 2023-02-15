@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/merkle"
 
 	"github.com/33cn/chain33/types"
 	rolluptypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
@@ -33,6 +34,13 @@ func (r *rollup) Exec_Commit(cp *rolluptypes.CheckPoint, tx *types.Transaction, 
 		CrossTxCheckHash: common.ToHex(cp.GetBatch().GetCrossTxCheckHash()),
 		CrossTxResults:   common.ToHex(cp.GetBatch().GetCrossTxResults()),
 	}
+
+	blkHashes := make([][]byte, len(headers))
+	for i, h := range headers {
+		roundInfo.CommitTxCount += int32(h.TxCount)
+		blkHashes[i] = sha256Hash(h)
+	}
+	roundInfo.BlockRootHash = common.ToHex(merkle.GetMerkleRoot(blkHashes))
 
 	encodeVal := types.Encode(roundInfo)
 	receipt.KV = append(receipt.KV, &types.KeyValue{
