@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 
@@ -116,13 +117,12 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 	}
 
 	checkHash := common.ToHex(CalcTxHashsHash(crossTxHashes))
-
 	if roundInfo.CrossTxCheckHash != checkHash {
 		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(),
 			"calcHash", checkHash, "commitHash", roundInfo.CrossTxCheckHash)
 
-		for i, hash := range crossTxHashes {
-			clog.Error("RollupCrossTx cross tx info", "index", commit.GetTxIndices()[i].String(), "txhash", common.ToHex(hash))
+		for _, hash := range crossTxHashes {
+			clog.Error("RollupCrossTx cross tx info", "txhash", common.ToHex(hash))
 		}
 		return nil, ErrCrossTxCheckHash
 	}
@@ -155,9 +155,15 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 	return mergeReceipt(receipt, rep), nil
 }
 
+func getTx(api client.QueueProtocolAPI, hash []byte) (*types.Transaction, error) {
+
+	detail, err := api.QueryTx(&types.ReqHash{Hash: hash})
+	return detail.GetTx(), err
+}
+
 func getRollupCrossTxs(api client.QueueProtocolAPI, paraTitle string, idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
 
-	blkCrossTxCache := make(map[int64][]*types.Transaction, len(idxArr)/2)
+	blkCrossTxCache := make(map[int64][]*types.Transaction, 4)
 	crossTxs := make([]*types.Transaction, 0, len(idxArr))
 	crossTxHashes := make([][]byte, 0, len(idxArr))
 	cfg := api.GetConfig()
@@ -165,25 +171,40 @@ func getRollupCrossTxs(api client.QueueProtocolAPI, paraTitle string, idxArr []*
 
 		// first get from cache
 		blkCrossTxs, ok := blkCrossTxCache[txIdx.BlockHeight]
-		if !ok {
+		if !ok && txIdx.BlockHeight > 0{
 
 			// get block from blockchain
 			detail, err := getBlockByHeight(api, txIdx.BlockHeight, true)
 			if err != nil {
+				clog.Error("getRollupCrossTxs", "height", txIdx.BlockHeight, "getBlock err", err)
 				return nil, nil, err
 			}
 
 			blkCrossTxs = FilterParaCrossTxs(FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, paraTitle)))
 			blkCrossTxCache[txIdx.BlockHeight] = blkCrossTxs
 		}
-		if int(txIdx.FilterIndex) >= len(blkCrossTxs) {
-			clog.Error("getRollupCrossTxs invalid filter index", "paraTitle", paraTitle)
-			return nil, nil, types.ErrInvalidParam
+		var crossTx *types.Transaction
+		if txIdx.BlockHeight > 0 && int(txIdx.FilterIndex) < len(blkCrossTxs) {
+			crossTx = blkCrossTxs[txIdx.FilterIndex]
 		}
-		crossTx := blkCrossTxs[txIdx.FilterIndex]
-		crossTxs = append(crossTxs, crossTx)
-		crossTxHashes = append(crossTxHashes, crossTx.Hash())
+		// 通过索引无法获取或者获取的交易数据不对, 可能是主链回滚导致索引信息混乱, 需要通过交易哈希查询交易
+		if crossTx == nil || !bytes.Equal(crossTx.Hash(), txIdx.TxHash) {
 
+			txHash := hex.EncodeToString(txIdx.TxHash)
+			clog.Debug("getRollupCrossTxs", "paraTitle", paraTitle,
+				"filterIdx", txIdx.FilterIndex, "len", len(blkCrossTxs),
+				"height", txIdx.BlockHeight, "txHash", txHash)
+
+			tx, err := getTx(api, txIdx.TxHash)
+			if err != nil {
+				clog.Error("getRollupCrossTxs", "txHash", txHash, "getTx err", err)
+				return nil, nil, err
+			}
+			crossTx = tx
+		}
+
+		crossTxs = append(crossTxs, crossTx)
+		crossTxHashes = append(crossTxHashes, txIdx.TxHash)
 	}
 
 	return crossTxHashes, crossTxs, nil

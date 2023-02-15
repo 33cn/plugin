@@ -39,16 +39,18 @@ func TestCrossTxHandler(t *testing.T) {
 	require.Equal(t, 0, len(h.txIdxCache))
 	h.addMainChainCrossTx(2, []*types.Transaction{tx, tx, tx1})
 	require.Equal(t, 1, len(h.txIdxCache))
-	idxArr, err := h.removePackedCrossTx([][]byte{tx1.Hash()})
-	require.Nil(t, err)
+	idxArr := h.removePackedCrossTx([][]byte{tx1.Hash()})
 	require.Equal(t, 0, len(h.txIdxCache))
 	require.Equal(t, 1, len(idxArr))
 	require.Equal(t, int64(2), idxArr[0].BlockHeight)
 	require.Equal(t, int32(0), idxArr[0].FilterIndex)
 	h.removePackedCrossTx(nil)
 	require.Equal(t, 0, len(h.txIdxCache))
-	_, err = h.removePackedCrossTx([][]byte{tx.Hash()})
-	require.Equal(t, types.ErrNotFound, err)
+	idxArr = h.removePackedCrossTx([][]byte{tx.Hash()})
+	require.Equal(t, 1, len(idxArr))
+	require.Equal(t, int64(0), idxArr[0].BlockHeight)
+	require.Equal(t, int32(0), idxArr[0].FilterIndex)
+	require.Equal(t, tx.Hash(), idxArr[0].TxHash)
 }
 
 func TestRefreshSyncedHeight(t *testing.T) {

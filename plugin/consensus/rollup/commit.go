@@ -57,12 +57,7 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 		batch.CrossTxResults = crossTxRst.Bytes()
 		batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
 	}
-	var err error
-	crossInfo.TxIndices, err = r.cross.removePackedCrossTx(crossTxHashes)
-	if err != nil {
-		rlog.Error("buildCommitData", "round", commitRound, "removePackedCrossTx err", err)
-		return nil, nil
-	}
+	crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
 
 	return []*rtypes.BlockBatch{batch}, []*pt.RollupCrossTx{crossInfo}
 }
@@ -112,11 +107,7 @@ func (r *RollUp) buildFullData(details []*types.BlockDetail, commitRound int64,
 			batch.CrossTxResults = crossTxRst.Bytes()
 			batch.CrossTxCheckHash = calcCrossTxCheckHash(crossTxHashes)
 		}
-		crossInfo.TxIndices, err = r.cross.removePackedCrossTx(crossTxHashes)
-		if err != nil {
-			rlog.Error("buildFullData", "round", commitRound, "removePackedCrossTx err", err)
-			return err
-		}
+		crossInfo.TxIndices = r.cross.removePackedCrossTx(crossTxHashes)
 		batchList = append(batchList, batch)
 		crossList = append(crossList, crossInfo)
 		return nil
@@ -190,21 +181,15 @@ func (r *RollUp) handleBuildBatch() {
 		if !prepared || len(blockDetails) == 0 {
 			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
 				"round", r.nextBuildRound, "msg", "wait more local block")
-			time.Sleep(time.Second * 5)
-			continue
-		}
-
-		batchList, crossList := r.buildCommitData(blockDetails, r.nextBuildRound, &fragIndex)
-		if len(batchList) == 0 {
-			rlog.Debug("handleBuildBatch", "height", r.nextBuildHeight,
-				"round", r.nextBuildRound, "msg", "buildCommitData nil")
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 3)
 			continue
 		}
 
 		rlog.Debug("handleBuildBatch commit height", "nextBuildRound", r.nextBuildRound,
 			"start", blockDetails[0].GetBlock().GetHeight(),
 			"end", blockDetails[len(blockDetails)-1].GetBlock().GetHeight())
+
+		batchList, crossList := r.buildCommitData(blockDetails, r.nextBuildRound, &fragIndex)
 
 		for i, blkBatch := range batchList {
 			crossInfo := crossList[i]

@@ -59,10 +59,10 @@ func (h *crossTxHandler) addMainChainCrossTx(mainHeight int64, filterTxs []*type
 }
 
 // 从缓存中删除平行链已打包执行的跨链交易, 返回跨链交易在主链区块的索引信息
-func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) ([]*pt.CrossTxIndex, error) {
+func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) []*pt.CrossTxIndex {
 
 	if len(hashList) <= 0 {
-		return nil, nil
+		return nil
 	}
 	h.lock.Lock()
 	defer h.lock.Unlock()
@@ -72,18 +72,19 @@ func (h *crossTxHandler) removePackedCrossTx(hashList [][]byte) ([]*pt.CrossTxIn
 
 		short := shortHash(hash)
 		info, ok := h.txIdxCache[short]
-		if !ok {
+		var txIdx *pt.CrossTxIndex
+		if ok {
+			txIdx = info.txIndex
+			// 缓存移除
+			delete(h.txIdxCache, short)
+		} else {
 			rlog.Error("removePackedCrossTx not exist", "hash", hex.EncodeToString(hash))
-			return nil, types.ErrNotFound
+			txIdx = &pt.CrossTxIndex{}
 		}
-
-		// 缓存移除
-		delete(h.txIdxCache, short)
-		idxList = append(idxList, info.txIndex)
-
+		txIdx.TxHash = hash
+		idxList = append(idxList, txIdx)
 	}
-
-	return idxList, nil
+	return idxList
 }
 
 // 刷新平行链同步主链跨链交易区块高度, 根据缓存中跨链交易记录决定

@@ -201,8 +201,9 @@ message CrossAssetTransfer {
 }
 
 message crossTxIndex {
-    int64 blockHeight = 1;
-    int32 filterIndex = 2;
+    int64 blockHeight   = 1;
+    int32 filterIndex   = 2;
+    bytes txHash        = 3;
 }
 
 message RollupCrossTx {
