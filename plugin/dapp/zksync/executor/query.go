@@ -420,13 +420,6 @@ func (z *zksync) Query_GetTotalDeposit(in *zt.ZkQueryReq) (types.Message, error)
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	//根据id查询symbol
-	idStr := new(big.Int).SetUint64(in.TokenId).String()
-	info, err := GetTokenByTokenId(z.GetStateDB(), idStr)
-	if err != nil {
-		return nil, err
-	}
-
 	totalBalance := new(big.Int)
 	lastAccountID, err := getLatestAccountID(z.GetStateDB())
 	if err != nil {
@@ -439,6 +432,5 @@ func (z *zksync) Query_GetTotalDeposit(in *zt.ZkQueryReq) (types.Message, error)
 			totalBalance = new(big.Int).Add(totalBalance, balance)
 		}
 	}
-
-	return &zt.ZkTotalDeposit{TokenId: info.Id, Symbol: info.Symbol, Decimal: info.Decimal, Balance: totalBalance.String()}, nil
+	return &zt.TokenBalance{TokenId: in.TokenId, Balance: decimalVal(totalBalance.String(), in.Decimal)}, nil
 }
