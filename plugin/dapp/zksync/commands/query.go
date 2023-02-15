@@ -557,23 +557,26 @@ func getL2TotalDepositCmd() *cobra.Command {
 func getL2TotalDepositFlag(cmd *cobra.Command) {
 	cmd.Flags().Int32P("tokenId", "t", 0, "token id")
 	_ = cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().Uint32P("decimal", "d", 0, "1:show with token's decimal, 0: real value")
 }
 
 func getL2TotalDeposit(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenId, _ := cmd.Flags().GetInt32("tokenId")
+	decimal, _ := cmd.Flags().GetUint32("decimal")
 
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		TokenId: uint64(tokenId),
+		Decimal: decimal,
 	}
 
 	params.FuncName = "GetTotalDeposit"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.ZkTotalDeposit
+	var resp zt.TokenBalance
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
