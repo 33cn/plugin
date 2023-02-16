@@ -1191,22 +1191,24 @@ func cmtTxInfo(cmd *cobra.Command, args []string) {
 // cmtTxInfoCmd query parachain is sync
 func blsPubKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pubkey",
-		Short: "get bls pub key by secp256 prikey or current wallet bls pubkey",
+		Use:   "pub",
+		Short: "get bls pub key from secp256k1 prikey",
 		Run:   blsPubKey,
 	}
+	cmd.Flags().StringP("prikey", "p", "", "secp256k1 private hex key")
 	return cmd
 }
 
 func blsPubKey(cmd *cobra.Command, args []string) {
-	cmd.Flags().StringP("prikey", "p", "", "secp256 private key")
 
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	prikey, _ := cmd.Flags().GetString("prikey")
-	req := &types.ReqString{Data: prikey}
-	var res pt.BlsPubKey
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetParaBlsPubKey", req, &res)
-	ctx.Run()
+
+	blsPub, err := getBlsPubFromSecp256Key(prikey)
+	if prikey == "" {
+		fmt.Fprintln(os.Stderr, "must input valid secp256k1 prikey, err:"+err.Error())
+		return
+	}
+	fmt.Println("blsPub:", blsPub)
 }
 
 func consusHeight(cmd *cobra.Command, args []string) {
