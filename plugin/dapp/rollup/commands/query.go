@@ -10,8 +10,8 @@ import (
 
 func validatorCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "val",
-		Short: "show getValidator bls pubkey",
+		Use:   "validator",
+		Short: "show validators bls pubkey",
 		Run:   getValidator,
 	}
 	addTitleFlags(cmd)
