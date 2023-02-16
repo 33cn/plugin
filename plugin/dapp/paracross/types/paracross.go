@@ -62,6 +62,7 @@ const (
 const (
 	// NameRollupCrossTxAction action name
 	NameRollupCrossTxAction = "RollupCrossTx"
+	NameRollupCrossTxLog    = "LogParaRollupCrossTx"
 )
 
 // action type
