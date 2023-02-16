@@ -51,11 +51,11 @@ func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
 	return driver, key
 }
 
-func (v *validator) init(cfg Config, valPubs *rtypes.ValidatorPubs, status *rtypes.RollupStatus) {
+func (v *validator) init(authKey string, valPubs *rtypes.ValidatorPubs, status *rtypes.RollupStatus) {
 
 	v.exit = make(chan struct{})
-	v.blsDriver, v.blsKey = getPrivKey(bls.Name, cfg.ValidatorBlsKey)
-	_, v.signTxKey = getPrivKey(secp256k1.Name, cfg.CommitTxKey)
+	_, v.signTxKey = getPrivKey(secp256k1.Name, authKey)
+	v.blsDriver, v.blsKey = bls.MustPrivKeyFromBytes(v.signTxKey.Bytes())
 	v.commitAddr = address.PubKeyToAddr(address.DefaultID, v.signTxKey.PubKey().Bytes())
 	v.updateValidators(valPubs)
 	v.updateRollupStatus(status)
@@ -127,9 +127,9 @@ func (v *validator) updateValidators(valPubs *rtypes.ValidatorPubs) {
 
 	blsPub := hex.EncodeToString(v.blsKey.PubKey().Bytes())
 	idx, ok := v.validators[blsPub]
-
 	v.enable = ok
 	v.commitRoundIndex = int32(idx)
+	rlog.Info("updateValidators", "blsPub", blsPub, "isValidator", ok, "idx", idx)
 	if !v.enable {
 		close(v.exit)
 	}

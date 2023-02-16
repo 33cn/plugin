@@ -64,6 +64,11 @@ func (r *RollUp) Init(base *consensus.BaseClient, subCfg []byte) {
 		r.cfg.MaxCommitInterval = defaultMaxCommitInterval
 	}
 
+	if r.cfg.AuthAccount == "" && r.cfg.AuthKey == "" {
+		rlog.Info("info", "addr", r.cfg.AuthAccount)
+		panic("rollup must config authAccount")
+	}
+
 	r.chainCfg = chainCfg
 	r.ctx, r.cancel = context.WithCancel(base.Context)
 	r.initDone = make(chan struct{})
@@ -72,6 +77,7 @@ func (r *RollUp) Init(base *consensus.BaseClient, subCfg []byte) {
 	r.cross = &crossTxHandler{}
 	r.base = base
 	r.client = base.GetQueueClient()
+	r.val = &validator{}
 
 	var err error
 	r.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, "")
@@ -83,8 +89,43 @@ func (r *RollUp) Init(base *consensus.BaseClient, subCfg []byte) {
 	go r.startRollupRoutine()
 }
 
+func (r *RollUp) getKeyFromWallet(addr string) string {
+
+	for {
+
+		time.Sleep(2 * time.Second)
+		resp, err := r.base.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
+		if err != nil {
+			rlog.Error("getKeyFromWallet", "GetWalletStatus err", err)
+			continue
+		}
+		if !resp.(*types.WalletStatus).GetIsHasSeed() {
+			rlog.Info("getKeyFromWallet wait wallet save seed...")
+			continue
+		}
+
+		if resp.(*types.WalletStatus).GetIsWalletLock() {
+			rlog.Info("getKeyFromWallet wait wallet unlock...")
+			continue
+		}
+
+		resp, err = r.base.GetAPI().ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: addr})
+		if err != nil {
+			rlog.Info("getKeyFromWallet", "addr", addr, "wait import key err", err)
+			continue
+		}
+		return resp.(*types.ReplyString).Data
+	}
+
+}
+
 func (r *RollUp) initJob() {
 
+	// 等待获取钱包私钥
+	authKey := r.cfg.AuthKey
+	if authKey == "" {
+		authKey = r.getKeyFromWallet(r.cfg.AuthAccount)
+	}
 	valPubs := r.getValidatorPubKeys()
 	status := r.getRollupStatus()
 	for len(valPubs.GetBlsPubs()) == 0 || status == nil {
@@ -99,8 +140,9 @@ func (r *RollUp) initJob() {
 		time.Sleep(5 * time.Second)
 	}
 
-	r.val = &validator{}
-	r.val.init(r.cfg, valPubs, status)
+	rlog.Info("Init rollup validator start...")
+	r.val.init(authKey, valPubs, status)
+	rlog.Info("Init rollup validator stop...")
 	r.nextBuildRound = status.CommitRound + 1
 	r.initFragIndex = status.BlockFragIndex
 	// 初始提交从高度1开始
