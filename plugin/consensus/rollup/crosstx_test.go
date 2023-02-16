@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/system/consensus"
@@ -35,6 +37,7 @@ func TestCrossTxHandler(t *testing.T) {
 
 	tx := &types.Transaction{Payload: []byte("test")}
 	tx1 := &types.Transaction{Execer: []byte("user.p.test.paracross")}
+	tx1.Payload = types.Encode(&pt.ParacrossAction{Ty: pt.ParacrossActionCrossAssetTransfer})
 	h.addMainChainCrossTx(2, nil)
 	require.Equal(t, 0, len(h.txIdxCache))
 	h.addMainChainCrossTx(2, []*types.Transaction{tx, tx, tx1})
@@ -57,6 +60,7 @@ func TestRefreshSyncedHeight(t *testing.T) {
 
 	h := newTestHandler()
 	tx := &types.Transaction{Execer: []byte("user.p.test.paracross")}
+	tx.Payload = types.Encode(&pt.ParacrossAction{Ty: pt.ParacrossActionCrossAssetTransfer})
 	h.addMainChainCrossTx(2, []*types.Transaction{tx})
 	require.Equal(t, 1, len(h.txIdxCache))
 	info := h.txIdxCache[shortHash(tx.Hash())]
@@ -70,6 +74,7 @@ func TestRemoveErrTx(t *testing.T) {
 
 	h := newTestHandler()
 	tx := &types.Transaction{Execer: []byte("user.p.test.paracross")}
+	tx.Payload = types.Encode(&pt.ParacrossAction{Ty: pt.ParacrossActionCrossAssetTransfer})
 	h.addMainChainCrossTx(2, []*types.Transaction{tx})
 	require.Equal(t, 1, len(h.txIdxCache))
 

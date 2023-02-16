@@ -115,8 +115,18 @@ func isCrossChainTx(tx *types.Transaction) bool {
 
 	execer := string(tx.GetExecer())
 	if strings.HasSuffix(execer, pt.ParaX) && types.IsParaExecName(execer) {
-		return true
+
+		var payload pt.ParacrossAction
+		err := types.Decode(tx.Payload, &payload)
+		if err != nil {
+			rlog.Error("isCrossChainTx decode tx payload", "txhash", hex.EncodeToString(tx.Hash()), "err", err.Error())
+			return false
+		}
+		if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+			return true
+		}
 	}
+
 	return false
 }
 

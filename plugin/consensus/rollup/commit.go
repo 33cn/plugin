@@ -1,7 +1,6 @@
 package rollup
 
 import (
-	"bytes"
 	"encoding/hex"
 	"math/big"
 	"time"
@@ -44,11 +43,13 @@ func (r *RollUp) buildCommitData(details []*types.BlockDetail, commitRound int64
 		for i, tx := range detail.Block.Txs {
 
 			// 过滤跨链交易
-			if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			if isCrossChainTx(tx) {
+				txHash := tx.Hash()
+				rlog.Debug("buildCommitData cross tx", "txHash", hex.EncodeToString(txHash))
 				if detail.Receipts[i].Ty == types.ExecOk {
 					crossTxRst.SetBit(crossTxRst, len(crossTxHashes), 1)
 				}
-				crossTxHashes = append(crossTxHashes, tx.Hash())
+				crossTxHashes = append(crossTxHashes, txHash)
 			}
 		}
 	}
@@ -144,7 +145,9 @@ func (r *RollUp) buildFullData(details []*types.BlockDetail, commitRound int64,
 			commitSize += len(txData)
 
 			// 过滤跨链交易
-			if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			if isCrossChainTx(tx) {
+				txHash := tx.Hash()
+				rlog.Debug("buildFullData cross tx", "txHash", hex.EncodeToString(txHash))
 				if detail.Receipts[i].Ty == types.ExecOk {
 					crossTxRst.SetBit(crossTxRst, len(crossTxHashes), 1)
 				}
@@ -235,6 +238,7 @@ func (r *RollUp) handleCommit() {
 
 		nextCommitRound, ok := r.val.isMyCommitTurn(r.cfg.MaxCommitInterval)
 		if !ok || nextCommitRound <= alreadyCommitRound {
+			rlog.Debug("handleCommit not ok", "round", nextCommitRound, "alreadyCommit", alreadyCommitRound)
 			time.Sleep(2 * time.Second)
 			continue
 		}

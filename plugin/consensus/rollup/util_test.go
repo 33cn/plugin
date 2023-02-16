@@ -3,13 +3,15 @@ package rollup
 import (
 	"testing"
 
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+
 	"github.com/33cn/chain33/types"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_filterParaCrossTx(t *testing.T) {
 
-	tx1 := &types.Transaction{Execer: []byte("user.p.test.coins"), Payload: []byte("test-tx1")}
+	tx1 := &types.Transaction{Execer: []byte("user.p.test.paracross"), Payload: []byte("test-tx1")}
 	tx2 := &types.Transaction{Execer: []byte("user.p.test.none"), Payload: []byte("test-tx2")}
 
 	crossTxs := filterParaCrossTx([]*types.Transaction{tx1, tx2})
@@ -18,6 +20,7 @@ func Test_filterParaCrossTx(t *testing.T) {
 	require.Equal(t, 0, len(crossTxs))
 
 	tx2.Execer = []byte("user.p.test.paracross")
+	tx2.Payload = types.Encode(&pt.ParacrossAction{Ty: pt.ParacrossActionCrossAssetTransfer})
 	tx2.GroupCount = 2
 	crossTxs = filterParaCrossTx([]*types.Transaction{tx1, tx2, tx1, tx2})
 	require.Equal(t, 3, len(crossTxs))

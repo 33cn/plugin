@@ -32,7 +32,9 @@ rollup 涉及功能介绍
 - 单个区块交易过多, 单次提交数据超过最大交易容量, 触发分段
 
 ### 资产跨链
-rollup模式兼容已有的资产跨链转账, 但跨链结算需要等到状态提交后
+- rollup模式兼容已有的资产跨链转账, 但跨链结算需要等到状态提交后
+- 跨链交易会被转发到主链优先执行
+- 如果交易组中包含跨链交易, 则
 
  
 ### 区块同步
@@ -78,6 +80,7 @@ DHTDataPath="paradatadir/p2pstore"
 mainChainGrpcAddr="localhost:8802"
 # 平行链跨链交易需要转发到主链
 forwardExecs=["paracross"]
+forwardActionNames=["crossAssetTransfer"]
 
 
 [consensus]
