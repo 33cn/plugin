@@ -225,8 +225,8 @@ github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 h1:R8vQdOQdZ9Y3
 github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792/go.mod h1:ghJtEyQwv5/p4Mg4C0fgbePVuGr935/5ddU9Z3TmDRY=
 github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46fmI40EZs=
 github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23/go.mod h1:bbYlZJ7hK1yFx9hf58LP0zeX7UjIGs20ufpu3evjr+s=
-github.com/bysomeone/chain33 v0.0.0-20230112114353-4923f2a93591 h1:S9TNRt0BcPLJu7EtpWcNckdpI38rHvp5exav2Uy6dyw=
-github.com/bysomeone/chain33 v0.0.0-20230112114353-4923f2a93591/go.mod h1:rOabIpP0KWiehXmX6ShOrAveTUvdoQvjUkUePdwk/oQ=
+github.com/bysomeone/chain33 v0.0.0-20230214131555-2b0ae5daa2e0 h1:4yaiYiZdv1Az3VdhkOcd15t4kdmxqFLGEgPrtlgyqwE=
+github.com/bysomeone/chain33 v0.0.0-20230214131555-2b0ae5daa2e0/go.mod h1:rOabIpP0KWiehXmX6ShOrAveTUvdoQvjUkUePdwk/oQ=
 github.com/c-bata/go-prompt v0.2.2 h1:uyKRz6Z6DUyj49QVijyM339UJV9yhbr70gESwbNU3e0=
 github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
 github.com/cactus/go-statsd-client/statsd v0.0.0-20191106001114-12b4e2b38748/go.mod h1:l/bIBLeOl9eX+wxJAzxS4TveKRtAqlyDpHjhkfO0MEI=
