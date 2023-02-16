@@ -90,7 +90,7 @@ func TestPullCrossTx(t *testing.T) {
 	h.ru.chainCfg = cfg
 	h.ru.mainChainGrpc = grpc
 	h.ru.ctx = context.Background()
-	txs := util.GenNoneTxs(cfg, node.GetGenesisKey(), 20)
+	txs := util.GenNoneTxs(cfg, node.GetGenesisKey(), 10)
 	for i := 0; i < len(txs); i++ {
 		_, err = node.GetAPI().SendTx(txs[i])
 		require.Nil(t, err)
@@ -103,7 +103,7 @@ func TestPullCrossTx(t *testing.T) {
 		h.lock.Lock()
 		pulled := h.pulledHeight
 		h.lock.Unlock()
-		if pulled == 20-defaultReservedMainHeight {
+		if pulled == 10-h.ru.cfg.ReservedMainHeight {
 			return
 		}
 		if types.Now().Unix()-start >= 5 {

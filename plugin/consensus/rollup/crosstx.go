@@ -145,6 +145,7 @@ const (
 func (h *crossTxHandler) pullCrossTx() {
 
 	start := h.pulledHeight + 1
+	reservedHeight := h.ru.cfg.ReservedMainHeight
 	for {
 
 		select {
@@ -161,7 +162,7 @@ func (h *crossTxHandler) pullCrossTx() {
 		}
 
 		// 预留一定高度, 降低回滚概率
-		end := mainHeader.Height - defaultReservedMainHeight
+		end := mainHeader.Height - reservedHeight
 		if end < start {
 			rlog.Debug("pullCrossTx wait for reserved block 1m")
 			time.Sleep(time.Second * 5)

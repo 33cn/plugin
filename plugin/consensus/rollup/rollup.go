@@ -64,6 +64,10 @@ func (r *RollUp) Init(base *consensus.BaseClient, subCfg []byte) {
 		r.cfg.MaxCommitInterval = defaultMaxCommitInterval
 	}
 
+	if r.cfg.ReservedMainHeight <= 0 {
+		r.cfg.ReservedMainHeight = defaultReservedMainHeight
+	}
+
 	if r.cfg.AuthAccount == "" && r.cfg.AuthKey == "" {
 		rlog.Info("info", "addr", r.cfg.AuthAccount)
 		panic("rollup must config authAccount")

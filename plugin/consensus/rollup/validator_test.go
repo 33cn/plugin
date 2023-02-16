@@ -20,17 +20,15 @@ func newTestVal() (*validator, *rtypes.ValidatorPubs, string) {
 
 	blsDrv := &bls.Driver{}
 	commitAddr, priv := util.Genaddress()
-	cfg.CommitTxKey = common.ToHex(priv.Bytes())
+	cfg.AuthKey = common.ToHex(priv.Bytes())
 	valPubs := &rtypes.ValidatorPubs{}
 	for i := 0; i < 3; i++ {
 		newPriv, _ := blsDrv.GenKey()
 		valPubs.BlsPubs = append(valPubs.BlsPubs, hex.EncodeToString(newPriv.PubKey().Bytes()))
 	}
-	priv, _ = blsDrv.GenKey()
-	cfg.ValidatorBlsKey = hex.EncodeToString(priv.Bytes())
-	valPubs.BlsPubs = append(valPubs.BlsPubs, common.ToHex(priv.PubKey().Bytes()))
-	val.init(cfg, valPubs, &rtypes.RollupStatus{})
-
+	_, blsKey := bls.MustPrivKeyFromBytes(priv.Bytes())
+	valPubs.BlsPubs = append(valPubs.BlsPubs, common.ToHex(blsKey.PubKey().Bytes()))
+	val.init(cfg.AuthKey, valPubs, &rtypes.RollupStatus{})
 	return val, valPubs, commitAddr
 }
 
