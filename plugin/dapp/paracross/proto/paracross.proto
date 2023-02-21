@@ -200,6 +200,27 @@ message CrossAssetTransfer {
     string note         = 5;
 }
 
+message crossTxIndex {
+    int64 blockHeight   = 1;
+    int32 filterIndex   = 2;
+    bytes txHash        = 3;
+}
+
+message RollupCrossTx {
+
+    string   chainTitle             = 1;
+    int64    commitRound            = 2;
+    repeated crossTxIndex txIndices = 3;
+}
+
+message RollupCrossTxLog {
+    int64 commitRound = 1;
+    string chainTitle = 2;
+    string crossTxResults = 3;
+    string crossTxCheckHash = 4;
+    repeated string crossTxHashes = 5;
+}
+
 message ParacrossAction {
     oneof value {
         ParacrossCommitAction commit          = 1;
@@ -215,6 +236,7 @@ message ParacrossAction {
         CrossAssetTransfer    crossAssetTransfer    = 12;
         ParaBindMinerCmd      paraBindMiner         = 13;
         ParaNodeGroupConfig   supervisionNodeConfig = 14;
+        RollupCrossTx         rollupCrossTx = 15;
     }
     int32 ty = 2;
 }

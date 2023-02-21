@@ -22,6 +22,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/33cn/plugin/plugin/crypto/bls"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -38,6 +40,13 @@ const fee = 1e6
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789-=_+=/<>!@#$%^&"
 
 var r *rand.Rand
+var signType string
+
+var (
+	log      = log15.New()
+	testExec = "none"
+	execAddr = address.ExecAddress(testExec)
+)
 
 // TxHeightOffset needed
 var TxHeightOffset int64
@@ -47,48 +56,57 @@ func main() {
 		LoadHelp()
 		return
 	}
-	fmt.Println("jrpc url:", os.Args[2]+":8801")
+	fmt.Println("grpc url:", os.Args[2])
+
+	// 指定设置交易执行器为平行链
+	if strings.Contains(os.Args[0], "para") {
+		testExec = "user.p.para.none"
+		execAddr = address.ExecAddress(testExec)
+	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	argsWithoutProg := os.Args[1:]
-	switch argsWithoutProg[0] {
+	args := os.Args[1:]
+	// 最后一个参数指定签名类型, 支持 bls
+	signType = args[len(args)-1]
+
+	switch args[0] {
 	case "-h": //使用帮助
 		LoadHelp()
 	case "perf":
-		if len(argsWithoutProg) != 6 {
+		if len(args) < 6 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		Perf(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4], argsWithoutProg[5])
+		Perf(args[1], args[2], args[3], args[4], args[5])
 	case "perfV2":
-		if len(argsWithoutProg) != 5 {
+		if len(args) != 5 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		PerfV2(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4])
+		PerfV2(args[1], args[2], args[3], args[4])
 	case "put":
-		if len(argsWithoutProg) != 3 {
+		if len(args) != 3 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		Put(argsWithoutProg[1], argsWithoutProg[2], "")
+		Put(args[1], args[2], "")
 	case "get":
-		if len(argsWithoutProg) != 3 {
+		if len(args) != 3 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		Get(argsWithoutProg[1], argsWithoutProg[2])
+		Get(args[1], args[2])
 	case "valnode":
-		if len(argsWithoutProg) != 4 {
+		if len(args) != 4 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		ValNode(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3])
+		ValNode(args[1], args[2], args[3])
 	case "perfOld":
-		if len(argsWithoutProg) != 6 {
+		if len(args) != 6 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		PerfOld(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4], argsWithoutProg[5])
+		PerfOld(args[1], args[2], args[3], args[4], args[5])
 	}
 }
 
@@ -104,6 +122,11 @@ func LoadHelp() {
 }
 
 // Perf 性能测试
+// host grpc地址, localhost:8802
+// txsize 存证交易字节大小
+// num 单次循环总发送交易数量
+// sleepinterval 单次循环后协程等待间隔秒
+// totalduration  总持续次数
 func Perf(host, txsize, num, sleepinterval, totalduration string) {
 	var numThread int
 	numInt, err := strconv.Atoi(num)
@@ -173,7 +196,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 					tx.Expire = height + types.TxHeightFlag + types.LowAllowPackHeight
 					tx.Payload = RandStringBytes(sizeInt)
 					//交易签名
-					tx.Sign(types.SECP256K1, priv)
+					tx.Sign(int32(getSignID()), priv)
 					txChan <- tx
 				}
 				if sleep > 0 {
@@ -197,19 +220,9 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 				txPool.Put(tx)
 				atomic.AddInt64(&total, 1)
 				if err != nil {
-					if strings.Contains(err.Error(), "ErrTxExpire") {
-						continue
-					}
-					if strings.Contains(err.Error(), "ErrMemFull") {
-						time.Sleep(time.Second)
-						continue
-					}
-
 					log.Error("sendtx", "err", err)
 					time.Sleep(time.Second)
-					//conn.Close()
-					//conn = newGrpcConn(ip)
-					//gcli = types.NewChain33Client(conn)
+
 				} else {
 					atomic.AddInt64(&success, 1)
 				}
@@ -363,11 +376,6 @@ func PerfV2(host, txsize, sleepinterval, duration string) {
 	log.Info("sendtx success tx", "success", success)
 }
 
-var (
-	log      = log15.New()
-	execAddr = address.ExecAddress("user.write")
-)
-
 func getHeight(gcli types.Chain33Client) (int64, error) {
 	header, err := gcli.GetLastHeader(context.Background(), &types.ReqNil{})
 	if err != nil {
@@ -379,7 +387,7 @@ func getHeight(gcli types.Chain33Client) (int64, error) {
 
 var txPool = sync.Pool{
 	New: func() interface{} {
-		tx := &types.Transaction{Execer: []byte("user.write")}
+		tx := &types.Transaction{Execer: []byte(testExec)}
 		return tx
 	},
 }
@@ -552,8 +560,16 @@ func getprivkey(key string) crypto.PrivKey {
 	return priv
 }
 
+func getSignID() int {
+	if signType == "bls" {
+		return bls.ID
+	}
+	return types.SECP256K1
+}
+
 func genaddress() (string, crypto.PrivKey) {
-	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
+
+	cr, err := crypto.Load(types.GetSignName("", getSignID()), -1)
 	if err != nil {
 		panic(err)
 	}

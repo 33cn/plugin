@@ -70,7 +70,6 @@ type client struct {
 
 type subConfig struct {
 	WriteBlockMsec          int64      `json:"writeBlockMsec,omitempty"`
-	ParaRemoteGrpcClient    string     `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight             int64      `json:"startHeight,omitempty"`
 	WaitMainBlockNum        int64      `json:"waitMainBlockNum,omitempty"`
 	GenesisStartHeightSame  bool       `json:"genesisStartHeightSame,omitempty"`

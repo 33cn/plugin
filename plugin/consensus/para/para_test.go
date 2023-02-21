@@ -195,6 +195,7 @@ func getMockLastBlock(para *client, returnBlock *types.Block) {
 	para.BaseClient = baseCli
 
 	qClient := &qmocks.Client{}
+	qClient.On("GetConfig").Return(&types.Chain33Config{})
 	para.InitClient(qClient, initBlock)
 
 	msg := queue.NewMessage(0, "", 1, returnBlock)

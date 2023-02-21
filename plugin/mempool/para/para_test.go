@@ -34,7 +34,7 @@ func TestParaNodeMempool(t *testing.T) {
 	main.Listen()
 
 	chainCfg := types.NewChain33ConfigNoInit(paratest.DefaultConfig)
-	testnode.ModifyParaClient(chainCfg, main.GetCfg().RPC.GrpcBindAddr)
+	chainCfg.GetModuleConfig().RPC.ParaChain.MainChainGrpcAddr = main.GetCfg().RPC.GrpcBindAddr
 	cfg := chainCfg.GetModuleConfig()
 	cfg.Mempool.Name = "para"
 	para := testnode.NewWithConfig(chainCfg, nil)

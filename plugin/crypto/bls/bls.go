@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/common"
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/phoreproject/bls/g1pubs"
@@ -34,6 +35,19 @@ func (d Driver) GenKey() (crypto.PrivKey, error) {
 	privBytes := priv.Serialize()
 	copy(privKeyBytes[:], privBytes[:])
 	return PrivKeyBLS(*privKeyBytes), nil
+}
+
+// MustPrivKeyFromBytes must get bls private key from bytes
+func MustPrivKeyFromBytes(b []byte) (crypto.Crypto, crypto.PrivKey) {
+
+	d := Driver{}
+	key, err := d.PrivKeyFromBytes(b)
+
+	for err != nil {
+		copy(b[:], common.Sha256(b[:]))
+		key, err = d.PrivKeyFromBytes(b)
+	}
+	return d, key
 }
 
 // PrivKeyFromBytes create private key from bytes

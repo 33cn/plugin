@@ -9,7 +9,7 @@ genesisAccount="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 genesisAmount=100000000
 
 #主链节点的ip
-ParaRemoteGrpcClient="114.55.11.139:1197"
+mainChainGrpcAddr="114.55.11.139:1197"
 #从主链哪个高度开始同步区块
 mainStartHeight=4000000
 #fork config

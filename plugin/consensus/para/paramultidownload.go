@@ -142,7 +142,7 @@ func (m *multiDldClient) testConn(conn *connectCli, inv *inventory) {
 
 func (m *multiDldClient) getConns(inv *inventory) error {
 	cfg := m.paraClient.GetAPI().GetConfig()
-	paraRemoteGrpcIps := types.Conf(cfg, "config.consensus.sub.para").GStr("ParaRemoteGrpcClient")
+	paraRemoteGrpcIps := cfg.GetModuleConfig().RPC.ParaChain.MainChainGrpcAddr
 	ips := strings.Split(paraRemoteGrpcIps, ",")
 	var conns []*connectCli
 	for _, ip := range ips {

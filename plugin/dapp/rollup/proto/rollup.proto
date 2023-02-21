@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+import "blockchain.proto";
+
+package types;
+option go_package = "../types";
+
+// rollup合约交易行为总类型
+message RollupAction {
+    int32 ty = 1;
+    oneof value {
+        CheckPoint commit = 2;
+    }
+}
+
+message BlockBatch {
+
+    repeated Header blockHeaders = 1;
+    // 区块过大, 分段提交分割位置(交易下标)
+    int32    blockFragIndex         = 2;
+    repeated bytes txList           = 3;
+    repeated bytes pubKeyList       = 4;
+    bytes          aggregateTxSign  = 5;
+    bytes          txAddrIDList     = 6;
+    bytes          crossTxCheckHash = 7;
+    bytes          crossTxResults   = 8;
+}
+
+message ValidatorSignMsg {
+    int64 commitRound = 1;
+    bytes pubKey      = 2;
+    bytes signature   = 3;
+    bytes msgHash     = 4;
+}
+
+// CheckPoint
+message CheckPoint {
+    string     chainTitle                 = 1;
+    int64      commitRound                = 2;
+    BlockBatch batch                      = 3;
+    repeated bytes validatorPubs          = 4;
+    bytes          aggregateValidatorSign = 5;
+    // main chain block height
+    int64 crossTxSyncedHeight = 6;
+}
+
+message RollupStatus {
+
+    int64 timestamp         = 1;
+    int64 commitRound       = 2;
+    int64 commitBlockHeight = 3;
+    // 区块过大, 分段提交分割位置(交易下标)
+    int32  blockFragIndex  = 4;
+    string commitBlockHash = 5;
+    string commitAddr      = 6;
+    // main chain block height
+    int64 crossTxSyncedHeight = 7;
+}
+
+message CommitRoundInfo {
+
+    int64  commitRound      = 1;
+    int64  firstBlockHeight = 2;
+    int64  lastBlockHeight  = 3;
+    int32  commitTxCount    = 4;
+    string crossTxCheckHash = 5;
+    string crossTxResults   = 6;
+    string blockRootHash    = 7;
+}
+
+message ReqGetCommitRound {
+    int64  commitRound = 1;
+    string chainTitle  = 2;
+}
+
+message chainTitle {
+    string value = 1;
+}
+
+message ValidatorPubs {
+    repeated string blsPubs = 1;
+}
+
+service rollup {}

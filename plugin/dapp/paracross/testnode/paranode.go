@@ -3,6 +3,7 @@ package testnode
 import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
+	_ "github.com/33cn/plugin/plugin/mempool/init"
 )
 
 /*
@@ -24,7 +25,7 @@ func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNo
 	}
 	if para == nil {
 		cfg := types.NewChain33Config(DefaultConfig)
-		testnode.ModifyParaClient(cfg, main.GetCfg().RPC.GrpcBindAddr)
+		cfg.GetModuleConfig().RPC.ParaChain.MainChainGrpcAddr = main.GetCfg().RPC.GrpcBindAddr
 		para = testnode.NewWithConfig(cfg, nil)
 		para.Listen()
 	}
