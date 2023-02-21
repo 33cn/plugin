@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.68.0"></a>
+# [1.68.0](https://github.com/33cn/plugin/compare/v1.67.6...v1.68.0) (2023-02-21)
+
+
+### Features
+
+* add consensus commiter plugin rollup(33cn/chain33#1268) ([b0aca7d](https://github.com/33cn/plugin/commit/b0aca7d)), closes [33cn/chain33#1268](https://github.com/33cn/chain33/issues/1268)
+
 <a name="1.67.6"></a>
 ## [1.67.6](https://github.com/33cn/plugin/compare/v1.67.5...v1.67.6) (2023-01-31)
 
