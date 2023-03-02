@@ -79,6 +79,8 @@ ForkEVMYoloV1=9500000
 ForkEVMTxGroup=0
 # EVM兼容base58及16进制地址混合调用处理
 ForkEVMMixAddress=0
+# EVM gas 计算调整
+ForkIntrinsicGas=0
 
 [fork.sub.evmxgo]
 Enable=0
