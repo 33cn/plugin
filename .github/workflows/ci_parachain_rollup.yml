@@ -1,0 +1,21 @@
+name: ci_parachain_rollup
+on: [push,pull_request]
+
+jobs:
+  paracross:
+    name: ci_parachain_rollup
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version-file: 'go.mod'
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make docker-compose dapp=rollup
+          make docker-compose-down dapp=rollup
