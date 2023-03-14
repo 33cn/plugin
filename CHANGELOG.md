@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.68.1"></a>
+## [1.68.1](https://github.com/33cn/plugin/compare/v1.68.0...v1.68.1) (2023-03-14)
+
+
+### Bug Fixes
+
+* fix rpc config for parachain ([cd9ad35](https://github.com/33cn/plugin/commit/cd9ad35))
+
 <a name="1.68.0"></a>
 # [1.68.0](https://github.com/33cn/plugin/compare/v1.67.6...v1.68.0) (2023-02-21)
 
