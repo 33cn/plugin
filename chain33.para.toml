@@ -47,7 +47,7 @@ singleMode=true
 batchsync=false
 #平行链钱包通过平行链区块seqence索引高度，缺省是true
 isRecordBlockSequence=true
-isParaChain = true
+isParaChain=true
 enableTxQuickIndex=true
 # 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
 enableReExecLocal=true
@@ -89,6 +89,8 @@ wsApi=["eth","web3","personal","admin","net"]
 mainChainGrpcAddr="localhost:8802"
 #配置grpc负载均衡为sync模式
 useGrpcLBSync=false
+forwardExecs=["all"]
+forwardActionNames=[]
 
 [mempool]
 name="para"
@@ -151,6 +153,26 @@ emptyBlockInterval=["0:50"]
 [consensus.sub.para.bls]
 #是否开启聚合签名，缺省不开启
 blsSign=false
+
+[consensus.sub.rollup]
+
+# 配置节点账户私钥, 隐秘性不好, 用于测试
+authKey=""
+# 当authKey未配置时, 支持配置节点账户地址
+# 即从钱包中获取对应的私钥, 节点需要创建钱包并解锁导入对应的私钥
+authAccount=""
+
+# 全量数据即提交所有交易源数据, 此时交易签名必须为bls类型
+# 默认关闭, 即仅提交区块header数据
+fullDataCommit=false
+# 最大状态提交间隔时长
+# 最低60s, 默认5min
+maxCommitInterval=300 #seconds
+# 设置平行链启动时对应的主链高度
+startHeight=0
+# 同步主链区块头, 预留高度, 减少回滚概率
+# 默认12, 最低设为1
+reservedMainHeight=12
 
 
 [store]
@@ -221,7 +243,7 @@ paraConsensusStopBlocks=30000
 #是否关闭自共识,缺省开启自共识校验
 closeSelfConsensus=false
 #平行链在构建区块时候配置丢弃tx list
-discardTxs=[""]
+discardTxs=[]
 
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"

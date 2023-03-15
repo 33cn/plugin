@@ -108,6 +108,10 @@ startHeight=0
 # 同步主链区块头, 预留高度, 减少回滚概率 
 # 默认12, 最低设为1
 reservedMainHeight=12
+
+[fork.system]
+ForkBlockHash= 0
+ForkRootHash=0
 ```
                                                                   
 
