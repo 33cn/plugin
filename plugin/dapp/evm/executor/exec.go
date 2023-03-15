@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/account"
 	"github.com/ethereum/go-ethereum/params"
 
@@ -48,19 +50,20 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	cfg := evm.GetAPI().GetConfig()
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
+	execAddr := evm.getEvmExecAddress()
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
-	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
-	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
+	isCreate := strings.Compare(msg.To().String(), execAddr) == 0 && len(msg.Data()) > 0
+	isTransferOnly := strings.Compare(msg.To().String(), execAddr) == 0 && 0 == len(msg.Data())
 	//coins转账，para数据作为备注交易
-	isTransferNote := strings.Compare(msg.To().String(), EvmAddress) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
+	isTransferNote := strings.Compare(msg.To().String(), execAddr) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
 
 	//加上固有消费的gas
 	gas, err := intrinsicGas(msg, isCreate, true)
 	if err != nil {
 		return nil, err
 	}
-	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", EvmAddress, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value())
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
@@ -354,6 +357,17 @@ func (evm *EVMExecutor) GetTxFee(tx *types.Transaction, index int) int64 {
 		}
 	}
 	return fee
+}
+
+// 获取evm 执行器地址
+func (evm *EVMExecutor) getEvmExecAddress() string {
+
+	isFork := evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMAddressInit)
+	if isFork && address.IsEthAddress(evmExecAddress) {
+		return evmExecFormatAddress
+	}
+
+	return evmExecAddress
 }
 
 func getDataHashKey(addr common.Address) []byte {
