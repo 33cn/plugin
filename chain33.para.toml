@@ -367,6 +367,7 @@ ForkEVMYoloV1=0
 ForkEVMTxGroup=0
 # EVM兼容base58及16进制地址混合调用处理
 ForkEVMMixAddress=0
+ForkEVMAddressInit=0
 
 [fork.sub.blackwhite]
 Enable=0
