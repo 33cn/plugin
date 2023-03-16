@@ -48,6 +48,8 @@ const (
 	ForkEVMTxGroup = "ForkEVMTxGroup"
 	// ForkEVMMixAddress evm同时兼容base58及16进制地址混合调用处理
 	ForkEVMMixAddress = "ForkEVMMixAddress"
+	// ForkEVMAddressInit 初始化以太坊格式地址
+	ForkEVMAddressInit = "ForkEVMAddressInit"
 )
 
 var (

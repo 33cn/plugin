@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"sort"
-
 	"reflect"
+	"sort"
 
 	log "github.com/33cn/chain33/common/log/log15"
 
@@ -26,9 +25,10 @@ import (
 
 var (
 	evmDebugInited = false
-	// EvmAddress 本合约地址
-	EvmAddress = ""
-	driverName = evmtypes.ExecutorName
+	// 执行器地址, 格式由evm配置的地址驱动指定
+	evmExecAddress       = ""
+	evmExecFormatAddress = ""
+	driverName           = evmtypes.ExecutorName
 )
 
 type subConfig struct {
@@ -67,7 +67,9 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName = name
 	drivers.Register(cfg, driverName, newEVMDriver, enableHeight)
 	// 格式化为配置地址格式
-	EvmAddress = common.StringToAddress(address.ExecAddress(cfg.ExecName(name))).String()
+	evmExecAddress = common.StringToAddress(address.ExecAddress(cfg.ExecName(name))).String()
+	evmExecFormatAddress = address.ToLower(evmExecAddress)
+	log.Info("evmInit", "execAddr", evmExecAddress, "formatAddr", evmExecFormatAddress)
 	// 初始化硬分叉数据
 	state.InitForkData()
 	InitExecType()
