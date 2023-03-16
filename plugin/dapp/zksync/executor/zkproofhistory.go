@@ -29,7 +29,7 @@ func setHistoryAccountProofToDb(proof *zt.HistoryAccountProofInfo) error {
 
 //根据rootHash获取account在该root下的证明
 func getAccountProofInHistory(statedb dbm.KV, req *zt.ZkReqExistenceProof) (*zt.ZkProofWitness, error) {
-	historyAccountInfo, err := BuildStateDbHistoryAccount(statedb, req.RootHash) //获取所有的叶子节点信息
+	historyAccountInfo, err := BuildStateDbHistoryAccount(statedb, req.RootHash)
 	if err != nil {
 		return nil, err
 	}
