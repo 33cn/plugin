@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.68.2"></a>
+## [1.68.2](https://github.com/33cn/plugin/compare/v1.68.1...v1.68.2) (2023-03-16)
+
+
+### Bug Fixes
+
+* init evm exec address with format ([36e8875](https://github.com/33cn/plugin/commit/36e8875))
+
 <a name="1.68.1"></a>
 ## [1.68.1](https://github.com/33cn/plugin/compare/v1.68.0...v1.68.1) (2023-03-14)
 
