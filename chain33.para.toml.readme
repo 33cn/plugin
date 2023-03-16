@@ -72,7 +72,7 @@ whitelist=["127.0.0.1"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
 
-[rpc.sub.parachain]
+[rpc.parachain]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
 #mainChainGrpcAddr="jiedian2.bityuan.com,cloud.bityuan.com"
 mainChainGrpcAddr="localhost:8802"

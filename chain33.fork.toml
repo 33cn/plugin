@@ -81,6 +81,8 @@ ForkEVMTxGroup=0
 ForkEVMMixAddress=0
 # EVM gas 计算调整
 ForkIntrinsicGas=0
+ForkEVMAddressInit=0
+
 
 [fork.sub.evmxgo]
 Enable=0
