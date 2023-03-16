@@ -29,13 +29,14 @@ func setHistoryAccountProofToDb(proof *zt.HistoryAccountProofInfo) error {
 
 //根据rootHash获取account在该root下的证明
 func getAccountProofInHistory(statedb dbm.KV, req *zt.ZkReqExistenceProof) (*zt.ZkProofWitness, error) {
-	historyAccountInfo, err := BuildStateDbHistoryAccount(statedb, req.RootHash)
+	historyAccountInfo, err := BuildStateDbHistoryAccount(statedb, req.RootHash) //获取所有的叶子节点信息
 	if err != nil {
 		return nil, err
 	}
 	if len(req.RootHash) > 0 && historyAccountInfo.RootHash != req.RootHash {
 		return nil, errors.Wrapf(types.ErrNotFound, "req Root=%s,buildRoot=%s", req.RootHash, historyAccountInfo.GetRootHash())
 	}
+	//获取账户id对应的witness
 	return GetHistoryAccountProof(historyAccountInfo, req.AccountId, req.TokenId)
 }
 

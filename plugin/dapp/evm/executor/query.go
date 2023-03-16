@@ -144,7 +144,7 @@ func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (type
 		ldb.ResetCache()
 		sdb := evm.mStateDB.StateDB.(*executor.StateDB)
 		sdb.ResetCache()
-		if err != nil {
+		if err != nil && count == 1 { //第一次执行出错，停止估算
 			return nil, err
 		}
 		if !ok { //如果!ok 说明GaS 不够用，则把上一轮计算的mid gas 赋值给low gas, 进而提高mid gas 的值

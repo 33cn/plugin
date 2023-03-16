@@ -434,3 +434,15 @@ func (z *zksync) Query_GetTotalDeposit(in *zt.ZkQueryReq) (types.Message, error)
 	}
 	return &zt.TokenBalance{TokenId: in.TokenId, Balance: decimalVal(totalBalance.String(), in.Decimal)}, nil
 }
+
+//Query_GetHistoryAccountByRoot 根据历史rootHash 获取所有账户下的快照信息
+func (z *zksync) Query_GetHistoryAccountByRoot(in *zt.ZkReqExistenceProof) (types.Message, error) {
+	confManager := types.ConfSub(z.GetAPI().GetConfig(), zt.Zksync)
+	historyAccountProof, err := getHistoryAccountByRoot(z.GetLocalDB(), in.GetRootHash(), confManager.GStr("ethfeeAddr"), confManager.GStr("layer2FeeAddr"))
+	if err != nil {
+		return nil, err
+	}
+
+	//处理accountID,tokenID 信息
+	return GetHistoryAccountProof(historyAccountProof, in.GetAccountId(), in.GetTokenId())
+}
