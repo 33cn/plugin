@@ -36,7 +36,6 @@ func getAccountProofInHistory(statedb dbm.KV, req *zt.ZkReqExistenceProof) (*zt.
 	if len(req.RootHash) > 0 && historyAccountInfo.RootHash != req.RootHash {
 		return nil, errors.Wrapf(types.ErrNotFound, "req Root=%s,buildRoot=%s", req.RootHash, historyAccountInfo.GetRootHash())
 	}
-	//获取账户id对应的witness
 	return GetHistoryAccountProof(historyAccountInfo, req.AccountId, req.TokenId)
 }
 

@@ -38,7 +38,6 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		atomic.StoreInt32(&evm.vmCfg.Debug, int32(conf.GInt("evmDebugEnable")))
 		evmDebugInited = true
 	}
-	log.Info("Exec", "ethhash:", common.Bytes2Hex(tx.GetEthTxHash()))
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
 	return receipt, err
 }
