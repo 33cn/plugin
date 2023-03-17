@@ -56,14 +56,18 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	isCreate := strings.Compare(msg.To().String(), execAddr) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), execAddr) == 0 && 0 == len(msg.Data())
 	//coins转账，para数据作为备注交易
-	isTransferNote := strings.Compare(msg.To().String(), execAddr) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
 
-	//加上固有消费的gas
-	gas, err := intrinsicGas(msg, isCreate, true)
-	if err != nil {
-		return nil, err
+	isTransferNote := strings.Compare(msg.To().String(), execAddr) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
+	var gas uint64
+	if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkIntrinsicGas) {
+		//加上固有消费的gas
+		gas, err = intrinsicGas(msg, isCreate, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+
 		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value())
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
@@ -198,7 +202,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 
 	if isCreate && !readOnly {
 		log.Info("innerExec", "Succeed to created new contract with name", msg.Alias(),
-			"created contract address", contractAddrStr)
+			"created contract address", contractAddrStr, "isethtx", types.IsEthSignID(sigType))
 	}
 
 	return receipt, nil
