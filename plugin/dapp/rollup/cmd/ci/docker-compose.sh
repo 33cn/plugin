@@ -22,10 +22,10 @@ MAIN_NODE="${1}_main_1"
 MAIN_CLI="docker exec ${MAIN_NODE} /root/chain33-cli"
 
 PARA_NODE="${1}_para1_1"
-CLI="docker exec ${PARA_NODE} /root/chain33-cli --paraName=user.p.para"
+CLI="docker exec ${PARA_NODE} /root/chain33-cli --paraName=user.p.para."
 
 PARA_NODE2="${1}_para2_1"
-CLI2="docker exec ${PARA_NODE2} /root/chain33-cli"
+CLI2="docker exec ${PARA_NODE2} /root/chain33-cli --paraName=user.p.para."
 
 # shellcheck disable=SC2034
 
@@ -284,7 +284,7 @@ function test_cross_chain() {
     fi
 
     echo "=== bty parachain -> mainchain ==="
-    ${CLI} send para cross_transfer -e user.p.para.coins -s para \
+    ${CLI} send para cross_transfer -e user.p.para.paracross -s coins.bty \
     --paraName=user.p.para. -a 1 -t 14BQdkMhuVgJCRyPeUczUCB2BowGrbF3wK -k "${testKey1}"
     mainHeight=$((mainHeight + 1))
     wait_height "${MAIN_CLI}" "${mainHeight}" 50
@@ -314,7 +314,7 @@ function test_cross_chain() {
         exit 1
     fi
 
-    balance=$(${CLI} asset balance -e paracross -a 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw \
+    balance=$(${CLI} asset balance -e user.p.para.paracross -a 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw \
     --asset_exec=coins --asset_symbol=para | jq -r ".balance")
     if [ "${balance}" != "1.0000" ]; then
         echo "para balance in parachain not correct, balance=${balance}"
@@ -367,7 +367,7 @@ function start_docker() {
 }
 
 function check_docker_container() {
-    echo "============== check_docker_container ==============================="
+    echo "===== check_docker_container ======"
     for con in "${containers[@]}"; do
         runing=$(docker inspect "${con}" | jq '.[0].State.Running')
         if [ ! "${runing}" ]; then
@@ -399,7 +399,7 @@ function sync_status() {
 }
 
 function main() {
-    echo "==============================DAPP=$DAPP main begin========================================================"
+    echo "====================DAPP=$DAPP main begin==================="
     ### init config ####
     set_main_config
     set_para_config
@@ -416,7 +416,7 @@ function main() {
 
     ### finish ###
     check_docker_container
-    echo "===============================DAPP=$DAPP main end========================================================="
+    echo "===============DAPP=$DAPP main end==============="
 }
 
 # run script
