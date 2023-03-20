@@ -1,10 +1,10 @@
 #!/bin/bash
 # 官方ci集成脚本
-strpwd=$(pwd)
-strcmd=${strpwd##*dapp/}
-strapp=${strcmd%/cmd*}
+#strpwd=$(pwd)
+#strcmd=${strpwd##*dapp/}
+#strapp=${strcmd%/cmd*}
 
-OUT_DIR="${1}/$strapp"
+#OUT_DIR="${1}/$strapp"
 #FLAG=$2
 
 #mkdir -p "${OUT_DIR}"
