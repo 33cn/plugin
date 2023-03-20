@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
 function rollup() {
-   echo "not implement"
-   exit 1
+    echo "not implement"
+    exit 1
 }

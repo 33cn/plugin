@@ -257,14 +257,14 @@ function test_cross_chain() {
     echo "=== check cross chain asset balance step 1==="
 
     balance=$(${CLI} asset balance -e paracross -a 1CqsBFa8KMGG9yjY4XcCUWaqdscBw6eipn \
-    --asset_exec=paracross --asset_symbol=coins.bty | jq -r ".balance")
+        --asset_exec=paracross --asset_symbol=coins.bty | jq -r ".balance")
     if [ "${balance}" != "2.0000" ]; then
         echo "bty balance in parachain not correct, balance=${balance}"
         exit 1
     fi
 
     balance=$(${MAIN_CLI} asset balance -e paracross -a 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw \
-    --asset_exec=paracross --asset_symbol=user.p.para.coins.para | jq -r ".balance")
+        --asset_exec=paracross --asset_symbol=user.p.para.coins.para | jq -r ".balance")
     if [ "${balance}" != "2.0000" ]; then
         echo "para balance in mainchain not correct, balance=${balance}"
         exit 1
@@ -272,12 +272,12 @@ function test_cross_chain() {
 
     echo "=== para mainchain -> parachain ==="
     ${CLI} send para cross_transfer -e paracross -s user.p.para.coins.para \
-    --paraName=user.p.para. -a 1 -t 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw -k "${testKey2}"
+        --paraName=user.p.para. -a 1 -t 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw -k "${testKey2}"
     mainHeight=$((mainHeight + 1))
     wait_height "${MAIN_CLI}" "${mainHeight}" 50
 
     frozen=$(${MAIN_CLI} asset balance -e paracross -a 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw \
-    --asset_exec=paracross --asset_symbol=user.p.para.coins.para | jq -r ".balance")
+        --asset_exec=paracross --asset_symbol=user.p.para.coins.para | jq -r ".balance")
     if [ "${frozen}" != "1.0000" ]; then
         echo "para frozen in mainchain not correct, frozen=${frozen}"
         exit 1
@@ -285,7 +285,7 @@ function test_cross_chain() {
 
     echo "=== bty parachain -> mainchain ==="
     ${CLI} send para cross_transfer -e user.p.para.paracross -s coins.bty \
-    --paraName=user.p.para. -a 1 -t 14BQdkMhuVgJCRyPeUczUCB2BowGrbF3wK -k "${testKey1}"
+        --paraName=user.p.para. -a 1 -t 14BQdkMhuVgJCRyPeUczUCB2BowGrbF3wK -k "${testKey1}"
     mainHeight=$((mainHeight + 1))
     wait_height "${MAIN_CLI}" "${mainHeight}" 50
 
@@ -307,7 +307,7 @@ function test_cross_chain() {
 
     echo "=== check cross chain asset balance step 2==="
     balance=$(${MAIN_CLI} asset balance -e paracross -a 14BQdkMhuVgJCRyPeUczUCB2BowGrbF3wK \
-    --asset_exec=coins --asset_symbol=bty | jq -r ".balance")
+        --asset_exec=coins --asset_symbol=bty | jq -r ".balance")
 
     if [ "${balance}" != "1.0000" ]; then
         echo "bty balance in mainchain not correct, balance=${balance}"
@@ -315,7 +315,7 @@ function test_cross_chain() {
     fi
 
     balance=$(${CLI} asset balance -e user.p.para.paracross -a 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw \
-    --asset_exec=coins --asset_symbol=para | jq -r ".balance")
+        --asset_exec=coins --asset_symbol=para | jq -r ".balance")
     if [ "${balance}" != "1.0000" ]; then
         echo "para balance in parachain not correct, balance=${balance}"
         exit 1
@@ -404,15 +404,12 @@ function main() {
     set_main_config
     set_para_config
 
-
-
     ### start docker ####
     start_docker
 
     node_group_config
 
     test_rollup
-
 
     ### finish ###
     check_docker_container
