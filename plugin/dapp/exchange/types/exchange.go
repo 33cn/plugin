@@ -106,6 +106,27 @@ var (
 	ForkParamV7 = "ForkParamV7"
 	ForkParamV8 = "ForkParamV8"
 	ForkParamV9 = "ForkParamV9"
+
+	ForkParamV10 = "ForkParamV10"
+	ForkParamV11 = "ForkParamV11"
+	ForkParamV12 = "ForkParamV12"
+	ForkParamV13 = "ForkParamV13"
+	ForkParamV14 = "ForkParamV14"
+	ForkParamV15 = "ForkParamV15"
+	ForkParamV16 = "ForkParamV16"
+	ForkParamV17 = "ForkParamV17"
+	ForkParamV18 = "ForkParamV18"
+	ForkParamV19 = "ForkParamV19"
+	ForkParamV20 = "ForkParamV20"
+	ForkParamV21 = "ForkParamV21"
+	ForkParamV22 = "ForkParamV22"
+	ForkParamV23 = "ForkParamV23"
+	ForkParamV24 = "ForkParamV24"
+	ForkParamV25 = "ForkParamV25"
+	ForkParamV26 = "ForkParamV26"
+	ForkParamV27 = "ForkParamV27"
+	ForkParamV28 = "ForkParamV28"
+	ForkParamV29 = "ForkParamV29"
 )
 
 // init defines a register function
@@ -129,6 +150,26 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, ForkParamV7, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV8, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV9, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV10, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV11, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV12, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV13, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV14, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV15, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV16, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV17, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV18, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV19, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV20, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV21, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV22, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV23, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV24, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV25, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV26, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV27, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV28, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV29, 0)
 }
 
 // InitExecutor defines register executor
