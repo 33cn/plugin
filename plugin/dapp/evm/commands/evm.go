@@ -5,18 +5,12 @@
 package commands
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
-	"math/big"
 	"math/rand"
 	"os"
 	"time"
-
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/pkg/errors"
@@ -33,7 +27,6 @@ import (
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmCommon "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 )
@@ -270,47 +263,7 @@ func addCreateContractFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("from", "f", "", "sender address")
 }
 
-//createContractByEthModel eth的方式创建合约
-func createContractByEthModel(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	code, _ := cmd.Flags().GetString("code")
-	alias, _ := cmd.Flags().GetString("alias")
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	paraName, _ := cmd.Flags().GetString("paraName")
-	abi, _ := cmd.Flags().GetString("abi")
-	constructorPara, _ := cmd.Flags().GetString("parameter")
-	chainID, _ := cmd.Flags().GetInt32("chainID")
-	fromAddr, _ := cmd.Flags().GetString("from")
-	ecli, err := ethclient.Dial(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	if address.IsEthAddress(fromAddr) {
-		fmt.Fprintln(os.Stderr, "not ethaddress")
-		return
-	}
-	from := ethcommon.HexToAddress(fromAddr)
-	fromNonce, err := ecli.NonceAt(context.Background(), from, nil)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	ethtypes.LegacyTx{
-		Nonce:    fromNonce,
-		GasPrice: big.NewInt(10e9),
-		Gas:      big.NewInt(),
-	}
-
-}
 func createContract(cmd *cobra.Command, args []string) {
-	ty, _ := cmd.Flags().GetString("model")
-	if strings.Compare(ty, "eth") == 0 { //用 eth 的方式发布合约
-		createContractByEthModel(cmd, args)
-		return
-	}
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	code, _ := cmd.Flags().GetString("code")
 	note, _ := cmd.Flags().GetString("note")

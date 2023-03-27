@@ -5,9 +5,10 @@
 package runtime
 
 import (
+	"math/big"
+
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/holiman/uint256"
-	"math/big"
 )
 
 // ContractRef 合约对象引用
