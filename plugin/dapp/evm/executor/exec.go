@@ -123,7 +123,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		contractAddrStr = contractAddr.String()
 	}
 
-	//	evm
+	//      evm
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
 	if isCreate {
@@ -137,7 +137,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	}
 	// 打印合约中生成的日志
 	evm.mStateDB.PrintLogs()
-
 	usedGas := msg.GasLimit() - leftOverGas
 	logMsg := "call contract details:"
 	if isCreate {

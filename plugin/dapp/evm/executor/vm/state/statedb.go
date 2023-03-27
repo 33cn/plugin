@@ -6,6 +6,7 @@ package state
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -75,20 +76,20 @@ type MemoryStateDB struct {
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
 func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
 	mdb := &MemoryStateDB{
-		StateDB:      StateDB,
-		LocalDB:      LocalDB,
-		CoinsAccount: CoinsAccount,
+		StateDB:         StateDB,
+		LocalDB:         LocalDB,
+		CoinsAccount:    CoinsAccount,
 		evmPlatformAddr: address.ExecAddress(api.GetConfig().ExecName("evm")),
-		accounts:    make(map[string]*ContractAccount),
-		logs:        make(map[common.Hash][]*model.ContractLog),
-		logSize:     0,
-		preimages:   make(map[common.Hash][]byte),
-		stateDirty:  make(map[string]interface{}),
-		dataDirty:   make(map[string]interface{}),
-		blockHeight: blockHeight,
-		refund:      0,
-		txIndex:     0,
-		api:         api,
+		accounts:        make(map[string]*ContractAccount),
+		logs:            make(map[common.Hash][]*model.ContractLog),
+		logSize:         0,
+		preimages:       make(map[common.Hash][]byte),
+		stateDirty:      make(map[string]interface{}),
+		dataDirty:       make(map[string]interface{}),
+		blockHeight:     blockHeight,
+		refund:          0,
+		txIndex:         0,
+		api:             api,
 	}
 	return mdb
 }
@@ -509,6 +510,44 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		"sender", sender, "recipient", recipient, "amount:", amount)
 
 	return true
+}
+
+//TransferToToken evm call token
+func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (bool, error) {
+	tokendb, err := account.NewAccountDB(mdb.api.GetConfig(), "token", symbol, mdb.StateDB)
+	if err != nil {
+		return false, err
+	}
+	execName := mdb.api.GetConfig().ExecName("token")
+	execaddress := address.ExecAddress(execName)
+	if recipient == execaddress {
+		return false, errors.New("not allow")
+	}
+	receipt, err := tokendb.Transfer(from, recipient, amount)
+	if err != nil {
+		return false, err
+	}
+
+	mdb.addChange(transferChange{
+		baseChange: baseChange{},
+		amount:     amount,
+		data:       receipt.GetKV(),
+		logs:       receipt.GetLogs(),
+	})
+	return true, nil
+
+}
+
+func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbol string) (int64, error) {
+	tokenAccount, err := account.NewAccountDB(mdb.GetConfig(), execer, tokensymbol, mdb.StateDB)
+	if err != nil {
+		return 0, err
+	}
+	acc := tokenAccount.LoadAccount(caller.String())
+	if acc == nil {
+		return 0, nil
+	}
+	return acc.Balance, nil
 }
 
 // 因为chain33的限制，在执行器中转账只能在以下几个方向进行：

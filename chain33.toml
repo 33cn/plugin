@@ -279,6 +279,7 @@ tokenApprs = [
 	"1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",
 	"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
 ]
+friendExecer=["evm"]
 
 [exec.sub.cert]
 # 是否启用证书验证和签名
@@ -382,6 +383,10 @@ evmGasLimit=2000000
 #evm内部调试输出，指令级的，默认关闭,0：关闭；1：打开
 evmDebugEnable=0
 
+# 预编译合约配置管理员
+[exec.sub.evm.preCompile]
+# 激活合token-erc20 的合约管理地址，必须配置管理员地址
+superManager=[""]
 [exec.sub.mix]
 #私对私的交易费,交易比较大，需要多的手续费
 txFee=100000000

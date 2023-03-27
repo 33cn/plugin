@@ -49,6 +49,8 @@ var (
 	ForkTokenSymbolWithNumberX = "ForkTokenSymbolWithNumber"
 	// ForkTokenCheckX  fork check impl bug
 	ForkTokenCheckX = "ForkTokenCheck"
+	//ForkTokenEvm  token asset can be transfer by evm
+	ForkTokenEvm = "ForkTokenEvm"
 )
 
 const (
