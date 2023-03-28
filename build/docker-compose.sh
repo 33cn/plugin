@@ -473,26 +473,6 @@ function dapp_test_address() {
     echo "${hash}"
 }
 
-#eth_tx_test eth 兼容测试
-function eth_tx_test(){
-  //向eth 地址打币 0xd83b69C56834E85e023B1738E69BFA2F0dd52905
-  hash=$(${1} send coins transfer -a 100 -n transfer -t 0xd83b69C56834E85e023B1738E69BFA2F0dd52905 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
-  echo "${hash}"
-   #    block_wait "${1}" 1
-  tx_wait  "${hash}"
-
-  rbalance=$(${1} account balance -a 0xd83b69C56834E85e023B1738E69BFA2F0dd52905 -e retrieve | jq -r ".balance")
-  if [ "${rbalance}" != "100.0000" ]; then
-        echo "wrong  balance, should not be zero"
-        exit 1
-  fi
-
-
-
-
-
-
-}
 
 function base_config() {
     #    sync
@@ -512,10 +492,6 @@ function rpc_test() {
     fi
 }
 
-function  evm_test() {
-
-
-}
 
 function dapp_run() {
     if [ -e "$DAPP_TEST_FILE" ]; then

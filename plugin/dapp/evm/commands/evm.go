@@ -259,8 +259,7 @@ func addCreateContractFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name(optional)")
 
 	cmd.Flags().StringP("parameter", "p", "", "(optional)parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
-	cmd.Flags().StringP("model", "m", "chain33", "model support chain33 tx  and ethereum tx ,default chain33 tx")
-	cmd.Flags().StringP("from", "f", "", "sender address")
+
 }
 
 func createContract(cmd *cobra.Command, args []string) {
