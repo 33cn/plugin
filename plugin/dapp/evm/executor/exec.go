@@ -108,7 +108,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		if types.IsEthSignID(sigType) {
 			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
 			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
-
 		} else {
 			contractAddr = evm.createContractAddress(msg.From(), txHash)
 		}
@@ -154,8 +153,9 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			visiableOut = append(visiableOut, ret[i])
 		}
 		ret = visiableOut
-		vmerr = fmt.Errorf("%s,detail: %s", vmerr.Error(), common.Bytes2Hex(ret))
-		log.Error("innerExec evm contract exec error", "error info", vmerr)
+
+		vmerr = fmt.Errorf("%s,detail: %s:", vmerr.Error(), string(ret))
+		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret))
 		return receipt, vmerr
 	}
 

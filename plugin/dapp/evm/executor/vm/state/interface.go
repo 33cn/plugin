@@ -90,4 +90,6 @@ type EVMStateDB interface {
 	TransferToToken(from, recipient, symbol string, amount int64) (bool, error)
 	//返回Token 合约下symbol 的余额
 	TokenBalance(from common.Address, execer string, symbol string) (int64, error)
+	//查询代币总量
+	TokenSupply(tokensymbol string) (int64, error)
 }

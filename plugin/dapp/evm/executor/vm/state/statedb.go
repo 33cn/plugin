@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"strings"
 
+	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
+
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 
 	"github.com/33cn/chain33/account"
@@ -514,12 +516,21 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 
 //TransferToToken evm call token
 func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (bool, error) {
+	tokenInfo, err := mdb.tokenStatus(symbol)
+	if err != nil {
+		return false, err
+	}
+	if tokenInfo.GetStatus() != 1 {
+		// 0:precreated,1:created,2:revoke
+		return false, errors.New(fmt.Sprintf("transfer without permission,token status:", tokenInfo.GetStatus()))
+	}
+
 	tokendb, err := account.NewAccountDB(mdb.api.GetConfig(), "token", symbol, mdb.StateDB)
 	if err != nil {
 		return false, err
 	}
-	execName := mdb.api.GetConfig().ExecName("token")
-	execaddress := address.ExecAddress(execName)
+	execer := mdb.api.GetConfig().ExecName("token")
+	execaddress := address.ExecAddress(execer)
 	if recipient == execaddress {
 		return false, errors.New("not allow")
 	}
@@ -538,6 +549,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 
 }
 
+//TokenBalance 查询token 账户下的余额
 func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbol string) (int64, error) {
 	tokenAccount, err := account.NewAccountDB(mdb.GetConfig(), execer, tokensymbol, mdb.StateDB)
 	if err != nil {
@@ -548,6 +560,34 @@ func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbo
 		return 0, nil
 	}
 	return acc.Balance, nil
+}
+
+//tokenStatus 获取token 状态信息
+func (mdb *MemoryStateDB) tokenStatus(tokensymbol string) (*tokenty.LocalToken, error) {
+	tokenPreCreatedSTONewLocal := "LODB-token-create-sto-"
+	tokenKey := []byte(fmt.Sprintf(tokenPreCreatedSTONewLocal+"%d-%s-", 1, tokensymbol))
+	values, err := mdb.LocalDB.List(tokenKey, nil, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	if len(values) == 0 || values[0] == nil || len(values[0]) == 0 {
+		return nil, types.ErrNotFound
+	}
+	var tokenInfo tokenty.LocalToken
+	err = types.Decode(values[0], &tokenInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &tokenInfo, nil
+}
+
+//TokenSupply 获取token 总量
+func (mdb *MemoryStateDB) TokenSupply(tokensymbol string) (int64, error) {
+	tokenInfo, err := mdb.tokenStatus(tokensymbol)
+	if err != nil {
+		return 0, err
+	}
+	return tokenInfo.Total, nil
 }
 
 // 因为chain33的限制，在执行器中转账只能在以下几个方向进行：

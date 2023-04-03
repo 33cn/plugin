@@ -17,6 +17,16 @@ library PreToken {
         return abi.decode(returnData, (uint8));
     }
 
+    function totalSupply()internal view returns(uint256){
+        (bool success, bytes memory returnData) = PRECOMPILE.staticcall(abi.encodeWithSignature("totalSupply()"));
+        assembly {
+            if eq(success, 0) {
+                revert(add(returnData, 0x20), returndatasize())
+            }
+        }
+
+        return abi.decode(returnData, (uint256));
+    }
 
     function balanceOf(address account) internal view returns (uint256) {
         (bool success, bytes memory returnData) = PRECOMPILE.staticcall(
