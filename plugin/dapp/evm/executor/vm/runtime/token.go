@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	balanceOf = "70a08231"
-	decimals  = "313ce567"
-	transfer  = "beabacc8"
+	balanceOf   = "70a08231"
+	decimals    = "313ce567"
+	transfer    = "beabacc8"
+	totalSupply = "18160ddd"
 	//transfer(address,address,uint256)
 )
 
@@ -100,6 +101,11 @@ func (t *tokenPrecompile) setTokenSymbol(evm *EVM, caller ContractRef) {
 //Run ...
 func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
 	log.Info("token.Precompiled", "Run.Caller", caller.Address().String(), "inputSize:", len(input))
+	if !t.checkCreator(evm, caller) {
+		err = errors.New("contract not authorized")
+		ret = []byte(err.Error())
+		return
+	}
 	remainingGas = suppliedGas
 	//获取方法哈希
 	action := common.Bytes2Hex(input[:4])[2:]
@@ -108,10 +114,7 @@ func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppli
 	case transfer:
 		if len(input) < 68 {
 			err = errors.New("input size too low")
-			return
-		}
-		if !t.checkCreator(evm, caller) {
-			err = errors.New("unapproved contract")
+			ret = []byte(err.Error())
 			return
 		}
 
@@ -122,6 +125,7 @@ func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppli
 		ok, err = t.callTransfer(evm, from, to, caller.Address(), amount.Int64())
 		if err != nil {
 			log.Error("token.Precompiled Run", "callTransfer", err, "input:", common.Bytes2Hex(input))
+			ret = []byte(err.Error())
 			return
 		}
 		ret, err = t.encode("transfer", ok)
@@ -139,6 +143,15 @@ func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppli
 
 	case decimals:
 		ret, err = t.encode("decimals", uint8(t.decimals))
+		return
+
+	case totalSupply:
+		var total int64
+		total, err = t.callTotalSupply(evm, caller.Address())
+		if err != nil {
+			return
+		}
+		ret, err = t.encode("totalSupply", big.NewInt(total))
 		return
 	}
 
@@ -158,7 +171,7 @@ func (t *tokenPrecompile) callTransfer(evm *EVM, caller, to, contract common.Add
 		ok = true
 		return
 	}
-	tokenName := t.contractInfo[contract.String()]
+	tokenName := t.contractInfo[strings.ToLower(contract.String())]
 	ok, err = evm.StateDB.TransferToToken(caller.String(), to.String(), tokenName, amount)
 	return
 }
@@ -169,4 +182,10 @@ func (t *tokenPrecompile) callBalanceOf(evm *EVM, caller, contract common.Addres
 	tokenName := t.contractInfo[strings.ToLower(contract.String())]
 	return evm.StateDB.TokenBalance(caller, tokenExecer, tokenName)
 
+}
+
+func (f *tokenPrecompile) callTotalSupply(evm *EVM, contract common.Address) (int64, error) {
+	//total
+	tokenName := f.contractInfo[strings.ToLower(contract.String())]
+	return evm.StateDB.TokenSupply(tokenName)
 }

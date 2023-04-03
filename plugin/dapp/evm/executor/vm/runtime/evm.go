@@ -40,7 +40,6 @@ func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte,
 		} else if sp != nil {
 			ret, contract.Gas, err = RunStateFulPrecompiledContract(evm, contract, sp, input, contract.Gas)
 		}
-		return
 	}
 	// 在此处打印下自定义合约的错误信息
 	ret, err = evm.Interpreter.Run(contract, input, readOnly)

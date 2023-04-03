@@ -9,13 +9,11 @@ import "./PreToken.sol";
 contract Token is IERC20 {
     using SafeMath for uint256;
     mapping (address => mapping (address => uint256)) private _allowances;
-    uint256 private _totalSupply;
     string private _name;
     string private _symbol;
-    constructor(string memory name_, uint256 supply_){
+    constructor(string memory name_){
         _name=name_;
         _symbol=name_;
-        _totalSupply=supply_;
 
     }
 
@@ -42,10 +40,11 @@ contract Token is IERC20 {
     }
 
     /**
-     * @dev See {IERC20-totalSupply}.
-     */
+    * @dev See {IERC20-totalSupply}.
+    */
     function totalSupply() public view override returns (uint256) {
-        return _totalSupply;
+        //return _totalSupply;
+        return PreToken.totalSupply();
     }
 
     /**
