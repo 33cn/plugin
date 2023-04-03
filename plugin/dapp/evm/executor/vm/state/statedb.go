@@ -522,7 +522,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 	}
 	if tokenInfo.GetStatus() != 1 {
 		// 0:precreated,1:created,2:revoke
-		return false, errors.New(fmt.Sprintf("transfer without permission,token status:", tokenInfo.GetStatus()))
+		return false, fmt.Errorf("transfer without permission,token status:%v", tokenInfo.GetStatus())
 	}
 
 	tokendb, err := account.NewAccountDB(mdb.api.GetConfig(), "token", symbol, mdb.StateDB)
@@ -754,6 +754,7 @@ func (mdb *MemoryStateDB) GetConfig() *types.Chain33Config {
 	return mdb.api.GetConfig()
 }
 
+//GetApi return QueueProtocolAPI
 func (mdb *MemoryStateDB) GetApi() client.QueueProtocolAPI {
 	return mdb.api
 }
