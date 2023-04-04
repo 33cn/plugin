@@ -90,7 +90,7 @@ jobs:
 
   ci_base:
     name: ci_base
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
