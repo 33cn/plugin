@@ -3,7 +3,7 @@ on: [push,pull_request]
 
 jobs:
   check_fmt:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
@@ -37,7 +37,7 @@ jobs:
 
   unit-test:
     name: unit-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
@@ -53,7 +53,7 @@ jobs:
 
   coverage:
     name: coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
@@ -72,7 +72,7 @@ jobs:
 
   autotest:
     name: autotest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
@@ -90,7 +90,7 @@ jobs:
 
   ci_base:
     name: ci_base
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
@@ -108,7 +108,7 @@ jobs:
 
   test-arch-386:
     name: Test GOARCH 386
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       GOARCH: 386
       CGO_ENABLED: 1

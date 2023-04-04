@@ -4,7 +4,7 @@ on: [push,pull_request]
 jobs:
   paracross:
     name: ci_paracross
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v2
