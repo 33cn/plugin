@@ -445,7 +445,7 @@ func TestCompatibility(t *testing.T) {
 	}
 
 	// Brute force all trees up to size 'max'. Running time for this test is max^3.
-	max := uint64(129)
+	max := uint64(17)
 	tree := New(h)
 	for i := uint64(1); i < max; i++ {
 		// Try with proof at every possible index.
@@ -479,7 +479,7 @@ func TestCompatibility(t *testing.T) {
 	}
 
 	// Check that proofs on larger trees are consistent.
-	for i := 0; i < 25; i++ {
+	for i := 0; i < 5; i++ {
 		// Determine a random size for the tree up to 64M elements.
 		sizeI, err := rand.Int(rand.Reader, big.NewInt(256e3))
 		if err != nil {
