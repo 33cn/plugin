@@ -5,7 +5,7 @@ jobs:
   check_fmt:
     runs-on: ubuntu-20.04
     steps:
-      - name: Set up Golang
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
