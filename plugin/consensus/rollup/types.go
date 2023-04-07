@@ -13,6 +13,7 @@ type Config struct {
 	MaxCommitInterval  int64  `json:"maxCommitInterval,omitempty"`
 	AuthAccount        string `json:"authAccount,omitempty"`
 	AuthKey            string `json:"authKey,omitempty"`
+	AddressID          int32  `json:"addressID,omitempty"`
 	ReservedMainHeight int64  `json:"reservedMainHeight,omitempty"`
 }
 
