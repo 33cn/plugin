@@ -1,0 +1,8 @@
+version: '3'
+# 单节点solo模式
+services:
+  main:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.test.toml"
