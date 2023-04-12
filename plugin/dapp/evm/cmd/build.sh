@@ -16,5 +16,6 @@ cp ./ci/* "${OUT_DIR}"
 
 
 PLUGIN_PATH=$(go list -f "{{.Dir}}" github.com/33cn/plugin)
+echo "plugin+++++++++++++++++ path: ${PLUGIN_PATH}"
 # copy chain33 toml
-cp "${PLUGIN_PATH}/chain33.test.toml" "${OUT_DIR}"
+cp "${PLUGIN_PATH}/chain33.toml" "${OUT_DIR}"
