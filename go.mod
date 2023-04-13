@@ -2,7 +2,7 @@ module github.com/33cn/plugin
 
 go 1.16
 
-replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20230413083049-0cb2b9145f72
+replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20230413094555-30adfc3cfce7
 
 require (
 	github.com/33cn/chain33 v1.68.0
