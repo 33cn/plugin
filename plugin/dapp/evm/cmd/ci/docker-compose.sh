@@ -220,8 +220,8 @@ function main() {
         ip=$(${Chain33_CLI} net info | jq -r ".localAddr")
         ip=$(echo "$ip" | cut -d':' -f 1)
     fi
-    MAIN_HTTP=$(http://${ip} +":8801")
-    ETH_HTTP=$(http://${ip} +":8545")
+    MAIN_HTTP=http://${ip}:8801
+    ETH_HTTP=http://${ip}:8545
     echo "main_http:${MAIN_HTTP}"
     run_tesstcase
     check_docker_container
