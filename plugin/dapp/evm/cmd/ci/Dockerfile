@@ -6,3 +6,4 @@ COPY chain33-cli chain33-cli
 COPY *.toml ./
 
 CMD /root/chain33 -f /root/$ChainConfig
+EXPOSE 8801 8545
