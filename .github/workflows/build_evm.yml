@@ -1,0 +1,23 @@
+name: ci_evm
+on: [push,pull_request]
+
+jobs:
+  ci_cross2eth:
+    name: ci_evm
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+        id: go
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          export GOPATH=$HOME/go
+          export PATH=${PATH}:`go env GOPATH`/bin
+          echo $GOPATH
+          make
+          make docker-compose dapp=evm
+          make docker-compose-down dapp=evm
