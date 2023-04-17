@@ -5,4 +5,4 @@ services:
     build:
       context: .
     environment:
-      ChainConfig: "chain33.toml"
+      ChainConfig: "chain33.evm.test.toml"
