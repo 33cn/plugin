@@ -2,7 +2,7 @@ name: ci_evm
 on: [push,pull_request]
 
 jobs:
-  ci_cross2eth:
+  ci_evm:
     name: ci_evm
     runs-on: ubuntu-18.04
     steps:
