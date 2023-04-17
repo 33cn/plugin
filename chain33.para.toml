@@ -232,8 +232,6 @@ genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 superManager=["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"]
 #autonomy执行器名字,空则不开启,使用superManager list
 autonomyExec=""
-[exec.sub.coins]
-friendExecer=["evm"]
 [exec.sub.token]
 saveTokenTxList=true
 tokenApprs=[]
