@@ -22,7 +22,7 @@ set -o pipefail
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-SOLO_NODE="${1}-main-1"
+SOLO_NODE="${1}_main_1"
 SOLO_CLI="docker exec ${SOLO_NODE} /root/chain33-cli --rpc_laddr http://localhost:8545"
 Chain33_CLI="docker exec ${SOLO_NODE} /root/chain33-cli"
 DAPP="evm"

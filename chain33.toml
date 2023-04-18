@@ -3,6 +3,9 @@ TestNet=true
 FixTime=false
 version="6.3.0"
 
+[address]
+#旧的版本或bty缺省是btc格式地址，可以支持eth格式地址，如果对地址格式没要求，采用缺省配置即可
+defaultDriver="btc"
 [crypto]
 
 [log]
