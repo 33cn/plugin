@@ -6,3 +6,8 @@ services:
       context: .
     environment:
       ChainConfig: "chain33.evm.test.toml"
+
+    expose:
+      - 8545
+      - 8801
+

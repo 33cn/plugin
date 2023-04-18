@@ -2,6 +2,7 @@
 # shellcheck disable=SC2034
 # shellcheck disable=SC2154
 # shellcheck disable=SC2155
+# shellcheck disable=SC2086
 
 # debug mode
 #set -x
@@ -21,7 +22,7 @@ set -o pipefail
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-SOLO_NODE="${1}_main_1"
+SOLO_NODE="${1}-main-1"
 SOLO_CLI="docker exec ${SOLO_NODE} /root/chain33-cli --rpc_laddr http://localhost:8545"
 Chain33_CLI="docker exec ${SOLO_NODE} /root/chain33-cli"
 DAPP="evm"
@@ -91,14 +92,14 @@ function testcase_coinsTransfer(){
      fi
      echo "============= sign eth tx ============="
      #签名交易
-    local signData=$(${CLI} wallet sign -d ${rawTx} -c 2999 -p 2 -k ${genesisKey})
+    local signData=$(${CLI} wallet sign -d "${rawTx}" -c 2999 -p 2 -k ${genesisKey})
     #如果返回空
      if [ -z "${signData}" ]; then
         exit 1
      fi
     echo "${signData}"
     echo "============= send eth tx ============="
-    local hash=$(${CLI} wallet send -d ${signData} -e)
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
     if [ -z "${signData}" ]; then
         exit 1
     fi
@@ -131,7 +132,7 @@ function testcase_deployErc20(){
 
   echo "============= sign eth tx ============="
   #签名交易
-  local signData=$(${CLI} wallet sign -d ${rawTx} -c 2999 -p 2 -k ${genesisKey})
+  local signData=$(${CLI} wallet sign -d "${rawTx}" -c 2999 -p 2 -k ${genesisKey})
   #如果返回空
   if [ -z "${signData}" ]; then
         exit 1
@@ -139,7 +140,7 @@ function testcase_deployErc20(){
 
   echo "${signData}"
   echo "============= send eth tx ============="
-  local hash=$(${CLI} wallet send -d ${signData} -e)
+  local hash=$(${CLI} wallet send -d "${signData}" -e)
   if [ -z "${signData}" ]; then
         exit 1
   fi
@@ -148,7 +149,7 @@ function testcase_deployErc20(){
   #check tx status
   queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
   echo "eth_http:${ETH_HTTP}"
-  evm_contractAddr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_getContractorAddress","params":["'${genesisAddr}'","'0x1'"]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
+  evm_contractAddr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_getContractorAddress","params":["'${genesisAddr}'","0x1"]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
   echo "evm_contractAddr: ${evm_contractAddr}"
 
 }
@@ -158,7 +159,7 @@ function checkBalanceOf(){
   local addr=${1}
   local expectBalance=${2}
   local data=${balanceOfSig}${addr:2:40}
-  local balance=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_call","params":[{"to":"'${evm_contractAddr}'","data":"'${data}'"}]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
+  local balance=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_call","params":[{"to":"'"${evm_contractAddr}"'","data":"'"${data}"'"}]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
    if [ "${balance}" != "${expectBalance}" ]; then
           echo "check balance faild "
           return 1
@@ -177,7 +178,7 @@ function testcase_transferErc20() {
      transferData="0xa9059cbb000000000000000000000000De79A84DD3A16BB91044167075dE17a1CA4b1d6b0000000000000000000000000000000000000000000000000000000005f5e100"
      #构造交易
       echo "============= create eth deployErc20 tx  ============="
-      local rawTx=$(${CLI} coins transfer_eth -f ${genesisAddr}  -d ${transferData} -t ${evm_contractAddr})
+      local rawTx=$(${CLI} coins transfer_eth -f ${genesisAddr}  -d ${transferData} -t "${evm_contractAddr}")
       echo "${rawTx}"
       #如果返回空
       if [ -z "${rawTx}" ]; then
@@ -185,14 +186,14 @@ function testcase_transferErc20() {
       fi
       echo "============= sign eth tx(erc20) ============="
        #签名交易
-      local signData=$(${CLI} wallet sign -d ${rawTx} -c 2999 -p 2 -k ${genesisKey})
+      local signData=$(${CLI} wallet sign -d "${rawTx}" -c 2999 -p 2 -k ${genesisKey})
       #如果返回空
       if [ -z "${signData}" ]; then
           exit 1
       fi
       echo "${signData}"
       echo "============= send eth tx (erc20)============="
-      local hash=$(${CLI} wallet send -d ${signData} -e)
+      local hash=$(${CLI} wallet send -d "${signData}" -e)
       echo "${hash}"
       #check tx status
       queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
@@ -214,9 +215,9 @@ function  token_finish() {
     exit 1
   fi
 
-  local signedTx=$(${Chain33_CLI} wallet sign -d ${rawTx} -k ${genesisKey} -p 2)
+  local signedTx=$(${Chain33_CLI} wallet sign -d "${rawTx}" -k ${genesisKey} -p 2)
   echo "token_finish signedTx:${signedTx}"
-  local hash=$(${Chain33_CLI} wallet send -d ${signedTx}  )
+  local hash=$(${Chain33_CLI} wallet send -d "${signedTx}"  )
   echo  "token_finish hash: ${hash}"
   queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
   echo "=== token_finish check token create success ==="
@@ -231,9 +232,9 @@ function token_preConfig() {
        exit 1
     fi
     echo "token_preConfig rawtx:${rawTx}"
-    local signedTx=$(${Chain33_CLI} wallet sign -d ${rawTx} -k ${genesisKey} -p 2 -e 360)
+    local signedTx=$(${Chain33_CLI} wallet sign -d "${rawTx}" -k ${genesisKey} -p 2 -e 360)
     echo "token_preConfig signedTx:${signedTx}"
-    local hash=$(${Chain33_CLI} wallet send -d ${signedTx}  )
+    local hash=$(${Chain33_CLI} wallet send -d "${signedTx}"  )
     echo "token_preConfig hash: ${hash}"
     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
     echo  "=== finish token_preConfig ==="
@@ -244,13 +245,13 @@ function token_preCreate() {
   token_symbol=${1}
   owner=${2}
   echo "token_preCreate:symbol:${token_symbol}"
-  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a ${2}  -i "for test" --total 1000000000000 )
+  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 1000000000000 )
   if [ "${unsignedTx}" == "" ]; then
      echo "token preCreate create tx"
      return
   fi
 
-  local signedTx=$(${Chain33_CLI} wallet sign -d ${unsignedTx}  -p 2 -k ${genesisKey})
+  local signedTx=$(${Chain33_CLI} wallet sign -d "${unsignedTx}"  -p 2 -k ${genesisKey})
   echo "token_preCreate signedTx:${signedTx}"
   local hash=$(${Chain33_CLI} wallet send -d ${signedTx} )
   echo  token_preCreate hash: ${hash}
@@ -277,7 +278,7 @@ function testcase_evmPrecompile(){
 
     echo "============= evmPrecompile  sign eth tx ============="
     #签名交易
-    local signData=$(${CLI} wallet sign -d ${rawTx} -c 2999 -p 2 -k ${genesisKey})
+    local signData=$(${CLI} wallet sign -d "${rawTx}" -c 2999 -p 2 -k ${genesisKey})
     #如果返回空
     if [ -z "${signData}" ]; then
           exit 1
@@ -293,7 +294,7 @@ function testcase_evmPrecompile(){
 
     #check tx status
     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
-    evm_contractAddr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_getContractorAddress","params":["'${genesisAddr}'","'0x3'"]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
+    evm_contractAddr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_getContractorAddress","params":["'${genesisAddr}'","0x3"]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
     #new contractor address
     echo "evm_contractAddr: ${evm_contractAddr}"
 
@@ -309,7 +310,7 @@ function queryTransaction() {
     txHash=$1
     validators=$2
     expectRes=$3
-    res=$(${Chain33_CLI} tx query --hash  ${txHash} |jq -r .receipt.tyName)
+    res=$(${Chain33_CLI} tx query --hash  "${txHash}" |jq -r .receipt.tyName)
 
 
     if [ "${res}" != "${expectRes}" ]; then
@@ -351,12 +352,14 @@ function main() {
         ip=$(${Chain33_CLI} net info | jq -r ".localAddr")
         ip=$(echo "$ip" | cut -d':' -f 1)
     fi
+   # ip="127.0.0.1"
     MAIN_HTTP=http://${ip}:8801
     ETH_HTTP=http://${ip}:8545
     echo "main_http:${MAIN_HTTP}"
     run_testcase
     check_docker_container
     #finish
+    docker-compose down
     echo "===============DAPP=$DAPP main end==============="
 }
 

@@ -13,7 +13,3 @@ cp ./test/test-rpc.sh "${OUT_TESTDIR}"
 
 mkdir -p "${OUT_DIR}"
 cp ./ci/* "${OUT_DIR}"
-
-
-PLUGIN_PATH=$(go list -f "{{.Dir}}" github.com/33cn/plugin)
-
