@@ -7,7 +7,6 @@ import (
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/pkg/errors"
 
@@ -270,7 +269,7 @@ func (r *RollUp) commit2MainChain(info *commitInfo) error {
 		return errors.Wrapf(err, "createCommitCheckPointTx")
 	}
 	tx.Fee, _ = tx.GetRealFee(r.getProperFeeRate())
-	tx.Sign(types.EncodeSignID(secp256k1.ID, address.GetDefaultAddressID()), r.val.signTxKey)
+	tx.Sign(types.EncodeSignID(secp256k1.ID, r.cfg.AddressID), r.val.signTxKey)
 	// 提交跨链交易, 构建交易组
 	if len(info.crossTx.TxIndices) > 0 {
 		tx2, err := r.createTx(pt.ParaX, pt.NameRollupCrossTxAction, types.Encode(info.crossTx))
@@ -283,7 +282,7 @@ func (r *RollUp) commit2MainChain(info *commitInfo) error {
 		}
 
 		for index := range gtx.GetTxs() {
-			gtx.SignN(index, types.EncodeSignID(secp256k1.ID, address.GetDefaultAddressID()), r.val.signTxKey)
+			gtx.SignN(index, types.EncodeSignID(secp256k1.ID, r.cfg.AddressID), r.val.signTxKey)
 		}
 		tx = gtx.Tx()
 	}
