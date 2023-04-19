@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/queue"
 
 	"github.com/33cn/chain33/common/log"
@@ -127,7 +129,13 @@ func (r *RollUp) initJob() {
 
 	// 等待获取钱包私钥
 	authKey := r.cfg.AuthKey
+
 	if authKey == "" {
+		var err error
+		r.cfg.AddressID, err = address.GetAddressType(r.cfg.AuthAccount)
+		if err != nil {
+			panic("invalid address type for authAccount config, " + r.cfg.AuthAccount)
+		}
 		authKey = r.getKeyFromWallet(r.cfg.AuthAccount)
 	}
 	valPubs := r.getValidatorPubKeys()
