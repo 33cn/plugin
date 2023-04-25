@@ -94,3 +94,64 @@ func TestDecodePacVal(t *testing.T) {
 	rst = DecodePacVal(bVal, PacExpBitWidth)
 	assert.Equal(t, "100000000000000", rst)
 }
+
+func TestDecimalAddr2Hex(t *testing.T) {
+	type args struct {
+		addr string
+	}
+	var tests = []struct {
+		name  string
+		args  args
+		want  string
+		want1 bool
+	}{
+		{"1",
+			args{
+				addr: "4670991539099926443578259456495483705028406529",
+			},
+			"00d1745a6ad93272201680cd18f2eb4cd6366d01",
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := DecimalAddr2Hex(tt.args.addr)
+			assert.Equalf(t, tt.want, got, "DecimalAddr2Hex(%v)", tt.args.addr)
+			assert.Equalf(t, tt.want1, got1, "DecimalAddr2Hex(%v)", tt.args.addr)
+		})
+	}
+}
+
+func TestHexAddr2Decimal(t *testing.T) {
+	type args struct {
+		addr string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		want  string
+		want1 bool
+	}{
+		{"1",
+			args{
+				addr: "0x00d1745a6ad93272201680cd18f2eb4cd6366d01",
+			},
+			"4670991539099926443578259456495483705028406529",
+			true,
+		},
+		{"2",
+			args{
+				addr: "d1745a6ad93272201680cd18f2eb4cd6366d01",
+			},
+			"4670991539099926443578259456495483705028406529",
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := HexAddr2Decimal(tt.args.addr)
+			assert.Equalf(t, tt.want, got, "HexAddr2Decimal(%v)", tt.args.addr)
+			assert.Equalf(t, tt.want1, got1, "HexAddr2Decimal(%v)", tt.args.addr)
+		})
+	}
+}
