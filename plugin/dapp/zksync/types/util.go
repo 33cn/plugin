@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -44,10 +45,11 @@ func DecimalAddr2Hex(addr string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	return hex.EncodeToString(addrInt.Bytes()), true
+	// 会少前置0 需要补齐0
+	return fmt.Sprintf("%0*s", 40, hex.EncodeToString(addrInt.Bytes())), true
 }
 
-//DecodePacVal decode pac val with man+exp format
+// DecodePacVal decode pac val with man+exp format
 func DecodePacVal(p []byte, expBitWidth int) string {
 	var v, expMask big.Int
 	v.SetBytes(p)
@@ -77,7 +79,7 @@ func SplitNFTContent(contentHash string) (*big.Int, *big.Int, string, error) {
 	return part1, part2, hexContent, nil
 }
 
-//ZkFindExponentPart 找到一个数的指数数量，最大31个0，也就是10^31,循环div 10， 找到最后一个余数非0
+// ZkFindExponentPart 找到一个数的指数数量，最大31个0，也就是10^31,循环div 10， 找到最后一个余数非0
 func ZkFindExponentPart(s string) int {
 	//如果位数很少，直接返回0
 	if len(s) <= 1 {
@@ -99,7 +101,7 @@ func ZkFindExponentPart(s string) int {
 	return count
 }
 
-//ZkTransferManExpPart 获取s的man和exp部分，exp部分只统计0的个数，man部分为尾部去掉0部分
+// ZkTransferManExpPart 获取s的man和exp部分，exp部分只统计0的个数，man部分为尾部去掉0部分
 func ZkTransferManExpPart(s string) (string, int) {
 	exp := ZkFindExponentPart(s)
 	return s[0 : len(s)-exp], exp
