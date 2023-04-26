@@ -46,7 +46,7 @@ func (z *zksync) Query_GetNFTStatus(in *zt.ZkQueryReq) (types.Message, error) {
 	return &status, nil
 }
 
-//Query_GetNFTId get nft id by content hash
+// Query_GetNFTId get nft id by content hash
 func (z *zksync) Query_GetNFTId(in *types.ReqString) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -76,11 +76,11 @@ func (z *zksync) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) 
 		return nil, err
 	}
 	var ok bool
-	leaf.EthAddress, ok = zt.DecimalAddr2Hex(leaf.GetEthAddress())
+	leaf.EthAddress, ok = zt.DecimalAddr2Hex(leaf.GetEthAddress(), zt.EthAddrLen)
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong eth addr format=%s", leaf.GetEthAddress())
 	}
-	leaf.Chain33Addr, ok = zt.DecimalAddr2Hex(leaf.GetChain33Addr())
+	leaf.Chain33Addr, ok = zt.DecimalAddr2Hex(leaf.GetChain33Addr(), zt.BTYAddrLen)
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong chain33 addr format=%s", leaf.GetChain33Addr())
 	}
@@ -134,7 +134,7 @@ func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, erro
 	return getLastCommitProofData(z.GetStateDB())
 }
 
-//Query_GetLastOnChainProof 获取最新的包含OnChainPubData的Proof
+// Query_GetLastOnChainProof 获取最新的包含OnChainPubData的Proof
 func (z *zksync) Query_GetLastOnChainProof(in *types.ReqNil) (types.Message, error) {
 	return getLastOnChainProofData(z.GetStateDB())
 }
@@ -145,7 +145,7 @@ func (z *zksync) Query_GetMaxAccountId(in *types.ReqNil) (types.Message, error) 
 	return &types.Int64{Data: lastAccountID}, err
 }
 
-//Query_GetTreeInitRoot 获取系统初始tree root
+// Query_GetTreeInitRoot 获取系统初始tree root
 func (z *zksync) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -170,13 +170,13 @@ func (z *zksync) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error
 	return &types.ReplyString{Data: root}, nil
 }
 
-//Query_GetCfgFeeAddr 获取系统初始fee addr
+// Query_GetCfgFeeAddr 获取系统初始fee addr
 func (z *zksync) Query_GetCfgFeeAddr(in *types.ReqNil) (types.Message, error) {
 	eth, l2 := getCfgFeeAddr(z.GetAPI().GetConfig())
 	return &zt.ZkFeeAddrs{EthFeeAddr: eth, L2FeeAddr: l2}, nil
 }
 
-//Query_GetCfgTokenFee 获取系统配置的fee
+// Query_GetCfgTokenFee 获取系统配置的fee
 func (z *zksync) Query_GetCfgTokenFee(in *zt.ZkSetFee) (types.Message, error) {
 	amount, err := getDbFeeData(z.GetStateDB(), in.GetActionTy(), in.GetTokenId())
 	if err != nil {
@@ -185,7 +185,7 @@ func (z *zksync) Query_GetCfgTokenFee(in *zt.ZkSetFee) (types.Message, error) {
 	return &types.ReplyString{Data: amount}, nil
 }
 
-//Query_GetVerifiers 获取系统初始fee addr
+// Query_GetVerifiers 获取系统初始fee addr
 func (z *zksync) Query_GetVerifiers(in *types.ReqNil) (types.Message, error) {
 	return getVerifierData(z.GetStateDB())
 }
@@ -200,7 +200,7 @@ func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, e
 	return contractAccount, nil
 }
 
-//注意：如果val超过1e10会被圆整到1e10格式表示
+// 注意：如果val超过1e10会被圆整到1e10格式表示
 func decimalVal(val string, decimal uint32) string {
 	if decimal == 0 {
 		return val
@@ -392,7 +392,7 @@ func (z *zksync) Query_GetExistenceProof(in *zt.ZkReqExistenceProof) (types.Mess
 	return getAccountProofInHistory(z.GetStateDB(), in)
 }
 
-//Query_BuildHistoryAccounts 获取statedb中的tree账户信息构建merkel tree，返回tree roothash
+// Query_BuildHistoryAccounts 获取statedb中的tree账户信息构建merkel tree，返回tree roothash
 func (z *zksync) Query_BuildHistoryAccounts(in *zt.CommitProofState) (types.Message, error) {
 	if in == nil || in.ProofId == 0 {
 		accts, err := BuildStateDbHistoryAccount(z.GetStateDB(), "")

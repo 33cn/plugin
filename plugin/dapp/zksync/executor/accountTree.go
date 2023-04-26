@@ -41,7 +41,7 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	return ethAddrDecimal, chain33AddrDecimal
 }
 
-//由于ethAddr+chain33Addr 唯一确定一个accountId,所以设置初始账户的chain33Addr不相同
+// 由于ethAddr+chain33Addr 唯一确定一个accountId,所以设置初始账户的chain33Addr不相同
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	zeroHash := zt.Str2Byte("0")
 	defaultAccount := &zt.Leaf{
@@ -79,7 +79,7 @@ func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	return []*zt.Leaf{defaultAccount, feeAccount, NFTAccount, treeToContractAccount}
 }
 
-//获取系统初始root，如果未设置fee账户，缺省采用配置文件，
+// 获取系统初始root，如果未设置fee账户，缺省采用配置文件，
 func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, layer2AddrDecimal string) string {
 	var feeEth, fee33 string
 	if len(ethAddrDecimal) > 0 && len(layer2AddrDecimal) > 0 {
@@ -406,8 +406,8 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	}
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
-		data.EthAddress, _ = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr, _ = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		data.EthAddress, _ = zt.DecimalAddr2Hex(data.GetEthAddress(), zt.EthAddrLen)
+		data.Chain33Addr, _ = zt.DecimalAddr2Hex(data.GetChain33Addr(), zt.BTYAddrLen)
 		datas = append(datas, data)
 	}
 	return datas, nil
@@ -427,8 +427,8 @@ func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) 
 	}
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
-		data.EthAddress, _ = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr, _ = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		data.EthAddress, _ = zt.DecimalAddr2Hex(data.GetEthAddress(), zt.EthAddrLen)
+		data.Chain33Addr, _ = zt.DecimalAddr2Hex(data.GetChain33Addr(), zt.BTYAddrLen)
 		datas = append(datas, data)
 	}
 	return datas, nil

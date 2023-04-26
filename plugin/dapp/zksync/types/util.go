@@ -12,6 +12,11 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
+const (
+	EthAddrLen = 40
+	BTYAddrLen = 64
+)
+
 func Str2Byte(v string) []byte {
 	var f fr.Element
 	f.SetString(v)
@@ -39,14 +44,14 @@ func HexAddr2Decimal(addr string) (string, bool) {
 	return addrInt.String(), true
 }
 
-// DecimalAddr2Hex 10进制地址转16进制
-func DecimalAddr2Hex(addr string) (string, bool) {
+// DecimalAddr2Hex 10进制地址转16进制 需要传入地址期望长度 目前有两种地址格式 一种长度为40 另一种长度为64
+func DecimalAddr2Hex(addr string, l int) (string, bool) {
 	addrInt, ok := new(big.Int).SetString(strings.ToLower(addr), 10)
 	if !ok {
 		return "", false
 	}
 	// 会少前置0 需要补齐0
-	return fmt.Sprintf("%0*s", 40, hex.EncodeToString(addrInt.Bytes())), true
+	return fmt.Sprintf("%0*s", l, hex.EncodeToString(addrInt.Bytes())), true
 }
 
 // DecodePacVal decode pac val with man+exp format

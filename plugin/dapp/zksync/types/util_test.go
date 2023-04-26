@@ -98,6 +98,7 @@ func TestDecodePacVal(t *testing.T) {
 func TestDecimalAddr2Hex(t *testing.T) {
 	type args struct {
 		addr string
+		l    int
 	}
 	var tests = []struct {
 		name  string
@@ -105,17 +106,35 @@ func TestDecimalAddr2Hex(t *testing.T) {
 		want  string
 		want1 bool
 	}{
-		{"1",
+		{"EthAddrLen",
 			args{
 				addr: "4670991539099926443578259456495483705028406529",
+				l:    EthAddrLen,
 			},
 			"00d1745a6ad93272201680cd18f2eb4cd6366d01",
+			true,
+		},
+		{"BTYAddrLen",
+			args{
+				addr: "173750844901626209501209951474623756993323324272695928116144152195075671129",
+				l:    BTYAddrLen,
+			},
+			"006256e906a57a2803b57e39b031688966b02c280a57f534c5e6f754d1640459",
+			true,
+		},
+
+		{"BTYAddrLen",
+			args{
+				addr: "5601505027900822869981099873756869437615353855474597367465718402566003623001",
+				l:    BTYAddrLen,
+			},
+			"0c6256e906a57a2803b57e39b031688966b02c280a57f534c5e6f754d1640459",
 			true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := DecimalAddr2Hex(tt.args.addr)
+			got, got1 := DecimalAddr2Hex(tt.args.addr, tt.args.l)
 			assert.Equalf(t, tt.want, got, "DecimalAddr2Hex(%v)", tt.args.addr)
 			assert.Equalf(t, tt.want1, got1, "DecimalAddr2Hex(%v)", tt.args.addr)
 		})
@@ -144,6 +163,20 @@ func TestHexAddr2Decimal(t *testing.T) {
 				addr: "d1745a6ad93272201680cd18f2eb4cd6366d01",
 			},
 			"4670991539099926443578259456495483705028406529",
+			true,
+		},
+		{"bty",
+			args{
+				addr: "006256e906a57a2803b57e39b031688966b02c280a57f534c5e6f754d1640459",
+			},
+			"173750844901626209501209951474623756993323324272695928116144152195075671129",
+			true,
+		},
+		{"bty",
+			args{
+				addr: "0c6256e906a57a2803b57e39b031688966b02c280a57f534c5e6f754d1640459",
+			},
+			"5601505027900822869981099873756869437615353855474597367465718402566003623001",
 			true,
 		},
 	}
