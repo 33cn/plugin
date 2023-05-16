@@ -113,41 +113,6 @@ function testcase_coinsTransfer(){
 
     echo "^_^check eth-evm-coins transfer success! ^_^ "
 
-    # 测试重复交易
-    local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -n "${hash}" ]; then
-        echo "tx dup,txhash should empty"
-        exit 1
-    fi
-
-    #测试nonce 过低的交易 nonce=0,current nonce=1
-    signData="f86e808502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a01ef32729e82a06c390c7ff3cd1cfd55e1d29622f8f83401198fdbcfacc241b7ea0222c4022edb1cdee8c7b52baa6b581b5f5e4c4bcb86e849cd97b4f280b7e8512"
-    local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -n "${hash}" ]; then
-        echo "nonce =0,txhash should empty"
-        exit 1
-    fi
-
-    #测试NONCE 过高的交易,current nonce=1,test nonce=2
-    signData="f86e028502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821792a0a56139355751c2ae2b9a13247a11b17e686077d7d99b150026e9fc66a64b6407a00bf5b076e20f90f16cb0e8a1174edf20e2560f37ce6e88d020d1c9c76d602bd4"
-    local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -z "${hash}" ]; then
-        echo "nonce =2,txhash should not empty"
-        exit 1
-    fi
-    # 查询交易哈希详情，预期查询不到，因为nonce 过高，放入mempool 等待Nonce=1的交易到来之后才会被打包执行
-    queryTransaction "${hash}"  "jq -r .result.receipt.tyName" ""
-    tempHash2=hash
-    # 补充nonce=1的交易
-    signData="f86e018502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a083b0aae28590bc0adbde30f3cc987708e0d33e5d8cc23f9dbbc3e740985b2aa5a06776a3fa4abbd2adb18e3f23954bed44a95594ea013e73d260f982ed5483000a"
-    local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -z "${hash}" ]; then
-        echo "nonce =1,txhash should not empty"
-        exit 1
-    fi
-
-     queryTransaction "${tempHash2}"  "jq -r .result.receipt.tyName" "ExecOk"
-     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
 }
 
 function testcase_deployErc20(){
@@ -212,7 +177,7 @@ function testcase_transferErc20() {
      #transfer testaddr 1
      transferData="0xa9059cbb000000000000000000000000De79A84DD3A16BB91044167075dE17a1CA4b1d6b0000000000000000000000000000000000000000000000000000000005f5e100"
      #构造交易
-      echo "============= create eth deployErc20 tx  ============="
+      echo "============= create eth Erc20 tx  ============="
       local rawTx=$(${CLI} coins transfer_eth -f ${genesisAddr}  -d ${transferData} -t "${evm_contractAddr}")
       echo "${rawTx}"
       #如果返回空
@@ -360,7 +325,45 @@ function queryTransaction() {
 
 
 
+function testcase_nonceTransfer(){
+    #测试nonce 过低的交易 nonce=0,current nonce=5
+    signData="f86e808502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a01ef32729e82a06c390c7ff3cd1cfd55e1d29622f8f83401198fdbcfacc241b7ea0222c4022edb1cdee8c7b52baa6b581b5f5e4c4bcb86e849cd97b4f280b7e8512"
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -n "${hash}" ]; then
+        echo "nonce =0,txhash should empty"
+        exit 1
+    fi
 
+    #测试NONCE 过高的交易,current nonce=5,test nonce=6
+    signData="f86e068502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a096dcece8240ff8af277ca419196b62f06c21a2171f310c91dc9deeacdeada363a03e21dc6c8abdb30842f0cf4aacf45202a3b71bb693f293bf872ac2f2efdee7a7"
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -z "${hash}" ]; then
+        echo "nonce =2,txhash should not empty"
+        exit 1
+    fi
+    # 查询交易哈希详情，预期查询不到，因为nonce 过高，放入mempool 等待Nonce=1的交易到来之后才会被打包执行
+    queryTransaction "${hash}"  "" ""
+    tempHash2=${hash}
+    tempSignData=signData
+    # 补充nonce=5的交易current nonce=5
+    signData="f86e058502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821792a0235130ba07aa2c3ff0c745a4e799f85fcce1da9f39776739fe969922a445f830a00bd3c8bd347b963ea310b7a98fa162049edbda4a3afceda7f82501713e79d500"
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -z "${hash}" ]; then
+        echo "nonce =1,txhash should not empty"
+        exit 1
+    fi
+
+     queryTransaction "${tempHash2}"  "jq -r .result.receipt.tyName" "ExecOk"
+     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+
+    # 测试重复交易 nonce=6
+    local hash=$(${CLI} wallet send -d "${tempSignData}" -e)
+    if [ -n "${hash}" ]; then
+        echo "tx dup,txhash should empty"
+        exit 1
+    fi
+
+}
 
 
 function run_testcase(){
@@ -374,6 +377,8 @@ function run_testcase(){
   testcase_evmPrecompile
   #5. 验证Evm-token Erc20 转账功能
   testcase_transferErc20
+  #6. 测试nonce 过低，过高 下的转账功能
+  testcase_nonceTransfer
 }
 function main() {
      echo "====================DAPP=${DAPP} main begin==================="
