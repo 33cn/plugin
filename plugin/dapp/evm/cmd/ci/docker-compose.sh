@@ -100,7 +100,7 @@ function testcase_coinsTransfer(){
     echo "${signData}"
     echo "============= send eth tx ============="
     local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -z "${signData}" ]; then
+    if [ -z "${hash}" ]; then
         exit 1
     fi
     echo "${hash}"
@@ -113,6 +113,41 @@ function testcase_coinsTransfer(){
 
     echo "^_^check eth-evm-coins transfer success! ^_^ "
 
+    # 测试重复交易
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -n "${hash}" ]; then
+        echo "tx dup,txhash should empty"
+        exit 1
+    fi
+
+    #测试nonce 过低的交易 nonce=0,current nonce=1
+    signData="f86e808502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a01ef32729e82a06c390c7ff3cd1cfd55e1d29622f8f83401198fdbcfacc241b7ea0222c4022edb1cdee8c7b52baa6b581b5f5e4c4bcb86e849cd97b4f280b7e8512"
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -n "${hash}" ]; then
+        echo "nonce =0,txhash should empty"
+        exit 1
+    fi
+
+    #测试NONCE 过高的交易,current nonce=1,test nonce=2
+    signData="f86e028502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821792a0a56139355751c2ae2b9a13247a11b17e686077d7d99b150026e9fc66a64b6407a00bf5b076e20f90f16cb0e8a1174edf20e2560f37ce6e88d020d1c9c76d602bd4"
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -z "${hash}" ]; then
+        echo "nonce =2,txhash should not empty"
+        exit 1
+    fi
+    # 查询交易哈希详情，预期查询不到，因为nonce 过高，放入mempool 等待Nonce=1的交易到来之后才会被打包执行
+    queryTransaction "${hash}"  "jq -r .result.receipt.tyName" ""
+    tempHash2=hash
+    # 补充nonce=1的交易
+    signData="f86e018502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a083b0aae28590bc0adbde30f3cc987708e0d33e5d8cc23f9dbbc3e740985b2aa5a06776a3fa4abbd2adb18e3f23954bed44a95594ea013e73d260f982ed5483000a"
+    local hash=$(${CLI} wallet send -d "${signData}" -e)
+    if [ -z "${hash}" ]; then
+        echo "nonce =1,txhash should not empty"
+        exit 1
+    fi
+
+     queryTransaction "${tempHash2}"  "jq -r .result.receipt.tyName" "ExecOk"
+     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
 }
 
 function testcase_deployErc20(){

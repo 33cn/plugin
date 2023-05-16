@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+	"errors"
 
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"github.com/33cn/chain33/types"
@@ -13,8 +14,8 @@ import (
 )
 
 // ExecLocal 处理本地区块新增逻辑
-func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	set, err := evm.DriverBase.ExecLocal(tx, receipt, index)
+func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (set *types.LocalDBSet, err error) {
+	set, err = evm.DriverBase.ExecLocal(tx, receipt, index)
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +29,9 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 				types.Decode(nonceV, &evmNonce)
 				if evmNonce.GetNonce() == tx.GetNonce() {
 					evmNonce.Nonce++
+				} else {
+					err = errors.New("invalid nonce")
+					return
 				}
 
 			} else {

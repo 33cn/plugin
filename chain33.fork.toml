@@ -25,6 +25,7 @@ ForkTicketFundAddrV1=3350000
 ForkRootHash=4500000
 #地址key格式化, 主要针对eth地址
 ForkFormatAddressKey=0
+ForkCheckEthTxSort=0
 [fork.sub.none]
 ForkUseTimeDelay=0
 
