@@ -29,9 +29,12 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 				types.Decode(nonceV, &evmNonce)
 				if evmNonce.GetNonce() == tx.GetNonce() {
 					evmNonce.Nonce++
-				} else {
-					err = errors.New("invalid nonce")
-					return
+				} else { //nonce 错误 返回异常
+					if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) {
+						err = errors.New("invalid nonce")
+						return
+					}
+
 				}
 
 			} else {

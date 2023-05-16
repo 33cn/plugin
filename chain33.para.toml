@@ -398,6 +398,7 @@ ForkEVMMixAddress=0
 # EVM gas 计算调整
 ForkIntrinsicGas=0
 ForkEVMAddressInit=0
+ForkEvmExecNonce=0
 
 [fork.sub.blackwhite]
 Enable=0

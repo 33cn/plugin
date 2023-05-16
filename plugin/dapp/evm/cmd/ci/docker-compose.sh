@@ -344,7 +344,7 @@ function testcase_nonceTransfer(){
     # 查询交易哈希详情，预期查询不到，因为nonce 过高，放入mempool 等待Nonce=1的交易到来之后才会被打包执行
     queryTransaction "${hash}"  "" ""
     tempHash2=${hash}
-    tempSignData=signData
+    tempSignData=${signData}
     # 补充nonce=5的交易current nonce=5
     signData="f86e058502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821792a0235130ba07aa2c3ff0c745a4e799f85fcce1da9f39776739fe969922a445f830a00bd3c8bd347b963ea310b7a98fa162049edbda4a3afceda7f82501713e79d500"
     local hash=$(${CLI} wallet send -d "${signData}" -e)

@@ -52,6 +52,8 @@ const (
 	ForkIntrinsicGas = "ForkIntrinsicGas"
 	// ForkEVMAddressInit 初始化以太坊格式地址
 	ForkEVMAddressInit = "ForkEVMAddressInit"
+	//ForkEvmExecNonce 执行器校验nonce
+	ForkEvmExecNonce = "ForkEvmExecNonce"
 )
 
 var (
