@@ -23,18 +23,15 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 	defer func(lSet *types.LocalDBSet) {
 		if types.IsEthSignID(tx.GetSignature().GetTy()) {
 			nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(tx.From())
-			nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
 			var evmNonce types.EvmAccountNonce
-			if err == nil {
+			nonceV, nonceErr := evm.GetLocalDB().Get(nonceLocalKey)
+			if nonceErr == nil {
 				types.Decode(nonceV, &evmNonce)
 				if evmNonce.GetNonce() == tx.GetNonce() {
 					evmNonce.Nonce++
-				} else { //nonce 错误 返回异常
-					if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) {
-						err = errors.New("invalid nonce")
-						return
-					}
-
+				} else if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) { //nonce 错误 返回异常
+					err = errors.New("invalid nonce")
+					return
 				}
 
 			} else {
