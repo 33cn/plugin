@@ -9,7 +9,6 @@ import (
 	"errors"
 
 	"github.com/33cn/chain33/common"
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"github.com/33cn/chain33/types"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
@@ -19,30 +18,29 @@ var (
 	errInvalidEvmNonce = errors.New("errInvalidEvmNonce")
 )
 
-func (evm *EVMExecutor) handleEvmNonce(tx *types.Transaction, dbSet *types.LocalDBSet) error {
+func (evm *EVMExecutor) execEvmNonce(dbSet *types.LocalDBSet, tx *types.Transaction, index int) error {
 
-	if types.IsEthSignID(tx.GetSignature().GetTy()) {
-		fromAddr := tx.From()
-		nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(fromAddr)
-		evmNonce := &types.EvmAccountNonce{}
-		nonceV, nonceErr := evm.GetLocalDB().Get(nonceLocalKey)
-		if nonceErr == nil {
-			_ = types.Decode(nonceV, evmNonce)
-		}
-
-		log.Debug("ExecLocal handleEvmNonce", "height", evm.GetHeight(), "txHash", common.ToHex(tx.Hash()),
-			"from", fromAddr, "expect", evmNonce.GetNonce(), "actual", tx.GetNonce())
-
-		if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) &&
-			evmNonce.GetNonce() != tx.GetNonce() { //nonce 错误 返回异常
-			return errInvalidEvmNonce
-		}
-		evmNonce.Addr = fromAddr
-		evmNonce.Nonce++
-		if dbSet != nil {
-			dbSet.KV = append(dbSet.KV, &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(evmNonce)})
-		}
+	if !types.IsEthSignID(tx.GetSignature().GetTy()) {
+		return nil
 	}
+
+	fromAddr := tx.From()
+	nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(fromAddr)
+	evmNonce := &types.EvmAccountNonce{}
+	nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
+	if err == nil {
+		_ = types.Decode(nonceV, evmNonce)
+	}
+
+	if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) &&
+		evmNonce.GetNonce() != tx.GetNonce() { //nonce 错误 返回异常
+		elog.Error("execEvmNonce err", "height", evm.GetHeight(), "idx", index, "txHash", common.ToHex(tx.Hash()),
+			"from", fromAddr, "expect", evmNonce.GetNonce(), "actual", tx.GetNonce())
+		return errInvalidEvmNonce
+	}
+	evmNonce.Addr = fromAddr
+	evmNonce.Nonce++
+	dbSet.KV = append(dbSet.KV, &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(evmNonce)})
 	return nil
 }
 
@@ -54,7 +52,7 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 	}
 
 	// 校验及设置evm nonce
-	if err = evm.handleEvmNonce(tx, set); err != nil {
+	if err = evm.execEvmNonce(set, tx, index); err != nil {
 		return nil, err
 	}
 

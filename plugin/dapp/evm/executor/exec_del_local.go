@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
@@ -16,16 +17,19 @@ func (evm *EVMExecutor) ExecDelLocal(tx *types.Transaction, receipt *types.Recei
 		return nil, err
 	}
 
-	if receipt.GetTy() != types.ExecOk {
+	// 以太坊类型交易, 直接调用自动回滚处理
+	if types.IsEthSignID(tx.GetSignature().GetTy()) {
 
-		if types.IsEthSignID(tx.GetSignature().GetTy()) {
-
-			kvs, err := evm.DelRollbackKV(tx, []byte(evmtypes.ExecutorName))
-			if err != nil {
-				return nil, err
-			}
-			set.KV = kvs
+		kvs, err := evm.DelRollbackKV(tx, []byte(evmtypes.ExecutorName))
+		if err != nil {
+			elog.Error("ExecDelLocal", "txHash", common.ToHex(tx.Hash()), "err", err)
+			return nil, err
 		}
+		set.KV = kvs
+		return set, nil
+	}
+
+	if receipt.GetTy() != types.ExecOk {
 		return set, nil
 	}
 	cfg := evm.GetAPI().GetConfig()
