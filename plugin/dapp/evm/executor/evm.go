@@ -29,6 +29,7 @@ var (
 	evmExecAddress       = ""
 	evmExecFormatAddress = ""
 	driverName           = evmtypes.ExecutorName
+	elog                 = log.New("module", "evm.executor")
 )
 
 type subConfig struct {
