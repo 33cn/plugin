@@ -41,9 +41,9 @@ func TestExecNonce(t *testing.T) {
 	exec.SetEnv(0, 1539918074, 1539918074)
 	exec = exec.(*EVMExecutor)
 
-	addr, priv := util.Genaddress()
+	_, priv := util.Genaddress()
 	recp := &types.ReceiptData{Ty: types.ExecOk}
-	addr = address.PubKeyToAddr(2, priv.PubKey().Bytes())
+	addr := address.PubKeyToAddr(2, priv.PubKey().Bytes())
 	_, err := localDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
 	require.Equal(t, types.ErrNotFound, err)
 
