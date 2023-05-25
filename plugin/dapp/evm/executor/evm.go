@@ -29,6 +29,7 @@ var (
 	evmExecAddress       = ""
 	evmExecFormatAddress = ""
 	driverName           = evmtypes.ExecutorName
+	elog                 = log.New("module", "evm.executor")
 )
 
 type subConfig struct {
@@ -234,6 +235,7 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 				}
 				if txs[i].GetTx().GetNonce() == tx.GetNonce() {
 					bnfee := big.NewInt(txs[i].GetTx().Fee)
+					//相同的nonce，gas 必须提升至1.1 倍 才能有效替换之前的交易
 					bnfee = bnfee.Mul(bnfee, big.NewInt(110))
 					bnfee = bnfee.Div(bnfee, big.NewInt(1e2))
 					if tx.Fee < bnfee.Int64() {
