@@ -36,7 +36,9 @@ type subConfig struct {
 	// AddressDriver address driver name, support btc/eth
 	AddressDriver string `json:"addressDriver"`
 	// PreCompileAddr key: preContractorAddress  value: real contract information
-	PreCompile runtime.TokenContract `json:"preCompile,omitempty"`
+	PreCompile   runtime.TokenContract `json:"preCompile,omitempty"`
+	UpgradeUrl   string                `json:"upgradeUrl,omitempty"`
+	NonceUpGrade bool                  `json:"nonceUpGrade,omitempty"`
 }
 
 func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
@@ -235,6 +237,7 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 				}
 				if txs[i].GetTx().GetNonce() == tx.GetNonce() {
 					bnfee := big.NewInt(txs[i].GetTx().Fee)
+					//相同的nonce，gas 必须提升至1.1 倍 才能有效替换之前的交易
 					bnfee = bnfee.Mul(bnfee, big.NewInt(110))
 					bnfee = bnfee.Div(bnfee, big.NewInt(1e2))
 					if tx.Fee < bnfee.Int64() {

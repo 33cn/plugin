@@ -386,6 +386,12 @@ evmGasLimit=2000000
 #evm内部调试输出，指令级的，默认关闭,0：关闭；1：打开
 evmDebugEnable=0
 
+#是否开启升级
+nonceUpGrade=false
+#升级路径
+upgradeUrl=""
+
+
 # 预编译合约配置管理员
 [exec.sub.evm.preCompile]
 # 激活合token-erc20 的合约管理地址，必须配置管理员地址
