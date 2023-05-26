@@ -36,7 +36,9 @@ type subConfig struct {
 	// AddressDriver address driver name, support btc/eth
 	AddressDriver string `json:"addressDriver"`
 	// PreCompileAddr key: preContractorAddress  value: real contract information
-	PreCompile runtime.TokenContract `json:"preCompile,omitempty"`
+	PreCompile   runtime.TokenContract `json:"preCompile,omitempty"`
+	UpgradeUrl   string                `json:"upgradeUrl,omitempty"`
+	NonceUpGrade bool                  `json:"nonceUpGrade,omitempty"`
 }
 
 func initEvmSubConfig(sub []byte, evmEnableHeight int64) {

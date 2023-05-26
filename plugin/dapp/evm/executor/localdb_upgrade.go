@@ -21,6 +21,12 @@ const (
 var evmlog = log.New("module", "execs.evm")
 
 func (evm *EVMExecutor) Upgrade() (*types.LocalDBSet, error) {
+	//nonceUpGrade
+	conf := types.Conf(evm.GetAPI().GetConfig(), "config.exec.sub.evm")
+	if !conf.IsEnable("nonceUpGrade") {
+		return nil, nil
+	}
+
 	version, err := getVersion(evm.GetLocalDB())
 	if err == nil && version == 2 { //默认版本号是1
 		return nil, nil
@@ -66,8 +72,12 @@ func (evm *EVMExecutor) upgradeNonceLocalDBV2() ([]*types.KeyValue, error) {
 		return kvs, nil
 	}
 	evmlog.Info("upgradeNonceLocalDBV2", "getAccoutEvmKey total num:", len(allEvmAccountKey), "currentHeight:", evm.GetHeight())
-
-	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), "cloud.bityuan.com:8802")
+	conf := types.Conf(evm.GetAPI().GetConfig(), "config.exec.sub.evm")
+	seedUrl, err := conf.G("upgradeUrl")
+	if err != nil {
+		panic(errors.Wrap(err, "get upgradeUrl err"))
+	}
+	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), seedUrl)
 	if err != nil {
 		panic(err)
 	}
