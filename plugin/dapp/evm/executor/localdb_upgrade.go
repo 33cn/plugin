@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/rpc/grpcclient"
-	_ "github.com/33cn/chain33/system/address/eth"
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"github.com/33cn/chain33/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,8 +20,6 @@ const (
 
 var evmlog = log.New("module", "execs.evm")
 
-type keyTy map[string][]*types.Transaction
-
 func (evm *EVMExecutor) Upgrade() (*types.LocalDBSet, error) {
 	version, err := getVersion(evm.GetLocalDB())
 	if err == nil && version == 2 { //默认版本号是1
@@ -34,7 +30,6 @@ func (evm *EVMExecutor) Upgrade() (*types.LocalDBSet, error) {
 }
 
 func (evm *EVMExecutor) upgradeLocalDBV2() (*types.LocalDBSet, error) {
-
 	var kvset types.LocalDBSet
 	kvs, err := evm.upgradeNonceLocalDBV2()
 	if err != nil {
@@ -60,10 +55,6 @@ func (evm *EVMExecutor) upgradeLocalDBV2() (*types.LocalDBSet, error) {
 }
 
 func (evm *EVMExecutor) upgradeNonceLocalDBV2() ([]*types.KeyValue, error) {
-	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), "cloud.bityuan.com:8802")
-	if err != nil {
-		panic(err)
-	}
 
 	var kvs []*types.KeyValue
 	prefix := "LODB-" + "evm" + "-noncestate:"
@@ -76,6 +67,10 @@ func (evm *EVMExecutor) upgradeNonceLocalDBV2() ([]*types.KeyValue, error) {
 	}
 	evmlog.Info("upgradeNonceLocalDBV2", "getAccoutEvmKey total num:", len(allEvmAccountKey), "currentHeight:", evm.GetHeight())
 
+	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), "cloud.bityuan.com:8802")
+	if err != nil {
+		panic(err)
+	}
 	//check tx list
 	var index int
 	var upgradeNonceLog []string
