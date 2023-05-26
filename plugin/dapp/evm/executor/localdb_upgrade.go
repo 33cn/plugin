@@ -73,10 +73,7 @@ func (evm *EVMExecutor) upgradeNonceLocalDBV2() ([]*types.KeyValue, error) {
 	}
 	evmlog.Info("upgradeNonceLocalDBV2", "getAccoutEvmKey total num:", len(allEvmAccountKey), "currentHeight:", evm.GetHeight())
 	conf := types.Conf(evm.GetAPI().GetConfig(), "config.exec.sub.evm")
-	seedUrl, err := conf.G("upgradeUrl")
-	if err != nil {
-		panic(errors.Wrap(err, "get upgradeUrl err"))
-	}
+	seedUrl := conf.GStr("upgradeUrl")
 	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), seedUrl)
 	if err != nil {
 		panic(err)
