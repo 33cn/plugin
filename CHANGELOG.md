@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.68.3"></a>
+## [1.68.3](https://github.com/33cn/plugin/compare/v1.68.2...v1.68.3) (2023-05-24)
+
+
+### Bug Fixes
+
+* fix evm nonce rollback ([3609b74](https://github.com/33cn/plugin/commit/3609b74))
+
 <a name="1.68.2"></a>
 ## [1.68.2](https://github.com/33cn/plugin/compare/v1.68.1...v1.68.2) (2023-03-16)
 
