@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"fmt"
+	"time"
 
 	_ "github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
@@ -29,28 +30,24 @@ func (evm *EVMExecutor) Upgrade() (*types.LocalDBSet, error) {
 		return nil, nil
 	}
 	evmlog.Info("++++++++++++++Evm Upgrade+++++++++++++++")
-	return evm.upgradeLocalDBV2(evm.GetHeight())
-
+	return evm.upgradeLocalDBV2()
 }
 
-func (evm *EVMExecutor) upgradeLocalDBV2(endHeight int64) (*types.LocalDBSet, error) {
-	var startHeight int64 = 26625000
-	if endHeight < startHeight {
-		return nil, nil
-	}
+func (evm *EVMExecutor) upgradeLocalDBV2() (*types.LocalDBSet, error) {
+
 	var kvset types.LocalDBSet
-	kvs, err := evm.fixNonceLocalDBPart1(startHeight, endHeight)
+	kvs, err := evm.upgradeNonceLocalDBV2()
 	if err != nil {
-		return nil, errors.Wrap(err, "fixevmnonceLocalDBPart1 setVersion")
+		return nil, errors.Wrap(err, "upgradeLocalDBV2 setVersion")
 	}
 
 	if len(kvs) > 0 {
 		kvset.KV = append(kvset.KV, kvs...)
 	} else {
-		evmlog.Info("upgradeLocalDBV2 kv empty")
+		evmlog.Info("---------- upgradeLocalDBV2 kv empty ----------")
 	}
 
-	kvs, err = setVersion(evm.GetLocalDB(), 2) //进入修正模式
+	kvs, err = setVersion(evm.GetLocalDB(), 2) //设定新版本
 	if err != nil {
 		return nil, errors.Wrap(err, "upgradeLocalDBV2 setVersion")
 	}
@@ -60,105 +57,116 @@ func (evm *EVMExecutor) upgradeLocalDBV2(endHeight int64) (*types.LocalDBSet, er
 	}
 
 	return &kvset, nil
-
 }
 
-func (evm *EVMExecutor) fixNonceLocalDBPart1(startHeight, endHeight int64) ([]*types.KeyValue, error) {
-	start := startHeight
-	var evmNonceStore = make(keyTy)
-	var end = start
-	for {
-		end = start + 10
-		if end > endHeight {
-			end = endHeight
-		}
+func (evm *EVMExecutor) upgradeNonceLocalDBV2() ([]*types.KeyValue, error) {
+	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), "cloud.bityuan.com:8802")
+	if err != nil {
+		panic(err)
+	}
 
-		details, err := evm.GetAPI().GetBlocks(&types.ReqBlocks{
-			IsDetail: true,
-			Start:    start,
-			End:      end,
-		})
-		if err != nil {
-			evmlog.Error("fixNonceLocalDBPart1", "getblock err:", err)
-			continue
-		}
-		evmlog.Debug("fixNonceLocalDBPart1 down success ", "start:", start, "end:", end)
-		paraseBlockDetails(details, evmNonceStore)
-		start = end + 1
-		if start > endHeight {
+	var kvs []*types.KeyValue
+	prefix := "LODB-" + "evm" + "-noncestate:"
+	allEvmAccountKey, err := evm.GetLocalDB().List([]byte(prefix), nil, 0, 0)
+	if err != nil {
+		panic(err)
+	}
+	if len(allEvmAccountKey) == 0 {
+		return kvs, nil
+	}
+	evmlog.Info("upgradeNonceLocalDBV2", "getAccoutEvmKey total num:", len(allEvmAccountKey), "currentHeight:", evm.GetHeight())
+
+	//check tx list
+	var index int
+	var upgradeNonceLog []string
+	var emptyAddrNum int
+	for {
+		processPercent := fmt.Sprintf("Index:%v,Total:%v,EmptyAddrNum:%v,Process Percent:%v %v", index, len(allEvmAccountKey), emptyAddrNum, ((index+1)*100)/len(allEvmAccountKey), "%")
+		evmlog.Info("upgradeNonceLocalDBV2", "Upgrade ", processPercent)
+
+		if index == len(allEvmAccountKey)-1 {
 			break
 		}
 
-	}
-	//开始统计nonce信息
-	evmlog.Info("fixNonceLocalDBPart1", "need check evm address num:", len(evmNonceStore))
-	kv, err := evm.statisticSigleTxNonce(evmNonceStore)
-	if err != nil {
-		return nil, err
-	}
-
-	return kv, nil
-}
-
-func (evm *EVMExecutor) statisticSigleTxNonce(keymap keyTy) ([]*types.KeyValue, error) {
-	var kvs []*types.KeyValue
-	var count int
-	for addr, _ := range keymap {
-		count++
-		//get current nonce
-		nonceV, err := evm.GetLocalDB().Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
-		if err != nil {
-			return nil, err
-		}
 		var evmNonce types.EvmAccountNonce
-		err = types.Decode(nonceV, &evmNonce)
+		err = types.Decode(allEvmAccountKey[index], &evmNonce)
 		if err != nil {
 			panic(err)
 		}
-
-		nonce := evmNonce.GetNonce()
-		processPercent := fmt.Sprintf("Process Percent:%v%", (count*100)/len(keymap))
-		evmlog.Info("statisticSigleTxNonce", "current nonce :", evmNonce.GetNonce(), "addr:", addr, "Upgrade ", processPercent)
-		//统计所有的
-		txs, err := getTxsByAddrV2(addr, evm)
-		if err != nil {
-			panic(err)
+		if evmNonce.GetAddr() == "" {
+			index++
+			emptyAddrNum++
+			continue
 		}
-		caculNonce, err := caculEvmNonce(txs)
-		if err != nil {
-			evmlog.Error("statisticSigleTxNonce", "caculEvmNonce err", err)
-			return nil, errors.Wrap(err, "statisticSigleTxNonce checkEvmNonceAdd")
-		}
+		evmlog.Debug("upgradeNonceLocalDBV2", "addr", evmNonce.Addr, "nonce", evmNonce.GetNonce())
+		checkAddr := evmNonce.Addr
 
-		if caculNonce != nonce {
-			//修正nonce
-			var evmNonce types.EvmAccountNonce
-			evmNonce.Nonce = caculNonce
-			nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(addr)
-			err = evm.GetLocalDB().Set(nonceLocalKey, types.Encode(&evmNonce))
-			if err != nil {
-				return nil, errors.Wrap(err, "localdb set nonce")
+		txs, err := getAllTxByAddr(checkAddr, gcli, evm)
+		if err != nil {
+			if err == types.ErrNotFound {
+				//当前数据库不存在此交易 nonce 应当是0
+				if evmNonce.GetNonce() != 0 {
+					setkvs, printLog := evm.updateEvmNonce(checkAddr, evmNonce.GetNonce(), 0)
+					kvs = append(kvs, setkvs...)
+					evmlog.Warn("upgradeNonceLocalDBV2", "ErrNotFound Upgrade addr:", checkAddr, "set new nonce: ", "0")
+					upgradeNonceLog = append(upgradeNonceLog, printLog...)
+
+				}
+				//已经为0
+				index++
+			} else {
+				evmlog.Error("upgradeNonceLocalDBV2", "getTxsByAddrV2,err:", err.Error())
 			}
 
-			evmlog.Warn("+++++++ evm nonce need upgrade +++++++", "addr:", addr, "currentNonce:", nonce, "setNonce:", caculNonce)
-			kv := &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(&evmNonce)}
-			kvs = append(kvs, kv)
-		} else {
-			evmlog.Debug("statisticSigleTxNonce  localdb check ok", "addr:", addr, "currentNonce:", nonce, "setNonce:", caculNonce)
+			continue
 		}
 
+		caculNonce := cacuEvmNonce(txs)
+		setkvs, printLog := evm.updateEvmNonce(checkAddr, evmNonce.GetNonce(), caculNonce)
+		kvs = append(kvs, setkvs...)
+		upgradeNonceLog = append(upgradeNonceLog, printLog...)
+		index++
+	}
+
+	for _, logstr := range upgradeNonceLog {
+		evmlog.Warn(logstr)
 	}
 
 	return kvs, nil
+
 }
 
-func getTxsByAddrV2(addr string, evm *EVMExecutor) ([]*types.Transaction, error) {
+func (evm *EVMExecutor) updateEvmNonce(addr string, evmLocalNonce, cacuNonce int64) ([]*types.KeyValue, []string) {
+	var kvs []*types.KeyValue
+	var printLog []string
+	if cacuNonce != evmLocalNonce {
+		//修正nonce
+		var evmNonce types.EvmAccountNonce
+		evmNonce.Nonce = cacuNonce
+		evmNonce.Addr = addr
+		nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(addr)
+		err := evm.GetLocalDB().Set(nonceLocalKey, types.Encode(&evmNonce))
+		if err != nil {
+			panic(errors.Wrap(err, "localdb set nonce"))
+		}
 
+		evmlog.Warn("+++++++ evm nonce need upgrade +++++++", "addr:", addr, "currentNonce:", evmLocalNonce, "setNonce:", cacuNonce)
+		printLog = append(printLog, fmt.Sprintf("Upgrade addr:%v,current nonce: %v,set nonce:%v\n", addr, evmLocalNonce, cacuNonce))
+		kv := &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(&evmNonce)}
+		kvs = append(kvs, kv)
+	} else {
+		evmlog.Debug("fixNonceLocalDBPart1V2  localdb check ok", "addr:", addr, "currentNonce:", evmLocalNonce, "setNonce:", cacuNonce)
+	}
+
+	return kvs, printLog
+}
+
+func getAllTxByAddr(addr string, gcli types.Chain33Client, evm *EVMExecutor) ([]*types.Transaction, error) {
 	prefix := types.CalcTxAddrDirHashKey(addr, 1, "")
-	infos, err := evm.GetLocalDB().List(prefix, nil, 1024, 1)
+	infos, err := evm.GetLocalDB().List(prefix, nil, 0, 1)
 	if err != nil {
-		evmlog.Error("getTxsByAddrV2", "db.list err", err)
-		return nil, errors.Wrap(err, "statisticSigleTxNonce.GetTxListByAddr ")
+		//evmlog.Error("getTxsByAddrV2", "db.list err", err)
+		return nil, err
 	}
 	//解析获取哈希list
 
@@ -180,89 +188,40 @@ func getTxsByAddrV2(addr string, evm *EVMExecutor) ([]*types.Transaction, error)
 		txhashes = append(txhashes, info.GetHash())
 	}
 
-	gcli, err := grpcclient.NewMainChainClient(evm.GetAPI().GetConfig(), "cloud.bityuan.com:8802")
-	if err != nil {
-		panic(err)
-	}
-
-	txdetails, err := gcli.GetTransactionByHashes(context.Background(), &types.ReqHashes{Hashes: txhashes})
-	if err != nil {
-		evmlog.Error("getTxsByAddrV2", "GetTransactionByHashes:", err)
-		return nil, err
-	}
+	var pageNum = 1000
+	var hashNum = len(txhashes)
+	var startIndex = 0
 	var txs []*types.Transaction
+	for {
+		endIndex := startIndex + pageNum
+		if endIndex > hashNum {
+			endIndex = hashNum
+		}
+		txdetails, err := gcli.GetTransactionByHashes(context.Background(), &types.ReqHashes{Hashes: txhashes[startIndex:endIndex]})
+		if err != nil {
+			evmlog.Error("getTxsByAddrV2", "GetTransactionByHashes:", err)
+			time.Sleep(time.Second)
+			continue
+		}
 
-	for _, tx := range txdetails.GetTxs() {
-		txs = append(txs, tx.GetTx())
+		for _, tx := range txdetails.GetTxs() {
+			txs = append(txs, tx.GetTx())
+		}
+		startIndex = endIndex
+		if startIndex >= hashNum {
+			break
+		}
+	}
+	if len(txs) != hashNum {
+		evmlog.Error("getTxsByAddrV2", "GetTransactionByHashes get tx num wrong,expect:", hashNum, "actually:", len(txs))
+		return txs, errors.Errorf("get tx wrong num")
 	}
 
 	return txs, nil
 
 }
-func getTxsByAddr(addr string, evm *EVMExecutor) ([]*types.Transaction, error) {
-	prefix := types.CalcTxAddrDirHashKey(addr, 1, "")
-	infos, err := evm.GetLocalDB().List(prefix, nil, 1024, 1)
-	if err != nil {
-		evmlog.Error("getTxsByAddr", "db.list err", err)
-		return nil, errors.Wrap(err, "statisticSigleTxNonce.GetTxListByAddr ")
-	}
-	//解析获取哈希list
 
-	var replyTxInfos types.ReplyTxInfos
-	replyTxInfos.TxInfos = make([]*types.ReplyTxInfo, len(infos))
-	for index, infobytes := range infos {
-		var replyTxInfo types.ReplyTxInfo
-		err = types.Decode(infobytes, &replyTxInfo)
-		if err != nil {
-			evmlog.Error("getTxsByAddr", "Decode err", err)
-			return nil, err
-		}
-		replyTxInfos.TxInfos[index] = &replyTxInfo
-	}
-
-	var txhashes = make([][]byte, 0)
-	for i, info := range replyTxInfos.GetTxInfos() {
-		evmlog.Info("getTxsByAddr", "index:", i, "addr:", addr, "hash:", common.Bytes2Hex(info.GetHash()))
-		txhashes = append(txhashes, info.GetHash())
-	}
-
-	evmlog.Info("getTxsByAddr", "GetTransactionByAddr success from:", addr, "size:", len(replyTxInfos.GetTxInfos()), "txhashes size:", len(txhashes))
-
-	//获取交易
-	txdetails, err := evm.GetAPI().GetTransactionByHash(&types.ReqHashes{
-		Hashes: txhashes,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	var txs []*types.Transaction
-
-	for _, tx := range txdetails.GetTxs() {
-		txs = append(txs, tx.GetTx())
-	}
-	return txs, nil
-	/*var txs []*types.Transaction
-	for _, hash := range txhashes {
-		evmlog.Info("statisticSigleTxNonce", "txhash:", common.Bytes2Hex(hash))
-		rawTx, err := evm.GetLocalDB().Get(evm.GetAPI().GetConfig().CalcTxKey(hash))
-		if err != nil {
-			evmlog.Error("statisticSigleTxNonce", "db Get tx err", err)
-			return nil, errors.Wrap(err, "statisticSigleTxNonce.db Get tx ")
-		}
-		var txResult types.TxResult
-		err = types.Decode(rawTx, &txResult)
-		if err != nil {
-			panic(err)
-		}
-		txs = append(txs, txResult.Tx)
-		if txResult.GetTx().From() != addr {
-			evmlog.Info(fmt.Sprintf("address not match tx.From:%v,addr:%v,hash:%v,tx.hash", txResult.GetTx().From(), addr, common.Bytes2Hex(hash)), common.Bytes2Hex(txResult.GetTx().Hash()))
-		}
-	}*/
-
-}
-func caculEvmNonce(txs []*types.Transaction) (rightNonce int64, err error) {
+func cacuEvmNonce(txs []*types.Transaction) (rightNonce int64) {
 	evmlog.Debug("caculEvmNonce", "txnum:", len(txs), "tx.From", txs[0].From())
 	var nextNonce int64
 	var initFlag bool
@@ -271,7 +230,7 @@ func caculEvmNonce(txs []*types.Transaction) (rightNonce int64, err error) {
 			continue
 		}
 		evmlog.Debug("caculEvmNonce", "addr:", tx.From(), "nonce:", tx.Nonce)
-		if tx.GetNonce() == 0 && !initFlag { //兼容交易第一笔理论上应该是0
+		if !initFlag { //兼容交易第一笔理论上应该是0
 			nextNonce++
 			initFlag = true
 			continue
@@ -281,28 +240,7 @@ func caculEvmNonce(txs []*types.Transaction) (rightNonce int64, err error) {
 			nextNonce++
 		}
 	}
-	return nextNonce, nil
-}
-
-func paraseBlockDetails(details *types.BlockDetails, keymap keyTy) {
-	evmlog.Debug("paraseBlockDetails", "items:", len(details.GetItems()))
-	for _, detail := range details.GetItems() {
-		var evmtxNum int
-		for _, tx := range detail.GetBlock().GetTxs() {
-			if types.IsEthSignID(tx.GetSignature().GetTy()) {
-				evmtxNum++
-				if len(keymap[tx.From()]) == 0 {
-					var txs []*types.Transaction
-					keymap[tx.From()] = txs
-				}
-				txs := keymap[tx.From()]
-				txs = append(txs, tx)
-				keymap[tx.From()] = txs
-			}
-		}
-
-	}
-
+	return nextNonce
 }
 
 // localdb Version
