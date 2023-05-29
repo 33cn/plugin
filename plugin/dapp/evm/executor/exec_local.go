@@ -30,26 +30,26 @@ func (evm *EVMExecutor) execEvmNonce(dbSet *types.LocalDBSet, tx *types.Transact
 	nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
 	if err == nil {
 		_ = types.Decode(nonceV, evmNonce)
+
+	}
+
+	if evmNonce.GetNonce() == 0 { //等同于not found
+		evmNonce.Addr = tx.From()
+		evmNonce.Nonce = 1
+	} else {
 		if evmNonce.GetNonce() == tx.GetNonce() {
 			evmNonce.Nonce++
 
-		} else { //nonce 不匹配
-			if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) { //分叉之后的逻辑
-				elog.Error("execEvmNonce err", "height", evm.GetHeight(), "idx", index, "txHash", common.ToHex(tx.Hash()),
-					"from", fromAddr, "expect", evmNonce.GetNonce(), "actual", tx.GetNonce())
-				return errInvalidEvmNonce
-			} else {
-				//分叉之前 不做任何处理
-			}
+		} else if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) { //分叉之后的逻辑
+			elog.Error("execEvmNonce err", "height", evm.GetHeight(), "idx", index, "txHash", common.ToHex(tx.Hash()),
+				"from", fromAddr, "expect", evmNonce.GetNonce(), "actual", tx.GetNonce())
+			return errInvalidEvmNonce
+		} else {
+			//分叉之前 不做任何处理
 		}
 
-	} else { //不存在nonceLocalKey
-		evmNonce.Addr = tx.From()
-		evmNonce.Nonce = 1
 	}
 
-	//evmNonce.Addr = fromAddr
-	//evmNonce.Nonce++
 	dbSet.KV = append(dbSet.KV, &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(evmNonce)})
 	return nil
 }

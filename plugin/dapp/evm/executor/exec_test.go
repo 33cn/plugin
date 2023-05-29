@@ -47,6 +47,30 @@ func TestExecNonce(t *testing.T) {
 	_, err := localDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
 	require.Equal(t, types.ErrNotFound, err)
 
+	tx := newEvmTestTx(int64(3), priv)
+	set, err := exec.ExecLocal(tx, recp, 3)
+	require.Equal(t, nil, err)
+	for _, kv := range set.GetKV() {
+		err = localDB.Set(kv.Key, kv.Value)
+		require.Nil(t, err)
+	}
+	nonceV, err := localDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
+	require.Equal(t, nil, err)
+	evmNonce := &types.EvmAccountNonce{}
+	_ = types.Decode(nonceV, evmNonce)
+	require.Equal(t, int64(1), evmNonce.GetNonce())
+	set, err = exec.ExecDelLocal(tx, recp, 0)
+	require.Nil(t, err)
+	for _, kv := range set.GetKV() {
+		err = localDB.Set(kv.Key, kv.Value)
+		require.Nil(t, err)
+	}
+
+	nonceV, err = localDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
+	require.Equal(t, nil, err)
+	_ = types.Decode(nonceV, evmNonce)
+	require.Equal(t, int64(0), evmNonce.GetNonce())
+
 	// exec local
 	count := 10
 	for i := 0; i < count; i++ {
@@ -62,14 +86,14 @@ func TestExecNonce(t *testing.T) {
 		}
 	}
 
-	evmNonce := &types.EvmAccountNonce{}
-	nonceV, err := localDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
+	evmNonce = &types.EvmAccountNonce{}
+	nonceV, err = localDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
 	require.Nil(t, err)
 	_ = types.Decode(nonceV, evmNonce)
 	require.Equal(t, int64(count), evmNonce.GetNonce())
 	require.Equal(t, addr, evmNonce.Addr)
 
-	tx := newEvmTestTx(5, priv)
+	tx = newEvmTestTx(5, priv)
 	_, err = exec.ExecLocal(tx, recp, 0)
 	require.Equal(t, errInvalidEvmNonce, err)
 
@@ -91,4 +115,5 @@ func TestExecNonce(t *testing.T) {
 	tx = newEvmTestTx(5, priv)
 	_, err = exec.ExecLocal(tx, recp, 0)
 	require.Nil(t, err)
+
 }
