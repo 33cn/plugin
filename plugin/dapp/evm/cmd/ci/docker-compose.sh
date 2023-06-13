@@ -23,15 +23,23 @@ PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
 SOLO_NODE="${1}_main_1"
+PARA1_NODE="${1}_para1_1"
+PARA2_NODE="${1}_para2_1"
+
+
 SOLO_CLI="docker exec ${SOLO_NODE} /root/chain33-cli --rpc_laddr http://localhost:8545"
-Chain33_CLI="docker exec ${SOLO_NODE} /root/chain33-cli"
+MAIN_CLI="docker exec ${SOLO_NODE} /root/chain33-cli"
+Para1_CLI="docker exec ${PARA1_NODE} /root/chain33-cli --paraName=user.p.para. --rpc_laddr http://localhost:8901"
+Para1_ETH_CLI="docker exec ${PARA1_NODE} /root/chain33-cli  --rpc_laddr http://localhost:8545"
+
 DAPP="evm"
 evm_contractAddr=""
 MAIN_HTTP=""
 ETH_HTTP=""
 # shellcheck disable=SC2034
 CLI=$SOLO_CLI
-containers=("${SOLO_NODE}")
+# 启动3个节点，一个主链节点，2个自共识的平行链节点
+containers=("${SOLO_NODE}" "${PARA1_NODE}" "${PARA2_NODE}" )
 export COMPOSE_PROJECT_NAME="$1"
 ## global config ###
 sedfix=""
@@ -49,6 +57,65 @@ genesisKey="c8729f05b10cc74d40feeb00376e11aa5b50e92b369d778b31b6e902c528f141"
 genesisAddr="0xd83b69c56834e85e023b1738e69bfa2f0dd52905"
 testAddr="0xDe79A84DD3A16BB91044167075dE17a1CA4b1d6b"
 
+# 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt  0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944
+paraGeneKey="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
+
+# 1CqsBFa8KMGG9yjY4XcCUWaqdscBw6eipn  982797e30031e9d1d00e0f1edf6da86c6a55338165f12efee7ff77e0d485f4d7
+# 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw  c9d5e87e94677df823e1cce0eab7de2e7bb4f724a12592821f84e12b72c639c2
+testKey1="982797e30031e9d1d00e0f1edf6da86c6a55338165f12efee7ff77e0d485f4d7"
+testKey2="c9d5e87e94677df823e1cce0eab7de2e7bb4f724a12592821f84e12b72c639c2"
+
+
+function set_para_config() {
+    echo "====== ${FUNCNAME[0]}======"
+    conf="chain33.para.toml"
+    # blockchain
+    sed -i $sedfix '0,/^isParaChain.*/s//isParaChain=false/' "${conf}"
+
+    # mempool
+    sed -i $sedfix '/^\[mempool\]/,/^name/s/^name.*/name="timeline"/' "${conf}"
+    sed -i $sedfix '0,/^minTxFeeRate=.*/s//minTxFeeRate=0/' "${conf}"
+    # p2p
+    sed -i $sedfix '/^\[p2p\]/,/^enable=.*/s/^enable.*/enable=true/' "${conf}"
+    sed -i $sedfix '0,/^waitPid=.*/{//d}' "${conf}"
+
+    # crypto
+    sed -i $sedfix '0,/^evmChainID.*/s//evmChainID=1999/' "${conf}"
+
+    # consensus
+    sed -i $sedfix '/^\[consensus\]/,/^name=.*/s/^name.*/name="solo"/' "${conf}"
+    sed -i $sedfix '/^\[consensus\]/,/^committer=/{/^committer="/d}' "${conf}"
+    sed -i $sedfix '/^\[consensus\]/,/^name=.*/!b;/^name/a committer="rollup"' "${conf}"
+    sed -i $sedfix '0,/^minerstart=.*/{//d}' "${conf}"
+
+    # rollup
+    sed -i $sedfix '0,/^maxCommitInterval=.*/s//maxCommitInterval=60/' "${conf}"
+    sed -i $sedfix '0,/^reservedMainHeight=.*/s//reservedMainHeight=1/' "${conf}"
+
+    # fork
+    sed -i $sedfix 's/^ForkBlockHash=.*/ForkBlockHash=0/' "${conf}"
+    sed -i $sedfix 's/^ForkRootHash=.*/ForkRootHash=0/' "${conf}"
+
+    # rpc
+    sed -i $sedfix '0,/^jrpcBindAddr=.*/s//jrpcBindAddr="localhost:8801"/' "${conf}"
+    sed -i $sedfix '0,/^mainChainGrpcAddr=.*/s//mainChainGrpcAddr="main:8802"/' "${conf}"
+    sed -i $sedfix '0,/^forwardExecs=.*/s//forwardExecs=["paracross"]/' "${conf}"
+    sed -i $sedfix '0,/^forwardActionNames=.*/s//forwardActionNames=["crossAssetTransfer"]/' "${conf}"
+
+    cp "${conf}" chain33.para1.toml
+    cp "${conf}" chain33.para2.toml
+
+
+    sed -i $sedfix '/^\[consensus\]/,/^name/!b;/^name/a minerstart=true' chain33.para1.toml
+    #testkey1
+    sed -i $sedfix '/^\[consensus.sub.rollup\]/,/^authKey/s/^authKey.*/authKey="982797e30031e9d1d00e0f1edf6da86c6a55338165f12efee7ff77e0d485f4d7"/' chain33.para1.toml
+
+    sed -i $sedfix '0,/^singleMode=.*/{//d}' chain33.para2.toml
+    #testkey2
+    sed -i $sedfix '/^\[consensus.sub.rollup\]/,/^authKey/s/^authKey.*/authKey="c9d5e87e94677df823e1cce0eab7de2e7bb4f724a12592821f84e12b72c639c2"/' chain33.para2.toml
+
+
+}
 
 
 
@@ -105,7 +172,7 @@ function testcase_coinsTransfer(){
     fi
     echo "${hash}"
 
-    balance=$(${Chain33_CLI} account balance -a ${testAddr} -e coins | jq -r ".balance")
+    balance=$(${MAIN_CLI} account balance -a ${testAddr} -e coins | jq -r ".balance")
     if [ "${balance}" != "12.0000" ]; then
         echo " balance  not correct, balance=${balance}"
         exit 1
@@ -147,7 +214,7 @@ function testcase_deployErc20(){
   echo "txhash: ${hash}"
 
   #check tx status
-  queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+  queryTransaction "${MAIN_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
   echo "eth_http:${ETH_HTTP}"
   evm_contractAddr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_getContractorAddress","params":["'${genesisAddr}'","0x1"]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
   echo "evm_contractAddr: ${evm_contractAddr}"
@@ -196,7 +263,7 @@ function testcase_transferErc20() {
       local hash=$(${CLI} wallet send -d "${signData}" -e)
       echo "${hash}"
       #check tx status
-      queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+      queryTransaction  "${MAIN_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
       checkBalanceOf ${testAddr} "0x0000000000000000000000000000000000000000000000000000000005f5e100"
 
 
@@ -208,35 +275,35 @@ function testcase_transferErc20() {
 function  token_finish() {
   echo "=======  token_finish ========="
 
-  local rawTx=$(${Chain33_CLI}  token finish  -s "${1}"  -a ${genesisAddr})
+  local rawTx=$(${MAIN_CLI}  token finish  -s "${1}"  -a ${genesisAddr})
   echo "token_finish rawTx:${rawTx}"
   if [ "${rawTx}" == "" ]; then
     echo "token  create tx faild"
     exit 1
   fi
 
-  local signedTx=$(${Chain33_CLI} wallet sign -d "${rawTx}" -k ${genesisKey} -p 2)
+  local signedTx=$(${MAIN_CLI} wallet sign -d "${rawTx}" -k ${genesisKey} -p 2)
   echo "token_finish signedTx:${signedTx}"
-  local hash=$(${Chain33_CLI} wallet send -d "${signedTx}"  )
+  local hash=$(${MAIN_CLI} wallet send -d "${signedTx}"  )
   echo  "token_finish hash: ${hash}"
-  queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+  queryTransaction "${MAIN_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
   echo "=== token_finish check token create success ==="
 }
 
 function token_preConfig() {
   echo "======= # token_preConfig ========="
 
-    local rawTx=$(${Chain33_CLI}  config config_tx -c "token-blacklist" -o "add" -v "zzz")
+    local rawTx=$(${MAIN_CLI}  config config_tx -c "token-blacklist" -o "add" -v "zzz")
      #如果返回空
     if [ -z "${rawTx}" ]; then
        exit 1
     fi
     echo "token_preConfig rawtx:${rawTx}"
-    local signedTx=$(${Chain33_CLI} wallet sign -d "${rawTx}" -k ${genesisKey} -p 2 -e 360)
+    local signedTx=$(${MAIN_CLI} wallet sign -d "${rawTx}" -k ${genesisKey} -p 2 -e 360)
     echo "token_preConfig signedTx:${signedTx}"
-    local hash=$(${Chain33_CLI} wallet send -d "${signedTx}"  )
+    local hash=$(${MAIN_CLI} wallet send -d "${signedTx}"  )
     echo "token_preConfig hash: ${hash}"
-    queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+    queryTransaction "${MAIN_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
     echo  "=== finish token_preConfig ==="
 
 }
@@ -245,17 +312,17 @@ function token_preCreate() {
   token_symbol=${1}
   owner=${2}
   echo "token_preCreate:symbol:${token_symbol}"
-  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 1000000000000 )
+  local unsignedTx=$(${MAIN_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 1000000000000 )
   if [ "${unsignedTx}" == "" ]; then
      echo "token preCreate create tx"
      return
   fi
 
-  local signedTx=$(${Chain33_CLI} wallet sign -d "${unsignedTx}"  -p 2 -k ${genesisKey})
+  local signedTx=$(${MAIN_CLI} wallet sign -d "${unsignedTx}"  -p 2 -k ${genesisKey})
   echo "token_preCreate signedTx:${signedTx}"
-  local hash=$(${Chain33_CLI} wallet send -d ${signedTx} )
+  local hash=$(${MAIN_CLI} wallet send -d ${signedTx} )
   echo  token_preCreate hash: ${hash}
-  queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+  queryTransaction "${MAIN_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
   echo  "=== finish token_preCreate ==="
 
 }
@@ -293,7 +360,7 @@ function testcase_evmPrecompile(){
     echo "txhash: ${hash}"
 
     #check tx status
-    queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+    queryTransaction "${MAIN_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
     evm_contractAddr=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_getContractorAddress","params":["'${genesisAddr}'","0x3"]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
     #new contractor address
     echo "evm_contractAddr: ${evm_contractAddr}"
@@ -307,10 +374,11 @@ function testcase_evmPrecompile(){
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
 function queryTransaction() {
-    txHash=$1
-    validators=$2
-    expectRes=$3
-    res=$(${Chain33_CLI} tx query --hash  "${txHash}" |jq -r .receipt.tyName)
+    cli=$1
+    txHash=$2
+    validators=$3
+    expectRes=$4
+    res=$(${cli} tx query --hash  "${txHash}" |jq -r .receipt.tyName)
 
 
     if [ "${res}" != "${expectRes}" ]; then
@@ -342,7 +410,7 @@ function testcase_nonceTransfer(){
         exit 1
     fi
     # 查询交易哈希详情，预期查询不到，因为nonce 过高，放入mempool 等待Nonce=1的交易到来之后才会被打包执行
-    queryTransaction "${hash}"  "" ""
+    queryTransaction "${MAIN_CLI}" "${hash}"  "" ""
     tempHash2=${hash}
     tempSignData=${signData}
     # 补充nonce=5的交易current nonce=5
@@ -353,8 +421,8 @@ function testcase_nonceTransfer(){
         exit 1
     fi
 
-     queryTransaction "${tempHash2}"  "jq -r .result.receipt.tyName" "ExecOk"
-     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+     queryTransaction "${MAIN_CLI}" "${tempHash2}"  "jq -r .result.receipt.tyName" "ExecOk"
+     queryTransaction "${MAIN_CLI}"  "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
 
     # 测试重复交易 nonce=6
     local hash=$(${CLI} wallet send -d "${tempSignData}" -e)
@@ -365,6 +433,117 @@ function testcase_nonceTransfer(){
 
 }
 
+function node_group_config() {
+
+    echo "====== ${FUNCNAME[0]} ======"
+    ${MAIN_CLI} send coins transfer -t 1CqsBFa8KMGG9yjY4XcCUWaqdscBw6eipn -a 1000 -k "${genesisKey}"
+    ${MAIN_CLI} send coins transfer -t 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw -a 1000 -k "${genesisKey}"
+    ${MAIN_CLI} send coins send_exec -e paracross -a 100 -k "${testKey1}"
+    ${MAIN_CLI} send coins send_exec -e paracross -a 100 -k "${testKey2}"
+
+    ${MAIN_CLI} account balance -a 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw
+    nodeAddrs="1CqsBFa8KMGG9yjY4XcCUWaqdscBw6eipn,13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw"
+    blsPubs="99ae786cac6a6ee65718d3bc036a57f90f92f38b5d14e6f61a7cfe2468ff96eed9e162aa0c8bda1f770b6f78513583eb,\
+    811575ddef2eee83d9f702f50268f5e85c0999518d52cecedd357799547904faa162a10bc517ca87d50393e3225e3cae"
+    # frozen 10
+    #申请超级账户组 包含了2个超级账户 设置evmID=1999 ，主链：2999
+    hash=$(${MAIN_CLI} send para nodegroup apply -a "${nodeAddrs}" -p "${blsPubs}" -c 10 -evmChainID 1999 --paraName=user.p.para. -k "${testKey1}")
+
+    echo "apply hash =${hash}"
+    ${MAIN_CLI} tx query -s "${hash}"
+    #批准超级账户组
+    res=$(${MAIN_CLI} send para nodegroup approve -c 10 -i "${hash}" --paraName=user.p.para. -k "${testKey1}")
+    echo "approve hash =${res}"
+    ${MAIN_CLI} tx query -s "${res}"
+
+    status=$(${MAIN_CLI} --rpc_laddr http://localhost:8801 --paraName "user.p.$paraName." para nodegroup status | jq -r ".status")
+    if [ "$status" != 2 ]; then
+            echo "status not approve status=$status"
+            exit 1
+    fi
+
+    if [ "$(${MAIN_CLI} rollup validator -t user.p.para. | jq -r ".blsPubs|length == 2")" != "true" ]; then
+        echo "fail to config parachain node group"
+        exit 1
+    fi
+
+}
+function wait_height() {
+
+    if [ "$#" -lt 3 ]; then
+        echo "wait_height not enough params"
+        exit 1
+    fi
+    cli="${1}"
+    expect="${2}"
+    timeout="${3}"
+    echo "wait height ${expect}"
+    while true; do
+        new_height=$(${cli} block last_header | jq ".height")
+        if [ "${new_height}" -ge "${expect}" ]; then
+            break
+        fi
+
+        timeout=$((timeout - 1))
+        if [ "${timeout}" -lt 0 ]; then
+            echo "wait height timeout, expect=${expect}, curr=${new_height}"
+            exit 1
+        fi
+        sleep 0.1
+    done
+
+}
+
+function node_group_transfer() {
+    mainHeight=$(${MAIN_CLI} block last_header | jq ".height")
+    echo "1.para node block height :${new_height}"
+    local txhash=${Para1_CLI}   send coins transfer -t 0xd83b69C56834E85e023B1738E69BFA2F0dd52905 -a 1024 -k "${paraGeneKey}"
+     balance=$(${Para1_CLI}    account balance -a 0xd83b69C56834E85e023B1738E69BFA2F0dd52905  -e coins | jq -r ".balance")
+    if [ "${balance}" != "1024.0000" ]; then
+        echo " balance  not correct, balance=${balance}"
+        exit 1
+    fi
+    mainHeight=$((mainHeight + 1))
+    wait_height "${MAIN_CLI}" "${mainHeight}" 300
+
+    echo "2.para node block height:${new_height}"
+    #evm coins transfer
+     local rawTx=$(${Para1_CLI} coins transfer_eth -f ${genesisAddr}  -t ${testAddr} -a 12)
+     echo "${rawTx}"
+     #如果返回空
+     if [ -z "${rawTx}" ]; then
+        exit 1
+     fi
+     echo "============= sign eth tx ============="
+     #签名交易
+    local signData=$(${Para1_CLI} wallet sign -d "${rawTx}" -c 1999 -p 2 -k ${genesisKey})
+    #如果返回空
+     if [ -z "${signData}" ]; then
+        exit 1
+     fi
+    echo "${signData}"
+    echo "============= send eth tx ============="
+    local hash=$(${Para1_CLI} wallet send -d "${signData}" -e)
+    if [ -z "${hash}" ]; then
+        exit 1
+    fi
+    echo "${hash}"
+    mainHeight=$((mainHeight + 1))
+    wait_height "${MAIN_CLI}" "${mainHeight}" 300
+
+    queryTransaction  "${Para1_CLI}" "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+
+
+}
+
+function testcase_paraEvmChainID(){
+  echo "#### self consensus paracorss testcase ####"
+  # step1 配置平行链自共识
+  node_group_config
+  # step2 transfer
+  node_group_transfer
+
+}
 
 function run_testcase(){
   #1. 验证 coins 转账
@@ -379,7 +558,10 @@ function run_testcase(){
   testcase_transferErc20
   #6. 测试nonce 过低，过高 下的转账功能
   testcase_nonceTransfer
+  #7. 测试平行链下转账：evm chainID 与主链不同
+  testcase_paraEvmChainID
 }
+
 function main() {
      echo "====================DAPP=${DAPP} main begin==================="
     ### start docker

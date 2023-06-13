@@ -1982,6 +1982,117 @@ func (x *EvmGetUnpackDataRespose) GetUnpackData() []string {
 	return nil
 }
 
+type EvmParaNodeGroupStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Status      int32  `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
+	Title       string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	TargetAddrs string `protobuf:"bytes,4,opt,name=targetAddrs,proto3" json:"targetAddrs,omitempty"`
+	CoinsFrozen int64  `protobuf:"varint,5,opt,name=coinsFrozen,proto3" json:"coinsFrozen,omitempty"`
+	FromAddr    string `protobuf:"bytes,6,opt,name=fromAddr,proto3" json:"fromAddr,omitempty"`
+	Height      int64  `protobuf:"varint,7,opt,name=height,proto3" json:"height,omitempty"`
+	BlsPubKeys  string `protobuf:"bytes,8,opt,name=blsPubKeys,proto3" json:"blsPubKeys,omitempty"`
+	EvmChainID  uint32 `protobuf:"varint,9,opt,name=evmChainID,proto3" json:"evmChainID,omitempty"`
+}
+
+func (x *EvmParaNodeGroupStatus) Reset() {
+	*x = EvmParaNodeGroupStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_evmcontract_proto_msgTypes[29]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EvmParaNodeGroupStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EvmParaNodeGroupStatus) ProtoMessage() {}
+
+func (x *EvmParaNodeGroupStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_evmcontract_proto_msgTypes[29]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EvmParaNodeGroupStatus.ProtoReflect.Descriptor instead.
+func (*EvmParaNodeGroupStatus) Descriptor() ([]byte, []int) {
+	return file_evmcontract_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *EvmParaNodeGroupStatus) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *EvmParaNodeGroupStatus) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *EvmParaNodeGroupStatus) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *EvmParaNodeGroupStatus) GetTargetAddrs() string {
+	if x != nil {
+		return x.TargetAddrs
+	}
+	return ""
+}
+
+func (x *EvmParaNodeGroupStatus) GetCoinsFrozen() int64 {
+	if x != nil {
+		return x.CoinsFrozen
+	}
+	return 0
+}
+
+func (x *EvmParaNodeGroupStatus) GetFromAddr() string {
+	if x != nil {
+		return x.FromAddr
+	}
+	return ""
+}
+
+func (x *EvmParaNodeGroupStatus) GetHeight() int64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *EvmParaNodeGroupStatus) GetBlsPubKeys() string {
+	if x != nil {
+		return x.BlsPubKeys
+	}
+	return ""
+}
+
+func (x *EvmParaNodeGroupStatus) GetEvmChainID() uint32 {
+	if x != nil {
+		return x.EvmChainID
+	}
+	return 0
+}
+
 var File_evmcontract_proto protoreflect.FileDescriptor
 
 var file_evmcontract_proto_rawDesc = []byte{
@@ -2196,9 +2307,26 @@ var file_evmcontract_proto_rawDesc = []byte{
 	0x64, 0x61, 0x74, 0x61, 0x22, 0x39, 0x0a, 0x17, 0x45, 0x76, 0x6d, 0x47, 0x65, 0x74, 0x55, 0x6e,
 	0x70, 0x61, 0x63, 0x6b, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x73, 0x65, 0x12,
 	0x1e, 0x0a, 0x0a, 0x75, 0x6e, 0x70, 0x61, 0x63, 0x6b, 0x44, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20,
-	0x03, 0x28, 0x09, 0x52, 0x0a, 0x75, 0x6e, 0x70, 0x61, 0x63, 0x6b, 0x44, 0x61, 0x74, 0x61, 0x42,
-	0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x03, 0x28, 0x09, 0x52, 0x0a, 0x75, 0x6e, 0x70, 0x61, 0x63, 0x6b, 0x44, 0x61, 0x74, 0x61, 0x22,
+	0x8e, 0x02, 0x0a, 0x16, 0x45, 0x76, 0x6d, 0x50, 0x61, 0x72, 0x61, 0x4e, 0x6f, 0x64, 0x65, 0x47,
+	0x72, 0x6f, 0x75, 0x70, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x74, 0x61, 0x72, 0x67,
+	0x65, 0x74, 0x41, 0x64, 0x64, 0x72, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x74,
+	0x61, 0x72, 0x67, 0x65, 0x74, 0x41, 0x64, 0x64, 0x72, 0x73, 0x12, 0x20, 0x0a, 0x0b, 0x63, 0x6f,
+	0x69, 0x6e, 0x73, 0x46, 0x72, 0x6f, 0x7a, 0x65, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x0b, 0x63, 0x6f, 0x69, 0x6e, 0x73, 0x46, 0x72, 0x6f, 0x7a, 0x65, 0x6e, 0x12, 0x1a, 0x0a, 0x08,
+	0x66, 0x72, 0x6f, 0x6d, 0x41, 0x64, 0x64, 0x72, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x66, 0x72, 0x6f, 0x6d, 0x41, 0x64, 0x64, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x69, 0x67,
+	0x68, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74,
+	0x12, 0x1e, 0x0a, 0x0a, 0x62, 0x6c, 0x73, 0x50, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x73, 0x18, 0x08,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x62, 0x6c, 0x73, 0x50, 0x75, 0x62, 0x4b, 0x65, 0x79, 0x73,
+	0x12, 0x1e, 0x0a, 0x0a, 0x65, 0x76, 0x6d, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x49, 0x44, 0x18, 0x09,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x65, 0x76, 0x6d, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x49, 0x44,
+	0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2213,7 +2341,7 @@ func file_evmcontract_proto_rawDescGZIP() []byte {
 	return file_evmcontract_proto_rawDescData
 }
 
-var file_evmcontract_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_evmcontract_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_evmcontract_proto_goTypes = []interface{}{
 	(*EVMContractObject)(nil),         // 0: types.EVMContractObject
 	(*EVMContractData)(nil),           // 1: types.EVMContractData
@@ -2244,14 +2372,15 @@ var file_evmcontract_proto_goTypes = []interface{}{
 	(*EvmGetPackDataRespose)(nil),     // 26: types.EvmGetPackDataRespose
 	(*EvmGetUnpackDataReq)(nil),       // 27: types.EvmGetUnpackDataReq
 	(*EvmGetUnpackDataRespose)(nil),   // 28: types.EvmGetUnpackDataRespose
-	nil,                               // 29: types.EVMContractState.StorageEntry
-	nil,                               // 30: types.EVMContractStateCmd.StorageEntry
+	(*EvmParaNodeGroupStatus)(nil),    // 29: types.EvmParaNodeGroupStatus
+	nil,                               // 30: types.EVMContractState.StorageEntry
+	nil,                               // 31: types.EVMContractStateCmd.StorageEntry
 }
 var file_evmcontract_proto_depIdxs = []int32{
 	1,  // 0: types.EVMContractObject.data:type_name -> types.EVMContractData
 	2,  // 1: types.EVMContractObject.state:type_name -> types.EVMContractState
-	29, // 2: types.EVMContractState.storage:type_name -> types.EVMContractState.StorageEntry
-	30, // 3: types.EVMContractStateCmd.storage:type_name -> types.EVMContractStateCmd.StorageEntry
+	30, // 2: types.EVMContractState.storage:type_name -> types.EVMContractState.StorageEntry
+	31, // 3: types.EVMContractStateCmd.storage:type_name -> types.EVMContractStateCmd.StorageEntry
 	4,  // [4:4] is the sub-list for method output_type
 	4,  // [4:4] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
@@ -2613,6 +2742,18 @@ func file_evmcontract_proto_init() {
 				return nil
 			}
 		}
+		file_evmcontract_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EvmParaNodeGroupStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2620,7 +2761,7 @@ func file_evmcontract_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_evmcontract_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

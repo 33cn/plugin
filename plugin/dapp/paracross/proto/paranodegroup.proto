@@ -76,6 +76,8 @@ message ParaNodeGroupConfig {
     string blsPubKeys  = 6;
     //nodegroup申请需要autonomy社区自治board审核
     string autonomyItemID = 7;
+    //平行链evm chainID
+    uint32 evmChainID = 8;
 }
 
 message ParaNodeGroupStatus {
@@ -87,6 +89,7 @@ message ParaNodeGroupStatus {
     string fromAddr    = 6;
     int64  height      = 7;
     string blsPubKeys  = 8;
+    uint32 evmChainID  = 9;
 }
 
 message ReceiptParaNodeGroupConfig {

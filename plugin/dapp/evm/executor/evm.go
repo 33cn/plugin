@@ -11,6 +11,10 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
+
+	etypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/golang/protobuf/proto"
 
 	log "github.com/33cn/chain33/common/log/log15"
 
@@ -218,6 +222,19 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	}
 	//main chain
 	if types.IsEthSignID(tx.GetSignature().GetTy()) {
+
+		//检查是否是平行链交易
+		if strings.Contains(string(tx.GetExecer()), "user.p") {
+			var evmChainID int64
+			cfg := types.Conf(evm.GetAPI().GetConfig(), "config.crypto.sub.secp256k1eth")
+			id, _ := cfg.G("evmChainID")
+			evmChainID = id.(int64)
+			err := evm.dealNodeGroupTx(evmChainID, tx)
+			if err != nil {
+				return nil
+			}
+		}
+
 		//获取mempool 某个地址下所有交易
 		details, err := evm.GetAPI().GetTxListByAddr(&types.ReqAddrs{Addrs: []string{tx.From()}})
 		if err != nil {
@@ -258,6 +275,42 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	return nil
+}
+
+func (evm *EVMExecutor) dealNodeGroupTx(mainEvmChainID int64, tx *types.Transaction) error {
+	var evmaction evmtypes.EVMContractAction
+	_ = proto.Unmarshal(tx.Payload, &evmaction)
+	var etx = new(etypes.Transaction)
+	err := etx.UnmarshalBinary(common.FromHex(evmaction.Note))
+	if err != nil {
+		return err
+	}
+
+	execSplites := strings.Split(string(tx.GetExecer()), ".")
+	title := "user.p." + execSplites[2]
+	paraNodeGroupStatusAddrs := "mavl-paracross-nodegroup-apply-title-"
+	queryKey := []byte(fmt.Sprintf(paraNodeGroupStatusAddrs+"%s", title))
+	val, err := evm.GetStateDB().Get(queryKey)
+	if err != nil { //平行链如果不是nodegroup 不校验
+		//要求必须要和主链保持一致
+		if mainEvmChainID == etx.ChainId().Int64() {
+			return nil
+		}
+		return fmt.Errorf("invalid chainID")
+	}
+
+	var status evmtypes.EvmParaNodeGroupStatus
+	_ = types.Decode(val, &status)
+	if status.GetStatus() != 2 { //2: approved,1:apply,3:quit,4:modify
+		return fmt.Errorf("invalid nodegroup status")
+	}
+
+	if status.GetEvmChainID() != uint32(etx.ChainId().Uint64()) {
+		return fmt.Errorf("invalid chainID,inconsistent with the registered ID")
+	}
+
+	return nil
+
 }
 
 // GetActionName 获取运行状态名

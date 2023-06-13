@@ -957,6 +957,8 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
 
+	cmd.Flags().Uint32P("evmChainID", "e", 0, "evmChainID config paracross node's evm id, not less config")
+
 }
 
 func nodeGroupApply(cmd *cobra.Command, args []string) {
@@ -964,7 +966,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	addrs, _ := cmd.Flags().GetString("addrs")
 	blspubs, _ := cmd.Flags().GetString("blspubs")
 	coins, _ := cmd.Flags().GetFloat64("coins")
-
+	evmChainID, _ := cmd.Flags().GetUint32("evmChainID")
 	if !strings.HasPrefix(paraName, "user.p") {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
@@ -982,7 +984,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addrs, BlsPubKeys: blspubs, CoinsFrozen: coinsInt64}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addrs, BlsPubKeys: blspubs, CoinsFrozen: coinsInt64, EvmChainID: evmChainID}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "NodeGroupConfig",

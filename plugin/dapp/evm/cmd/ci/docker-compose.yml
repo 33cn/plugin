@@ -1,5 +1,5 @@
 version: '3'
-# 单节点solo模式
+# 主链
 services:
   main:
     build:
@@ -11,3 +11,15 @@ services:
       - 8545
       - 8801
 
+
+  para1:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.para1.toml"
+
+  para2:
+      build:
+        context: .
+      environment:
+        ChainConfig: "chain33.para2.toml"

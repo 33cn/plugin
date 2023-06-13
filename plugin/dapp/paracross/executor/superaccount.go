@@ -813,6 +813,7 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		CoinsFrozen: config.CoinsFrozen,
 		FromAddr:    a.fromaddr,
 		Height:      a.height,
+		EvmChainID:  config.GetEvmChainID(),
 	}
 
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
@@ -829,6 +830,7 @@ func (a *action) nodeGroupModify(config *pt.ParaNodeGroupConfig) (*types.Receipt
 		Status:      pt.ParacrossNodeGroupModify,
 		Title:       config.Title,
 		CoinsFrozen: config.CoinsFrozen,
+		EvmChainID:  config.GetEvmChainID(),
 		Height:      a.height}
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
