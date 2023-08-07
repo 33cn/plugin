@@ -1,5 +1,8 @@
 package runtime
 
+/*
+* token 预编译合约： evm合约 映射相关对go-token 合约
+ */
 import (
 	"errors"
 	"fmt"

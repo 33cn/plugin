@@ -436,8 +436,8 @@ function testcase_nonceTransfer(){
 function node_group_config() {
 
     echo "====== ${FUNCNAME[0]} ======"
-    ${MAIN_CLI} send coins transfer -t 1CqsBFa8KMGG9yjY4XcCUWaqdscBw6eipn -a 1000 -k "${genesisKey}"
-    ${MAIN_CLI} send coins transfer -t 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw -a 1000 -k "${genesisKey}"
+    ${MAIN_CLI} send coins transfer -t 1CqsBFa8KMGG9yjY4XcCUWaqdscBw6eipn -a 1000 -p 2 -k "${genesisKey}"
+    ${MAIN_CLI} send coins transfer -t 13mBGpucgALNZkqnb22NeQA5gZ1E1VpSjw -a 1000 -p 2 -k "${genesisKey}"
     ${MAIN_CLI} send coins send_exec -e paracross -a 100 -k "${testKey1}"
     ${MAIN_CLI} send coins send_exec -e paracross -a 100 -k "${testKey2}"
 

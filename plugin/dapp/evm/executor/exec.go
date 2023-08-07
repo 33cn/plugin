@@ -40,6 +40,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		atomic.StoreInt32(&evm.vmCfg.Debug, int32(conf.GInt("evmDebugEnable")))
 		evmDebugInited = true
 	}
+
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
 	return receipt, err
 }
@@ -256,7 +257,7 @@ func (evm *EVMExecutor) CheckInit() {
 	cfg := evm.GetAPI().GetConfig()
 	if !cfg.IsPara() {
 		//主链
-		evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), evm.GetCoinsAccount(), evm.GetHeight(), evm.GetAPI())
+		evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), evm.GetCoinsAccount(), evm.GetHeight(), evm.GetBlockTime(), evm.GetAPI())
 		return
 	}
 	//平行链
@@ -266,8 +267,9 @@ func (evm *EVMExecutor) CheckInit() {
 	if "" == ethMapFromExecutor || "" == ethMapFromSymbol {
 		panic("Both ethMapFromExecutor and ethMapFromSymbol should be configured, " + "ethMapFromExecutor=" + ethMapFromExecutor + ", ethMapFromSymbol=" + ethMapFromSymbol)
 	}
+
 	accountDB, _ := account.NewAccountDB(evm.GetAPI().GetConfig(), ethMapFromExecutor, ethMapFromSymbol, evm.GetStateDB())
-	evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), accountDB, evm.GetHeight(), evm.GetAPI())
+	evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), accountDB, evm.GetHeight(), evm.GetBlockTime(), evm.GetAPI())
 }
 
 // GetMessage 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构

@@ -145,7 +145,12 @@ type (
 		data   []*types.KeyValue
 		logs   []*types.ReceiptLog
 	}
-
+	ticketChange struct {
+		baseChange
+		amount int64
+		data   []*types.KeyValue
+		logs   []*types.ReceiptLog
+	}
 	// 合约生成日志事件
 	addLogChange struct {
 		baseChange
@@ -322,5 +327,13 @@ func (ch transferChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 	return ch.data
 }
 func (ch transferChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
+	return ch.logs
+}
+
+func (ch ticketChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
+	return ch.data
+}
+
+func (ch ticketChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
 	return ch.logs
 }

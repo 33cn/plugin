@@ -40,6 +40,13 @@ type DB struct {
 	prevstatus int32
 }
 
+func (t *DB) SetPrevstatus(status int32) {
+	t.prevstatus = status
+}
+func (t *DB) GetPrevStatus() int32 {
+	return t.prevstatus
+}
+
 //GetRealPrice 获取真实的价格
 func (t *DB) GetRealPrice(cfg *types.Chain33Config) int64 {
 	if t.GetPrice() == 0 {

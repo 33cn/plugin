@@ -6,11 +6,10 @@ import (
 
 //TOKEN 预编译地址
 const TokenPrecompileAddr = "0x0000000000000000000000000000000000200001"
+const TicketPrecompileAddr = "0x0000000000000000000000000000000000200002"
 
-//其他复杂合约下的预编译地址
-const ComflixPrecompileAddr = "0x0000000000000000000000000000000000200002"
-
-//TODO 添加新的 GO 合约地址
+//TODO 其他复杂合约下的预编译地址
+const ComflixPrecompileAddr = "0x0000000000000000000000000000000000200005"
 
 // CustomizePrecompiledContracts 存储自定义的预编译地址
 var CustomizePrecompiledContracts = map[common.Hash160Address]StatefulPrecompiledContract{}

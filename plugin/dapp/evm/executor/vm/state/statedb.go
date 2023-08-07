@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"strings"
 
-	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
-
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
+	tokenty "github.com/33cn/plugin/plugin/dapp/token/types"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -66,7 +65,7 @@ type MemoryStateDB struct {
 	txIndex int
 	// 当前区块高度
 	blockHeight int64
-
+	blockTime   int64
 	// 用户保存合约账户的状态数据或合约代码数据有没有发生变更
 	stateDirty map[string]interface{}
 	dataDirty  map[string]interface{}
@@ -76,7 +75,7 @@ type MemoryStateDB struct {
 // NewMemoryStateDB 基于执行器框架的三个DB构建内存状态机对象
 // 此对象的生命周期对应一个区块，在同一个区块内的多个交易执行时共享同一个DB对象
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
-func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
+func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight, blockTime int64, api client.QueueProtocolAPI) *MemoryStateDB {
 	mdb := &MemoryStateDB{
 		StateDB:         StateDB,
 		LocalDB:         LocalDB,
@@ -89,6 +88,7 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 		stateDirty:      make(map[string]interface{}),
 		dataDirty:       make(map[string]interface{}),
 		blockHeight:     blockHeight,
+		blockTime:       blockTime,
 		refund:          0,
 		txIndex:         0,
 		api:             api,
@@ -545,6 +545,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 		data:       receipt.GetKV(),
 		logs:       receipt.GetLogs(),
 	})
+
 	return true, nil
 
 }

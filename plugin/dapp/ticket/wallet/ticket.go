@@ -507,9 +507,11 @@ func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey
 	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
+			//ticket 创建时间距离当前时间小于2天
 			if now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
+			//ticket 挖矿时间距离当前时间小于2小时
 			if now-t.GetMinerTime() < cfg.TicketMinerWaitTime {
 				continue
 			}
@@ -828,8 +830,8 @@ func (policy *ticketPolicy) withdrawFromTicket() (hashes [][]byte, err error) {
 //检查周期 --> 10分
 //开启挖矿：
 //1. 自动把成熟的ticket关闭
-//2. 查找超过1万余额的账户，自动购买ticket
-//3. 查找mineraddress 和他对应的 账户的余额（不在1中），余额超过1万的自动购买ticket 挖矿
+//2. 查找超过3000余额的账户，自动购买ticket
+//3. 查找mineraddress 和他对应的 账户的余额（不在1中），余额超过3000的自动购买ticket 挖矿
 //
 //停止挖矿：
 //1. 自动把成熟的ticket关闭

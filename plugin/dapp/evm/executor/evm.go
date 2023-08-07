@@ -7,16 +7,10 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	log "github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"os"
 	"reflect"
-	"sort"
-	"strings"
-
-	etypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/golang/protobuf/proto"
-
-	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -66,8 +60,9 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
 	}
 	common.InitEvmAddressDriver(driver)
-
+	//TODO 预编译合约地址增多的情况下，通过注册的方式实现
 	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TokenPrecompileAddr)] = runtime.NewTokenPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
+	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TicketPrecompileAddr)] = runtime.NewTokenPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
 
 }
 
@@ -84,6 +79,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	log.Info("evmInit", "execAddr", evmExecAddress, "formatAddr", evmExecFormatAddress)
 	// 初始化硬分叉数据
 	state.InitForkData()
+	state.InitCheckData()
 	InitExecType()
 }
 
@@ -213,104 +209,12 @@ func (evm *EVMExecutor) createEvmContractAddress(b common.Address, nonce uint64)
 
 // CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
-	if evm.GetAPI().GetConfig().IsPara() {
-		return nil
-	}
-
 	if tx == nil {
 		return fmt.Errorf("tx empty")
 	}
-	//main chain
-	if types.IsEthSignID(tx.GetSignature().GetTy()) {
 
-		//检查是否是平行链交易
-		if strings.Contains(string(tx.GetExecer()), "user.p") {
-			var evmChainID int64
-			cfg := types.Conf(evm.GetAPI().GetConfig(), "config.crypto.sub.secp256k1eth")
-			id, _ := cfg.G("evmChainID")
-			evmChainID = id.(int64)
-			err := evm.dealNodeGroupTx(evmChainID, tx)
-			if err != nil {
-				return nil
-			}
-		}
-
-		//获取mempool 某个地址下所有交易
-		details, err := evm.GetAPI().GetTxListByAddr(&types.ReqAddrs{Addrs: []string{tx.From()}})
-		if err != nil {
-			return err
-		}
-
-		txs := details.GetTxs()
-		txs = append(txs, &types.TransactionDetail{Tx: tx, Index: int64(index)})
-		if len(txs) > 1 {
-			sort.SliceStable(txs, func(i, j int) bool { //nonce asc
-				return txs[i].Tx.GetNonce() < txs[j].Tx.GetNonce()
-			})
-			//遇到相同的Nonce ,较低的手续费的交易将被删除
-			for i, stx := range txs {
-				if bytes.Equal(stx.Tx.Hash(), tx.Hash()) {
-					continue
-				}
-				if txs[i].GetTx().GetNonce() == tx.GetNonce() {
-					bnfee := big.NewInt(txs[i].GetTx().Fee)
-					//相同的nonce，gas 必须提升至1.1 倍 才能有效替换之前的交易
-					bnfee = bnfee.Mul(bnfee, big.NewInt(110))
-					bnfee = bnfee.Div(bnfee, big.NewInt(1e2))
-					if tx.Fee < bnfee.Int64() {
-						err := fmt.Errorf("requires at least 10 percent increase in handling fee,need more:%d", bnfee.Int64()-tx.Fee)
-						log.Error("checkTxNonce", "fee err", err, "txfee", tx.Fee, "mempooltx", txs[0].GetTx().Fee)
-						return err
-					}
-					//移除手续费较低的交易
-					evm.GetAPI().RemoveTxsByHashList(&types.TxHashList{
-						Hashes: [][]byte{txs[i].GetTx().Hash()},
-					})
-					return nil
-				}
-			}
-
-		}
-
-	}
-
-	return nil
-}
-
-func (evm *EVMExecutor) dealNodeGroupTx(mainEvmChainID int64, tx *types.Transaction) error {
-	var evmaction evmtypes.EVMContractAction
-	_ = proto.Unmarshal(tx.Payload, &evmaction)
-	var etx = new(etypes.Transaction)
-	err := etx.UnmarshalBinary(common.FromHex(evmaction.Note))
-	if err != nil {
-		return err
-	}
-
-	execSplites := strings.Split(string(tx.GetExecer()), ".")
-	title := "user.p." + execSplites[2]
-	paraNodeGroupStatusAddrs := "mavl-paracross-nodegroup-apply-title-"
-	queryKey := []byte(fmt.Sprintf(paraNodeGroupStatusAddrs+"%s", title))
-	val, err := evm.GetStateDB().Get(queryKey)
-	if err != nil { //平行链如果不是nodegroup 不校验
-		//要求必须要和主链保持一致
-		if mainEvmChainID == etx.ChainId().Int64() {
-			return nil
-		}
-		return fmt.Errorf("invalid chainID")
-	}
-
-	var status evmtypes.EvmParaNodeGroupStatus
-	_ = types.Decode(val, &status)
-	if status.GetStatus() != 2 { //2: approved,1:apply,3:quit,4:modify
-		return fmt.Errorf("invalid nodegroup status")
-	}
-
-	if status.GetEvmChainID() != uint32(etx.ChainId().Uint64()) {
-		return fmt.Errorf("invalid chainID,inconsistent with the registered ID")
-	}
-
-	return nil
-
+	log.Info("EVMExecutor.CheckTx", "current-blocknum:", evm.GetMainHeight())
+	return state.ProcessCheck(evm.mStateDB.GetConfig(), evm.GetMainHeight(), tx.Hash())
 }
 
 // GetActionName 获取运行状态名

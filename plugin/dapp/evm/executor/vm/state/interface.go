@@ -92,4 +92,6 @@ type EVMStateDB interface {
 	TokenBalance(from common.Address, execer string, symbol string) (int64, error)
 	//查询代币总量
 	TokenSupply(tokensymbol string) (int64, error)
+	//craetebindTickter
+	CreateBindMiner(from, bind common.Address, amount int64) (bool, error)
 }
