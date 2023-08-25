@@ -7,7 +7,7 @@ library PreTicket {
     */
     address constant private PRECOMPILE = address(0x0000000000000000000000000000000000200002);
     //BindMiner 建立绑定挖矿关系
-    function bindMiner(address origin, address bind, uint256 amount)  internal {
+    function createBindMiner(address origin, address bind, uint256 amount)  internal {
         (bool success, bytes memory returnData) = PRECOMPILE.call(
             abi.encodeWithSignature("bindMiner(address,address,uint256)", origin, bind, amount)
         );

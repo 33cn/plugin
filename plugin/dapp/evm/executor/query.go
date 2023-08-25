@@ -59,10 +59,57 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 	return ret, nil
 }
 
+func (evm *EVMExecutor) quck_estimateGas(req *evmtypes.EstimateEVMGasReq) (types.Message, error) {
+	evm.CheckInit()
+	txBytes, err := hex.DecodeString(req.Tx)
+	if nil != err {
+		return nil, err
+	}
+	var tx types.Transaction
+	err = types.Decode(txBytes, &tx)
+	if nil != err {
+		return nil, err
+	}
+
+	index := 0
+	from := evmCommon.StringToAddress(req.From)
+	msg, err := evm.GetMessage(&tx, index, from)
+	if err != nil {
+		return nil, err
+	}
+
+	msg.SetGasLimit(evmtypes.MaxGasLimit)
+	var sigType int32 = 0
+	if req.GetEthquery() {
+		sigType = types.EncodeSignID(types.SECP256K1ETH, 2)
+	}
+
+	receipt, err := evm.innerExec(msg, tx.Hash(), sigType, index, evmtypes.MaxGasLimit, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if receipt.Ty != types.ExecOk {
+		return nil, errors.New("contract call error")
+	}
+	callData := getCallReceipt(receipt.GetLogs())
+	if callData == nil {
+		return nil, errors.New("nil receipt")
+	}
+	log.Info("quck_estimateGas", "gasused:", callData.UsedGas)
+	result := &evmtypes.EstimateEVMGasResp{}
+	result.Gas = callData.UsedGas + uint64(float64(callData.UsedGas)*0.2)
+	return result, nil
+}
+
 // Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
 func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (types.Message, error) {
-	evm.CheckInit()
+	conf := types.ConfSub(evm.GetAPI().GetConfig(), evmtypes.ExecutorName)
+	if !conf.IsEnable("disableQuckGas") { //如果不配置disableQuckGas或者设置false,则启动快速gas计算模式
+		return evm.quck_estimateGas(req)
+	}
 
+	evm.CheckInit()
 	txBytes, err := hex.DecodeString(req.Tx)
 	if nil != err {
 		return nil, err

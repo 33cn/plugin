@@ -2,7 +2,6 @@ package state
 
 import (
 	"errors"
-	"github.com/33cn/chain33/types"
 )
 import "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 
@@ -21,13 +20,14 @@ func InitCheckData() {
 	checkData = make(map[int64]*EvmTxData)
 	//27878529 高度一个evm check 引起的状态不一致的bug，此处需要跟随现有主链的check 结果
 	txdata := &EvmTxData{blockHeight: 27878529, testnet: false}
+	txdata.txs = make(map[string]string)
 	txdata.txs["0x93bbffde6c860dbfdb1439b9086caa0a7f6c55b7f909c9fa641aade0b96dcd4b"] = "requires at least 10 percent increase in handling fee,need more:162353"
 	checkData[27878529] = txdata
 
 }
 
 //ProcessCheck 处理EVM对交易的检查更正处理
-func ProcessCheck(cfg *types.Chain33Config, blockHeight int64, txHash []byte) error {
+func ProcessCheck(blockHeight int64, txHash []byte) error {
 	if txdata, ok := checkData[blockHeight]; ok {
 		strHash := common.Bytes2Hex(txHash)
 		v, ok := txdata.txs[strHash]
@@ -38,5 +38,6 @@ func ProcessCheck(cfg *types.Chain33Config, blockHeight int64, txHash []byte) er
 
 		}
 	}
+
 	return nil
 }

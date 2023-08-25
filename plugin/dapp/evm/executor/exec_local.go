@@ -6,7 +6,10 @@ package executor
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
+	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
@@ -32,6 +35,7 @@ func (evm *EVMExecutor) execEvmNonce(dbSet *types.LocalDBSet, tx *types.Transact
 		_ = types.Decode(nonceV, evmNonce)
 
 	}
+	elog.Info("ExecLocal_execEvmNonce", "loalDb.Get nonce:", evmNonce.GetNonce(), "addr:", evmNonce.GetAddr(), "tx.nonce", tx.GetNonce(), "nonceV", nonceV)
 
 	if evmNonce.GetNonce() == 0 { //等同于not found
 		evmNonce.Addr = tx.From()
@@ -54,6 +58,58 @@ func (evm *EVMExecutor) execEvmNonce(dbSet *types.LocalDBSet, tx *types.Transact
 	return nil
 }
 
+func (evm *EVMExecutor) execBindTicket(dbSet *types.LocalDBSet, receipt *types.ReceiptData) error {
+
+	for _, item := range receipt.Logs {
+		switch item.Ty {
+		case ty.TyLogTicketBind:
+			var ticketlog ty.ReceiptTicketBind
+			err := types.Decode(item.Log, &ticketlog)
+			if err != nil {
+				panic(err) //数据错误了，已经被修改了
+			}
+			kv := evm.saveTicketBind(&ticketlog)
+			dbSet.KV = append(dbSet.KV, kv...)
+			fmt.Println(kv)
+
+		case ty.TyLogCloseTicket:
+			var ticketlog ty.ReceiptTicket
+			err := types.Decode(item.Log, &ticketlog)
+			if err != nil {
+				panic(err) //数据错误了，已经被修改了
+			}
+			kv := evm.saveTicket(&ticketlog)
+			dbSet.KV = append(dbSet.KV, kv...)
+		}
+
+	}
+
+	return nil
+
+}
+
+type localset struct {
+	KV   []*KeyValue `json:"kv"`
+	Txid int64       `json:"txid"`
+}
+
+type KeyValue struct {
+	Key   string
+	Value string
+}
+
+func trans2localSet(set *types.LocalDBSet) {
+	var lset localset
+	for _, kv := range set.KV {
+		var KV KeyValue
+		KV.Key = string(kv.Key)
+		lset.KV = append(lset.KV, &KV)
+	}
+
+	jstr, _ := json.MarshalIndent(lset, "", "\t")
+	fmt.Println(jstr)
+}
+
 // ExecLocal 处理本地区块新增逻辑
 func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (set *types.LocalDBSet, err error) {
 	set, err = evm.DriverBase.ExecLocal(tx, receipt, index)
@@ -73,6 +129,15 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 		}
 		return set, nil
 	}
+
+	//set evm ticket miner
+	err = evm.execBindTicket(set, receipt)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(set.String())
+	trans2localSet(set)
 	cfg := evm.GetAPI().GetConfig()
 	if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMState) {
 		// 需要将Exec中生成的合约状态变更信息写入localdb

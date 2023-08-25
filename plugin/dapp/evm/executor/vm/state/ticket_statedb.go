@@ -38,6 +38,23 @@ func (mdb *MemoryStateDB) CloseBindMiner(from, bind common.Address, amount int64
 	return true, nil
 }
 
+//TransferToExec 向特定执行器转账
+func (mdb *MemoryStateDB) TransferToExec(from common.Address, exec string, amount int64) (bool, error) {
+	receipt, err := mdb.CoinsAccount.TransferToExec(from.String(), address.ExecAddress(exec), amount)
+	if err != nil {
+		return false, err
+	}
+
+	mdb.addChange(transferChange{
+		baseChange: baseChange{},
+		amount:     amount,
+		data:       receipt.GetKV(),
+		logs:       receipt.GetLogs(),
+	})
+
+	return true, nil
+}
+
 //CreateBindMiner ,创建本地址与挖矿地址的绑定关系,并转移amount 数量的币去挖矿
 func (mdb *MemoryStateDB) CreateBindMiner(from, bind common.Address, amount int64) (bool, error) {
 	receipt, err := mdb.bindMiner(from, bind, amount)
@@ -58,13 +75,14 @@ func (mdb *MemoryStateDB) bindMiner(from, bind common.Address, amount int64) (*t
 	if from == bind { //授权地址和签名地址不能是同一个地址
 		return nil, types.ErrFromAddr
 	}
+	log15.Info("bindMiner ++++++STEP 1")
 	cfg := ty.GetTicketMinerParam(mdb.GetConfig(), mdb.blockHeight)
 	fee := mdb.GetConfig().GetCoinPrecision()
 
 	if amount > 0 && (amount-2*fee)/cfg.TicketPrice < 1 { //至少一张票
 		return nil, errors.New("insufficient balance to buy a ticket")
 	}
-
+	log15.Info("bindMiner ++++++STEP 2", "ReturnAddress:", from.String())
 	//check address
 	if err := address.CheckAddress(bind.String(), mdb.blockHeight); err != nil {
 		return nil, err
@@ -72,22 +90,17 @@ func (mdb *MemoryStateDB) bindMiner(from, bind common.Address, amount int64) (*t
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	tNewBind := &ty.TicketBind{MinerAddress: bind.String(), ReturnAddress: from.String()}
-	bindLog := mdb.getBindLog(tNewBind, mdb.getBind(from.String()))
-	logs = append(logs, bindLog)
+	oldbind := mdb.getBindLog(tNewBind, mdb.getBind(from.String()))
+	logs = append(logs, oldbind)
 	mdb.saveBind(mdb.StateDB, tNewBind)
 	bindKv := mdb.getBindKV(tNewBind)
 	kvs = append(kvs, bindKv...)
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-
+	log15.Info("bindMiner ++++++STEP 3")
 	//如果填写金额参数，则认为在绑定的时候一次性转移相应的coins 到执行器
 	if amount > 0 {
 		//transfer to exec ----->send ticket exector
-		//coinsdb, err := account.NewAccountDB(mdb.api.GetConfig(), "coins", "", mdb.StateDB)
-		//if err != nil {
-		//	return false, err
-		//}
-
-		receipt2, err := mdb.CoinsAccount.Transfer(from.String(), address.ExecAddress("ticket"), amount)
+		receipt2, err := mdb.CoinsAccount.TransferToExec(from.String(), address.ExecAddress("ticket"), amount)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +109,7 @@ func (mdb *MemoryStateDB) bindMiner(from, bind common.Address, amount int64) (*t
 		receipt.Logs = append(receipt.Logs, receipt2.GetLogs()...)
 
 	}
-
+	log15.Info("bindMiner ++++++STEP 4")
 	return receipt, nil
 }
 
@@ -186,6 +199,7 @@ func bindKey(addr string) []byte {
 
 //getBind 返回老的绑定地址，即上一个绑定关系的地址,如果没有则返回为空
 func (mdb *MemoryStateDB) getBind(addr string) string {
+	log15.Info("getBind++++++++++STEP1 addr:", addr)
 	var bindKey []byte
 	ticketBindKeyPrefix := []byte("mavl-ticket-tbind-")
 	bindKey = append(bindKey, ticketBindKeyPrefix...)
@@ -194,17 +208,21 @@ func (mdb *MemoryStateDB) getBind(addr string) string {
 	if err != nil || value == nil {
 		return ""
 	}
+	log15.Info("getBind++++++++++STEP2 value:", value)
 	var bind ty.TicketBind
 	err = types.Decode(value, &bind)
 	if err != nil {
 		panic(err)
 	}
+	log15.Info("getBind++++++++++STEP2 bind.MinerAddress:", bind.MinerAddress)
 	return bind.MinerAddress
 }
 
 //getBindLog old 是该地址之前绑定的账户地址，如果之前没有绑定挖矿，自己挖矿的则是返回自己的挖矿地址
 //tbind 是新的绑定关系
 func (mdb *MemoryStateDB) getBindLog(tbind *ty.TicketBind, old string) *types.ReceiptLog {
+
+	log15.Info("getBindLog++++++++++STEP1 old:", old)
 	log := &types.ReceiptLog{}
 	log.Ty = ty.TyLogTicketBind
 	r := &ty.ReceiptTicketBind{}

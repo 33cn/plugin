@@ -26,7 +26,7 @@ contract Ticket {
         require(amount != 0, "Ticket: createBindMiner amount is zero");
         address owner = msg.sender;
         //调用预编译合约地址,
-        PreTicket.bindMiner(owner, bind, amount);
+        PreTicket.createBindMiner(owner, bind, amount);
         //触发CreateBindMiner事件
         emit CreateBindMiner(owner, bind, amount);
         return true;

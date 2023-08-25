@@ -34,9 +34,11 @@ type subConfig struct {
 	// AddressDriver address driver name, support btc/eth
 	AddressDriver string `json:"addressDriver"`
 	// PreCompileAddr key: preContractorAddress  value: real contract information
-	PreCompile   runtime.TokenContract `json:"preCompile,omitempty"`
-	UpgradeUrl   string                `json:"upgradeUrl,omitempty"`
-	NonceUpGrade bool                  `json:"nonceUpGrade,omitempty"`
+	PreCompile     runtime.TokenContract `json:"preCompile,omitempty"`
+	UpgradeUrl     string                `json:"upgradeUrl,omitempty"`
+	NonceUpGrade   bool                  `json:"nonceUpGrade,omitempty"`
+	DisableQuckGas bool                  `json:"disableQuckGas,omitempty"`
+	FixCheckTx     bool                  `json:"fixCheckTx,omitempty"`
 }
 
 func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
@@ -62,7 +64,7 @@ func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
 	common.InitEvmAddressDriver(driver)
 	//TODO 预编译合约地址增多的情况下，通过注册的方式实现
 	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TokenPrecompileAddr)] = runtime.NewTokenPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
-	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TicketPrecompileAddr)] = runtime.NewTokenPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
+	runtime.CustomizePrecompiledContracts[common.HexToAddress(runtime.TicketPrecompileAddr)] = runtime.NewTicketPrecompile(&runtime.TokenContract{SuperManager: subCfg.PreCompile.SuperManager})
 
 }
 
@@ -80,6 +82,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	// 初始化硬分叉数据
 	state.InitForkData()
 	state.InitCheckData()
+
 	InitExecType()
 }
 
@@ -213,8 +216,13 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 		return fmt.Errorf("tx empty")
 	}
 
-	log.Info("EVMExecutor.CheckTx", "current-blocknum:", evm.GetMainHeight())
-	return state.ProcessCheck(evm.mStateDB.GetConfig(), evm.GetMainHeight(), tx.Hash())
+	//conf := types.ConfSub(evm.GetAPI().GetConfig(), evmtypes.ExecutorName)
+	//if conf.IsEnable("fixCheckTx") {
+	//log.Info("EVMExecutor.CheckTx", "current-blocknum:", evm.GetMainHeight())
+	return state.ProcessCheck(evm.GetMainHeight(), tx.Hash())
+	//}
+	//return nil
+
 }
 
 // GetActionName 获取运行状态名

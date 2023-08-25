@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/system/address/eth"
 	"math/big"
 	"strconv"
 	"strings"
@@ -242,14 +243,19 @@ func (client *Client) flushTicket() error {
 		tlog.Error("flushTicket error", "err", err)
 		return err
 	}
-	client.setTicket(&ty.ReplyTicketList{Tickets: tickets}, getPrivMap(privs))
+	client.setTicket(&ty.ReplyTicketList{Tickets: tickets}, getPrivMap(privs, tickets))
 	return nil
 }
 
-func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
+func getPrivMap(privs []crypto.PrivKey, tickets []*ty.Ticket) map[string]crypto.PrivKey {
 	list := make(map[string]crypto.PrivKey)
-	for _, priv := range privs {
-		addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
+
+	for i, priv := range privs {
+		var addressID int32 = address.DefaultID
+		if common.IsHex(tickets[i].MinerAddress) {
+			addressID = eth.ID
+		}
+		addr := address.PubKeyToAddr(addressID, priv.PubKey().Bytes())
 		list[addr] = priv
 	}
 	return list
@@ -539,18 +545,19 @@ func printBInt(data *big.Int) string {
 	return strings.Repeat("0", 64-len(txt)) + txt
 }
 
-func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket, crypto.PrivKey, *big.Int, []byte, string, error) {
+func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket, crypto.PrivKey, int32, *big.Int, []byte, string, error) {
 	cfg := client.GetAPI().GetConfig()
 	bits := parent.Difficulty
 	diff, modify, err := client.getNextTarget(parent, bits)
 	if err != nil {
-		return nil, nil, nil, nil, "", err
+		return nil, nil, 0, nil, nil, "", err
 	}
 	client.ticketmu.Lock()
 	defer client.ticketmu.Unlock()
+	var addressID int32 = 0
 	for ticketID, ticket := range client.ticketsMap {
 		if client.IsClosed() {
-			return nil, nil, nil, nil, "", nil
+			return nil, nil, 0, nil, nil, "", nil
 		}
 		if ticket == nil {
 			tlog.Warn("Client searchTargetTicket ticket is nil", "ticketID", ticketID)
@@ -561,10 +568,16 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 			continue
 		}
 		// 查找私钥
+		if common.IsHex(ticket.MinerAddress) {
+			ticket.MinerAddress = strings.ToLower(ticket.MinerAddress)
+		}
 		priv, ok := client.privmap[ticket.MinerAddress]
 		if !ok {
 			tlog.Error("Client searchTargetTicket can't find private key", "MinerAddress", ticket.MinerAddress)
 			continue
+		}
+		if common.IsHex(ticket.MinerAddress) {
+			addressID = eth.ID
 		}
 		privHash, err := genPrivHash(priv, ticketID)
 		if err != nil {
@@ -577,9 +590,9 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 		}
 		tlog.Info("currentdiff", "hex", printBInt(currentdiff))
 		tlog.Info("FindBlock", "height------->", block.Height, "ntx", len(block.Txs))
-		return ticket, priv, diff, modify, ticketID, nil
+		return ticket, priv, addressID, diff, modify, ticketID, nil
 	}
-	return nil, nil, nil, nil, "", nil
+	return nil, nil, 0, nil, nil, "", nil
 }
 
 func (client *Client) delTicket(ticketID string) {
@@ -597,7 +610,7 @@ func (client *Client) delTicket(ticketID string) {
 func (client *Client) Miner(block *types.Block) error {
 	//add miner address
 	parentBlock := client.GetCurrentBlock()
-	ticket, priv, diff, modify, ticketID, err := client.searchTargetTicket(parentBlock, block)
+	ticket, priv, addressID, diff, modify, ticketID, err := client.searchTargetTicket(parentBlock, block)
 	if err != nil {
 		tlog.Error("Miner", "err", err)
 		lastBlock, err := client.RequestLastBlock()
@@ -611,7 +624,7 @@ func (client *Client) Miner(block *types.Block) error {
 		return errors.New("ticket is nil")
 	}
 	newBlock := *block
-	err = client.addMinerTx(parentBlock, &newBlock, diff, priv, ticket.TicketId, modify)
+	err = client.addMinerTx(parentBlock, &newBlock, diff, priv, addressID, ticket.TicketId, modify)
 	if err != nil {
 		return err
 	}
@@ -652,7 +665,7 @@ func genPrivHash(priv crypto.PrivKey, tid string) ([]byte, error) {
 	return privHash, nil
 }
 
-func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv crypto.PrivKey, tid string, modify []byte) error {
+func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv crypto.PrivKey, addressID int32, tid string, modify []byte) error {
 	//return 0 always
 	cfg := client.GetAPI().GetConfig()
 	fee := calcTotalFee(block)
@@ -691,7 +704,7 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 	ticketAction.Value = &ty.TicketAction_Miner{Miner: miner}
 	ticketAction.Ty = ty.TicketActionMiner
 	//构造transaction
-	tx := client.createMinerTx(&ticketAction, priv)
+	tx := client.createMinerTx(&ticketAction, priv, addressID)
 	//unshift
 	if tx == nil {
 		return ty.ErrEmptyMinerTx
@@ -708,13 +721,13 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 	return nil
 }
 
-func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.PrivKey) *types.Transaction {
+func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.PrivKey, addressID int32) *types.Transaction {
 	cfg := client.GetAPI().GetConfig()
 	tx, err := types.CreateFormatTx(cfg, "ticket", types.Encode(ticketAction))
 	if err != nil {
 		return nil
 	}
-	tx.Sign(types.SECP256K1, priv)
+	tx.Sign(types.EncodeSignID(types.SECP256K1, addressID), priv)
 	return tx
 }
 

@@ -31,7 +31,7 @@ var (
 // PreTicketMetaData contains all meta data concerning the PreTicket contract.
 var PreTicketMetaData = &bind.MetaData{
 	ABI: "[]",
-	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122087503e2d4b85b10ee309dd75259a86f4f47b5ddbcefd3f1afabcd9bb7000a6e564736f6c634300080a0033",
+	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220c5b9bf7bc1becaf40d51f6f1c0334bcb66f244437a5e61e72c1dfa0f6b9b87d264736f6c634300080a0033",
 }
 
 // PreTicketABI is the input ABI used to generate the binding from.
@@ -203,13 +203,14 @@ func (_PreTicket *PreTicketTransactorRaw) Transact(opts *bind.TransactOpts, meth
 
 // TicketMetaData contains all meta data concerning the Ticket contract.
 var TicketMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CransferToTicketExec\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"origin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bind\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CreateBindMiner\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"bind\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"createBindMiner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTicketCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferToTickeExec\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"origin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bind\",\"type\":\"address\"}],\"name\":\"CloseBindMiner\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"origin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bind\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CreateBindMiner\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TransferToTicketExec\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"bind\",\"type\":\"address\"}],\"name\":\"closeBindMiner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"bind\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"createBindMiner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTicketCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferToTickeExec\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 	Sigs: map[string]string{
+		"57385d1b": "closeBindMiner(address)",
 		"5ca4b8fb": "createBindMiner(address,uint256)",
 		"21c63a47": "getTicketCount()",
 		"6850d595": "transferToTickeExec(uint256)",
 	},
-	Bin: "0x608060405234801561001057600080fd5b50610594806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806321c63a47146100465780635ca4b8fb146100615780636850d59514610084575b600080fd5b61004e610097565b6040519081526020015b60405180910390f35b61007461006f3660046104b9565b6100a6565b6040519015158152602001610058565b6100746100923660046104f1565b6101d7565b60006100a1610290565b905090565b60006001600160a01b03831661011a5760405162461bcd60e51b815260206004820152602e60248201527f5469636b65743a2063726561746542696e644d696e65722066726f6d2074686560448201526d20207a65726f206164647265737360901b60648201526084015b60405180910390fd5b816101765760405162461bcd60e51b815260206004820152602660248201527f5469636b65743a2063726561746542696e644d696e657220616d6f756e74206960448201526573207a65726f60d01b6064820152608401610111565b33610182818585610340565b604080516001600160a01b038084168252861660208201529081018490527ff68d6e786351c6914a35e97ea2605fb495e868c5f8e81f930394d7acbe8f7f3b9060600160405180910390a15060019392505050565b60008161023a5760405162461bcd60e51b815260206004820152602b60248201527f5469636b65743a207472616e73666572546f5469636b65744578656320616d6f60448201526a756e74206973207a65726f60a81b6064820152608401610111565b336102458184610401565b604080516001600160a01b0383168152602081018590527fa8485d592318e89107820798a65b789108a1172ec7aea285b0a46d2fbfe54bd2910160405180910390a150600192915050565b60408051600481526024810182526020810180516001600160e01b03166321c63a4760e01b17905290516000918291829162200002916102d0919061050a565b600060405180830381855afa9150503d806000811461030b576040519150601f19603f3d011682016040523d82523d6000602084013e610310565b606091505b50915091506000821415610325573d60208201fd5b808060200190518101906103399190610545565b9250505090565b6040516001600160a01b03848116602483015283166044820152606481018290526000908190622000029060840160408051601f198184030181529181526020820180516001600160e01b0316632dd8308f60e11b179052516103a3919061050a565b6000604051808303816000865af19150503d80600081146103e0576040519150601f19603f3d011682016040523d82523d6000602084013e6103e5565b606091505b509150915060008214156103fa573d60208201fd5b5050505050565b6040516001600160a01b0383166024820152604481018290526000908190622000029060640160408051601f198184030181529181526020820180516001600160e01b0316632a80b0ab60e01b1790525161045c919061050a565b6000604051808303816000865af19150503d8060008114610499576040519150601f19603f3d011682016040523d82523d6000602084013e61049e565b606091505b509150915060008214156104b3573d60208201fd5b50505050565b600080604083850312156104cc57600080fd5b82356001600160a01b03811681146104e357600080fd5b946020939093013593505050565b60006020828403121561050357600080fd5b5035919050565b6000825160005b8181101561052b5760208186018101518583015201610511565b8181111561053a576000828501525b509190910192915050565b60006020828403121561055757600080fd5b505191905056fea26469706673582212202785bb5a3f3f8b23b489ec8eccc5209cbb35917f005ad997c3b921834fd4475164736f6c634300080a0033",
+	Bin: "0x608060405234801561001057600080fd5b506106a5806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806321c63a471461005157806357385d1b1461006c5780635ca4b8fb1461008f5780636850d595146100a2575b600080fd5b6100596100b5565b6040519081526020015b60405180910390f35b61007f61007a366004610568565b6100c4565b6040519015158152602001610063565b61007f61009d36600461058a565b610148565b61007f6100b03660046105b4565b61022d565b60006100bf6102e6565b905090565b60006001600160a01b0382166100f55760405162461bcd60e51b81526004016100ec906105cd565b60405180910390fd5b6100ff8233610396565b604080513381526001600160a01b03841660208201527f1e1e210b9e04215b745006f4b006a0b6f420f87563005fb9baa0e7407b8f5da9910160405180910390a1506001919050565b60006001600160a01b0383166101705760405162461bcd60e51b81526004016100ec906105cd565b816101cc5760405162461bcd60e51b815260206004820152602660248201527f5469636b65743a2063726561746542696e644d696e657220616d6f756e74206960448201526573207a65726f60d01b60648201526084016100ec565b336101d8818585610430565b604080516001600160a01b038084168252861660208201529081018490527ff68d6e786351c6914a35e97ea2605fb495e868c5f8e81f930394d7acbe8f7f3b9060600160405180910390a15060019392505050565b6000816102905760405162461bcd60e51b815260206004820152602b60248201527f5469636b65743a207472616e73666572546f5469636b65744578656320616d6f60448201526a756e74206973207a65726f60a81b60648201526084016100ec565b3361029b81846104f1565b604080516001600160a01b0383168152602081018590527fa96959215ce46afdbce738a9b441a353e38c3c54c71c2894bfe6c6d4ccf10f18910160405180910390a150600192915050565b60408051600481526024810182526020810180516001600160e01b03166321c63a4760e01b1790529051600091829182916220000291610326919061061b565b600060405180830381855afa9150503d8060008114610361576040519150601f19603f3d011682016040523d82523d6000602084013e610366565b606091505b5091509150600082141561037b573d60208201fd5b8080602001905181019061038f9190610656565b9250505090565b60408051600481526024810182526020810180516001600160e01b031663474f72d360e01b1790529051600091829162200002916103d39161061b565b6000604051808303816000865af19150503d8060008114610410576040519150601f19603f3d011682016040523d82523d6000602084013e610415565b606091505b5091509150600082141561042a573d60208201fd5b50505050565b6040516001600160a01b03848116602483015283166044820152606481018290526000908190622000029060840160408051601f198184030181529181526020820180516001600160e01b0316632dd8308f60e11b17905251610493919061061b565b6000604051808303816000865af19150503d80600081146104d0576040519150601f19603f3d011682016040523d82523d6000602084013e6104d5565b606091505b509150915060008214156104ea573d60208201fd5b5050505050565b6040516001600160a01b0383166024820152604481018290526000908190622000029060640160408051601f198184030181529181526020820180516001600160e01b0316632a80b0ab60e01b179052516103d3919061061b565b80356001600160a01b038116811461056357600080fd5b919050565b60006020828403121561057a57600080fd5b6105838261054c565b9392505050565b6000806040838503121561059d57600080fd5b6105a68361054c565b946020939093013593505050565b6000602082840312156105c657600080fd5b5035919050565b6020808252602e908201527f5469636b65743a2063726561746542696e644d696e65722066726f6d2074686560408201526d20207a65726f206164647265737360901b606082015260800190565b6000825160005b8181101561063c5760208186018101518583015201610622565b8181111561064b576000828501525b509190910192915050565b60006020828403121561066857600080fd5b505191905056fea264697066735822122006fc5fc9c646adb73af5389e73c1a83fcfeb105d17d2fab72665d71091b0c18c64736f6c634300080a0033",
 }
 
 // TicketABI is the input ABI used to generate the binding from.
@@ -383,6 +384,27 @@ func (_Ticket *TicketTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Ticket.Contract.contract.Transact(opts, method, params...)
 }
 
+// CloseBindMiner is a paid mutator transaction binding the contract method 0x57385d1b.
+//
+// Solidity: function closeBindMiner(address bind) returns(bool)
+func (_Ticket *TicketTransactor) CloseBindMiner(opts *bind.TransactOpts, bind common.Address) (*types.Transaction, error) {
+	return _Ticket.contract.Transact(opts, "closeBindMiner", bind)
+}
+
+// CloseBindMiner is a paid mutator transaction binding the contract method 0x57385d1b.
+//
+// Solidity: function closeBindMiner(address bind) returns(bool)
+func (_Ticket *TicketSession) CloseBindMiner(bind common.Address) (*types.Transaction, error) {
+	return _Ticket.Contract.CloseBindMiner(&_Ticket.TransactOpts, bind)
+}
+
+// CloseBindMiner is a paid mutator transaction binding the contract method 0x57385d1b.
+//
+// Solidity: function closeBindMiner(address bind) returns(bool)
+func (_Ticket *TicketTransactorSession) CloseBindMiner(bind common.Address) (*types.Transaction, error) {
+	return _Ticket.Contract.CloseBindMiner(&_Ticket.TransactOpts, bind)
+}
+
 // CreateBindMiner is a paid mutator transaction binding the contract method 0x5ca4b8fb.
 //
 // Solidity: function createBindMiner(address bind, uint256 amount) returns(bool)
@@ -446,9 +468,9 @@ func (_Ticket *TicketTransactorSession) TransferToTickeExec(amount *big.Int) (*t
 	return _Ticket.Contract.TransferToTickeExec(&_Ticket.TransactOpts, amount)
 }
 
-// TicketCransferToTicketExecIterator is returned from FilterCransferToTicketExec and is used to iterate over the raw logs and unpacked data for CransferToTicketExec events raised by the Ticket contract.
-type TicketCransferToTicketExecIterator struct {
-	Event *TicketCransferToTicketExec // Event containing the contract specifics and raw log
+// TicketCloseBindMinerIterator is returned from FilterCloseBindMiner and is used to iterate over the raw logs and unpacked data for CloseBindMiner events raised by the Ticket contract.
+type TicketCloseBindMinerIterator struct {
+	Event *TicketCloseBindMiner // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -462,7 +484,7 @@ type TicketCransferToTicketExecIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *TicketCransferToTicketExecIterator) Next() bool {
+func (it *TicketCloseBindMinerIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -471,7 +493,7 @@ func (it *TicketCransferToTicketExecIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(TicketCransferToTicketExec)
+			it.Event = new(TicketCloseBindMiner)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -486,7 +508,7 @@ func (it *TicketCransferToTicketExecIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(TicketCransferToTicketExec)
+		it.Event = new(TicketCloseBindMiner)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -502,42 +524,42 @@ func (it *TicketCransferToTicketExecIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *TicketCransferToTicketExecIterator) Error() error {
+func (it *TicketCloseBindMinerIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *TicketCransferToTicketExecIterator) Close() error {
+func (it *TicketCloseBindMinerIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// TicketCransferToTicketExec represents a CransferToTicketExec event raised by the Ticket contract.
-type TicketCransferToTicketExec struct {
-	From   common.Address
-	Amount *big.Int
+// TicketCloseBindMiner represents a CloseBindMiner event raised by the Ticket contract.
+type TicketCloseBindMiner struct {
+	Origin common.Address
+	Bind   common.Address
 	Raw    types.Log // Blockchain specific contextual infos
 }
 
-// FilterCransferToTicketExec is a free log retrieval operation binding the contract event 0xa8485d592318e89107820798a65b789108a1172ec7aea285b0a46d2fbfe54bd2.
+// FilterCloseBindMiner is a free log retrieval operation binding the contract event 0x1e1e210b9e04215b745006f4b006a0b6f420f87563005fb9baa0e7407b8f5da9.
 //
-// Solidity: event CransferToTicketExec(address from, uint256 amount)
-func (_Ticket *TicketFilterer) FilterCransferToTicketExec(opts *bind.FilterOpts) (*TicketCransferToTicketExecIterator, error) {
+// Solidity: event CloseBindMiner(address origin, address bind)
+func (_Ticket *TicketFilterer) FilterCloseBindMiner(opts *bind.FilterOpts) (*TicketCloseBindMinerIterator, error) {
 
-	logs, sub, err := _Ticket.contract.FilterLogs(opts, "CransferToTicketExec")
+	logs, sub, err := _Ticket.contract.FilterLogs(opts, "CloseBindMiner")
 	if err != nil {
 		return nil, err
 	}
-	return &TicketCransferToTicketExecIterator{contract: _Ticket.contract, event: "CransferToTicketExec", logs: logs, sub: sub}, nil
+	return &TicketCloseBindMinerIterator{contract: _Ticket.contract, event: "CloseBindMiner", logs: logs, sub: sub}, nil
 }
 
-// WatchCransferToTicketExec is a free log subscription operation binding the contract event 0xa8485d592318e89107820798a65b789108a1172ec7aea285b0a46d2fbfe54bd2.
+// WatchCloseBindMiner is a free log subscription operation binding the contract event 0x1e1e210b9e04215b745006f4b006a0b6f420f87563005fb9baa0e7407b8f5da9.
 //
-// Solidity: event CransferToTicketExec(address from, uint256 amount)
-func (_Ticket *TicketFilterer) WatchCransferToTicketExec(opts *bind.WatchOpts, sink chan<- *TicketCransferToTicketExec) (event.Subscription, error) {
+// Solidity: event CloseBindMiner(address origin, address bind)
+func (_Ticket *TicketFilterer) WatchCloseBindMiner(opts *bind.WatchOpts, sink chan<- *TicketCloseBindMiner) (event.Subscription, error) {
 
-	logs, sub, err := _Ticket.contract.WatchLogs(opts, "CransferToTicketExec")
+	logs, sub, err := _Ticket.contract.WatchLogs(opts, "CloseBindMiner")
 	if err != nil {
 		return nil, err
 	}
@@ -547,8 +569,8 @@ func (_Ticket *TicketFilterer) WatchCransferToTicketExec(opts *bind.WatchOpts, s
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(TicketCransferToTicketExec)
-				if err := _Ticket.contract.UnpackLog(event, "CransferToTicketExec", log); err != nil {
+				event := new(TicketCloseBindMiner)
+				if err := _Ticket.contract.UnpackLog(event, "CloseBindMiner", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -569,12 +591,12 @@ func (_Ticket *TicketFilterer) WatchCransferToTicketExec(opts *bind.WatchOpts, s
 	}), nil
 }
 
-// ParseCransferToTicketExec is a log parse operation binding the contract event 0xa8485d592318e89107820798a65b789108a1172ec7aea285b0a46d2fbfe54bd2.
+// ParseCloseBindMiner is a log parse operation binding the contract event 0x1e1e210b9e04215b745006f4b006a0b6f420f87563005fb9baa0e7407b8f5da9.
 //
-// Solidity: event CransferToTicketExec(address from, uint256 amount)
-func (_Ticket *TicketFilterer) ParseCransferToTicketExec(log types.Log) (*TicketCransferToTicketExec, error) {
-	event := new(TicketCransferToTicketExec)
-	if err := _Ticket.contract.UnpackLog(event, "CransferToTicketExec", log); err != nil {
+// Solidity: event CloseBindMiner(address origin, address bind)
+func (_Ticket *TicketFilterer) ParseCloseBindMiner(log types.Log) (*TicketCloseBindMiner, error) {
+	event := new(TicketCloseBindMiner)
+	if err := _Ticket.contract.UnpackLog(event, "CloseBindMiner", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -711,6 +733,141 @@ func (_Ticket *TicketFilterer) WatchCreateBindMiner(opts *bind.WatchOpts, sink c
 func (_Ticket *TicketFilterer) ParseCreateBindMiner(log types.Log) (*TicketCreateBindMiner, error) {
 	event := new(TicketCreateBindMiner)
 	if err := _Ticket.contract.UnpackLog(event, "CreateBindMiner", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// TicketTransferToTicketExecIterator is returned from FilterTransferToTicketExec and is used to iterate over the raw logs and unpacked data for TransferToTicketExec events raised by the Ticket contract.
+type TicketTransferToTicketExecIterator struct {
+	Event *TicketTransferToTicketExec // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *TicketTransferToTicketExecIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(TicketTransferToTicketExec)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(TicketTransferToTicketExec)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *TicketTransferToTicketExecIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *TicketTransferToTicketExecIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// TicketTransferToTicketExec represents a TransferToTicketExec event raised by the Ticket contract.
+type TicketTransferToTicketExec struct {
+	From   common.Address
+	Amount *big.Int
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterTransferToTicketExec is a free log retrieval operation binding the contract event 0xa96959215ce46afdbce738a9b441a353e38c3c54c71c2894bfe6c6d4ccf10f18.
+//
+// Solidity: event TransferToTicketExec(address from, uint256 amount)
+func (_Ticket *TicketFilterer) FilterTransferToTicketExec(opts *bind.FilterOpts) (*TicketTransferToTicketExecIterator, error) {
+
+	logs, sub, err := _Ticket.contract.FilterLogs(opts, "TransferToTicketExec")
+	if err != nil {
+		return nil, err
+	}
+	return &TicketTransferToTicketExecIterator{contract: _Ticket.contract, event: "TransferToTicketExec", logs: logs, sub: sub}, nil
+}
+
+// WatchTransferToTicketExec is a free log subscription operation binding the contract event 0xa96959215ce46afdbce738a9b441a353e38c3c54c71c2894bfe6c6d4ccf10f18.
+//
+// Solidity: event TransferToTicketExec(address from, uint256 amount)
+func (_Ticket *TicketFilterer) WatchTransferToTicketExec(opts *bind.WatchOpts, sink chan<- *TicketTransferToTicketExec) (event.Subscription, error) {
+
+	logs, sub, err := _Ticket.contract.WatchLogs(opts, "TransferToTicketExec")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(TicketTransferToTicketExec)
+				if err := _Ticket.contract.UnpackLog(event, "TransferToTicketExec", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTransferToTicketExec is a log parse operation binding the contract event 0xa96959215ce46afdbce738a9b441a353e38c3c54c71c2894bfe6c6d4ccf10f18.
+//
+// Solidity: event TransferToTicketExec(address from, uint256 amount)
+func (_Ticket *TicketFilterer) ParseTransferToTicketExec(log types.Log) (*TicketTransferToTicketExec, error) {
+	event := new(TicketTransferToTicketExec)
+	if err := _Ticket.contract.UnpackLog(event, "TransferToTicketExec", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

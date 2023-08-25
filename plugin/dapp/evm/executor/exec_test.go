@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/crypto/sha3"
+	"github.com/ethereum/go-ethereum/common"
 	"testing"
 
 	"github.com/33cn/chain33/client"
@@ -116,4 +118,33 @@ func TestExecNonce(t *testing.T) {
 	_, err = exec.ExecLocal(tx, recp, 0)
 	require.Nil(t, err)
 
+}
+
+func caculteSig(in string) string {
+	s3 := sha3.KeccakSum256([]byte(in))
+	sig := common.Bytes2Hex(s3[:4])
+	return sig
+}
+func TestCaculateFuncSig(t *testing.T) {
+	expected := "70a08231"
+	var b = "balanceOf(address)"
+	sig := caculteSig(b)
+	t.Log(sig)
+	require.Equal(t, expected, sig)
+
+	b = "createBindMiner(address,address,uint256)"
+	sig = caculteSig(b)
+	t.Log(sig)
+	expected = "e2438c77"
+	require.Equal(t, expected, sig)
+	//a9059cbb": "transfer(address,uint256)",
+
+	b = "transfer(address,uint256)"
+	expected = "a9059cbb"
+	sig = caculteSig(b)
+	require.Equal(t, expected, sig)
+
+	b = "bindMiner(address,address,uint256)"
+	sig = caculteSig(b)
+	t.Log(sig)
 }

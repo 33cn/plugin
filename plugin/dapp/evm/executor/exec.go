@@ -69,7 +69,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	}
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 
-		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value())
+		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value(), "nonce:", msg.Nonce())
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
 	}

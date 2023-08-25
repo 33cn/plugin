@@ -94,4 +94,6 @@ type EVMStateDB interface {
 	TokenSupply(tokensymbol string) (int64, error)
 	//craetebindTickter
 	CreateBindMiner(from, bind common.Address, amount int64) (bool, error)
+	//transfer2Exec
+	TransferToExec(from common.Address, exec string, amount int64) (bool, error)
 }

@@ -173,9 +173,16 @@ func delticket(addr string, ticketID string, status int32) *types.KeyValue {
 
 // IsFriend check is fri
 func (t *Ticket) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
-	clog.Error("ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
+
 	//不允许平行链
-	return false
+	var ok bool
+	//TODO 放在配置中国读取，目前测试用途，临时修改
+	if string(tx.GetExecer()) == "evm" {
+		ok = true
+	}
+
+	clog.Info("ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey), "ok", ok)
+	return ok
 }
 
 // CheckTx check tx
