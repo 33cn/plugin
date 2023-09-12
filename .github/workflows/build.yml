@@ -36,6 +36,8 @@ jobs:
     name: unit-test
     runs-on: ubuntu-20.04
     steps:
+      - name: checkout
+        uses: actions/checkout@v2
       - name: Set up Golang
         uses: actions/setup-go@v3
         with:
@@ -43,8 +45,6 @@ jobs:
         id: go
       - name: set go env
         run: export PATH=${PATH}:`go env GOPATH`/bin
-      - name: checkout
-        uses: actions/checkout@v2
       - name: unit-test
         run: make test
 
@@ -52,6 +52,8 @@ jobs:
     name: coverage
     runs-on: ubuntu-20.04
     steps:
+      - name: checkout
+        uses: actions/checkout@v3
       - name: Set up Golang
         uses: actions/setup-go@v3
         with:
@@ -59,8 +61,7 @@ jobs:
         id: go
       - name: set go env
         run: export PATH=${PATH}:`go env GOPATH`/bin
-      - name: checkout
-        uses: actions/checkout@v3
+
       - name: ut coverage
         run: make coverage
       - name: cover report
@@ -71,6 +72,8 @@ jobs:
     name: autotest
     runs-on: ubuntu-20.04
     steps:
+      - name: checkout
+        uses: actions/checkout@v3
       - name: Set up Golang
         uses: actions/setup-go@v3
         with:
@@ -78,8 +81,6 @@ jobs:
         id: go
       - name: set go env
         run: export PATH=${PATH}:`go env GOPATH`/bin
-      - name: checkout
-        uses: actions/checkout@v3
       - name: deploy
         run: |
           make build_ci
@@ -89,6 +90,8 @@ jobs:
     name: ci_base
     runs-on: ubuntu-20.04
     steps:
+      - name: checkout
+        uses: actions/checkout@v3
       - name: Set up Golang
         uses: actions/setup-go@v3
         with:
@@ -96,8 +99,6 @@ jobs:
         id: go
       - name: set go env
         run: export PATH=${PATH}:`go env GOPATH`/bin
-      - name: checkout
-        uses: actions/checkout@v3
       - name: deploy
         run: |
           make docker-compose
