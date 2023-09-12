@@ -15,7 +15,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 
 ```
-需要安装golang1.17 or latest
+golang1.19+
 
 ```
 
