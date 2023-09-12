@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Golang env
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.17
+          go-version-file: 'go.mod'
         id: go
 
       - name: checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           persist-credentials: false # <--- this
@@ -40,7 +40,7 @@ jobs:
           branch: master
           extra_plugins: |
             conventional-changelog/conventional-changelog-jshint
-            @google/semantic-release-replace-plugin
+            @semantic-release-replace-plugin
             @semantic-release/exec
             @semantic-release/changelog
             @semantic-release/git
