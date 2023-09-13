@@ -18,8 +18,8 @@ environment:
 
 # set go version
 before_test:
-  - set PATH=C:\go116\bin;%PATH%
-  - set GOROOT=C:\go116
+  - set PATH=C:\go119\bin;%PATH%
+  - set GOROOT=C:\go119
   - go version
   - go env
 
