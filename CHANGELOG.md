@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.68.4"></a>
+## [1.68.4](https://github.com/33cn/plugin/compare/v1.68.3...v1.68.4) (2023-09-13)
+
+
+### Bug Fixes
+
+* sync chain33 patch version 1.68.1 ([82f248a](https://github.com/33cn/plugin/commit/82f248a))
+
 <a name="1.68.3"></a>
 ## [1.68.3](https://github.com/33cn/plugin/compare/v1.68.2...v1.68.3) (2023-05-24)
 
