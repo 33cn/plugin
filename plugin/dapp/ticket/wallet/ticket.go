@@ -7,6 +7,7 @@ package wallet
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/system/address/eth"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -163,9 +164,9 @@ func (policy *ticketPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 		Payload:    nil,
 	}
 	if len(wtxdetail.Fromaddr) <= 0 {
-		pubkey := tx.Signature.GetPubkey()
+		//pubkey := tx.Signature.GetPubkey()
 		//from addr
-		fromaddress := address.PubKeyToAddr(address.DefaultID, pubkey)
+		fromaddress := tx.From()
 		if len(fromaddress) != 0 && policy.walletOperate.AddrInWallet(fromaddress) {
 			wtxdetail.Fromaddr = fromaddress
 		}
@@ -230,7 +231,7 @@ func (policy *ticketPolicy) OnWalletLocked() {
 	FlushTicket(policy.getAPI())
 }
 
-//解锁超时处理，需要区分整个钱包的解锁或者只挖矿的解锁
+// 解锁超时处理，需要区分整个钱包的解锁或者只挖矿的解锁
 func (policy *ticketPolicy) resetTimeout(Timeout int64) {
 	if policy.minertimeout == nil {
 		policy.minertimeout = time.AfterFunc(time.Second*time.Duration(Timeout), func() {
@@ -309,7 +310,7 @@ func (policy *ticketPolicy) forceCloseTicket(height int64, minerAddr string) (*t
 	return policy.forceCloseAllTicket(height)
 }
 
-//通过minerAddr地址找到绑定的ticket的returnAddr，通过returnAddr的私钥close ticket，防止miner的私钥丢失场景
+// 通过minerAddr地址找到绑定的ticket的returnAddr，通过returnAddr的私钥close ticket，防止miner的私钥丢失场景
 func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr string) (*types.ReplyHashes, error) {
 	tListMiner, err := policy.getForceCloseTickets(minerAddr)
 	if err != nil {
@@ -320,18 +321,24 @@ func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr
 		tListMap[ticket.ReturnAddress] = append(tListMap[ticket.ReturnAddress], ticket)
 	}
 
-	keys, err := policy.getWalletOperate().GetAllPrivKeys()
+	operater := policy.getWalletOperate()
+	acclist, err := operater.GetWalletAccounts()
 	if err != nil {
-		return nil, errors.Wrap(err, "GetAllPrivKeys")
+		return nil, err
 	}
-
 	var hashes types.ReplyHashes
-	for _, key := range keys {
-		returnAddr := address.PubKeyToAddr(address.DefaultID, key.PubKey().Bytes())
-		if len(tListMap[returnAddr]) == 0 {
+	for _, acc := range acclist {
+		key, err := operater.GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			bizlog.Error("forceCloseTicketByAddr", "GetPrivKeyByAddr error", err, "addr", acc.GetAddr(), "minerAddr", minerAddr)
 			continue
 		}
-		hash, err := policy.forceCloseTicketList(height, key, tListMap[returnAddr])
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+		returnAddr := address.PubKeyToAddr(addressID, key.PubKey().Bytes())
+		hash, err := policy.forceCloseTicketList(height, key, addressID, tListMap[returnAddr])
 		if err != nil {
 			bizlog.Error("forceCloseTicketByAddr", "error", err, "returnAddr", returnAddr, "minerAddr", minerAddr)
 			continue
@@ -340,27 +347,40 @@ func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr
 			continue
 		}
 		hashes.Hashes = append(hashes.Hashes, hash)
+
 	}
+
 	return &hashes, nil
 }
 
 func (policy *ticketPolicy) forceCloseAllTicket(height int64) (*types.ReplyHashes, error) {
 	var err error
 
-	keys, err := policy.getWalletOperate().GetAllPrivKeys()
+	operater := policy.getWalletOperate()
+	acclist, err := operater.GetWalletAccounts()
 	if err != nil {
 		return nil, err
 	}
 
 	var hashes types.ReplyHashes
-	for _, key := range keys {
-		addr := address.PubKeyToAddr(address.DefaultID, key.PubKey().Bytes())
+	for _, acc := range acclist {
+		key, err := operater.GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			bizlog.Error("forceCloseTicketByAddr", "GetPrivKeyByAddr error", err, "addr", acc.GetAddr())
+			continue
+		}
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+
+		addr := address.PubKeyToAddr(addressID, key.PubKey().Bytes())
 		tlist, err := policy.getForceCloseTickets(addr)
 		if err != nil {
 			bizlog.Error("forceCloseAllTicket getTickets", "error", err, "addr", addr)
 			continue
 		}
-		hash, err := policy.forceCloseTicketList(height, key, tlist)
+		hash, err := policy.forceCloseTicketList(height, key, addressID, tlist)
 		if err != nil {
 			bizlog.Error("forceCloseAllTicket", "error", err, "addr", addr)
 			continue
@@ -405,7 +425,7 @@ func (policy *ticketPolicy) getForceCloseTickets(addr string) ([]*ty.Ticket, err
 	return append(tlist1, tlist2...), nil
 }
 
-func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivKey, tlist []*ty.Ticket) ([]byte, error) {
+func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivKey, addressID int32, tlist []*ty.Ticket) ([]byte, error) {
 	var ids []string
 	var tl []*ty.Ticket
 	now := types.Now().Unix()
@@ -429,13 +449,13 @@ func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivK
 		ids = append(ids, tl[i].TicketId)
 	}
 	if len(ids) > 0 {
-		return policy.closeTickets(priv, ids)
+		return policy.closeTickets(priv, addressID, ids)
 	}
 	return nil, nil
 }
 
-//通过rpc 精选close 操作
-func (policy *ticketPolicy) closeTickets(priv crypto.PrivKey, ids []string) ([]byte, error) {
+// 通过rpc 精选close 操作
+func (policy *ticketPolicy) closeTickets(priv crypto.PrivKey, addressID int32, ids []string) ([]byte, error) {
 	//每次最多close 200个
 	end := 200
 	if end > len(ids) {
@@ -446,7 +466,7 @@ func (policy *ticketPolicy) closeTickets(priv crypto.PrivKey, ids []string) ([]b
 	tclose := &ty.TicketClose{TicketId: ids[0:end]}
 	ta.Value = &ty.TicketAction_Tclose{Tclose: tclose}
 	ta.Ty = ty.TicketActionClose
-	return policy.getWalletOperate().SendTransaction(ta, []byte(ty.TicketX), priv, "")
+	return policy.getWalletOperate().SendTransaction(ta, []byte(ty.TicketX), priv, addressID, "")
 }
 
 func (policy *ticketPolicy) getTicketsByStatus(status int32) ([]*ty.Ticket, [][]byte, error) {
@@ -494,7 +514,7 @@ func (policy *ticketPolicy) isAutoMining() bool {
 	return atomic.LoadInt32(&policy.autoMinerFlag) == 1
 }
 
-func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey) ([]byte, error) {
+func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey, addressID int32) ([]byte, error) {
 	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	tlist, err := policy.getTickets(addr, 2)
 	if err != nil && err != types.ErrNotFound {
@@ -520,20 +540,28 @@ func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey
 		ids = append(ids, tl[i].TicketId)
 	}
 	if len(ids) > 0 {
-		return policy.closeTickets(priv, ids)
+		return policy.closeTickets(priv, addressID, ids)
 	}
 	return nil, nil
 }
 
 func (policy *ticketPolicy) closeAllTickets(height int64) (int, error) {
 	operater := policy.getWalletOperate()
-	keys, err := operater.GetAllPrivKeys()
+	acclist, err := operater.GetWalletAccounts()
 	if err != nil {
 		return 0, err
 	}
 	var hashes [][]byte
-	for _, key := range keys {
-		hash, err := policy.closeTicketsByAddr(height, key)
+	for _, acc := range acclist {
+		key, err := operater.GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			continue
+		}
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+		hash, err := policy.closeTicketsByAddr(height, key, addressID)
 		if err != nil {
 			bizlog.Error("close Tickets By Addr", "err", err)
 			continue
@@ -554,8 +582,8 @@ func (policy *ticketPolicy) closeTicket(height int64) (int, error) {
 	return policy.closeAllTickets(height)
 }
 
-func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
-	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
+func (policy *ticketPolicy) processFee(priv crypto.PrivKey, addressID int32) error {
+	addr := address.PubKeyToAddr(addressID, priv.PubKey().Bytes())
 	operater := policy.getWalletOperate()
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	acc1, err := operater.GetBalance(addr, cfg.GetCoinExec())
@@ -570,7 +598,7 @@ func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	//如果acc2 的余额足够，那题withdraw 部分钱做手续费
 	coinPrecision := cfg.GetCoinPrecision()
 	if (acc1.Balance < (coinPrecision / 2)) && (acc2.Balance > coinPrecision) {
-		_, err := operater.SendToAddress(priv, toaddr, -coinPrecision, "ticket->coins", false, "")
+		_, err := operater.SendToAddress(priv, addressID, toaddr, -coinPrecision, "ticket->coins", false, "")
 		if err != nil {
 			return err
 		}
@@ -578,14 +606,23 @@ func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	return nil
 }
 
-//手续费处理
+// 手续费处理
 func (policy *ticketPolicy) processFees() error {
-	keys, err := policy.getWalletOperate().GetAllPrivKeys()
+	acclist, err := policy.getWalletOperate().GetWalletAccounts()
 	if err != nil {
 		return err
 	}
-	for _, key := range keys {
-		e := policy.processFee(key)
+
+	for _, acc := range acclist {
+		key, err := policy.getWalletOperate().GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			continue
+		}
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+		e := policy.processFee(key, addressID)
 		if e != nil {
 			err = e
 		}
@@ -593,15 +630,15 @@ func (policy *ticketPolicy) processFees() error {
 	return err
 }
 
-func (policy *ticketPolicy) withdrawFromTicketOne(priv crypto.PrivKey) ([]byte, error) {
-	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
+func (policy *ticketPolicy) withdrawFromTicketOne(priv crypto.PrivKey, addressID int32) ([]byte, error) {
+	addr := address.PubKeyToAddr(addressID, priv.PubKey().Bytes())
 	operater := policy.getWalletOperate()
 	acc, err := operater.GetBalance(addr, ty.TicketX)
 	if err != nil {
 		return nil, err
 	}
 	if acc.Balance > 0 {
-		hash, err := operater.SendToAddress(priv, address.ExecAddress(ty.TicketX), -acc.Balance, "autominer->withdraw", false, "")
+		hash, err := operater.SendToAddress(priv, addressID, address.ExecAddress(ty.TicketX), -acc.Balance, "autominer->withdraw", false, "")
 		if err != nil {
 			return nil, err
 		}
@@ -610,7 +647,7 @@ func (policy *ticketPolicy) withdrawFromTicketOne(priv crypto.PrivKey) ([]byte, 
 	return nil, nil
 }
 
-func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto.PrivKey, count int32) ([]byte, error) {
+func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto.PrivKey, addressID, count int32) ([]byte, error) {
 	bizlog.Info("openticket", "mineraddr", mineraddr, "returnaddr", returnaddr, "count", count)
 	if count > ty.TicketCountOpenOnce {
 		count = ty.TicketCountOpenOnce
@@ -628,12 +665,12 @@ func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto
 	topen.PubHashes = hashList
 	ta.Value = &ty.TicketAction_Topen{Topen: topen}
 	ta.Ty = ty.TicketActionOpen
-	return policy.walletOperate.SendTransaction(ta, []byte(ty.TicketX), priv, "")
+	return policy.walletOperate.SendTransaction(ta, []byte(ty.TicketX), priv, addressID, "")
 }
 
-func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]byte, int, error) {
+func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey, addressID int32) ([]byte, int, error) {
 	//ticket balance and coins balance
-	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
+	addr := address.PubKeyToAddr(addressID, priv.PubKey().Bytes())
 	operater := policy.getWalletOperate()
 	acc1, err := operater.GetBalance(addr, policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec())
 	if err != nil {
@@ -658,7 +695,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 			var hash *types.ReplyHash
 			if amount > 0 {
 				bizlog.Info("buyTicketOne.send", "toaddr", toaddr, "amount", amount)
-				hash, err = policy.walletOperate.SendToAddress(priv, toaddr, amount, "coins->ticket", false, "")
+				hash, err = policy.walletOperate.SendToAddress(priv, addressID, toaddr, amount, "coins->ticket", false, "")
 
 				if err != nil {
 					return nil, 0, err
@@ -673,7 +710,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 		}
 		count := acc.Balance / cfg.TicketPrice
 		if count > 0 {
-			txhash, err := policy.openticket(addr, addr, priv, int32(count))
+			txhash, err := policy.openticket(addr, addr, priv, addressID, int32(count))
 			return txhash, int(count), err
 		}
 	}
@@ -681,7 +718,8 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 }
 
 func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
-	privs, err := policy.getWalletOperate().GetAllPrivKeys()
+	//privs, err := policy.getWalletOperate().GetAllPrivKeys()
+	acclist, err := policy.getWalletOperate().GetWalletAccounts()
 	if err != nil {
 		bizlog.Error("buyTicket.getAllPrivKeys", "err", err)
 		return nil, 0, err
@@ -689,8 +727,16 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 	count := 0
 	var hashes [][]byte
 	bizlog.Debug("ticketPolicy buyTicket begin")
-	for _, priv := range privs {
-		hash, n, err := policy.buyTicketOne(height, priv)
+	for _, acc := range acclist {
+		priv, err := policy.getWalletOperate().GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			continue
+		}
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+		hash, n, err := policy.buyTicketOne(height, priv, addressID)
 		if err != nil {
 			bizlog.Error("ticketPolicy buyTicket buyTicketOne", "err", err)
 			continue
@@ -742,7 +788,7 @@ func checkMinerWhiteList(addr string) bool {
 	return false
 }
 
-func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.PrivKey) ([][]byte, int, error) {
+func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.PrivKey, addressID int32) ([][]byte, int, error) {
 	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	//判断是否绑定了coldaddr
 	addrs, err := policy.getMinerColdAddr(addr)
@@ -766,7 +812,7 @@ func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.Priv
 		}
 		count := acc.Balance / cfg.TicketPrice
 		if count > 0 {
-			txhash, err := policy.openticket(addr, addrs[i], priv, int32(count))
+			txhash, err := policy.openticket(addr, addrs[i], priv, addressID, int32(count))
 			if err != nil {
 				return nil, 0, err
 			}
@@ -780,7 +826,8 @@ func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.Priv
 }
 
 func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, error) {
-	privs, err := policy.getWalletOperate().GetAllPrivKeys()
+	//privs, err := policy.getWalletOperate().GetAllPrivKeys()
+	acclist, err := policy.getWalletOperate().GetWalletAccounts()
 	if err != nil {
 		bizlog.Error("buyMinerAddrTicket.getAllPrivKeys", "err", err)
 		return nil, 0, err
@@ -788,8 +835,16 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 	count := 0
 	var hashes [][]byte
 	bizlog.Debug("ticketPolicy buyMinerAddrTicket begin")
-	for _, priv := range privs {
-		hashlist, n, err := policy.buyMinerAddrTicketOne(height, priv)
+	for _, acc := range acclist {
+		priv, err := policy.getWalletOperate().GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			continue
+		}
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+		hashlist, n, err := policy.buyMinerAddrTicketOne(height, priv, addressID)
 		if err != nil {
 			if err != types.ErrNotFound {
 				bizlog.Error("buyMinerAddrTicketOne", "err", err)
@@ -807,13 +862,22 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 }
 
 func (policy *ticketPolicy) withdrawFromTicket() (hashes [][]byte, err error) {
-	privs, err := policy.getWalletOperate().GetAllPrivKeys()
+	acclist, err := policy.getWalletOperate().GetWalletAccounts()
 	if err != nil {
-		bizlog.Error("withdrawFromTicket.getAllPrivKeys", "err", err)
+		bizlog.Error("withdrawFromTicket.GetWalletAccounts", "err", err)
 		return nil, err
 	}
-	for _, priv := range privs {
-		hash, err := policy.withdrawFromTicketOne(priv)
+	for _, acc := range acclist {
+		priv, err := policy.getWalletOperate().GetPrivKeyByAddr(acc.GetAddr())
+		if err != nil {
+			continue
+		}
+		var addressID int32 = address.DefaultID
+		if common.IsHex(acc.GetAddr()) {
+			addressID = eth.ID
+		}
+
+		hash, err := policy.withdrawFromTicketOne(priv, addressID)
 		if err != nil {
 			bizlog.Error("withdrawFromTicketOne", "err", err)
 			continue
@@ -825,16 +889,16 @@ func (policy *ticketPolicy) withdrawFromTicket() (hashes [][]byte, err error) {
 	return hashes, nil
 }
 
-//检查周期 --> 10分
-//开启挖矿：
-//1. 自动把成熟的ticket关闭
-//2. 查找超过1万余额的账户，自动购买ticket
-//3. 查找mineraddress 和他对应的 账户的余额（不在1中），余额超过1万的自动购买ticket 挖矿
+// 检查周期 --> 10分
+// 开启挖矿：
+// 1. 自动把成熟的ticket关闭
+// 2. 查找超过3000余额的账户，自动购买ticket
+// 3. 查找mineraddress 和他对应的 账户的余额（不在1中），余额超过3000的自动购买ticket 挖矿
 //
-//停止挖矿：
-//1. 自动把成熟的ticket关闭
-//2. 查找ticket 可取的余额
-//3. 取出ticket 里面的钱
+// 停止挖矿：
+// 1. 自动把成熟的ticket关闭
+// 2. 查找ticket 可取的余额
+// 3. 取出ticket 里面的钱
 func (policy *ticketPolicy) autoMining() {
 	bizlog.Info("Begin auto mining")
 	defer bizlog.Info("End auto mining")

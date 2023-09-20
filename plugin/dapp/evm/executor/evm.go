@@ -7,12 +7,10 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	log "github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"os"
 	"reflect"
-	"sort"
-
-	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -80,6 +78,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	log.Info("evmInit", "execAddr", evmExecAddress, "formatAddr", evmExecFormatAddress)
 	// 初始化硬分叉数据
 	state.InitForkData()
+	state.InitEvmCheckData()
 	InitExecType()
 }
 
@@ -216,48 +215,8 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	if tx == nil {
 		return fmt.Errorf("tx empty")
 	}
-	//main chain
-	if types.IsEthSignID(tx.GetSignature().GetTy()) {
-		//获取mempool 某个地址下所有交易
-		details, err := evm.GetAPI().GetTxListByAddr(&types.ReqAddrs{Addrs: []string{tx.From()}})
-		if err != nil {
-			return err
-		}
 
-		txs := details.GetTxs()
-		txs = append(txs, &types.TransactionDetail{Tx: tx, Index: int64(index)})
-		if len(txs) > 1 {
-			sort.SliceStable(txs, func(i, j int) bool { //nonce asc
-				return txs[i].Tx.GetNonce() < txs[j].Tx.GetNonce()
-			})
-			//遇到相同的Nonce ,较低的手续费的交易将被删除
-			for i, stx := range txs {
-				if bytes.Equal(stx.Tx.Hash(), tx.Hash()) {
-					continue
-				}
-				if txs[i].GetTx().GetNonce() == tx.GetNonce() {
-					bnfee := big.NewInt(txs[i].GetTx().Fee)
-					//相同的nonce，gas 必须提升至1.1 倍 才能有效替换之前的交易
-					bnfee = bnfee.Mul(bnfee, big.NewInt(110))
-					bnfee = bnfee.Div(bnfee, big.NewInt(1e2))
-					if tx.Fee < bnfee.Int64() {
-						err := fmt.Errorf("requires at least 10 percent increase in handling fee,need more:%d", bnfee.Int64()-tx.Fee)
-						log.Error("checkTxNonce", "fee err", err, "txfee", tx.Fee, "mempooltx", txs[0].GetTx().Fee)
-						return err
-					}
-					//移除手续费较低的交易
-					evm.GetAPI().RemoveTxsByHashList(&types.TxHashList{
-						Hashes: [][]byte{txs[i].GetTx().Hash()},
-					})
-					return nil
-				}
-			}
-
-		}
-
-	}
-
-	return nil
+	return state.ProcessCheck(evm.GetMainHeight(), tx.Hash())
 }
 
 // GetActionName 获取运行状态名

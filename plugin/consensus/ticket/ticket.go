@@ -10,6 +10,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/address/eth"
 	"math/big"
 	"strconv"
 	"strings"
@@ -17,7 +19,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/common/log/log15"
@@ -242,16 +243,33 @@ func (client *Client) flushTicket() error {
 		tlog.Error("flushTicket error", "err", err)
 		return err
 	}
-	client.setTicket(&ty.ReplyTicketList{Tickets: tickets}, getPrivMap(privs))
+	client.setTicket(&ty.ReplyTicketList{Tickets: tickets}, getPrivMap(privs, tickets))
 	return nil
 }
 
-func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
+func getPrivMap(privs []crypto.PrivKey, tickets []*ty.Ticket) map[string]crypto.PrivKey {
 	list := make(map[string]crypto.PrivKey)
-	for _, priv := range privs {
-		addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
-		list[addr] = priv
+	tempMinerList := make(map[string]string)
+	for _, ts := range tickets {
+		addr := strings.Split(ts.GetTicketId(), ":")[0]
+		tempMinerList[addr] = ts.GetTicketId()
 	}
+
+	for addr := range tempMinerList {
+		var addressID int32 = address.DefaultID
+		if common.IsHex(addr) {
+			addressID = eth.ID
+		}
+
+		for _, pk := range privs {
+			newAddr := address.PubKeyToAddr(addressID, pk.PubKey().Bytes())
+			if newAddr == addr {
+				list[addr] = pk
+			}
+
+		}
+	}
+
 	return list
 }
 
@@ -566,6 +584,7 @@ func (client *Client) searchTargetTicket(parent, block *types.Block) (*ty.Ticket
 			tlog.Error("Client searchTargetTicket can't find private key", "MinerAddress", ticket.MinerAddress)
 			continue
 		}
+
 		privHash, err := genPrivHash(priv, ticketID)
 		if err != nil {
 			tlog.Error("Client searchTargetTicket genPrivHash ", "error", err)
@@ -690,8 +709,13 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 
 	ticketAction.Value = &ty.TicketAction_Miner{Miner: miner}
 	ticketAction.Ty = ty.TicketActionMiner
+	tickerMinerAddr := strings.Split(tid, ":")[0]
+	var addressID = address.DefaultID
+	if common.IsHex(tickerMinerAddr) {
+		addressID = eth.ID
+	}
 	//构造transaction
-	tx := client.createMinerTx(&ticketAction, priv)
+	tx := client.createMinerTx(&ticketAction, priv, int32(addressID))
 	//unshift
 	if tx == nil {
 		return ty.ErrEmptyMinerTx
@@ -708,13 +732,13 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 	return nil
 }
 
-func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.PrivKey) *types.Transaction {
+func (client *Client) createMinerTx(ticketAction proto.Message, priv crypto.PrivKey, addressID int32) *types.Transaction {
 	cfg := client.GetAPI().GetConfig()
 	tx, err := types.CreateFormatTx(cfg, "ticket", types.Encode(ticketAction))
 	if err != nil {
 		return nil
 	}
-	tx.Sign(types.SECP256K1, priv)
+	tx.Sign(types.EncodeSignID(types.SECP256K1, addressID), priv)
 	return tx
 }
 

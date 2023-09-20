@@ -6,7 +6,9 @@ package executor
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"math"
 	"strings"
 	"sync/atomic"
@@ -47,6 +49,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
+	//nonce check
+	err = evm.checkEvmNonce(msg, sigType)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := evm.GetAPI().GetConfig()
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
@@ -56,7 +64,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	isCreate := strings.Compare(msg.To().String(), execAddr) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), execAddr) == 0 && 0 == len(msg.Data())
 	//coins转账，para数据作为备注交易
-
 	isTransferNote := strings.Compare(msg.To().String(), execAddr) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
 	var gas uint64
 	if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkIntrinsicGas) {
@@ -68,7 +75,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	}
 	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 
-		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value())
+		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value(), "nonce:", msg.Nonce())
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
 	}
@@ -207,7 +214,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	return receipt, nil
 }
 
-//intrinsicGas 计算固定gas消费
+// intrinsicGas 计算固定gas消费
 func intrinsicGas(msg *common.Message, isContractCreation bool, isEIP2028 bool) (uint64, error) {
 	var data []byte
 	if isContractCreation {
@@ -371,6 +378,27 @@ func (evm *EVMExecutor) getEvmExecAddress() string {
 	}
 
 	return evmExecAddress
+}
+
+func (evm *EVMExecutor) checkEvmNonce(msg *common.Message, sigType int32) error {
+	if !types.IsEthSignID(sigType) || !evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonceV2) {
+		return nil
+	}
+
+	nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(msg.From().String())
+	evmNonce := &types.EvmAccountNonce{}
+	nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
+	if err == nil {
+		_ = types.Decode(nonceV, evmNonce)
+
+	}
+
+	if msg.Nonce() < evmNonce.GetNonce() {
+		return types.ErrLowNonce
+	} else if msg.Nonce() > evmNonce.GetNonce() {
+		return errors.New("nonce too high")
+	}
+	return nil
 }
 
 func getDataHashKey(addr common.Address) []byte {
