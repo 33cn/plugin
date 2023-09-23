@@ -275,6 +275,8 @@ disableAddrIndex=false
 disableFeeIndex=false
 # 开启后会进一步精简localdb，用户查询合约功能会受影响，纯挖矿节点可以开启节省磁盘空间
 disableExecLocal=false
+#代理执行器地址
+proxyExecAddress="0x0000000000000000000000000000000000200005"
 [exec.sub.coins]
 friendExecer=["evm"]
 

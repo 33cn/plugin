@@ -337,7 +337,7 @@ function testcase_nonceTransfer(){
     #测试NONCE 过高的交易,current nonce=5,test nonce=6
     signData="f86e068502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821791a096dcece8240ff8af277ca419196b62f06c21a2171f310c91dc9deeacdeada363a03e21dc6c8abdb30842f0cf4aacf45202a3b71bb693f293bf872ac2f2efdee7a7"
     local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -z "${hash}" ]; then
+    if [ -z "${hash}" ]; then #hash为空
         echo "nonce =2,txhash should not empty"
         exit 1
     fi
@@ -348,7 +348,7 @@ function testcase_nonceTransfer(){
     # 补充nonce=5的交易current nonce=5
     signData="f86e058502540be40082520894de79a84dd3a16bb91044167075de17a1ca4b1d6b880429d069189e000080821792a0235130ba07aa2c3ff0c745a4e799f85fcce1da9f39776739fe969922a445f830a00bd3c8bd347b963ea310b7a98fa162049edbda4a3afceda7f82501713e79d500"
     local hash=$(${CLI} wallet send -d "${signData}" -e)
-    if [ -z "${hash}" ]; then
+    if [ -z "${hash}" ]; then #如果哈希为空
         echo "nonce =1,txhash should not empty"
         exit 1
     fi
@@ -365,6 +365,77 @@ function testcase_nonceTransfer(){
 
 }
 
+function testcase_evmProxyExec() {
+  #current nonce=6 代理执行交易：coins 转账 1024个币到地址 0xa42431Da868c58877a627CC71Dc95F01bf40c196
+
+  signData="f8e2068502540be4008389544094000000000000000000000000000000000020000580b87a0a05636f696e73123718010a3310808090bcfd02222a30786134323433314461383638633538383737613632374343373144633935463031626634306331393620a08d06309495e0fdf4beabe86e3a2a307861343234333144613836386335383837376136323743433731446339354630316266343063313936821792a0a3e5ba8a8a4c6516118a03e7dc8e3f8139c39ef992f3d5291b2cdcf59ee509d4a01fb946215d199d2e5142b7f51eb7c5eb13cf711657c603457d4216cd6f38788b"
+  local hash=$(${CLI} wallet send -d "${signData}" -e)
+   if [ -z "${hash}" ]; then #hash  为空
+          echo "proxy_exec txhash should not empty"
+          exit 1
+   fi
+
+   echo "proxy exec evm-coins txhash:${hash}"
+   #查询交易哈希
+   queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+   balance=$(${Chain33_CLI} account balance -a "0xa42431Da868c58877a627CC71Dc95F01bf40c196" -e coins | jq -r ".balance")
+   if [ "${balance}" != "1024.0000" ]; then
+       echo " balance  not correct, balance=${balance}"
+       exit 1
+   fi
+
+  #测试连续多笔代理执行币交易
+  #nonce =7
+  signProxyTx2="f8e2078502540be4008389544094000000000000000000000000000000000020000580b87a0a05636f696e73123718010a3310808090bcfd02222a30786134323433314461383638633538383737613632374343373144633935463031626634306331393620a08d06309495e0fdf4beabe86e3a2a307861343234333144613836386335383837376136323743433731446339354630316266343063313936821792a0eafe77e2fdf9b969738f72e2a78a1df9bf16fbcaf65f8fcfe48dc45856e234e9a04a461296c26e1cc7c3ccdf55a05963768ea3deba37a3d5d4ceb414863d0ab540"
+  #nonce =8
+  signProxyTx3="f8e2088502540be4008389544094000000000000000000000000000000000020000580b87a0a05636f696e73123718010a3310808090bcfd02222a30786134323433314461383638633538383737613632374343373144633935463031626634306331393620a08d06309495e0fdf4beabe86e3a2a307861343234333144613836386335383837376136323743433731446339354630316266343063313936821792a0ac08215d740b13c42513d4df8238f2cde0f6d82c3ad0d5f66688b90110f44e22a01db402b7811872d08eba34c36e74016fda651f67a5ea75620d8327d35f760a0b"
+  #测试代理执行与evm交易连续发送
+
+   echo "proxy exec evm-coins txhash:${hash}"
+   #先发送nonce过高的交易
+   local hash3=$(${CLI} wallet send -d "${signProxyTx3}" -e)
+   if [ -z "${hash3}" ]; then #hash  为空
+      echo "proxy_exec txhash should not empty"
+      exit 1
+   fi
+  echo "proxy exec evm-coins signProxyTx3  txhash:${hash3}"
+  local hash2=$(${CLI} wallet send -d "${signProxyTx2}" -e)
+   if [ -z "${hash2}" ]; then #hash  为空
+        echo "proxy_exec txhash should not empty"
+        exit 1
+   fi
+   echo "proxy exec evm-coins signProxyTx2  txhash:${hash2}"
+   #查询交易哈希
+   queryTransaction "${hash3}"  "jq -r .result.receipt.tyName" "ExecOk"
+   queryTransaction "${hash2}"  "jq -r .result.receipt.tyName" "ExecOk"
+   #测试nonce 错误的情况下的交易,发送nonce=7交易，此时current nonce=9
+   local hash4=$(${CLI} wallet send -d "${signProxyTx2}" -e)
+   if [ -n "${hash4}" ]; then #hash 不是空
+      echo "proxy_exec hash4 should  empty"
+      exit 1
+   fi
+
+   #current nonce=9,tx.nonce=10
+  signProxyTx4="f8e20a8502540be4008389544094000000000000000000000000000000000020000580b87a0a05636f696e73123718010a3310808090bcfd02222a30786134323433314461383638633538383737613632374343373144633935463031626634306331393620a08d06309495e0fdf4beabe86e3a2a307861343234333144613836386335383837376136323743433731446339354630316266343063313936821791a07bec65bb63ad3a9c3bac4270561cef094fafe3c3b79c8d05304c7c4864fe8500a07685c52f9dca3ad0acb83fdc7c8720235aa0c009580d8393e1cfe40f87337ac6"
+  local hash4=$(${CLI} wallet send -d "${signProxyTx2}" -e)
+  if [ -z "${hash4}" ]; then #hash  为空
+        echo "proxy_exec txhash should not empty"
+        exit 1
+  fi
+  #nonce过高，不会打包
+  echo "proxy exec evm-coins signProxyTx4  txhash:${hash4}"
+  #测试重复发送相同的交易，节点应该返回报错
+  local hash5=$(${CLI} wallet send -d "${signProxyTx2}" -e)
+  if [ -n "${hash4}" ]; then #hash  不为空
+          echo "proxy_exec txhash should  empty"
+          exit 1
+  fi
+
+
+
+
+
+}
 
 function run_testcase(){
   #1. 验证 coins 转账
@@ -379,6 +450,9 @@ function run_testcase(){
   testcase_transferErc20
   #6. 测试nonce 过低，过高 下的转账功能
   testcase_nonceTransfer
+  #7.  测试代理执行逻辑
+  testcase_evmProxyExec
+
 }
 function main() {
      echo "====================DAPP=${DAPP} main begin==================="

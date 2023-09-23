@@ -1,9 +1,9 @@
 module github.com/33cn/plugin
 
 go 1.16
-replace (
-	github.com/33cn/chain33 => ../chain33
-)
+
+replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20230922034056-ba8a8072d633
+
 require (
 	github.com/33cn/chain33 v1.68.1-0.20230516051810-c0873cb6709f
 	github.com/BurntSushi/toml v0.3.1
@@ -12,9 +12,12 @@ require (
 	github.com/NebulousLabs/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
 	github.com/NebulousLabs/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
 	github.com/OneOfOne/xxhash v1.2.5 // indirect
+	github.com/XiaoMi/pegasus-go-client v0.0.0-20210825081735-b8a75c1eac2b // indirect
+	github.com/apache/arrow/go/arrow v0.0.0-20200923215132-ac86123a3f01 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/btcsuite/btcd v0.22.0-beta
+	github.com/btcsuite/btcd v0.22.1
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/consensys/gnark v0.5.2
 	github.com/consensys/gnark-crypto v0.5.3
 	github.com/coreos/etcd v3.3.15+incompatible
@@ -23,13 +26,15 @@ require (
 	github.com/ethereum/go-ethereum v1.10.16
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/golang/snappy v0.0.4
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/holiman/uint256 v1.2.0
-	github.com/huin/goupnp v1.0.2
+	github.com/huin/goupnp v1.1.0
+	github.com/influxdata/influxdb v1.9.5 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/jinzhu/copier v0.3.6-0.20220210061904-7948fe2be217
+	github.com/libp2p/go-libp2p v0.27.9 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
@@ -39,14 +44,16 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/shopspring/decimal v1.2.0
 	github.com/spf13/cobra v1.1.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.2
 	github.com/tjfoc/gmsm v1.3.2
+	github.com/uber/jaeger-client-go v2.28.0+incompatible // indirect
 	github.com/valyala/fasthttp v1.34.0
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
+	golang.org/x/crypto v0.7.0
+	golang.org/x/net v0.8.0
+	golang.org/x/sys v0.7.0
+	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.40.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible

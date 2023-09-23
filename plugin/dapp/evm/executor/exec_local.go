@@ -25,17 +25,15 @@ func (evm *EVMExecutor) execEvmNonce(dbSet *types.LocalDBSet, tx *types.Transact
 	fromAddr := tx.From()
 	nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(fromAddr)
 	evmNonce := &types.EvmAccountNonce{}
-
+	nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
+	if err == nil {
+		_ = types.Decode(nonceV, evmNonce)
+	}
 	if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonceV2) {
-		elog.Info("execEvmNonce", "")
-		evmNonce.Nonce = tx.GetNonce() + 1
+		elog.Info("execEvmNonce", "ForkEvmExecNonceV2 process.....from", tx.From(), "tx.nonce", tx.GetNonce(), "dbnonce", evmNonce.GetNonce(), "txHash", common.ToHex(tx.Hash()))
+		evmNonce.Nonce = evmNonce.Nonce + 1
 		evmNonce.Addr = tx.From()
 	} else {
-		nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
-		if err == nil {
-			_ = types.Decode(nonceV, evmNonce)
-
-		}
 		elog.Info("execEvmNonce", "localdb nonce:", evmNonce.GetNonce(), "tx.From:", tx.From())
 		if evmNonce.GetNonce() == 0 { //等同于not found
 			evmNonce.Addr = tx.From()

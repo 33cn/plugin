@@ -42,6 +42,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		atomic.StoreInt32(&evm.vmCfg.Debug, int32(conf.GInt("evmDebugEnable")))
 		evmDebugInited = true
 	}
+	//nonce check
+	err = evm.checkEvmNonce(msg, tx.GetSignature().GetTy())
+	if err != nil {
+		return nil, err
+	}
+
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
 	return receipt, err
 }
@@ -49,11 +55,6 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
-	//nonce check
-	err = evm.checkEvmNonce(msg, sigType)
-	if err != nil {
-		return nil, err
-	}
 
 	cfg := evm.GetAPI().GetConfig()
 	// 获取当前区块的上下文信息构造EVM上下文
@@ -381,24 +382,23 @@ func (evm *EVMExecutor) getEvmExecAddress() string {
 }
 
 func (evm *EVMExecutor) checkEvmNonce(msg *common.Message, sigType int32) error {
-	if !types.IsEthSignID(sigType) || !evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonceV2) {
-		return nil
-	}
+	if types.IsEthSignID(sigType) && evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonceV2) {
+		nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(msg.From().String())
+		evmNonce := &types.EvmAccountNonce{}
+		nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
+		if err == nil {
+			_ = types.Decode(nonceV, evmNonce)
 
-	nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(msg.From().String())
-	evmNonce := &types.EvmAccountNonce{}
-	nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
-	if err == nil {
-		_ = types.Decode(nonceV, evmNonce)
-
-	}
-
-	if msg.Nonce() < evmNonce.GetNonce() {
-		return types.ErrLowNonce
-	} else if msg.Nonce() > evmNonce.GetNonce() {
-		return errors.New("nonce too high")
+		}
+		log.Info("EVMExecutor", "from", msg.From(), "checkEvmNonce localdb nonce:", evmNonce.Nonce, "tx.Nonce:", msg.Nonce())
+		if msg.Nonce() < evmNonce.GetNonce() {
+			return types.ErrLowNonce
+		} else if msg.Nonce() > evmNonce.GetNonce() {
+			return errors.New("nonce too high")
+		}
 	}
 	return nil
+
 }
 
 func getDataHashKey(addr common.Address) []byte {
