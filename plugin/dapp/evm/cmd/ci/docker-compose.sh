@@ -375,14 +375,16 @@ function testcase_evmProxyExec() {
           exit 1
    fi
 
-   echo "proxy exec evm-coins txhash:${hash}"
+   echo "check evm-coins txhash:${hash}"
    #查询交易哈希
    queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
+
    balance=$(${Chain33_CLI} account balance -a "0xa42431Da868c58877a627CC71Dc95F01bf40c196" -e coins | jq -r ".balance")
    if [ "${balance}" != "1024.0000" ]; then
        echo " balance  not correct, balance=${balance}"
        exit 1
    fi
+   echo "check balance success"
 
   #测试连续多笔代理执行币交易
   #nonce =8
@@ -391,7 +393,6 @@ function testcase_evmProxyExec() {
   signProxyTx3="f8e2098502540be4008389544094000000000000000000000000000000000020000580b87a0a05636f696e73123718010a3310808090bcfd02222a30786134323433314461383638633538383737613632374343373144633935463031626634306331393620a08d06309495e0fdf4beabe86e3a2a307861343234333144613836386335383837376136323743433731446339354630316266343063313936821792a08b83eebebcd0d34f39a61f7c7a288674dcc22bc457c57f65bd5bd9d59c024820a02e2dc411bf02c3eddbc85486894711e545b5619cdf5b6666a766a01f516d6acc"
   #测试代理执行与evm交易连续发送
 
-   echo "proxy exec evm-coins txhash:${hash}"
    #先发送nonce过高的交易
    local hash3=$(${CLI} wallet send -d "${signProxyTx3}" -e)
    if [ -z "${hash3}" ]; then #hash  为空
