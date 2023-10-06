@@ -515,7 +515,7 @@ func (policy *ticketPolicy) isAutoMining() bool {
 }
 
 func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey, addressID int32) ([]byte, error) {
-	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
+	addr := address.PubKeyToAddr(addressID, priv.PubKey().Bytes())
 	tlist, err := policy.getTickets(addr, 2)
 	if err != nil && err != types.ErrNotFound {
 		return nil, err
@@ -745,7 +745,7 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 		if hash != nil {
 			hashes = append(hashes, hash)
 		}
-		bizlog.Debug("ticketPolicy buyTicket", "Address", address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes()), "txhash", hex.EncodeToString(hash), "n", n)
+		bizlog.Debug("ticketPolicy buyTicket", "Address", address.PubKeyToAddr(addressID, priv.PubKey().Bytes()), "txhash", hex.EncodeToString(hash), "n", n)
 	}
 	bizlog.Debug("ticketPolicy buyTicket end")
 	return hashes, count, nil
@@ -789,7 +789,7 @@ func checkMinerWhiteList(addr string) bool {
 }
 
 func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.PrivKey, addressID int32) ([][]byte, int, error) {
-	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
+	addr := address.PubKeyToAddr(addressID, priv.PubKey().Bytes())
 	//判断是否绑定了coldaddr
 	addrs, err := policy.getMinerColdAddr(addr)
 	if err != nil {
@@ -855,7 +855,7 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 		if hashlist != nil {
 			hashes = append(hashes, hashlist...)
 		}
-		bizlog.Debug("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes()), "n", n)
+		bizlog.Debug("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddr(addressID, priv.PubKey().Bytes()), "n", n)
 	}
 	bizlog.Debug("ticketPolicy buyMinerAddrTicket end")
 	return hashes, count, nil

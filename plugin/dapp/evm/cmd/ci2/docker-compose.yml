@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  main:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+      - 8801
+
+  miner2:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+        - 8801
+
+  miner3:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+      - 8801
+  miner4:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+      - 8801
+      - 8545

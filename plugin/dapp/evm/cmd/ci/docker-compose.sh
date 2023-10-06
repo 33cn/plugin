@@ -427,7 +427,7 @@ function testcase_evmProxyExec() {
   echo "proxy exec evm-coins signProxyTx4  txhash:${hash4}"
   #测试重复发送相同的交易，节点应该返回报错
   local hash5=$(${CLI} wallet send -d "${signProxyTx2}" -e)
-  if [ -n "${hash4}" ]; then #hash  不为空
+  if [ -n "${hash5}" ]; then #hash  不为空
           echo "proxy_exec txhash should  empty"
           exit 1
   fi
