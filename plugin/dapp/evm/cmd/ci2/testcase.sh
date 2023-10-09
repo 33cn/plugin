@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function evmProxyExec() {
+function evm2() {
     echo "not implement"
     exit 1
 }

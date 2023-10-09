@@ -225,7 +225,7 @@ function  token_finish() {
 
 function token_preConfig() {
   echo "======= # token_preConfig ========="
-
+    sleep 1
     local rawTx=$(${Chain33_CLI}  config config_tx -c "token-blacklist" -o "add" -v "zzz")
      #如果返回空
     if [ -z "${rawTx}" ]; then
@@ -236,6 +236,7 @@ function token_preConfig() {
     echo "token_preConfig signedTx:${signedTx}"
     local hash=$(${Chain33_CLI} wallet send -d "${signedTx}"  )
     echo "token_preConfig hash: ${hash}"
+    sleep 1
     queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
     echo  "=== finish token_preConfig ==="
 
@@ -409,7 +410,7 @@ function testcase_evmProxyExec() {
    #查询交易哈希
    queryTransaction "${hash3}"  "jq -r .result.receipt.tyName" "ExecOk"
    queryTransaction "${hash2}"  "jq -r .result.receipt.tyName" "ExecOk"
-   #测试nonce 错误的情况下的交易,发送nonce=7交易，此时current nonce=9
+   #测试nonce 错误的情况下的交易,发送nonce=8交易，此时current nonce=10
    local hash4=$(${CLI} wallet send -d "${signProxyTx2}" -e)
    if [ -n "${hash4}" ]; then #hash 不是空
       echo "proxy_exec hash4 should  empty"
@@ -418,17 +419,17 @@ function testcase_evmProxyExec() {
 
    #current nonce=10,tx.nonce=11
   signProxyTx4="f8e20b8502540be4008389544094000000000000000000000000000000000020000580b87a0a05636f696e73123718010a3310808090bcfd02222a30786134323433314461383638633538383737613632374343373144633935463031626634306331393620a08d06309495e0fdf4beabe86e3a2a307861343234333144613836386335383837376136323743433731446339354630316266343063313936821791a0e5f6445a03b29391ad09c44a44f4f194b7a59112bfb67b74abf3b0ffaa44bf80a01a06ef7fd1472347af83827f2aa0966601a29a25c55bf4b218d6bcdb6ba06a37"
-  local hash4=$(${CLI} wallet send -d "${signProxyTx2}" -e)
+  local hash4=$(${CLI} wallet send -d "${signProxyTx4}" -e)
   if [ -z "${hash4}" ]; then #hash  为空
-        echo "proxy_exec txhash should not empty"
+        echo "proxy_exec txhash4 should not empty"
         exit 1
   fi
   #nonce过高，不会打包
   echo "proxy exec evm-coins signProxyTx4  txhash:${hash4}"
   #测试重复发送相同的交易，节点应该返回报错
-  local hash5=$(${CLI} wallet send -d "${signProxyTx2}" -e)
+  local hash5=$(${CLI} wallet send -d "${signProxyTx4}" -e)
   if [ -n "${hash5}" ]; then #hash  不为空
-          echo "proxy_exec txhash should  empty"
+          echo "proxy_exec txhash5 should  empty"
           exit 1
   fi
 

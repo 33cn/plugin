@@ -483,3 +483,249 @@ manager=[
 ethFeeAddr="832367164346888E248bd58b9A5f480299F1e88d"
 #二层的基于zk的chain33地址，注意:非基于sep256k1的普通的chain33地址，而是基于私钥产生的可用于二层的地址
 layer2FeeAddr="2c4a5c378be2424fa7585320630eceba764833f1ec1ffb2fafc1af97f27baf5a"
+
+
+
+[fork.system]
+ForkChainParamV1=0
+ForkChainParamV2=0
+ForkCheckTxDup=75260
+ForkBlockHash=209186
+ForkMinerTime=0
+ForkTransferExec=0
+ForkExecKey=0
+ForkWithdraw=0
+ForkTxGroup=408400
+ForkResetTx0=453400
+ForkExecRollback=706531
+ForkTxHeight=806578
+ForkCheckBlockTime=1200000
+ForkMultiSignAddress=1298600
+ForkStateDBSet=1572391
+ForkBlockCheck=1560000
+ForkLocalDBAccess=1572391
+ForkTxGroupPara=1687250
+ForkBase58AddressCheck=1800000
+# 这个fork只影响平行链，注册类似user.p.x.exec的driver，新开的平行链设为0即可，老的平行链要设置新的高度
+ForkEnableParaRegExec=0
+ForkCacheDriver=2580000
+ForkTicketFundAddrV1=3350000
+ForkRootHash=4500000
+#地址key格式化, 主要针对eth地址
+ForkFormatAddressKey=0
+ForkCheckEthTxSort=0
+ForkProxyExec=0
+
+[fork.sub.none]
+ForkUseTimeDelay=0
+
+[fork.sub.coins]
+Enable=0
+ForkFriendExecer=0
+
+[fork.sub.manage]
+Enable=120000
+ForkManageExec=400000
+ForkManageAutonomyEnable=10000000
+
+[fork.sub.accountmanager]
+Enable=0
+
+[fork.sub.autonomy]
+Enable=7200000
+ForkAutonomyDelRule=9500000
+ForkAutonomyEnableItem=10000000
+
+[fork.sub.blackwhite]
+Enable=850000
+ForkBlackWhiteV2=900000
+
+[fork.sub.cert]
+Enable=0
+
+[fork.sub.coinsx]
+Enable=0
+
+
+
+[fork.sub.dpos]
+Enable=0
+
+[fork.sub.echo]
+Enable=0
+
+[fork.sub.evm]
+Enable=0
+# EVM合约中的数据分散存储，支持大数据量
+ForkEVMState=650000
+# EVM合约状态数据生成哈希，保存在主链的StateDB中
+ForkEVMKVHash=1000000
+# EVM合约支持ABI绑定和调用
+ForkEVMABI=1250000
+# EVM合约用户金额冻结
+ForkEVMFrozen=1300000
+# EEVM 黄皮v1分叉高度
+ForkEVMYoloV1=9500000
+# EVM合约支持交易组
+ForkEVMTxGroup=0
+# EVM兼容base58及16进制地址混合调用处理
+ForkEVMMixAddress=0
+# EVM gas 计算调整
+ForkIntrinsicGas=0
+ForkEVMAddressInit=0
+ForkEvmExecNonce=0
+ForkEvmExecNonceV2=0
+
+[fork.sub.evmxgo]
+Enable=0
+[fork.sub.zksync]
+Enable=0
+[fork.sub.rollup]
+Enable=-1
+[fork.sub.exchange]
+Enable=0
+ForkFix1=0
+ForkParamV1 = 0
+ForkParamV2 = 0
+ForkParamV3 = 0
+ForkParamV4 = 0
+ForkParamV5 = 0
+ForkParamV6 = 0
+ForkParamV7 = 0
+ForkParamV8 = 0
+ForkParamV9 = 0
+ForkParamV10 = 0
+ForkParamV11 = 0
+ForkParamV12 = 0
+ForkParamV13 = 0
+ForkParamV14 = 0
+ForkParamV15 = 0
+ForkParamV16 = 0
+ForkParamV17 = 0
+ForkParamV18 = 0
+ForkParamV19 = 0
+ForkParamV20 = 0
+ForkParamV21 = 0
+ForkParamV22 = 0
+ForkParamV23 = 0
+ForkParamV24 = 0
+ForkParamV25 = 0
+ForkParamV26 = 0
+ForkParamV27 = 0
+ForkParamV28 = 0
+ForkParamV29 = 0
+
+[fork.sub.game]
+Enable=0
+
+[fork.sub.guess]
+Enable=0
+
+[fork.sub.hashlock]
+Enable=0
+ForkBadRepeatSecret=2715575
+
+[fork.sub.issuance]
+Enable=0
+ForkIssuanceTableUpdate=0
+ForkIssuancePrecision=0
+
+[fork.sub.collateralize]
+Enable=0
+ForkCollateralizeTableUpdate=0
+ForkCollateralizePrecision=0
+
+[fork.sub.jsvm]
+Enable=0
+
+[fork.sub.lottery]
+Enable=0
+
+[fork.sub.mix]
+Enable=0
+
+[fork.sub.multisig]
+Enable=0
+
+[fork.sub.norm]
+Enable=0
+
+[fork.sub.oracle]
+Enable=0
+
+[fork.sub.paracross]
+Enable=1600000
+ForkParacrossWithdrawFromParachain=1298600
+ForkParacrossCommitTx=1850000
+ForkLoopCheckCommitTxDone=3230000
+ForkParaAssetTransferRbk=4500000
+ForkParaSupervision=6000000
+ForkParaAutonomySuperGroup=10200000
+ForkParaFreeRegister=10700000
+#以下仅平行链适用
+ForkParaSelfConsStages=-1
+ForkParaFullMinerHeight=-1
+ForkParaRootHash=-1
+ForkParaCheckTx=0
+
+[fork.sub.pokerbull]
+Enable=0
+
+[fork.sub.privacy]
+Enable=980000
+
+[fork.sub.qbftNode]
+Enable=0
+
+[fork.sub.relay]
+Enable=570000
+
+[fork.sub.retrieve]
+Enable=0
+ForkRetrive=180000
+ForkRetriveAsset=3150000
+
+[fork.sub.storage]
+Enable=0
+ForkStorageLocalDB=0
+
+[fork.sub.ticket]
+Enable=0
+ForkTicketId=1062000
+ForkTicketVrf=1770000
+
+[fork.sub.token]
+Enable=100899
+ForkTokenBlackList=190000
+ForkBadTokenSymbol=184000
+ForkTokenPrice=560000
+ForkTokenSymbolWithNumber=1298600
+ForkTokenCheck=1600000
+# 增加Erc20合约对token 合约的支持
+ForkTokenEvm=0
+
+[fork.sub.trade]
+Enable=100899
+ForkTradeBuyLimit=301000
+ForkTradeAsset=1010000
+ForkTradeID=1450000
+ForkTradeFixAssetDB=2500000
+ForkTradePrice=3150000
+
+[fork.sub.unfreeze]
+Enable=0
+ForkTerminatePart=1298600
+ForkUnfreezeIDX=1450000
+
+[fork.sub.valnode]
+Enable=0
+
+[fork.sub.vote]
+Enable=0
+
+[fork.sub.wasm]
+Enable=0
+
+
+[fork.sub.store-kvmvccmavl]
+ForkKvmvccmavl=1870000
