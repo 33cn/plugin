@@ -11,29 +11,30 @@ jobs:
     name: Build
     runs-on: ubuntu-20.04
     steps:
-      - name: Set up Golang env
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
-        id: go
 
       - name: checkout repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           persist-credentials: false # <--- this
+      - uses: actions/setup-go@v2
+        with:
+          go-version-file: 'go.mod'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
 
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v4
         id: semantic
         with:
           branch: master
           extra_plugins: |
             conventional-changelog/conventional-changelog-jshint
-            @google/semantic-release-replace-plugin
-            @semantic-release/exec
-            @semantic-release/changelog
-            @semantic-release/git
+            semantic-release-replace-plugin@1.2.7
+            @semantic-release/exec@6
+            @semantic-release/changelog@6
+            @semantic-release/git@10
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 

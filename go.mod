@@ -1,9 +1,8 @@
 module github.com/33cn/plugin
 
-go 1.16
+go 1.19
 
 replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20231010060309-0a0498500034
-
 
 require (
 	github.com/33cn/chain33 v1.68.2-0.20230913033848-77916d34d300
@@ -230,4 +229,5 @@ require (
 	k8s.io/apimachinery v0.17.5 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
+
 )
