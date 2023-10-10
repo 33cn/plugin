@@ -6,6 +6,7 @@ package wallet
 
 import (
 	"encoding/hex"
+	"github.com/33cn/chain33/common/address"
 	"math/rand"
 	"sync"
 	"testing"
@@ -51,7 +52,7 @@ func TestForceCloseTicketList(t *testing.T) {
 
 	tlist := []*ty.Ticket{t1, t2, t3, t4, t5, t6}
 
-	r1, r2 := ticket.forceCloseTicketList(0, nil, tlist)
+	r1, r2 := ticket.forceCloseTicketList(0, nil, address.DefaultID, tlist)
 	assert.Equal(t, []byte(sendhash), r1)
 	assert.Nil(t, r2)
 
@@ -82,7 +83,7 @@ func TestCloseTicketsByAddr(t *testing.T) {
 	tlist := &ty.ReplyTicketList{Tickets: []*ty.Ticket{t1, t2, t3}}
 	qapi.On("Query", ty.TicketX, "TicketList", mock.Anything).Return(tlist, nil)
 
-	r1, r2 := ticket.closeTicketsByAddr(0, priKey)
+	r1, r2 := ticket.closeTicketsByAddr(0, priKey, address.DefaultID)
 	assert.Equal(t, []byte(sendhash), r1)
 	assert.Nil(t, r2)
 
@@ -104,7 +105,7 @@ func TestBuyTicketOne(t *testing.T) {
 	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
-	hash, r1, r2 := ticket.buyTicketOne(0, priKey)
+	hash, r1, r2 := ticket.buyTicketOne(0, priKey, address.DefaultID)
 	assert.Equal(t, []byte(sendhash), hash)
 	assert.Equal(t, 10, r1)
 	assert.Nil(t, r2)
@@ -134,7 +135,7 @@ func TestBuyMinerAddrTicketOne(t *testing.T) {
 	tlist := &types.ReplyStrings{Datas: []string{"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"}}
 	qapi.On("Query", ty.TicketX, "MinerSourceList", mock.Anything).Return(tlist, nil)
 
-	hashs, r2, r3 := ticket.buyMinerAddrTicketOne(0, priKey)
+	hashs, r2, r3 := ticket.buyMinerAddrTicketOne(0, priKey, address.DefaultID)
 	assert.Equal(t, [][]byte{[]byte(sendhash)}, hashs)
 	assert.Equal(t, 10, r2)
 	assert.Nil(t, r3)
@@ -260,12 +261,12 @@ func (_m *walletOperateMock) RegisterMineStatusReporter(reporter wcom.MineStatus
 }
 
 // SendToAddress provides a mock function with given fields: priv, addrto, amount, note, Istoken, tokenSymbol
-func (_m *walletOperateMock) SendToAddress(priv crypto.PrivKey, addrto string, amount int64, note string, Istoken bool, tokenSymbol string) (*types.ReplyHash, error) {
+func (_m *walletOperateMock) SendToAddress(priv crypto.PrivKey, addressID int32, addrto string, amount int64, note string, Istoken bool, tokenSymbol string) (*types.ReplyHash, error) {
 	return &types.ReplyHash{Hash: []byte(sendhash)}, nil
 }
 
 // SendTransaction provides a mock function with given fields: payload, execer, priv, to
-func (_m *walletOperateMock) SendTransaction(payload types.Message, execer []byte, priv crypto.PrivKey, to string) ([]byte, error) {
+func (_m *walletOperateMock) SendTransaction(payload types.Message, execer []byte, priv crypto.PrivKey, addressID int32, to string) (hash []byte, err error) {
 	return []byte(sendhash), nil
 }
 
