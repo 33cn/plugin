@@ -614,7 +614,8 @@ func (policy *ticketPolicy) processFees() error {
 	}
 
 	for _, acc := range acclist {
-		key, err := policy.getWalletOperate().GetPrivKeyByAddr(acc.GetAddr())
+		var key crypto.PrivKey
+		key, err = policy.getWalletOperate().GetPrivKeyByAddr(acc.GetAddr())
 		if err != nil {
 			continue
 		}

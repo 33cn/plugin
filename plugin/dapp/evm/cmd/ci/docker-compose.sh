@@ -477,6 +477,12 @@ function main() {
     #finish
     docker-compose down
     echo "===============DAPP=$DAPP main end==============="
+    echo "++++++++++++++++DAPP=$DAPP ci2  start++++++++++++++++"
+    mkdir -p ../evm2-ci && cp ../evm2/* ../evm2-ci
+    cp -n ../* ../evm2-ci && echo $?
+    cd ../evm2-ci  && pwd
+    ./docker-compose.sh build evm2
+    echo "++++++++++++++++DAPP=$DAPP ci2  end++++++++++++++++"
 }
 
 # start

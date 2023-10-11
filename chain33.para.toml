@@ -318,6 +318,7 @@ ForkRootHash=7200000
 #地址key格式化, 主要针对eth地址
 ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
+ForkProxyExec=0
 [fork.sub.none]
 ForkUseTimeDelay=0
 
@@ -399,7 +400,7 @@ ForkEVMMixAddress=0
 ForkIntrinsicGas=0
 ForkEVMAddressInit=0
 ForkEvmExecNonce=0
-
+ForkEvmExecNonceV2=0
 [fork.sub.blackwhite]
 Enable=0
 ForkBlackWhiteV2=0
