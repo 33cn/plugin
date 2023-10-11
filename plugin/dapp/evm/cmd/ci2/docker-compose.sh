@@ -3,6 +3,8 @@
 # shellcheck disable=SC2154
 # shellcheck disable=SC2155
 # shellcheck disable=SC2086
+# shellcheck disable=SC2004
+# shellcheck disable=SC1091
 
 # debug mode
 #set -x
