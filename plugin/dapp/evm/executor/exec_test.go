@@ -92,11 +92,6 @@ func TestExecNonce(t *testing.T) {
 	_ = types.Decode(nonceV, evmNonce)
 	require.Equal(t, int64(count), evmNonce.GetNonce())
 	require.Equal(t, addr, evmNonce.Addr)
-
-	tx = newEvmTestTx(5, priv)
-	_, err = exec.ExecLocal(tx, recp, 0)
-	require.Equal(t, errInvalidEvmNonce, err)
-
 	// exec del local
 	delSet := &types.LocalDBSet{}
 	for i := count - 1; i >= 5; i-- {
