@@ -234,7 +234,7 @@ func TestEVMExecutor_Check(t *testing.T) {
 	err = exec.CheckTx(nil, 0)
 	assert.Equal(t, err.Error(), "tx empty")
 	detailTxs.Txs = append(detailTxs.Txs, &ctypes.TransactionDetail{Tx: tx4, Index: 3})
-	err = exec.CheckTx(nil, 0)
-	assert.Equal(t, err, nil)
+	err = exec.CheckTx(tx4, 0)
+	assert.Equal(t, nil, err)
 
 }
