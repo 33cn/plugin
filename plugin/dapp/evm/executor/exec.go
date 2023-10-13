@@ -137,7 +137,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
-		log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
+		//log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
 		//设置eth 签名交易标签，如果msg.Value 不为0，则在evm 合约执行中从精度1e8转换为1e18
 		env.SetEthTxFlag(types.IsEthSignID(sigType))
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), callPara, context.GasLimit, msg.Value())
