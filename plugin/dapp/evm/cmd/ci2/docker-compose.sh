@@ -166,29 +166,30 @@ function run_testcase(){
   while true; do
   result=$(${CLI} account balance -a "${genesis}" -e ticket | jq -r ".balance")
   balance=$(printf "%.0f\n" $result)
-  echo "balance: $(("${balance}")) "
+  echo "balance: $(("${balance}")) ,timestamp:$(date +"%s")"
   if [ $((balance))  -ge ${targeBalance} ];then
     break
   fi
   sleep 1
   done
-  rawtx=$(${CLI} coins withdraw  -e ticket -a 110000  -n "take test money")
+
+  local rawtx=$(${CLI} coins withdraw  -e ticket -a 110000  -n "take test money")
   echo "withdraw coins rawtx:${rawtx}"
   #签名sign
-  signedRawTx=$(${CLI} wallet sign -d ${rawtx} -k ${genesiskey} -p 2)
+  local signedRawTx=$(${CLI} wallet sign -d ${rawtx} -k ${genesiskey} -p 2)
   echo "withdraw coins signedTx:${signedRawTx}"
   #发送交易
-  hash=$(${CLI} wallet  send -d ${signedRawTx})
+  local hash=$(${CLI} wallet  send -d ${signedRawTx})
   echo "withdraw coins hash:${hash}"
   chain33_QueryTx ${hash} ${MCli}
 
   #发送一部分coins到测试地址上
   echo "send coins to testaddress:${m4normalAddr}"
 
-  rawtx=$(${CLI} coins transfer -a 100001 -t ${m4normalAddr})
-  signedRawTx=$(${CLI} wallet sign -d ${rawtx} -k ${genesiskey} -p 2)
+  local rawtx=$(${CLI} coins transfer -a 100001 -t ${m4normalAddr})
+  local signedRawTx=$(${CLI} wallet sign -d ${rawtx} -k ${genesiskey} -p 2)
   #发送交易
-  hash=$(${CLI} wallet  send -d ${signedRawTx})
+  local hash=$(${CLI} wallet  send -d ${signedRawTx})
   echo "send coins hash:${hash}"
   chain33_QueryTx  ${hash} ${MCli}
   result=$(${CLI} account balance -a "${m4normalAddr}" -e coins)
@@ -196,15 +197,21 @@ function run_testcase(){
   balance_ret "${result}" "100001.0000"
   echo "balance check success"
   #发送一部分币到测试挖矿地址上
-  hash=$(${CLI}  send coins transfer -t ${m4minerAddr} -a 10 -k ${m2minerkey})
+  local hash=$(${CLI}  send coins transfer -t ${m4minerAddr} -a 10 -k ${m2minerkey})
   chain33_QueryTx ${hash} ${MCli}
   result=$(${CLI} account balance -a "${m4minerAddr}" -e coins)
   balance_ret "${result}" "10.0000"
 
 
-
+  #代理绑定验证
   bindMiner
+  #代理买票挖矿
   trans2Ticket
+  #关闭票数
+  closeColdAddrTicket
+  #取回ticket合约下的余额到coins
+  withdrawTicketBalance
+  #解绑
   closeBindMiner
   echo "=============test close bindminer end ^_^============="
   echo "========== all test finished ,end=========="
@@ -217,15 +224,15 @@ function bindMiner(){
       ECli=http://${ip}:8545
       #开始创建绑定交易
       echo "===========start test bindminer ============"
-      rawtx=$(${CLI} ticket bind -b ${m4minerAddr} -o ${m4normalAddr})
+      local rawtx=$(${CLI} ticket bind -b ${m4minerAddr} -o ${m4normalAddr})
       echo "bindminer rawtx:${rawtx}"
       #用代理交易处理
-      ethrawtx=$(${CLI} coins transfer_eth -d ${rawtx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
+      local ethrawtx=$(${CLI} coins transfer_eth -d ${rawtx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
       echo "binminer ethrawtx:${ethrawtx}"
       #签名
-      signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
+      local signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
       echo "bindminer signedrawTx:${signedRawTx}"
-      hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
+      local hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
       if [ -z "${hash}" ]; then
         exit 1
       fi
@@ -249,15 +256,16 @@ function closeBindMiner() {
     ECli=http://${ip}:8545
     #测试解除绑定挖矿
       echo "=============test close bindminer============="
-      rawtx=$(${CLI} ticket bind -b "" -o ${m4normalAddr})
+      local rawtx=$(${CLI} ticket bind -b "" -o ${m4normalAddr})
       echo "close bindminer rawtx:${rawtx}"
       #用代理交易处理
-      ethrawtx=$(${CLI} coins transfer_eth -d ${rawtx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
+      local ethrawtx=$(${CLI} coins transfer_eth -d ${rawtx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
       echo "close binminer ethrawtx:${ethrawtx}"
       #签名
-      signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
+      local signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
       echo "close bindminer signedrawTx:${signedRawTx}"
-      hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
+      local hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
+
       if [ -z "${hash}" ]; then
           exit 1
       fi
@@ -273,20 +281,98 @@ function closeBindMiner() {
 
       fi
 }
-function trans2Ticket() {
-     ip=$( ${CLI} net info | jq -r ".externalAddr")
+
+#关闭代理挖矿源地址的票
+function closeColdAddrTicket() {
+      echo "==========closeColdAddrTicket============"
+      ip=$( ${CLI} net info | jq -r ".externalAddr")
       MCli=http://${ip}:8801
       ECli=http://${ip}:8545
-     echo "==========test transfer coins to ticket contractor============"
-      rawtx=$(${CLI} coins send_exec -e ticket -a 100000)
+
+      ticketNum=$(${CLI} ticket count)
+      echo "ticketNum:${ticketNum} time:$(date +"%s") "
+      result=$(${CLI} account balance -a "${m4normalAddr}" -e ticket)
+      echo "ticket balance:${result}"
+      ${CLI} wallet auto_mine -f 0
+      sleep 10
+      hash=$(${CLI} ticket close | jq ".hashes")
+      preCut=${hash#*[}
+      realhash=$( echo ${preCut%]*}|tr -d '\n' |tr -d '"')
+      echo "ticket close hash:${realhash}"
+      if [ -z "${realhash}" ]; then
+          exit 1
+      fi
+      chain33_QueryTx ${realhash} ${MCli}
+      #Check ticket balance/frozen
+      while true; do
+        result=$(${CLI} account balance -a "${m4normalAddr}" -e ticket)
+        local balance=$(echo "${result}" | jq -r ".balance")
+        local frozen=$(echo "${result}" | jq -r ".frozen")
+        echo "ticket balance:${balance},addr:${m4normalAddr},timestamp:$(date +"%s")"
+        echo "ticket frozen:${frozen},addr:${m4normalAddr},timestamp:$(date +"%s")"
+        checkBalance=$(printf "%.0f\n" $frozen)
+        echo "checkBalance: $(("${checkBalance}")) "
+        if [ $((checkBalance))  -eq 0 ];then
+            break
+        fi
+        sleep 1
+      done
+
+
+}
+
+#withdrawTicketBalance 从ticket合约中取走coins
+function withdrawTicketBalance(){
+   echo "==========withdrawTicketBalance============"
+   ip=$( ${CLI} net info | jq -r ".externalAddr")
+   MCli=http://${ip}:8801
+   ECli=http://${ip}:8545
+   result=$(${CLI} account balance -a "${m4normalAddr}" -e ticket)
+   local balance=$(echo "${result}" | jq -r ".balance")
+   tbalance=$(printf "%.0f\n" $balance)
+   echo "ticket balance:${tbalance},addr:${m4normalAddr},timestamp:$(date +"%s")"
+
+   local withdrawTx=$( ${CLI} coins withdraw  -e ticket -a 100000  -n "take test money")
+   echo "withdraw rawTx:${withdrawTx}"
+    #用代理交易处理
+   local ethrawtx=$(${CLI} coins transfer_eth -d ${withdrawTx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
+   echo "withdraw ethrawtx:${ethrawtx}"
+   #签名
+   local signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
+   echo "withdraw signedrawTx:${signedRawTx}"
+   local hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
+   if [ -z "${hash}" ]; then
+      exit 1
+   fi
+   echo "withdraw hash:${hash}"
+   chain33_QueryTx ${hash} ${MCli}
+   #check coins balance
+   local result=$(${CLI} account balance -a "${m4normalAddr}" -e coins)
+   local balance=$(echo "${result}" | jq -r ".balance")
+   echo "coldminer addr coins balance:${balance}"
+   local checkBalance=$(printf "%.0f\n" $balance)
+   echo "checkBalance: $(("${checkBalance}")) "
+   if [ $((checkBalance))  -lt $((tbalance)) ]; then
+               exit 1
+   fi
+
+}
+#trans2Ticket 转账到ticket合约下进行挖矿操作
+function trans2Ticket() {
+      echo "==========test transfer coins to ticket contractor============"
+      ip=$( ${CLI} net info | jq -r ".externalAddr")
+      MCli=http://${ip}:8801
+      ECli=http://${ip}:8545
+      sleep 5
+      local rawtx=$(${CLI} coins send_exec -e ticket -a 100000)
       echo "send_exec 2 ticket rawTx:${rawtx}"
       #用代理交易处理
-      ethrawtx=$(${CLI} coins transfer_eth -d ${rawtx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
+      local ethrawtx=$(${CLI} coins transfer_eth -d ${rawtx} -t "0x0000000000000000000000000000000000200005" -f ${m4normalAddr} --rpc_laddr ${ECli} )
       echo "send_exec 2 ticket ethrawtx:${ethrawtx}"
       #签名
-      signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
+      local signedRawTx=$(${CLI} wallet sign -d ${ethrawtx} -p 2 -c 1999 -k ${m4addrkey} --rpc_laddr ${ECli} )
       echo "send_exec 2 ticket signedrawTx:${signedRawTx}"
-      hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
+      local hash=$(${CLI}  wallet send -d ${signedRawTx} -e --rpc_laddr ${ECli} )
       if [ -z "${hash}" ]; then
           exit 1
       fi

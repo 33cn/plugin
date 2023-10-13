@@ -54,6 +54,8 @@ testAddr="0xDe79A84DD3A16BB91044167075dE17a1CA4b1d6b"
 
 function start_docker() {
     echo "=========== # docker-compose ps ============="
+    cd ../evm2 && docker-compose ps && docker-compose down
+    cd ../evm-ci
     docker-compose ps
 
     # remove exsit container

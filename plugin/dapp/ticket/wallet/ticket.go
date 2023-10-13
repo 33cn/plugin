@@ -306,7 +306,6 @@ func (policy *ticketPolicy) forceCloseTicket(height int64, minerAddr string) (*t
 	if minerAddr != "" {
 		return policy.forceCloseTicketByReturnAddr(height, minerAddr)
 	}
-
 	return policy.forceCloseAllTicket(height)
 }
 
@@ -338,6 +337,9 @@ func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr
 			addressID = eth.ID
 		}
 		returnAddr := address.PubKeyToAddr(addressID, key.PubKey().Bytes())
+		if len(tListMap[returnAddr]) == 0 {
+			continue
+		}
 		hash, err := policy.forceCloseTicketList(height, key, addressID, tListMap[returnAddr])
 		if err != nil {
 			bizlog.Error("forceCloseTicketByAddr", "error", err, "returnAddr", returnAddr, "minerAddr", minerAddr)
@@ -417,11 +419,9 @@ func (policy *ticketPolicy) getForceCloseTickets(addr string) ([]*ty.Ticket, err
 	if err2 != nil && err2 != types.ErrNotFound {
 		return nil, errors.Wrap(err2, "status=2")
 	}
-
 	if len(tlist1)+len(tlist2) <= 0 {
 		return nil, errors.Wrapf(types.ErrNotFound, "addr=%s no tickets in status=1&2", addr)
 	}
-
 	return append(tlist1, tlist2...), nil
 }
 
@@ -431,8 +431,10 @@ func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivK
 	now := types.Now().Unix()
 	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
 	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
+
 	for _, t := range tlist {
 		if !t.IsGenesis {
+
 			if t.Status == ty.TicketOpened && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
