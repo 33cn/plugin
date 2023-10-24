@@ -74,9 +74,9 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			return nil, err
 		}
 	}
-	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evm-execaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 
-		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value(), "nonce:", msg.Nonce())
+		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value(), "nonce:", msg.Nonce(), "gas:", msg.GasLimit())
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
 	}
@@ -149,7 +149,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	if isCreate {
 		logMsg = "create contract details:"
 	}
-	log.Info(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "leftOverGas:", leftOverGas)
+	log.Info(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "leftOverGas:", leftOverGas,
+		"msg.GasLimit:", msg.GasLimit())
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
 		var visiableOut []byte
@@ -163,7 +164,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		ret = visiableOut
 
 		vmerr = fmt.Errorf("%s,detail: %s:", vmerr.Error(), string(ret))
-		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret))
+		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret), "leftOverGas:", leftOverGas, "usedGas:", usedGas)
 		return receipt, vmerr
 	}
 
@@ -175,6 +176,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		if curVer != nil && snapshot >= curVer.GetID() && curVer.GetID() > -1 {
 			evm.mStateDB.RevertToSnapshot(snapshot)
 		}
+		log.Error("innerExec evm contract exec error", "overflow", overflow, "usedFee:", usedFee, "txFee:", txFee)
 		return receipt, model.ErrOutOfGas
 	}
 
@@ -323,6 +325,11 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 }
 
 func (evm *EVMExecutor) collectEvmTxLog(txHash []byte, cr *evmtypes.ReceiptEVMContract, receipt *types.Receipt) {
+	cfg := evm.GetAPI().GetConfig()
+	conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+	if !conf.IsEnable("debugEvmTxLog") { //避免过多evm交易导致节点log 刷屏
+		return
+	}
 	log.Debug("evm collect begin")
 	log.Debug("Tx info", "txHash", common.Bytes2Hex(txHash), "height", evm.GetHeight())
 	log.Debug("ReceiptEVMContract", "data", fmt.Sprintf("caller=%v, name=%v, addr=%v, usedGas=%v, ret=%v", cr.Caller, cr.ContractName, cr.ContractAddr, cr.UsedGas, common.Bytes2Hex(cr.Ret)))

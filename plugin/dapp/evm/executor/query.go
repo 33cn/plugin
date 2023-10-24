@@ -98,9 +98,24 @@ func (evm *EVMExecutor) quick_estimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	if callData == nil {
 		return nil, errors.New("nil receipt")
 	}
-	log.Info("quick_estimateGas", "gasused:", callData.UsedGas)
+
 	result := &evmtypes.EstimateEVMGasResp{}
-	result.Gas = callData.UsedGas + uint64(float64(callData.UsedGas)*0.2)
+
+	conf := types.ConfSub(evm.GetAPI().GetConfig(), evmtypes.ExecutorName)
+	gasmultiple, err := conf.G("gasmultiple")
+	if err == nil {
+		multiple, ok := gasmultiple.(float64)
+		if ok {
+			if multiple < 1.3 { //quick gas 默认增加30%
+				multiple = 1.3
+			}
+			result.Gas = uint64(float64(result.Gas) * multiple)
+		}
+
+	} else {
+		result.Gas = callData.UsedGas + uint64(float64(callData.UsedGas)*0.3)
+	}
+	log.Info("quick_estimateGas", "from:", from, "gasused:", callData.UsedGas, "return Gas:", result.Gas, "gasmultiple:", gasmultiple)
 	return result, nil
 }
 
@@ -309,14 +324,14 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	return ret, nil
 }
 
-//Query_GetNonce 获取普通账户的Nonce
+// Query_GetNonce 获取普通账户的Nonce
 func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Message, error) {
 	evm.CheckInit()
 	nonce := evm.mStateDB.GetAccountNonce(in.Address)
 	return &evmtypes.EvmGetNonceRespose{Nonce: int64(nonce)}, nil
 }
 
-//Query_GetPackData ...
+// Query_GetPackData ...
 func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types.Message, error) {
 	evm.CheckInit()
 	_, packData, err := evmAbi.Pack(in.Parameter, in.Abi, false)
@@ -328,7 +343,7 @@ func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types
 	return &evmtypes.EvmGetPackDataRespose{PackData: packStr}, nil
 }
 
-//Query_GetUnpackData ...
+// Query_GetUnpackData ...
 func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (types.Message, error) {
 	evm.CheckInit()
 	data, err := common.FromHex(in.Data)
@@ -349,7 +364,7 @@ func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (t
 	return &ret, nil
 }
 
-//Query_GetCode 获取合约地址下的code
+// Query_GetCode 获取合约地址下的code
 func (evm *EVMExecutor) Query_GetCode(in *evmtypes.CheckEVMAddrReq) (types.Message, error) {
 	evm.CheckInit()
 	addrStr := in.Addr

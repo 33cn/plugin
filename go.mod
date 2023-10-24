@@ -2,10 +2,8 @@ module github.com/33cn/plugin
 
 go 1.19
 
-replace github.com/33cn/chain33 => github.com/libangzhu/chain33 v0.0.0-20231012033435-78121eeec4a4
-
 require (
-	github.com/33cn/chain33 v1.68.2-0.20230913033848-77916d34d300
+	github.com/33cn/chain33 v1.68.2-0.20231020043313-dff390b55700
 	github.com/BurntSushi/toml v1.1.0
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
@@ -37,9 +35,9 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.34.0
-	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.8.0
-	golang.org/x/sys v0.7.0
+	golang.org/x/crypto v0.14.0
+	golang.org/x/net v0.17.0
+	golang.org/x/sys v0.13.0
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -219,7 +217,7 @@ require (
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

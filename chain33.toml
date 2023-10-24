@@ -117,6 +117,7 @@ httpApi=["eth","web3","personal","admin","net"]
 # websocket 绑定地址
 wsAddr="localhost:8546"
 wsApi=["eth","web3","personal","admin","net"]
+gasmultiple=2
 
 [mempool]
 name="price"
