@@ -7,7 +7,6 @@ package executor
 import (
 	"bytes"
 	"errors"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"github.com/33cn/chain33/types"
@@ -23,31 +22,35 @@ func (evm *EVMExecutor) execEvmNonce(dbSet *types.LocalDBSet, tx *types.Transact
 	if !types.IsEthSignID(tx.GetSignature().GetTy()) {
 		return nil
 	}
-
 	fromAddr := tx.From()
 	nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(fromAddr)
 	evmNonce := &types.EvmAccountNonce{}
 	nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
 	if err == nil {
 		_ = types.Decode(nonceV, evmNonce)
-
 	}
-
-	if evmNonce.GetNonce() == 0 { //等同于not found
+	if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonceV2) {
+		elog.Info("execEvmNonce", "ForkEvmExecNonceV2 process.....from", tx.From(), "tx.nonce", tx.GetNonce(), "dbnonce", evmNonce.GetNonce(), "txHash", common.ToHex(tx.Hash()))
+		evmNonce.Nonce = evmNonce.Nonce + 1
 		evmNonce.Addr = tx.From()
-		evmNonce.Nonce = 1
 	} else {
-		if evmNonce.GetNonce() == tx.GetNonce() {
-			evmNonce.Nonce++
-
-		} else if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) { //分叉之后的逻辑
-			elog.Error("execEvmNonce err", "height", evm.GetHeight(), "idx", index, "txHash", common.ToHex(tx.Hash()),
-				"from", fromAddr, "expect", evmNonce.GetNonce(), "actual", tx.GetNonce())
-			return errInvalidEvmNonce
+		elog.Info("execEvmNonce", "localdb nonce:", evmNonce.GetNonce(), "tx.From:", tx.From())
+		if evmNonce.GetNonce() == 0 { //等同于not found
+			evmNonce.Addr = tx.From()
+			evmNonce.Nonce = 1
 		} else {
-			//分叉之前 不做任何处理
-		}
+			if evmNonce.GetNonce() == tx.GetNonce() {
+				evmNonce.Nonce++
 
+			} else if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonce) { //分叉之后的逻辑
+				elog.Error("execEvmNonce err", "height", evm.GetHeight(), "idx", index, "txHash", common.ToHex(tx.Hash()),
+					"from", fromAddr, "expect", evmNonce.GetNonce(), "actual", tx.GetNonce())
+				return errInvalidEvmNonce
+			} else {
+				//分叉之前 不做任何处理
+			}
+
+		}
 	}
 
 	dbSet.KV = append(dbSet.KV, &types.KeyValue{Key: nonceLocalKey, Value: types.Encode(evmNonce)})
@@ -65,7 +68,6 @@ func (evm *EVMExecutor) ExecLocal(tx *types.Transaction, receipt *types.ReceiptD
 	if err = evm.execEvmNonce(set, tx, index); err != nil {
 		return nil, err
 	}
-
 	if receipt.GetTy() != types.ExecOk {
 		// 失败交易也需要记录evm nonce, 增加自动回滚处理
 		if types.IsEthSignID(tx.GetSignature().GetTy()) {

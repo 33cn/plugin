@@ -53,7 +53,8 @@ const (
 	// ForkEVMAddressInit 初始化以太坊格式地址
 	ForkEVMAddressInit = "ForkEVMAddressInit"
 	//ForkEvmExecNonce 执行器校验nonce
-	ForkEvmExecNonce = "ForkEvmExecNonce"
+	ForkEvmExecNonce   = "ForkEvmExecNonce"
+	ForkEvmExecNonceV2 = "ForkEvmExecNonceV2"
 )
 
 var (

@@ -6,7 +6,9 @@ package executor
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"math"
 	"strings"
 	"sync/atomic"
@@ -40,6 +42,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		atomic.StoreInt32(&evm.vmCfg.Debug, int32(conf.GInt("evmDebugEnable")))
 		evmDebugInited = true
 	}
+	//nonce check
+	err = evm.checkEvmNonce(msg, tx.GetSignature().GetTy())
+	if err != nil {
+		return nil, err
+	}
+
 	receipt, err := evm.innerExec(msg, tx.Hash(), tx.GetSignature().GetTy(), index, msg.GasLimit(), false)
 	return receipt, err
 }
@@ -47,6 +55,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
+
 	cfg := evm.GetAPI().GetConfig()
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
@@ -56,7 +65,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	isCreate := strings.Compare(msg.To().String(), execAddr) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), execAddr) == 0 && 0 == len(msg.Data())
 	//coins转账，para数据作为备注交易
-
 	isTransferNote := strings.Compare(msg.To().String(), execAddr) != 0 && !env.StateDB.Exist(msg.To().String()) && len(msg.Para()) > 0 && msg.Value() != 0
 	var gas uint64
 	if evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkIntrinsicGas) {
@@ -66,9 +74,9 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			return nil, err
 		}
 	}
-	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evmaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
+	log.Info("innerExec", "isCreate", isCreate, "isTransferOnly", isTransferOnly, "isTransferNote:", isTransferNote, "evm-execaddr", execAddr, "msg.From:", msg.From(), "msg.To", msg.To().String(),
 
-		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value())
+		"data size:", len(msg.Data()), "para size:", len(msg.Para()), "readOnly:", readOnly, "intrinsicGas:", gas, "value:", msg.Value(), "nonce:", msg.Nonce(), "gas:", msg.GasLimit())
 	if msg.GasLimit() < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", model.ErrIntrinsicGas, msg.GasLimit(), gas)
 	}
@@ -129,7 +137,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
 		callPara := msg.Para()
-		log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
+		//log.Debug("call contract ", "callPara", common.Bytes2Hex(callPara))
 		//设置eth 签名交易标签，如果msg.Value 不为0，则在evm 合约执行中从精度1e8转换为1e18
 		env.SetEthTxFlag(types.IsEthSignID(sigType))
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), callPara, context.GasLimit, msg.Value())
@@ -141,7 +149,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	if isCreate {
 		logMsg = "create contract details:"
 	}
-	log.Info(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "leftOverGas:", leftOverGas)
+	log.Info(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "leftOverGas:", leftOverGas,
+		"msg.GasLimit:", msg.GasLimit())
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
 		var visiableOut []byte
@@ -155,7 +164,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		ret = visiableOut
 
 		vmerr = fmt.Errorf("%s,detail: %s:", vmerr.Error(), string(ret))
-		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret))
+		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret), "leftOverGas:", leftOverGas, "usedGas:", usedGas)
 		return receipt, vmerr
 	}
 
@@ -167,6 +176,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		if curVer != nil && snapshot >= curVer.GetID() && curVer.GetID() > -1 {
 			evm.mStateDB.RevertToSnapshot(snapshot)
 		}
+		log.Error("innerExec evm contract exec error", "overflow", overflow, "usedFee:", usedFee, "txFee:", txFee)
 		return receipt, model.ErrOutOfGas
 	}
 
@@ -207,7 +217,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	return receipt, nil
 }
 
-//intrinsicGas 计算固定gas消费
+// intrinsicGas 计算固定gas消费
 func intrinsicGas(msg *common.Message, isContractCreation bool, isEIP2028 bool) (uint64, error) {
 	var data []byte
 	if isContractCreation {
@@ -315,6 +325,11 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 }
 
 func (evm *EVMExecutor) collectEvmTxLog(txHash []byte, cr *evmtypes.ReceiptEVMContract, receipt *types.Receipt) {
+	cfg := evm.GetAPI().GetConfig()
+	conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+	if !conf.IsEnable("debugEvmTxLog") { //避免过多evm交易导致节点log 刷屏
+		return
+	}
 	log.Debug("evm collect begin")
 	log.Debug("Tx info", "txHash", common.Bytes2Hex(txHash), "height", evm.GetHeight())
 	log.Debug("ReceiptEVMContract", "data", fmt.Sprintf("caller=%v, name=%v, addr=%v, usedGas=%v, ret=%v", cr.Caller, cr.ContractName, cr.ContractAddr, cr.UsedGas, common.Bytes2Hex(cr.Ret)))
@@ -371,6 +386,26 @@ func (evm *EVMExecutor) getEvmExecAddress() string {
 	}
 
 	return evmExecAddress
+}
+
+func (evm *EVMExecutor) checkEvmNonce(msg *common.Message, sigType int32) error {
+	if types.IsEthSignID(sigType) && evm.GetAPI().GetConfig().IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEvmExecNonceV2) {
+		nonceLocalKey := secp256k1eth.CaculCoinsEvmAccountKey(msg.From().String())
+		evmNonce := &types.EvmAccountNonce{}
+		nonceV, err := evm.GetLocalDB().Get(nonceLocalKey)
+		if err == nil {
+			_ = types.Decode(nonceV, evmNonce)
+
+		}
+		log.Info("EVMExecutor", "from", msg.From(), "checkEvmNonce localdb nonce:", evmNonce.Nonce, "tx.Nonce:", msg.Nonce())
+		if msg.Nonce() < evmNonce.GetNonce() {
+			return types.ErrLowNonce
+		} else if msg.Nonce() > evmNonce.GetNonce() {
+			return errors.New("nonce too high")
+		}
+	}
+	return nil
+
 }
 
 func getDataHashKey(addr common.Address) []byte {

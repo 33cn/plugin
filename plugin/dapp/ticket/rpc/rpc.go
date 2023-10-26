@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"golang.org/x/net/context"
+	"strings"
 )
 
 func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
@@ -28,6 +29,11 @@ func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindM
 
 // CreateBindMiner 创建绑定挖矿
 func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
+	//调整十六进制地址大小写转换,如果不进行大小写转换，在TicketBind 进行action.fromaddr != tbind.ReturnAddress 地址校验的时候会返回ErrFromAddr
+	if common.IsHex(in.OriginAddr) {
+		in.OriginAddr = strings.ToLower(in.OriginAddr)
+	}
+
 	if in.BindAddr != "" {
 		err := address.CheckAddress(in.BindAddr, -1)
 		if err != nil {

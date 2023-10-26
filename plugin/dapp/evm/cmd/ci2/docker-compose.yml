@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  chain33:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+      - 8801
+      - 8545
+
+  chain32:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+        - 8801
+
+  chain31:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+      - 8801
+  chain30:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.proxyminer.toml"
+    expose:
+      - 8801
+      - 8545

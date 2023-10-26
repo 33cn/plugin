@@ -16,7 +16,7 @@ pipeline {
         gitlabBuilds(builds: ['check', 'build', 'test', 'deploy'])
         checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
-
+    tools {go 'go1.19'}
     stages {
         stage('check') {
             steps {

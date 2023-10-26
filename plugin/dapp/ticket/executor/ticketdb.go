@@ -40,7 +40,7 @@ type DB struct {
 	prevstatus int32
 }
 
-//GetRealPrice 获取真实的价格
+// GetRealPrice 获取真实的价格
 func (t *DB) GetRealPrice(cfg *types.Chain33Config) int64 {
 	if t.GetPrice() == 0 {
 		cfg := ty.GetTicketMinerParam(cfg, cfg.GetFork("ForkChainParamV1"))
@@ -109,7 +109,7 @@ func (t *DB) Save(db dbm.KV) {
 	}
 }
 
-//Key address to save key
+// Key address to save key
 func Key(id string) (key []byte) {
 	key = append(key, ticketKeyPrefix...)
 	key = append(key, []byte(id)...)
@@ -207,10 +207,11 @@ func (action *Action) getBind(addr string) string {
 	return bind.MinerAddress
 }
 
-//TicketBind 授权某个地址进行挖矿
+// TicketBind 授权某个地址进行挖矿
 func (action *Action) TicketBind(tbind *ty.TicketBind) (*types.Receipt, error) {
 	//todo: query address is a minered address
 	if action.fromaddr != tbind.ReturnAddress {
+		tlog.Error("TicketBind", "from:", action.fromaddr, " tbind.ReturnAddress:", tbind.ReturnAddress)
 		return nil, types.ErrFromAddr
 	}
 	//"" 表示设置为空

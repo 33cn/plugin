@@ -156,12 +156,12 @@ func (evm *EVM) SetMaxCodeSize(maxCodeSize int) {
 	evm.maxCodeSize = maxCodeSize
 }
 
-//SetEthTxFlag 设置eth tx 标志
+// SetEthTxFlag 设置eth tx 标志
 func (evm *EVM) SetEthTxFlag(ok bool) {
 	evm.isEthTx = ok
 }
 
-//CheckIsEthTx  查看是否是eth tx
+// CheckIsEthTx  查看是否是eth tx
 func (evm *EVM) CheckIsEthTx() bool {
 	return evm.isEthTx
 }
@@ -193,7 +193,7 @@ func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error
 // 根据合约地址调用已经存在的合约，input为合约调用参数
 // 合约调用逻辑支持在合约调用的同时进行向合约转账的操作
 func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas uint64, value uint64) (ret []byte, snapshot int, leftOverGas uint64, err error) {
-	log.Info("Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value, "inputsize:", len(input), "inputData:", common.Bytes2Hex(input))
+	log.Info("Evm Call", "caller:", caller.Address().String(), "addr:", addr.String(), "gas:", gas, "isEtx:", evm.CheckIsEthTx(), "value:", value, "inputsize:", len(input))
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		log.Error("Call", "preCheck:", err)
@@ -280,6 +280,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		if err != model.ErrExecutionReverted {
 			gas = 0
 		}
+		log.Error("Evm Call err not nil", "caller:", caller.Address().String(), "err", err, "inputData:", common.Bytes2Hex(input))
 	}
 	return ret, snapshot, gas, err
 }
@@ -558,14 +559,14 @@ func (evm *EVM) CheckPrecompile(addr common.Address) bool {
 	return ok
 }
 
-//conversion2EthPrecision 把底层精度转换为eth 精度
+// conversion2EthPrecision 把底层精度转换为eth 精度
 func (evm *EVM) conversion2EthPrecision(num *big.Int) *big.Int {
 	ethUnit := big.NewInt(1e18)
 	mulUnit := new(big.Int).Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision()))
 	return new(big.Int).Mul(num, mulUnit)
 }
 
-//ethPrecision2Chain33Standard 把eth 表示的精度值转换为底层精度值
+// ethPrecision2Chain33Standard 把eth 表示的精度值转换为底层精度值
 func (evm *EVM) ethPrecision2Chain33Standard(num *big.Int) *big.Int {
 	ethUnit := big.NewInt(1e18)
 	return new(big.Int).Div(num, ethUnit.Div(ethUnit, big.NewInt(1).SetInt64(evm.cfg.GetCoinPrecision())))

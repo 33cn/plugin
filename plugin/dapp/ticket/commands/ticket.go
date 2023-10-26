@@ -8,8 +8,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/33cn/chain33/common"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
@@ -112,6 +114,9 @@ func bindMiner(cmd *cobra.Command, args []string) {
 	//a, _ := common.FromHex(key)
 	//privKey, _ := c.PrivKeyFromBytes(a)
 	//originAddr := account.PubKeyToAddress(privKey.PubKey().Bytes()).String()
+	if common.IsHex(originAddr) {
+		originAddr = strings.ToLower(originAddr)
+	}
 	ta := &ty.TicketAction{}
 	tBind := &ty.TicketBind{
 		MinerAddress:  bindAddr,
