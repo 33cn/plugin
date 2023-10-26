@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.19
 
 require (
-	github.com/33cn/chain33 v1.68.2-0.20231020043313-dff390b55700
+	github.com/33cn/chain33 v1.68.2-0.20231026110314-eb340f7500d5
 	github.com/BurntSushi/toml v1.1.0
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
