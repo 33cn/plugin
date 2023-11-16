@@ -135,12 +135,12 @@ timeoutVoting=3000
 timeoutWaitNotify=2000
 createEmptyBlocks=false
 createEmptyBlocksInterval=0
-validatorNodes=["127.0.0.1:36676"]
+validatorNodes=["127.0.0.1:36656"]
 delegateNum=1
 blockInterval=2
 continueBlockNum=12
 isValidator=true
-port="36676"
+port="36656"
 #shuffleType为1表示使用固定出块顺序，为2表示使用vrf信息进行出块顺序洗牌
 shuffleType=1
 #是否更新topN，如果为true，根据下面几个配置项定期更新topN节点;如果为false，则一直使用初始配置的节点，不关注投票结果
@@ -279,7 +279,7 @@ timeoutVoting=3000
 timeoutWaitNotify=2000
 createEmptyBlocks=false
 createEmptyBlocksInterval=0
-validatorNodes=["127.0.0.1:36676"]
+validatorNodes=["127.0.0.1:36656"]
 delegateNum=1
 blockInterval=2
 continueBlockNum=12
