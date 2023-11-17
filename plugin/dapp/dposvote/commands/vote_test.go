@@ -148,6 +148,7 @@ createEmptyBlocks=false
 createEmptyBlocksInterval=0
 validatorNodes=["127.0.0.1:46656"]
 delegateNum=1
+port="36686"
 blockInterval=2
 continueBlockNum=12
 isValidator=true
