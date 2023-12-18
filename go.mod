@@ -2,7 +2,6 @@ module github.com/33cn/plugin
 
 go 1.19
 
-
 require (
 	github.com/33cn/chain33 v1.68.2-0.20231115062606-d887f73e3c2d
 	github.com/BurntSushi/toml v1.1.0
@@ -36,9 +35,9 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.34.0
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.17.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/sys v0.15.0
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -218,7 +217,7 @@ require (
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
