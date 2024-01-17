@@ -130,6 +130,11 @@ maxTxFeeRate=10000000
 # 单笔交易最大的手续费, 10 coins
 maxTxFee=1000000000
 isLevelFee=true
+
+[mver.mempool.ForkMaxTxFeeV1]
+# 单笔交易最大的手续费, 50 coins
+maxTxFee=5000000000
+
 [mempool.sub.timeline]
 poolCacheSize=10240
 
@@ -515,6 +520,7 @@ ForkRootHash=4500000
 ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
+ForkMaxTxFeeV1=0
 
 [fork.sub.none]
 ForkUseTimeDelay=0
@@ -575,7 +581,6 @@ ForkIntrinsicGas=0
 ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEvmExecNonceV2=0
-
 [fork.sub.evmxgo]
 Enable=0
 [fork.sub.zksync]
