@@ -78,7 +78,7 @@ func createTxsGroup(cfg *types.Chain33Config, txs []*types.Transaction) ([]*type
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(cfg, 0, cfg.GetMinTxFeeRate(), cfg.GetMaxTxFee())
+	err = group.Check(cfg, 0, cfg.GetMinTxFeeRate(), cfg.GetMaxTxFee(0))
 	if err != nil {
 		return nil, err
 	}

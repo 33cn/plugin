@@ -665,7 +665,7 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GetMinTxFeeRate(), chain33TestCfg.GetMaxTxFee())
+	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GetMinTxFeeRate(), chain33TestCfg.GetMaxTxFee(0))
 	if err != nil {
 		return nil, err
 	}
