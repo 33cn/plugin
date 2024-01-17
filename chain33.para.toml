@@ -99,6 +99,10 @@ poolCacheSize=10240
 minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
+[mver.mempool.ForkMaxTxFeeV1]
+# 单笔交易最大的手续费, 50 coins
+maxTxFee=5000000000
+
 [consensus]
 name="para"
 genesisBlockTime=1514533390
@@ -319,6 +323,8 @@ ForkRootHash=7200000
 ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
+ForkMaxTxFeeV1=0
+
 [fork.sub.none]
 ForkUseTimeDelay=0
 
