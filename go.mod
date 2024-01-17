@@ -4,7 +4,7 @@ go 1.19
 
 
 require (
-	github.com/33cn/chain33 v1.68.2-0.20231115062606-d887f73e3c2d
+	github.com/33cn/chain33  v1.68.2-0.20240117085747-5de6bc4d527f
 	github.com/BurntSushi/toml v1.1.0
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
