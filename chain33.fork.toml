@@ -225,6 +225,7 @@ ForkTradePrice=3150000
 Enable=0
 ForkTerminatePart=1298600
 ForkUnfreezeIDX=1450000
+ForkFormatWithdrawAddr=0
 
 [fork.sub.valnode]
 Enable=0

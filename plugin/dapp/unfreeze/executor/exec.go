@@ -6,6 +6,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -17,7 +18,10 @@ func (u *Unfreeze) Exec_Create(payload *pty.UnfreezeCreate, tx *types.Transactio
 	if payload.AssetExec == "" || payload.AssetSymbol == "" || payload.TotalCount <= 0 || payload.Means == "" {
 		return nil, types.ErrInvalidParam
 	}
-
+	if u.GetAPI().GetConfig().IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkFormatWithdrawAddr) &&
+		address.IsEthAddress(payload.Beneficiary) {
+		payload.Beneficiary = address.ToLower(payload.Beneficiary)
+	}
 	unfreeze, err := u.newEntity(payload, tx)
 	if err != nil {
 		uflog.Error("unfreeze create entity", "addr", tx.From(), "payload", payload)
@@ -56,6 +60,11 @@ func (u *Unfreeze) Exec_Withdraw(payload *pty.UnfreezeWithdraw, tx *types.Transa
 	unfreeze, err := loadUnfreeze(payload.UnfreezeID, u.GetStateDB())
 	if err != nil {
 		return nil, err
+	}
+	// 统一eth地址格式
+	if cfg.IsDappFork(u.GetHeight(), pty.UnfreezeX, pty.ForkFormatWithdrawAddr) &&
+		address.IsEthAddress(unfreeze.Beneficiary) {
+		unfreeze.Beneficiary = address.ToLower(unfreeze.Beneficiary)
 	}
 	if unfreeze.Beneficiary != tx.From() {
 		uflog.Error("unfreeze withdraw no privilege", "beneficiary", unfreeze.Beneficiary, "txFrom", tx.From())
