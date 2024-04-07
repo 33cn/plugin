@@ -145,14 +145,10 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 		return
 	}
 	sizeInt, _ := strconv.Atoi(txsize)
+	numThread = runtime.NumCPU()
 	if numInt < 10 {
 		numThread = 1
-	} else if numInt > 100 {
-		numThread = 10
-	} else {
-		numThread = numInt / 10
 	}
-	numThread = runtime.NumCPU()
 	ch := make(chan struct{}, numThread)
 	chSend := make(chan struct{}, numThread*2)
 	txChan := make(chan *types.Transaction, numInt)
