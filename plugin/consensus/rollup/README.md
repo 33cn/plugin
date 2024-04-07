@@ -36,7 +36,7 @@ rollup 涉及功能介绍
 - 跨链交易会被转发到主链优先执行, 主链执行后由平行链自动拉取到本地执行
 - 如果交易组中包含有跨链交易, 则交易组判定为跨链交易
 
- 
+
 ### 区块同步
 - 支持节点间基于p2p区块同步
 - 配置项isParaChain需要置为false
@@ -64,7 +64,7 @@ poolCacheSize=10240
 minTxFeeRate=0
 
 
-# p2p功能需开启, 建议使用dht插件
+# p2p功能需开启, 使用dht插件
 [p2p]
 types=["dht"]
 enable=true
@@ -93,8 +93,8 @@ committer="rollup"
 
 # 配置节点账户私钥, 隐秘性不好, 用于测试
 authKey=""
-# 当authKey未配置时, 支持配置节点账户地址 
-# 即从钱包中获取对应的私钥, 节点需要创建钱包并解锁导入对应的私钥 
+# 当authKey未配置时, 支持配置节点账户地址
+# 即从钱包中获取对应的私钥, 节点需要创建钱包并解锁导入对应的私钥
 authAccount=""
 
 # 全量数据即提交所有交易源数据, 此时交易签名必须为bls类型
@@ -105,7 +105,7 @@ fullDataCommit=false
 maxCommitInterval=60 #seconds
 # 设置平行链启动时对应的主链高度
 startHeight=0
-# 同步主链区块头, 预留高度, 减少回滚概率 
+# 同步主链区块头, 预留高度, 减少回滚概率
 # 默认12, 最低设为1
 reservedMainHeight=12
 
@@ -113,9 +113,9 @@ reservedMainHeight=12
 ForkBlockHash= 0
 ForkRootHash=0
 ```
-                                                                  
 
-      
+
+
 
 ### 部署配置
 - 主链开启rollup合约
@@ -125,18 +125,18 @@ ForkRootHash=0
 ```
 # 命令行基于验证节点私钥生成对应的bls公钥信息
 ./cli para bls pub -p <nodeAuthKey>
- 
+
 # 主链 apply node group构建交易
 ./cli para nodegroup apply --paraName=<paraTitle> -a <nodeAuthAddr> -p <nodeBlsPub> -c <frozenAmount>
 
 # 主链 approve node group构建交易, applyID即apply交易的哈希
-./cli para nodegroup approve --paraName=<paraTitle> -c <frozenAmount> -i <applyID> 
+./cli para nodegroup approve --paraName=<paraTitle> -c <frozenAmount> -i <applyID>
 
 ```
 
 [NodeGroup相关文档](https://chain.33.cn/document/134)
 
-   
+
 ## 命令行
 
 
