@@ -4,7 +4,7 @@
 
 package types
 
-//unfreeze action ty
+// unfreeze action ty
 const (
 	UnfreezeActionCreate = iota + 1
 	UnfreezeActionWithdraw
@@ -30,9 +30,9 @@ const (
 	FuncName_QueryUnfreezeWithdraw = "QueryUnfreezeWithdraw"
 )
 
-//包的名字可以通过配置文件来配置
-//建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
-//如果发生重名，可以通过配置文件修改这些名字
+// 包的名字可以通过配置文件来配置
+// 建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
+// 如果发生重名，可以通过配置文件修改这些名字
 var (
 	PackageName    = "chain33.unfreeze"
 	RPCName        = "Chain33.Unfreeze"
@@ -43,6 +43,7 @@ var (
 	LeftProportionX = "LeftProportion"
 	SupportMeans    = []string{"FixAmount", "LeftProportion"}
 
-	ForkTerminatePartX = "ForkTerminatePart"
-	ForkUnfreezeIDX    = "ForkUnfreezeIDX"
+	ForkTerminatePartX     = "ForkTerminatePart"
+	ForkUnfreezeIDX        = "ForkUnfreezeIDX"
+	ForkFormatWithdrawAddr = "ForkFormatWithdrawAddr"
 )
