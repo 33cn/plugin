@@ -6,9 +6,9 @@ jobs:
     name: ci_relay
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version-file: 'go.mod'
         id: go
