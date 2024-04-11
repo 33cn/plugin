@@ -6,6 +6,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
@@ -14,6 +15,9 @@ func (t *Ticket) Exec_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, 
 	if payload.Count <= 0 {
 		return nil, ty.ErrTicketCount
 	}
+
+	payload.MinerAddress = common.FmtEthAddressWithFork(payload.MinerAddress, t.GetAPI().GetConfig(), t.GetHeight())
+	payload.ReturnAddress = common.FmtEthAddressWithFork(payload.ReturnAddress, t.GetAPI().GetConfig(), t.GetHeight())
 	actiondb := NewAction(t, tx)
 	return actiondb.GenesisInit(payload)
 }
@@ -24,23 +28,28 @@ func (t *Ticket) Exec_Topen(payload *ty.TicketOpen, tx *types.Transaction, index
 		tlog.Error("topen ", "value", payload)
 		return nil, ty.ErrTicketCount
 	}
+	payload.MinerAddress = common.FmtEthAddressWithFork(payload.MinerAddress, t.GetAPI().GetConfig(), t.GetHeight())
+	payload.ReturnAddress = common.FmtEthAddressWithFork(payload.ReturnAddress, t.GetAPI().GetConfig(), t.GetHeight())
 	actiondb := NewAction(t, tx)
 	return actiondb.TicketOpen(payload)
 }
 
 // Exec_Tbind exec bind
 func (t *Ticket) Exec_Tbind(payload *ty.TicketBind, tx *types.Transaction, index int) (*types.Receipt, error) {
+	payload.MinerAddress = common.FmtEthAddressWithFork(payload.MinerAddress, t.GetAPI().GetConfig(), t.GetHeight())
+	payload.ReturnAddress = common.FmtEthAddressWithFork(payload.ReturnAddress, t.GetAPI().GetConfig(), t.GetHeight())
 	actiondb := NewAction(t, tx)
 	return actiondb.TicketBind(payload)
 }
 
 // Exec_Tclose exec close
 func (t *Ticket) Exec_Tclose(payload *ty.TicketClose, tx *types.Transaction, index int) (*types.Receipt, error) {
+	payload.MinerAddress = common.FmtEthAddressWithFork(payload.MinerAddress, t.GetAPI().GetConfig(), t.GetHeight())
 	actiondb := NewAction(t, tx)
 	return actiondb.TicketClose(payload)
 }
 
-//Exec_Miner exec miner
+// Exec_Miner exec miner
 func (t *Ticket) Exec_Miner(payload *ty.TicketMiner, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewAction(t, tx)
 	return actiondb.TicketMiner(payload, index)

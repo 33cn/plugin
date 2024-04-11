@@ -32,7 +32,6 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(name, "Enable", 0)
 	cfg.RegisterDappFork(name, ForkTerminatePartX, 0)
 	cfg.RegisterDappFork(name, ForkUnfreezeIDX, 0)
-	cfg.RegisterDappFork(name, ForkFormatWithdrawAddr, 0)
 }
 
 // InitExecutor ...

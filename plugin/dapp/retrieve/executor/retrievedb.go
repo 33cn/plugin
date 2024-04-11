@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common"
 
 	//log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/client"
@@ -119,6 +120,8 @@ func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Recei
 	var r *DB
 	var newRetrieve = false
 	cfg := action.api.GetConfig()
+	backupRet.DefaultAddress = common.FmtEthAddressWithFork(backupRet.DefaultAddress, cfg, action.height)
+	backupRet.BackupAddress = common.FmtEthAddressWithFork(backupRet.BackupAddress, cfg, action.height)
 	if cfg.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveX) {
 		if err := address.CheckAddress(backupRet.BackupAddress, action.height); err != nil {
 			rlog.Debug("retrieve checkaddress")
@@ -176,6 +179,9 @@ func (action *Action) RetrievePrepare(preRet *rt.PrepareRetrieve) (*types.Receip
 	var index int
 	var related bool
 
+	cfg := action.api.GetConfig()
+	preRet.DefaultAddress = common.FmtEthAddressWithFork(preRet.DefaultAddress, cfg, action.height)
+	preRet.BackupAddress = common.FmtEthAddressWithFork(preRet.BackupAddress, cfg, action.height)
 	retrieve, err := readRetrieve(action.db, preRet.BackupAddress)
 	if err != nil {
 		rlog.Debug("RetrievePrepare", "readRetrieve", err)
@@ -212,6 +218,8 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 	var kv []*types.KeyValue
 	var receipt *types.Receipt
 	cfg := action.api.GetConfig()
+	perfRet.DefaultAddress = common.FmtEthAddressWithFork(perfRet.DefaultAddress, cfg, action.height)
+	perfRet.BackupAddress = common.FmtEthAddressWithFork(perfRet.BackupAddress, cfg, action.height)
 	// 兼容原来的找回， 在不指定的情况下，找回主币
 	if len(perfRet.Assets) == 0 {
 		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: cfg.GetCoinExec(), Symbol: cfg.GetCoinSymbol()})
@@ -252,7 +260,8 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	var related bool
 	var acc *types.Account
 	cfg := action.api.GetConfig()
-
+	perfRet.DefaultAddress = common.FmtEthAddressWithFork(perfRet.DefaultAddress, cfg, action.height)
+	perfRet.BackupAddress = common.FmtEthAddressWithFork(perfRet.BackupAddress, cfg, action.height)
 	retrieve, err := readRetrieve(action.db, perfRet.BackupAddress)
 	if err != nil {
 		rlog.Debug("RetrievePerform", "readRetrieve", perfRet.BackupAddress)
@@ -315,7 +324,9 @@ func (action *Action) RetrieveCancel(cancel *rt.CancelRetrieve) (*types.Receipt,
 	var receipt *types.Receipt
 	var index int
 	var related bool
-
+	cfg := action.api.GetConfig()
+	cancel.DefaultAddress = common.FmtEthAddressWithFork(cancel.DefaultAddress, cfg, action.height)
+	cancel.BackupAddress = common.FmtEthAddressWithFork(cancel.BackupAddress, cfg, action.height)
 	retrieve, err := readRetrieve(action.db, cancel.BackupAddress)
 	if err != nil {
 		rlog.Debug("RetrieveCancel", "readRetrieve err", cancel.BackupAddress)

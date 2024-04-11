@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common"
 	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
 )
 
@@ -26,6 +27,10 @@ func (h *Hashlock) Exec_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, in
 		clog.Warn("hashlock checkaddress")
 		return nil, err
 	}
+
+	hlock.ToAddress = common.FmtEthAddressWithFork(hlock.ToAddress, h.GetAPI().GetConfig(), h.GetHeight())
+	hlock.ReturnAddress = common.FmtEthAddressWithFork(hlock.ReturnAddress, h.GetAPI().GetConfig(), h.GetHeight())
+
 	if hlock.ReturnAddress != tx.From() {
 		clog.Warn("hashlock return address")
 		return nil, pty.ErrHashlockReturnAddrss

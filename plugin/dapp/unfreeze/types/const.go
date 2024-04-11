@@ -43,7 +43,6 @@ var (
 	LeftProportionX = "LeftProportion"
 	SupportMeans    = []string{"FixAmount", "LeftProportion"}
 
-	ForkTerminatePartX     = "ForkTerminatePart"
-	ForkUnfreezeIDX        = "ForkUnfreezeIDX"
-	ForkFormatWithdrawAddr = "ForkFormatWithdrawAddr"
+	ForkTerminatePartX = "ForkTerminatePart"
+	ForkUnfreezeIDX    = "ForkUnfreezeIDX"
 )

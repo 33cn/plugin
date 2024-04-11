@@ -6,6 +6,7 @@ package executor
 
 import (
 	"encoding/hex"
+	"github.com/33cn/plugin/plugin/dapp/common"
 
 	"github.com/33cn/chain33/system/address/btc"
 
@@ -18,7 +19,7 @@ import (
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 )
 
-//action 结构体
+// action 结构体
 type action struct {
 	coinsAccount *account.DB
 	db           dbm.KV
@@ -39,7 +40,7 @@ func newAction(t *MultiSig, tx *types.Transaction, index int32) *action {
 		t.GetBlockTime(), t.GetHeight(), index, dapp.ExecAddress(string(tx.Execer)), t.GetAPI()}
 }
 
-//MultiSigAccCreate 创建多重签名账户
+// MultiSigAccCreate 创建多重签名账户
 func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -57,6 +58,7 @@ func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types
 			totalweight += owner.Weight
 			ownerCount = ownerCount + 1
 		}
+		owner.OwnerAddr = common.FmtEthAddressWithFork(owner.GetOwnerAddr(), a.api.GetConfig(), a.height)
 	}
 
 	if accountCreate.RequiredWeight > totalweight {
@@ -113,8 +115,8 @@ func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-//MultiSigAccOperate 多重签名账户属性的修改：weight权重以及每日限额的修改
-//修改requiredweight权重值不能大于当前所有owner权重之和
+// MultiSigAccOperate 多重签名账户属性的修改：weight权重以及每日限额的修改
+// 修改requiredweight权重值不能大于当前所有owner权重之和
 func (a *action) MultiSigAccOperate(AccountOperate *mty.MultiSigAccOperate) (*types.Receipt, error) {
 
 	if AccountOperate == nil {
@@ -163,9 +165,11 @@ func (a *action) MultiSigAccOperate(AccountOperate *mty.MultiSigAccOperate) (*ty
 	return a.executeAccOperateTx(multiSigAccount, newMultiSigTx, AccountOperate, confirmOwner, true)
 }
 
-//MultiSigOwnerOperate 多重签名账户owner属性的修改：owner的add/del/replace等
-//在del和replace owner时需要保证修改后所有owner的权重之和大于requiredweight值
+// MultiSigOwnerOperate 多重签名账户owner属性的修改：owner的add/del/replace等
+// 在del和replace owner时需要保证修改后所有owner的权重之和大于requiredweight值
 func (a *action) MultiSigOwnerOperate(AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.Receipt, error) {
+	AccOwnerOperate.OldOwner = common.FmtEthAddressWithFork(AccOwnerOperate.GetOldOwner(), a.api.GetConfig(), a.height)
+	AccOwnerOperate.NewOwner = common.FmtEthAddressWithFork(AccOwnerOperate.GetNewOwner(), a.api.GetConfig(), a.height)
 	multiSigAccAddr := AccOwnerOperate.MultiSigAccAddr
 
 	//首先从statedb中获取MultiSigAccAddr的状态信息
@@ -200,9 +204,9 @@ func (a *action) MultiSigOwnerOperate(AccOwnerOperate *mty.MultiSigOwnerOperate)
 	return a.executeOwnerOperateTx(multiSigAccount, newMultiSigTx, AccOwnerOperate, confirmOwner, true)
 }
 
-//MultiSigExecTransferFrom 首先判断转账的额度是否大于每日限量，小于就直接执行交易，调用ExecTransferFrozen进行转账
-//大于每日限量只需要将交易信息记录
-//合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
+// MultiSigExecTransferFrom 首先判断转账的额度是否大于每日限量，小于就直接执行交易，调用ExecTransferFrozen进行转账
+// 大于每日限量只需要将交易信息记录
+// 合约中多重签名账户转账到外部账户，multiSigAddr--->Addr
 func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecTransferFrom) (*types.Receipt, error) {
 
 	//首先从statedb中获取MultiSigAccAddr的状态信息
@@ -247,7 +251,7 @@ func (a *action) MultiSigExecTransferFrom(multiSigAccTransfer *mty.MultiSigExecT
 	return a.executeTransferTx(multiSigAcc, newMultiSigTx, multiSigAccTransfer, confirmOwner, mty.IsSubmit)
 }
 
-//MultiSigExecTransferTo 将合约中外部账户转账上的Execname.Symbol资产转到多重签名账户上，from:Addr --->to:multiSigAddr
+// MultiSigExecTransferTo 将合约中外部账户转账上的Execname.Symbol资产转到多重签名账户上，from:Addr --->to:multiSigAddr
 // from地址使用tx中的签名的地址，payload中from地址不使用在 TransferTo交易中
 func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransferTo) (*types.Receipt, error) {
 
@@ -301,10 +305,10 @@ func (a *action) MultiSigExecTransferTo(execTransfer *mty.MultiSigExecTransferTo
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-//MultiSigConfirmTx 多重签名账户上MultiSigAcc账户Transfer交易的确认和撤销
-//确认交易需要判断权重是否满足，满足就直接执行交易，调用ExecTransferFrozen进行转账
-//不满足就只更新本交易的确认owner
-//撤销确认交易，只允许撤销还没有被执行的交易，只更新本交易的确认owner
+// MultiSigConfirmTx 多重签名账户上MultiSigAcc账户Transfer交易的确认和撤销
+// 确认交易需要判断权重是否满足，满足就直接执行交易，调用ExecTransferFrozen进行转账
+// 不满足就只更新本交易的确认owner
+// 撤销确认交易，只允许撤销还没有被执行的交易，只更新本交易的确认owner
 func (a *action) MultiSigConfirmTx(ConfirmTx *mty.MultiSigConfirmTx) (*types.Receipt, error) {
 
 	//首先从statedb中获取MultiSigAccAddr的状态信息
@@ -390,7 +394,7 @@ func (a *action) MultiSigConfirmTx(ConfirmTx *mty.MultiSigConfirmTx) (*types.Rec
 	return nil, mty.ErrTxTypeNoMatch
 }
 
-//多重签名账户请求权重的修改,返回新的KeyValue对和ReceiptLog信息
+// 多重签名账户请求权重的修改,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigWeightModify(multiSigAccAddr string, newRequiredWeight uint64) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	multiSigAccount, err := getMultiSigAccFromDb(a.db, multiSigAccAddr)
@@ -432,7 +436,7 @@ func (a *action) multiSigWeightModify(multiSigAccAddr string, newRequiredWeight 
 	return kv, receiptLog, nil
 }
 
-//多重签名账户资产每日限额的添加或者修改,
+// 多重签名账户资产每日限额的添加或者修改,
 func (a *action) multiSigDailyLimitOperate(multiSigAccAddr string, dailylimit *mty.SymbolDailyLimit) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	multiSigAccount, err := getMultiSigAccFromDb(a.db, multiSigAccAddr)
@@ -499,7 +503,7 @@ func (a *action) multiSigDailyLimitOperate(multiSigAccAddr string, dailylimit *m
 	return kv, receiptLog, nil
 }
 
-//多重签名账户的添加,返回新的KeyValue对和ReceiptLog信息
+// 多重签名账户的添加,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigOwnerAdd(multiSigAccAddr string, AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	//添加newowner到账户的owner中
@@ -509,7 +513,7 @@ func (a *action) multiSigOwnerAdd(multiSigAccAddr string, AccOwnerOperate *mty.M
 	return a.receiptOwnerAddOrDel(multiSigAccAddr, &newOwner, true)
 }
 
-//多重签名账户的删除,返回新的KeyValue对和ReceiptLog信息
+// 多重签名账户的删除,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigOwnerDel(multiSigAccAddr string, AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.KeyValue, *types.ReceiptLog, error) {
 	var owner mty.Owner
 	owner.OwnerAddr = AccOwnerOperate.OldOwner
@@ -517,7 +521,7 @@ func (a *action) multiSigOwnerDel(multiSigAccAddr string, AccOwnerOperate *mty.M
 	return a.receiptOwnerAddOrDel(multiSigAccAddr, &owner, false)
 }
 
-//组装add/del owner的receipt信息
+// 组装add/del owner的receipt信息
 func (a *action) receiptOwnerAddOrDel(multiSigAccAddr string, owner *mty.Owner, addOrDel bool) (*types.KeyValue, *types.ReceiptLog, error) {
 	receiptLog := &types.ReceiptLog{}
 
@@ -572,7 +576,7 @@ func (a *action) receiptOwnerAddOrDel(multiSigAccAddr string, owner *mty.Owner, 
 	return keyValue, receiptLog, nil
 }
 
-//多重签名账户owner的修改,返回新的KeyValue对和ReceiptLog信息
+// 多重签名账户owner的修改,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigOwnerModify(multiSigAccAddr string, AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	prev := &mty.Owner{OwnerAddr: AccOwnerOperate.OldOwner, Weight: 0}
@@ -580,7 +584,7 @@ func (a *action) multiSigOwnerModify(multiSigAccAddr string, AccOwnerOperate *mt
 	return a.receiptOwnerModOrRep(multiSigAccAddr, prev, cur, true)
 }
 
-//多重签名账户owner的替换,返回新的KeyValue对和ReceiptLog信息
+// 多重签名账户owner的替换,返回新的KeyValue对和ReceiptLog信息
 func (a *action) multiSigOwnerReplace(multiSigAccAddr string, AccOwnerOperate *mty.MultiSigOwnerOperate) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	prev := &mty.Owner{OwnerAddr: AccOwnerOperate.OldOwner, Weight: 0}
@@ -588,7 +592,7 @@ func (a *action) multiSigOwnerReplace(multiSigAccAddr string, AccOwnerOperate *m
 	return a.receiptOwnerModOrRep(multiSigAccAddr, prev, cur, false)
 }
 
-//组装修改/替换owner的receipt信息
+// 组装修改/替换owner的receipt信息
 func (a *action) receiptOwnerModOrRep(multiSigAccAddr string, prev *mty.Owner, cur *mty.Owner, modOrRep bool) (*types.KeyValue, *types.ReceiptLog, error) {
 	receiptLog := &types.ReceiptLog{}
 
@@ -641,7 +645,7 @@ func (a *action) receiptOwnerModOrRep(multiSigAccAddr string, prev *mty.Owner, c
 	return keyValue, receiptLog, nil
 }
 
-//组装AccExecTransfer的receipt信息,需要区分是在提交交易时执行的，还是在确认阶段执行的交易
+// 组装AccExecTransfer的receipt信息,需要区分是在提交交易时执行的，还是在确认阶段执行的交易
 func (a *action) receiptDailyLimitUpdate(multiSigAccAddr string, findindex int, curdailyLimit *mty.DailyLimit) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	multiSigAcc, err := getMultiSigAccFromDb(a.db, multiSigAccAddr)
@@ -673,7 +677,7 @@ func (a *action) receiptDailyLimitUpdate(multiSigAccAddr string, findindex int, 
 	return keyValue, receiptLog, nil
 }
 
-//组装修改账户属性时交易计数的增加和的receipt信息
+// 组装修改账户属性时交易计数的增加和的receipt信息
 func (a *action) receiptTxCountUpdate(multiSigAccAddr string) (*types.KeyValue, *types.ReceiptLog, error) {
 
 	multiSigAcc, err := getMultiSigAccFromDb(a.db, multiSigAccAddr)
@@ -705,7 +709,7 @@ func (a *action) receiptTxCountUpdate(multiSigAccAddr string) (*types.KeyValue, 
 	return keyValue, receiptLog, nil
 }
 
-//组装MultiSigAccTx的receipt信息
+// 组装MultiSigAccTx的receipt信息
 func (a *action) receiptMultiSigTx(multiSigTx *mty.MultiSigTx, owner *mty.Owner, prevExecutes, subOrConfirm bool) (*types.KeyValue, *types.ReceiptLog) {
 	receiptLog := &types.ReceiptLog{}
 
@@ -730,7 +734,7 @@ func (a *action) receiptMultiSigTx(multiSigTx *mty.MultiSigTx, owner *mty.Owner,
 	return keyValue, receiptLog
 }
 
-//确认并执行转账交易：区分submitTx和confirmtx阶段。
+// 确认并执行转账交易：区分submitTx和confirmtx阶段。
 func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, transfer *mty.MultiSigExecTransferFrom, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
 
 	//获取对应资产的每日限额信息
@@ -829,7 +833,7 @@ func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty
 	}, nil
 }
 
-//确认并执行操作账户属性的交易：区分submitTx和confirmtx阶段。
+// 确认并执行操作账户属性的交易：区分submitTx和confirmtx阶段。
 func (a *action) executeAccOperateTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, accountOperate *mty.MultiSigAccOperate, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
 
 	//确认权重是否已达到要求
@@ -885,7 +889,7 @@ func (a *action) executeAccOperateTx(multiSigAcc *mty.MultiSig, newMultiSigTx *m
 	}, nil
 }
 
-//确认并执行操作owner属性的交易：区分submitTx和confirmtx阶段。
+// 确认并执行操作owner属性的交易：区分submitTx和confirmtx阶段。
 func (a *action) executeOwnerOperateTx(multiSigAccount *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, accountOperate *mty.MultiSigOwnerOperate, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -962,7 +966,7 @@ func (a *action) executeOwnerOperateTx(multiSigAccount *mty.MultiSig, newMultiSi
 	}, nil
 }
 
-//构造确认交易的receiptLog
+// 构造确认交易的receiptLog
 func (a *action) confirmTransaction(multiSigTx *mty.MultiSigTx, multiSigTxOwner *mty.MultiSigTxOwner, ConfirmOrRevoke bool) (*types.Receipt, error) {
 	receiptLog := &types.ReceiptLog{}
 
