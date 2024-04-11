@@ -28,6 +28,7 @@ ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
 ForkMaxTxFeeV1=0
+ForkEthAddressFormat=0
 
 [fork.sub.none]
 ForkUseTimeDelay=0
@@ -225,7 +226,6 @@ ForkTradePrice=3150000
 Enable=0
 ForkTerminatePart=1298600
 ForkUnfreezeIDX=1450000
-ForkFormatWithdrawAddr=0
 
 [fork.sub.valnode]
 Enable=0

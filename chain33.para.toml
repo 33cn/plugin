@@ -324,6 +324,7 @@ ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
 ForkMaxTxFeeV1=0
+ForkEthAddressFormat=0
 
 [fork.sub.none]
 ForkUseTimeDelay=0
@@ -473,7 +474,6 @@ Enable=0
 Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
-ForkFormatWithdrawAddr=0
 
 [fork.sub.autonomy]
 Enable=0
