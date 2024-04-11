@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/common"
 
 	"strings"
 
@@ -151,6 +152,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 	if token == nil {
 		return nil, types.ErrInvalidParam
 	}
+	token.Owner = common.FmtEthAddressWithFork(token.Owner, cfg, action.height)
 	if len(token.GetName()) > pty.TokenNameLenLimit {
 		return nil, pty.ErrTokenNameLen
 	} else if len(token.GetIntroduction()) > pty.TokenIntroLenLimit {
@@ -242,6 +244,7 @@ func (action *tokenAction) finishCreate(tokenFinish *pty.TokenFinishCreate) (*ty
 	if tokenFinish == nil {
 		return nil, types.ErrInvalidParam
 	}
+	tokenFinish.Owner = common.FmtEthAddressWithFork(tokenFinish.Owner, cfg, action.height)
 	token, err := getTokenFromDB(action.db, tokenFinish.GetSymbol(), tokenFinish.GetOwner())
 	if err != nil || token.Status != pty.TokenStatusPreCreated {
 		return nil, pty.ErrTokenNotPrecreated
@@ -250,6 +253,7 @@ func (action *tokenAction) finishCreate(tokenFinish *pty.TokenFinishCreate) (*ty
 	approverValid := false
 	conf := types.ConfSub(cfg, driverName)
 	for _, approver := range conf.GStrList("tokenApprs") {
+		approver = common.FmtEthAddressWithFork(approver, cfg, action.height)
 		if approver == action.fromaddr {
 			approverValid = true
 			break
@@ -317,6 +321,7 @@ func (action *tokenAction) revokeCreate(tokenRevoke *pty.TokenRevokeCreate) (*ty
 		return nil, types.ErrInvalidParam
 	}
 	cfg := action.api.GetConfig()
+	tokenRevoke.Owner = common.FmtEthAddressWithFork(tokenRevoke.Owner, cfg, action.height)
 	token, err := getTokenFromDB(action.db, tokenRevoke.GetSymbol(), tokenRevoke.GetOwner())
 	if err != nil {
 		tokenlog.Error("token revokeCreate ", "Can't get token form db for token", tokenRevoke.GetSymbol())

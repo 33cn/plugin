@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/hex"
+	"github.com/33cn/plugin/plugin/dapp/common"
 
 	"github.com/33cn/chain33/system/dapp"
 
@@ -17,6 +18,7 @@ type action struct {
 	blockTime int64
 	height    int64
 	index     int
+	cfg       *types.Chain33Config
 }
 
 func newAction(v *vote, tx *types.Transaction, index int) *action {
@@ -26,7 +28,9 @@ func newAction(v *vote, tx *types.Transaction, index int) *action {
 		fromAddr:  tx.From(),
 		blockTime: v.GetBlockTime(),
 		height:    v.GetHeight(),
-		index:     index}
+		index:     index,
+		cfg:       v.GetAPI().GetConfig(),
+	}
 }
 
 func (a *action) getGroupInfo(groupID string) (*vty.GroupInfo, error) {
@@ -59,6 +63,8 @@ func (a *action) createGroup(create *vty.CreateGroup) (*types.Receipt, error) {
 	//添加创建者作为默认管理员
 	group.Admins = append(group.Admins, a.fromAddr)
 	for _, addr := range create.GetAdmins() {
+
+		addr = common.FmtEthAddressWithFork(addr, a.cfg, a.height)
 		if addr != a.fromAddr {
 			group.Admins = append(group.Admins, addr)
 		}
@@ -70,6 +76,7 @@ func (a *action) createGroup(create *vty.CreateGroup) (*types.Receipt, error) {
 		if member.VoteWeight < 1 {
 			member.VoteWeight = 1
 		}
+		member.Addr = common.FmtEthAddressWithFork(member.GetAddr(), a.cfg, a.height)
 	}
 	group.MemberNum = uint32(len(group.Members))
 	group.Creator = a.fromAddr
@@ -96,6 +103,7 @@ func (a *action) updateGroup(update *vty.UpdateGroup) (*types.Receipt, error) {
 	}
 	// remove members
 	for _, addr := range update.GetRemoveMembers() {
+		addr = common.FmtEthAddressWithFork(addr, a.cfg, a.height)
 		if index, ok := addrMap[addr]; ok {
 			group.Members = append(group.Members[:index], group.Members[index+1:]...)
 			delete(addrMap, addr)
@@ -104,6 +112,7 @@ func (a *action) updateGroup(update *vty.UpdateGroup) (*types.Receipt, error) {
 
 	// add members
 	for _, member := range update.GetAddMembers() {
+		member.Addr = common.FmtEthAddressWithFork(member.GetAddr(), a.cfg, a.height)
 		if _, ok := addrMap[member.Addr]; !ok {
 			group.Members = append(group.Members, member)
 		}
@@ -116,6 +125,7 @@ func (a *action) updateGroup(update *vty.UpdateGroup) (*types.Receipt, error) {
 
 	// remove admins
 	for _, addr := range update.GetRemoveAdmins() {
+		addr = common.FmtEthAddressWithFork(addr, a.cfg, a.height)
 		if index, ok := adminMap[addr]; ok {
 			group.Admins = append(group.Admins[:index], group.Admins[index+1:]...)
 			delete(adminMap, addr)
@@ -124,6 +134,7 @@ func (a *action) updateGroup(update *vty.UpdateGroup) (*types.Receipt, error) {
 
 	// add admins
 	for _, addr := range update.GetAddAdmins() {
+		addr = common.FmtEthAddressWithFork(addr, a.cfg, a.height)
 		if _, ok := adminMap[addr]; !ok {
 			group.Admins = append(group.Admins, addr)
 		}
