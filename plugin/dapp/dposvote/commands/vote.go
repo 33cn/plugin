@@ -23,7 +23,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +33,7 @@ var (
 	pvFile   = "priv_validator_"
 )
 
-//DPosCmd DPosVote合约命令行
+// DPosCmd DPosVote合约命令行
 func DPosCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dpos",
@@ -63,7 +63,7 @@ func DPosCmd() *cobra.Command {
 	return cmd
 }
 
-//DPosRegistCmd 构造候选节点注册的命令行
+// DPosRegistCmd 构造候选节点注册的命令行
 func DPosRegistCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "regist",
@@ -106,7 +106,7 @@ func regist(cmd *cobra.Command, args []string) {
 
 }
 
-//DPosCancelRegistCmd 构造候选节点去注册的命令行
+// DPosCancelRegistCmd 构造候选节点去注册的命令行
 func DPosCancelRegistCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancelRegist",
@@ -144,7 +144,7 @@ func cancelRegist(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosVoteCmd 构造为候选节点投票的命令行
+// DPosVoteCmd 构造为候选节点投票的命令行
 func DPosVoteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vote",
@@ -184,7 +184,7 @@ func vote(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosVoteCancelCmd 构造撤销对候选节点投票的命令行
+// DPosVoteCancelCmd 构造撤销对候选节点投票的命令行
 func DPosVoteCancelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancelVote",
@@ -222,7 +222,7 @@ func cancelVote(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosReRegistCmd 构造重新注册候选节点的命令行
+// DPosReRegistCmd 构造重新注册候选节点的命令行
 func DPosReRegistCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reRegist",
@@ -265,7 +265,7 @@ func reRegist(cmd *cobra.Command, args []string) {
 
 }
 
-//DPosCandidatorQueryCmd 构造查询候选节点信息的命令行
+// DPosCandidatorQueryCmd 构造查询候选节点信息的命令行
 func DPosCandidatorQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "candidatorQuery",
@@ -317,7 +317,7 @@ func candidatorQuery(cmd *cobra.Command, args []string) {
 	}
 }
 
-//DPosVoteQueryCmd 构造投票信息查询的命令行
+// DPosVoteQueryCmd 构造投票信息查询的命令行
 func DPosVoteQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "voteQuery",
@@ -356,7 +356,7 @@ func voteQuery(cmd *cobra.Command, args []string) {
 
 }
 
-//DPosVrfMRegistCmd 构造注册VRF M信息（输入信息）的命令行
+// DPosVrfMRegistCmd 构造注册VRF M信息（输入信息）的命令行
 func DPosVrfMRegistCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfMRegist",
@@ -398,7 +398,7 @@ func vrfM(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosVrfRPRegistCmd 构造VRF R/P(hash及proof)注册的命令行
+// DPosVrfRPRegistCmd 构造VRF R/P(hash及proof)注册的命令行
 func DPosVrfRPRegistCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfRPRegist",
@@ -444,7 +444,7 @@ func vrfRP(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosVrfQueryCmd 构造VRF相关信息查询的命令行
+// DPosVrfQueryCmd 构造VRF相关信息查询的命令行
 func DPosVrfQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfQuery",
@@ -570,7 +570,7 @@ func vrfQuery(cmd *cobra.Command, args []string) {
 
 }
 
-//DPosCreateCmd to create keyfiles
+// DPosCreateCmd to create keyfiles
 func DPosCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init_keyfile",
@@ -663,7 +663,7 @@ func createFiles(cmd *cobra.Command, args []string) {
 	fmt.Printf("Generated genesis file path %v\n", genFile)
 }
 
-//DPosVrfVerifyCmd to create keyfiles
+// DPosVrfVerifyCmd to create keyfiles
 func DPosVrfVerifyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfVerify",
@@ -745,7 +745,7 @@ func verify(cmd *cobra.Command, args []string) {
 	fmt.Println("vrf hash is same with input hash, vrf Verify succeed")
 }
 
-//DPosVrfEvaluateCmd to create keyfiles
+// DPosVrfEvaluateCmd to create keyfiles
 func DPosVrfEvaluateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vrfEvaluate",
@@ -791,7 +791,7 @@ func evaluate(cmd *cobra.Command, args []string) {
 	fmt.Println(fmt.Sprintf("proof:%x", vrfProof))
 }
 
-//DPosCBRecordCmd to create keyfiles
+// DPosCBRecordCmd to create keyfiles
 func DPosCBRecordCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cbRecord",
@@ -877,7 +877,7 @@ func recordCB(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//DPosCBQueryCmd 查询Cycle Boundary info的命令
+// DPosCBQueryCmd 查询Cycle Boundary info的命令
 func DPosCBQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cbQuery",
@@ -946,7 +946,7 @@ func cbQuery(cmd *cobra.Command, args []string) {
 	}
 }
 
-//DPosTopNQueryCmd 构造TopN相关信息查询的命令行
+// DPosTopNQueryCmd 构造TopN相关信息查询的命令行
 func DPosTopNQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "topNQuery",

@@ -29,7 +29,7 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -127,7 +127,7 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	return ret
 }
 
-//316190000 coins
+// 316190000 coins
 func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count int32, height int64) (ret []*types.Transaction) {
 	tx1 := types.Transaction{}
 	tx1.Execer = []byte(cfg.GetCoinExec())
@@ -648,7 +648,7 @@ func (client *Client) Miner(block *types.Block) error {
 	return nil
 }
 
-//gas 直接燃烧
+// gas 直接燃烧
 func calcTotalFee(block *types.Block) (total int64) {
 	return 0
 }
@@ -830,7 +830,7 @@ func getTxHashes(txs []*types.Transaction) (hashes [][]byte) {
 	return hashes
 }
 
-//CmpBestBlock 比较newBlock是不是最优区块，目前ticket主要是比较挖矿交易的难度系数
+// CmpBestBlock 比较newBlock是不是最优区块，目前ticket主要是比较挖矿交易的难度系数
 func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	cfg := client.GetAPI().GetConfig()
 

@@ -11,7 +11,7 @@ import (
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/btcec"
 	"golang.org/x/crypto/sha3"
 )
 
