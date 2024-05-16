@@ -19,7 +19,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
 )
 
 // KeyText ...
