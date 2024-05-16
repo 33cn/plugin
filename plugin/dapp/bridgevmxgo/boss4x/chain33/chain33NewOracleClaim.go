@@ -20,7 +20,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	btcec_secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"

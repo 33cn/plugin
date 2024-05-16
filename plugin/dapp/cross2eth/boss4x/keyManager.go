@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	chain33Common "github.com/33cn/chain33/common"
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/btcec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
@@ -123,7 +123,7 @@ func addShowKeyFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("key")
 }
 
-//Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
+// Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
 func showEtheremKey(cmd *cobra.Command, _ []string) {
 	key, _ := cmd.Flags().GetString("key")
 	privateKeySlice, err := chain33Common.FromHex(key)

@@ -10,7 +10,7 @@ import (
 	chain33Types "github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	x2ethTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	btcec_secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -19,7 +19,7 @@ var (
 	start             = int(1)
 )
 
-//GetAccount ...
+// GetAccount ...
 func (chain33Relayer *Relayer4Chain33) GetAccount(passphrase string) (privateKey, addr string, err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -35,7 +35,7 @@ func (chain33Relayer *Relayer4Chain33) GetAccount(passphrase string) (privateKey
 	return
 }
 
-//GetAccountAddr ...
+// GetAccountAddr ...
 func (chain33Relayer *Relayer4Chain33) GetAccountAddr() (addr string, err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -79,7 +79,7 @@ func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeySt
 	return chain33Relayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
-//StoreAccountWithNewPassphase ...
+// StoreAccountWithNewPassphase ...
 func (chain33Relayer *Relayer4Chain33) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -97,7 +97,7 @@ func (chain33Relayer *Relayer4Chain33) StoreAccountWithNewPassphase(newPassphras
 	return chain33Relayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
-//RestorePrivateKeys ...
+// RestorePrivateKeys ...
 func (chain33Relayer *Relayer4Chain33) RestorePrivateKeys(passPhase string) (err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil == err {
