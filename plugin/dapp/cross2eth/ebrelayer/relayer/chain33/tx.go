@@ -14,7 +14,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
-	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	btcec_secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 
@@ -38,7 +38,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-//DeployPara ...
+// DeployPara ...
 type DeployPara4Chain33 struct {
 	Deployer       address.Address
 	Operator       address.Address

@@ -2,6 +2,7 @@ package ethtxs
 
 import (
 	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/core/txpool"
 	"math/big"
 	"time"
 
@@ -20,7 +21,7 @@ var (
 	txslog = log15.New("ethereum relayer", "ethtxs")
 )
 
-//const ...
+// const ...
 const (
 	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
 	GasLimit         = uint64(100 * 10000)
@@ -103,7 +104,7 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 				}
 				if burnOrLockParameter.Clients[i].OracleInstance != nil {
 					_, err = burnOrLockParameter.Clients[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
-					if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
+					if err != nil && err.Error() != txpool.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 						txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 					}
 				}
@@ -114,7 +115,7 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (strin
 				for i := 0; i < len(burnOrLockParameter.ClientBSCRecommendSpecs); i++ {
 					if burnOrLockParameter.ClientBSCRecommendSpecs[i].OracleInstance != nil {
 						_, err = burnOrLockParameter.ClientBSCRecommendSpecs[i].OracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
-						if err != nil && err.Error() != core.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
+						if err != nil && err.Error() != txpool.ErrAlreadyKnown.Error() && err.Error() != core.ErrNonceTooLow.Error() && err.Error() != core.ErrNonceTooHigh.Error() {
 							txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 						}
 					}

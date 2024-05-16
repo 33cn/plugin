@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	chain33Common "github.com/33cn/chain33/common"

@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-//EthClientSpec ...
+// EthClientSpec ...
 type EthClientSpec interface {
 	bind.ContractBackend
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
@@ -21,17 +21,17 @@ type EthClientSpec interface {
 	SyncProgress(ctx context.Context) (*ethereum.SyncProgress, error)
 }
 
-//SimExtend ...
+// SimExtend ...
 type SimExtend struct {
 	*backends.SimulatedBackend
 }
 
-//HeaderByNumber ...
+// HeaderByNumber ...
 func (sim *SimExtend) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
-	return sim.Blockchain().CurrentBlock().Header(), nil
+	return sim.Blockchain().CurrentBlock(), nil
 }
 
-//NetworkID ...
+// NetworkID ...
 func (sim *SimExtend) NetworkID(ctx context.Context) (*big.Int, error) {
 	return nil, nil
 }
