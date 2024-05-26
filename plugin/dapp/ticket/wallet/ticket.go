@@ -7,11 +7,12 @@ package wallet
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/system/address/eth"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/33cn/chain33/system/address/eth"
 
 	"github.com/pkg/errors"
 

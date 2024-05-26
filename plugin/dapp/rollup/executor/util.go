@@ -38,7 +38,7 @@ func GetRoundInfo(kv db.KV, title string, round int64) (*rolluptypes.CommitRound
 	return info, err
 }
 
-func sha256Hash(h *types.Header) []byte{
+func sha256Hash(h *types.Header) []byte {
 	return common.Sha256(types.Encode(h))
 }
 

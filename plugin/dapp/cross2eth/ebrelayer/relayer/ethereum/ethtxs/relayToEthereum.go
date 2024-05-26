@@ -2,9 +2,10 @@ package ethtxs
 
 import (
 	"crypto/ecdsa"
-	"github.com/ethereum/go-ethereum/core/txpool"
 	"math/big"
 	"time"
+
+	"github.com/ethereum/go-ethereum/core/txpool"
 
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/log/log15"

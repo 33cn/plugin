@@ -8,11 +8,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/chain33/common"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/33cn/chain33/common"
 
 	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/pkg/errors"

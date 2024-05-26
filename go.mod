@@ -2,7 +2,7 @@ module github.com/33cn/plugin
 
 go 1.19
 
-replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20240512025003-55d7dc44896a
+replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20240526154333-c9b4079f37f6
 
 require (
 	github.com/33cn/chain33 v0.0.0-00010101000000-000000000000
@@ -268,7 +268,7 @@ require (
 )
 
 replace (
-	github.com/ava-labs/avalanchego => github.com/bysomeone/avalanchego v0.0.0-20240511070301-a9a2aac50464
+	github.com/ava-labs/avalanchego => github.com/bysomeone/avalanchego v0.0.0-20240525154058-c4ea5da7ec71
 	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd v0.22.3
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.5.3
 )

@@ -8,10 +8,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"math"
 	"strings"
 	"sync/atomic"
+
+	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 
 	"github.com/33cn/chain33/common/address"
 

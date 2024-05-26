@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 	"errors"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/secp256k1eth"
 	"github.com/33cn/chain33/types"

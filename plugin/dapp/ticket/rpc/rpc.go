@@ -5,13 +5,14 @@
 package rpc
 
 import (
+	"strings"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
 	"golang.org/x/net/context"
-	"strings"
 )
 
 func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
