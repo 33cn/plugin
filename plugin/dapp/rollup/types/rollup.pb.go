@@ -8,12 +8,13 @@ package types
 
 import (
 	context "context"
+	reflect "reflect"
+	sync "sync"
+
 	types "github.com/33cn/chain33/types"
 	grpc "google.golang.org/grpc"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (

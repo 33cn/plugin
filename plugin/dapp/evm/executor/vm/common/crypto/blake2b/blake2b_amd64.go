@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build !go1.7 && amd64 && !gccgo && !appengine
 // +build !go1.7,amd64,!gccgo,!appengine
 
 //nolint:unparam // 忽视本文件所有golangci-linter检查

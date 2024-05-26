@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+//go:build amd64 && blsadx
 // +build amd64,blsadx
 
 //nolint:unparam // 忽视本文件所有golangci-linter检查

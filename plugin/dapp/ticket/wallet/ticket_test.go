@@ -6,10 +6,11 @@ package wallet
 
 import (
 	"encoding/hex"
-	"github.com/33cn/chain33/common/address"
 	"math/rand"
 	"sync"
 	"testing"
+
+	"github.com/33cn/chain33/common/address"
 
 	"github.com/stretchr/testify/mock"
 

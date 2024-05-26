@@ -14,7 +14,6 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/core/txpool"
 	"math"
 	"math/big"
 	"regexp"
@@ -22,6 +21,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/ethereum/go-ethereum/core/txpool"
 
 	chain33Common "github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"

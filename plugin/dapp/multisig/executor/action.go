@@ -6,6 +6,7 @@ package executor
 
 import (
 	"encoding/hex"
+
 	"github.com/33cn/plugin/plugin/dapp/common"
 
 	"github.com/33cn/chain33/system/address/btc"

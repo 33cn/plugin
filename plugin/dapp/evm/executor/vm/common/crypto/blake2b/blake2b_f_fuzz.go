@@ -1,3 +1,4 @@
+//go:build gofuzz
 // +build gofuzz
 
 //nolint:unparam // 忽视本文件所有golangci-linter检查

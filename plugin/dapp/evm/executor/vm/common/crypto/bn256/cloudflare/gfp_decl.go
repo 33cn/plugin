@@ -1,3 +1,4 @@
+//go:build (amd64 && !generic) || (arm64 && !generic)
 // +build amd64,!generic arm64,!generic
 
 //nolint:unparam // 忽视本文件所有golangci-linter检查

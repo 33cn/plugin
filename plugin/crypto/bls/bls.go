@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+
 	"github.com/33cn/chain33/common"
 
 	"github.com/33cn/chain33/common/crypto"
