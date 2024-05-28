@@ -14,7 +14,7 @@ import (
 	relayerutils "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
-	btcecsecp256k1 "github.com/btcsuite/btcd/btcec/btcec"
+	btcecsecp256k1 "github.com/btcsuite/btcd/btcec"
 	ethSecp256k1 "github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/spf13/cobra"
 )
