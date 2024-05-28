@@ -10,7 +10,7 @@ import (
 	chain33Types "github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	x2ethTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	btcec_secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
+	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 

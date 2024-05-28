@@ -18,7 +18,7 @@ import (
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/assert"
 
 	apimocks "github.com/33cn/chain33/client/mocks"

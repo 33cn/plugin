@@ -23,7 +23,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/spf13/cobra"
 )
 

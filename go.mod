@@ -2,7 +2,12 @@ module github.com/33cn/plugin
 
 go 1.19
 
-replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20240526154333-c9b4079f37f6
+replace (
+	github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20240528044956-81055706f346
+	github.com/ava-labs/avalanchego => github.com/bysomeone/avalanchego v0.0.0-20240525154058-c4ea5da7ec71
+	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
+	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.5.3
+)
 
 require (
 	github.com/33cn/chain33 v0.0.0-00010101000000-000000000000
@@ -10,7 +15,6 @@ require (
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/btcsuite/btcd v0.23.4
-	github.com/btcsuite/btcd/btcec v0.0.0-00010101000000-000000000000
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/consensys/gnark v0.5.2
 	github.com/consensys/gnark-crypto v0.10.0
@@ -68,6 +72,7 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.3 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd // indirect
 	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
@@ -265,10 +270,4 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 
-)
-
-replace (
-	github.com/ava-labs/avalanchego => github.com/bysomeone/avalanchego v0.0.0-20240525154058-c4ea5da7ec71
-	github.com/btcsuite/btcd/btcec => github.com/btcsuite/btcd v0.22.3
-	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.5.3
 )
