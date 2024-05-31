@@ -3,14 +3,13 @@ module github.com/33cn/plugin
 go 1.19
 
 replace (
-	github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20240528044956-81055706f346
-	github.com/ava-labs/avalanchego => github.com/bysomeone/avalanchego v0.0.0-20240525154058-c4ea5da7ec71
+	github.com/ava-labs/avalanchego => github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.5.3
 )
 
 require (
-	github.com/33cn/chain33 v0.0.0-00010101000000-000000000000
+	github.com/33cn/chain33 v1.69.0
 	github.com/BurntSushi/toml v1.2.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
