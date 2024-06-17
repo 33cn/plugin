@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.69.0"></a>
+# [1.69.0](https://github.com/33cn/plugin/compare/v1.68.4...v1.69.0) (2024-06-17)
+
+
+### Features
+
+* update chain33 to v1.69.0 with block finalize consensus ([86ec62d](https://github.com/33cn/plugin/commit/86ec62d))
+
 <a name="1.68.4"></a>
 ## [1.68.4](https://github.com/33cn/plugin/compare/v1.68.3...v1.68.4) (2023-09-13)
 
