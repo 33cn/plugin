@@ -68,9 +68,11 @@ message transferAsset {
 message confirmTx {
 
   int32 actionType = 1;
-  bool timeout = 2;
-  bytes txHash = 3;
-  btcWitness witness =4;
+  int64 txBlockHeight = 2;
+  int64 txIndex = 3;
+  bytes txHash = 4;
+  bool timeout = 5;
+  btcWitness witness =6;
 }
 
 
@@ -79,6 +81,10 @@ message pendingTx {
   int64 timestamp = 2;
   bytes txHash = 3;
   outPoint utxo = 4;
+}
+
+message pendingTxs {
+  repeated pendingTx pendingList=1;
 }
 
 service rgbx {

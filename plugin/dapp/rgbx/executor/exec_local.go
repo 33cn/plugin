@@ -2,7 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	rgbxtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
 
 /*
@@ -10,25 +10,48 @@ import (
  * 非关键数据，本地存储(localDB), 用于辅助查询，效率高
  */
 
-func (r *rgbx) ExecLocal_Mint(payload *rgbxtypes.MintAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rgbx) addPendingTxKV(dbSet *types.LocalDBSet, logData []byte, index int) {
+
+	dbSet.KV = append(dbSet.KV, &types.KeyValue{
+		Key:   formatPendingTxKey(r.GetHeight(), int64(index)),
+		Value: logData,
+	})
+}
+
+func (r *rgbx) ExecLocal_Mint(_ *rtypes.MintAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code, add customize kv to dbSet...
+
+	for _, log := range receiptData.Logs {
+
+		if log.Ty == rtypes.TyPendingTxLog {
+			r.addPendingTxKV(dbSet, log.Log, index)
+		}
+	}
 
 	//auto gen for localdb auto rollback
 	return r.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (r *rgbx) ExecLocal_Transfer(payload *rgbxtypes.TransferAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rgbx) ExecLocal_Transfer(_ *rtypes.TransferAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code, add customize kv to dbSet...
+	for _, log := range receiptData.Logs {
+
+		if log.Ty == rtypes.TyPendingTxLog {
+			r.addPendingTxKV(dbSet, log.Log, index)
+		}
+	}
 
 	//auto gen for localdb auto rollback
 	return r.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (r *rgbx) ExecLocal_Confirm(payload *rgbxtypes.ConfirmTx, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rgbx) ExecLocal_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code, add customize kv to dbSet...
+	// remove pending tx record
+	dbSet.KV = append(dbSet.KV, &types.KeyValue{
+		Key:   formatPendingTxKey(confirm.TxBlockHeight, confirm.TxIndex),
+		Value: nil,
+	})
 
 	//auto gen for localdb auto rollback
 	return r.addAutoRollBack(tx, dbSet.KV), nil

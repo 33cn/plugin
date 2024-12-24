@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 )
 
@@ -11,7 +12,7 @@ import (
  * 需要字段前缀查询时，使用’-‘作为分割符号
  */
 
-var (
+const (
 	//KeyPrefixStateDB state db key必须前缀
 	KeyPrefixStateDB = "mavl-rgbx-"
 	//KeyPrefixLocalDB local db的key必须前缀
@@ -23,7 +24,14 @@ func formatPayloadKey(hash []byte) []byte {
 }
 
 func formatAssetKey(symbol string) []byte {
-	return append([]byte(KeyPrefixLocalDB+"asset-"), symbol...)
+	return append([]byte(KeyPrefixStateDB+"asset-"), symbol...)
+}
+
+const pendingTxKeyPrefix = KeyPrefixLocalDB + "pendtx-"
+
+func formatPendingTxKey(height, txIndex int64) []byte {
+	
+	return []byte(pendingTxKeyPrefix + dapp.HeightIndexStr(height, txIndex))
 }
 
 func readDB(kdb db.KV, key []byte, result types.Message) error {

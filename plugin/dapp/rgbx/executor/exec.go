@@ -25,7 +25,7 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 			ActionType: rtypes.TyMintAction,
 			Timestamp:  r.GetBlockTime(),
 			TxHash:     tx.Hash(),
-			Utxo:       mint.GetFirstPrevOut(),
+			Utxo:       mint.GetGenesisOut(),
 		}),
 	})
 
@@ -44,6 +44,15 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 			Ty: types.ExecOk,
 			KV: []*types.KeyValue{{Key: formatPayloadKey(tx.Hash()), Value: types.Encode(transfer)}},
 		}
+		receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
+			Ty: rtypes.TyPendingTxLog,
+			Log: types.Encode(&rtypes.PendingTx{
+				ActionType: rtypes.TyTransferAction,
+				Timestamp:  r.GetBlockTime(),
+				TxHash:     tx.Hash(),
+				Utxo:       transfer.GetFrom().GetUtxo(),
+			}),
+		})
 		return receipt, nil
 	}
 	accDB, err := r.newAccount(transfer.GetSymbol())
