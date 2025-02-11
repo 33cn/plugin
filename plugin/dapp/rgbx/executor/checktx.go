@@ -116,6 +116,8 @@ func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
 
 	if confirm.ActionType == rtypes.TyMintAction {
 		return r.checkConfirmMint(txHash, confirm, val)
+	} else if confirm.ActionType == rtypes.TyTransferAction {
+
 	}
 
 	return nil
@@ -137,5 +139,10 @@ func (r *rgbx) checkConfirmMint(txHash string, confirm *rtypes.ConfirmTx, payloa
 			"expect", mint.GetGenesisOut(), "actual", confirm.GetWitness().GetIn())
 		return ErrGenesisOutNotEqual
 	}
+	return nil
+}
+
+func (r *rgbx) checkConfirmTransfer(txHash string, transfer *rtypes.TransferAsset, payload []byte) error {
+
 	return nil
 }
