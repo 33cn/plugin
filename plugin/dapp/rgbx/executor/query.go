@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"errors"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
@@ -32,4 +33,27 @@ func (r *rgbx) Query_ListPendingTx(req *rtypes.ReqListPendingTx) (types.Message,
 	}
 
 	return pendingTxs, nil
+}
+
+func (r *rgbx) Query_GetConfirmedHeight(_ *types.ReqNil) (types.Message, error) {
+
+	v, err := r.GetLocalDB().Get([]byte(confirmedHeightKey))
+
+	reply := &types.Int64{}
+	if errors.Is(err, types.ErrNotFound) {
+		return reply, nil
+	}
+	if err != nil {
+		elog.Error("Query_GetConfirmedHeight", "get db err", err)
+		return nil, err
+	}
+
+	err = types.Decode(v, reply)
+	if err != nil {
+		elog.Error("Query_GetConfirmedHeight", "decode err", err)
+		return nil, err
+	}
+
+	return reply, nil
+
 }

@@ -48,10 +48,13 @@ func (r *rgbx) ExecLocal_Transfer(_ *rtypes.TransferAsset, tx *types.Transaction
 func (r *rgbx) ExecLocal_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	// remove pending tx record
-	dbSet.KV = append(dbSet.KV, &types.KeyValue{
-		Key:   formatPendingTxKey(confirm.TxBlockHeight, confirm.TxIndex),
-		Value: nil,
-	})
+	if !confirm.Timeout {
+		dbSet.KV = append(dbSet.KV,
+			&types.KeyValue{Key: formatPendingTxKey(confirm.TxBlockHeight, confirm.TxIndex),
+				Value: types.Encode(&rtypes.PendingTx{Confirmed: true})})
+	}
+	dbSet.KV = append(dbSet.KV, &types.KeyValue{Key: []byte(confirmedHeightKey),
+		Value: types.Encode(&types.Int64{Data: confirm.ConfirmedBlockHeight})})
 
 	//auto gen for localdb auto rollback
 	return r.addAutoRollBack(tx, dbSet.KV), nil

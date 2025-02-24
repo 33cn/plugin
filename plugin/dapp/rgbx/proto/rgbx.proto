@@ -82,6 +82,7 @@ message pendingTx {
   int64 timestamp = 2;
   bytes txHash = 3;
   outPoint utxo = 4;
+  bool confirmed = 5;
 }
 
 message pendingTxs {

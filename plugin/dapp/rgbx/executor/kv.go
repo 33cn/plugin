@@ -30,9 +30,11 @@ func formatAssetKey(symbol string) []byte {
 const pendingTxKeyPrefix = KeyPrefixLocalDB + "pendtx-"
 
 func formatPendingTxKey(height, txIndex int64) []byte {
-	
+
 	return []byte(pendingTxKeyPrefix + dapp.HeightIndexStr(height, txIndex))
 }
+
+const confirmedHeightKey = KeyPrefixLocalDB + "confirmed-height-"
 
 func readDB(kdb db.KV, key []byte, result types.Message) error {
 

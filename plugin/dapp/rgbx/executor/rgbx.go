@@ -50,3 +50,7 @@ func GetName() string {
 func (r *rgbx) GetDriverName() string {
 	return driverName
 }
+
+func (r *rgbx) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
