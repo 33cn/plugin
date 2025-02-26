@@ -5,6 +5,9 @@ import (
 	"encoding/hex"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 )
 
 var ()
@@ -90,59 +93,76 @@ func (r *rgbx) checkTransfer(txHash string, transfer *rtypes.TransferAsset) erro
 // TODO check from address
 func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
 
-	val, err := r.GetStateDB().Get(formatPayloadKey(confirm.GetTxHash()))
+	confirmTxHash := hex.EncodeToString(confirm.TxHash)
+	action := rtypes.GetActionName(confirm.GetActionType())
 
+	pendingTx := &rtypes.PendingTx{}
+	err := readDB(r.GetLocalDB(), formatPendingTxKey(confirm.TxBlockHeight, confirm.TxIndex), pendingTx)
 	if err != nil {
-		elog.Error("checkConfirm get payload", "txHash", txHash,
-			"confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"action", rtypes.GetActionName(confirm.GetActionType()), "err", err)
-		return ErrConfirmedTxNotExist
+		elog.Error("checkConfirm read pending tx", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"height", confirm.TxBlockHeight, "index", confirm.TxIndex, "err", err)
+		return ErrPendingTxNotExist
+	}
+
+	if pendingTx.Confirmed {
+		elog.Error("checkConfirm tx already confirmed", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash)
+		return ErrTxAlreadyConfirmed
+	}
+
+	_, err = r.GetStateDB().Get(formatPayloadKey(confirm.GetTxHash()))
+	if !bytes.Equal(confirm.GetTxHash(), pendingTx.GetTxHash()) {
+		elog.Error("checkConfirm tx hash not equal", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"expectConfirmHash", hex.EncodeToString(pendingTx.GetTxHash()))
+		return ErrConfirmedHashNotEqual
 	}
 
 	if confirm.Timeout {
-		elog.Debug("checkConfirm timeout", "txHash", txHash,
-			"confirmTxHash", hex.EncodeToString(confirm.GetTxHash()))
+		elog.Debug("checkConfirm timeout", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash)
 		return nil
 	}
 
-	//TODO check op_return commitment
-	if !bytes.Equal(confirm.Witness.GetOpRetOut().PkScript, confirm.GetTxHash()) {
+	spendingTxHash := chainhash.DoubleHashH(confirm.GetProof().GetSpendingTx()).String()
+	if confirm.GetProof().GetOpRetOutputIdx() <= 0 {
+		elog.Debug("checkConfirm invalid proof",
+			"action", action, "txHash", txHash,
+			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
+		return nil
+	}
 
-		elog.Error("checkConfirm op return commitment", "txHash", txHash,
-			"confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"opCommitment", hex.EncodeToString(confirm.Witness.GetOpRetOut().PkScript))
+	spendingTx := wire.MsgTx{}
+	err = spendingTx.DeserializeNoWitness(bytes.NewReader(confirm.GetProof().GetSpendingTx()))
+	if err != nil {
+		elog.Error("checkConfirm decode spending tx", "action", action,
+			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
+			"rawSpendingTx", hex.EncodeToString(confirm.GetProof().GetSpendingTx()),
+			"decode err", err)
+		return ErrDecodeBtcTx
+	}
+
+	// check input
+	expectInput := pendingTx.Utxo.ToString()
+	actualInput := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.String()
+	if expectInput != actualInput {
+		elog.Error("checkConfirm input utxo not equal", "action", action,
+			"expectInput", expectInput, "actualInput", actualInput)
+		return ErrSpendingInputNotEqual
+	}
+
+	//check op_return commitment
+	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
+	opRetOutScript := spendingTx.TxOut[int(confirm.GetProof().GetOpRetOutputIdx())].PkScript
+	if !bytes.Equal(opRetOutScript, commitment) {
+
+		elog.Error("checkConfirm op return commitment", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"spendingTxHash", spendingTxHash, "commit", hex.EncodeToString(opRetOutScript),
+			"expectCommit", hex.EncodeToString(commitment))
 		return ErrInvalidOpRetCommitment
 	}
-
-	if confirm.ActionType == rtypes.TyMintAction {
-		return r.checkConfirmMint(txHash, confirm, val)
-	} else if confirm.ActionType == rtypes.TyTransferAction {
-
-	}
-
-	return nil
-}
-
-func (r *rgbx) checkConfirmMint(txHash string, confirm *rtypes.ConfirmTx, payload []byte) error {
-
-	mint := &rtypes.MintAsset{}
-	err := types.Decode(payload, mint)
-	if err != nil {
-		elog.Error("checkConfirmMint decode payload", "txHash", txHash,
-			"confirmTxHash", hex.EncodeToString(confirm.GetTxHash()))
-		return types.ErrDecode
-	}
-
-	if mint.GetGenesisOut().ToString() != confirm.GetWitness().GetIn().ToString() {
-		elog.Error("checkConfirmMint genesis out", "txHash", txHash,
-			"confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"expect", mint.GetGenesisOut(), "actual", confirm.GetWitness().GetIn())
-		return ErrGenesisOutNotEqual
-	}
-	return nil
-}
-
-func (r *rgbx) checkConfirmTransfer(txHash string, transfer *rtypes.TransferAsset, payload []byte) error {
 
 	return nil
 }
