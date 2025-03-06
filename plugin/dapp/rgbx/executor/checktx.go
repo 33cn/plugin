@@ -126,12 +126,6 @@ func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
 	}
 
 	spendingTxHash := chainhash.DoubleHashH(confirm.GetProof().GetSpendingTx()).String()
-	if confirm.GetProof().GetOpRetOutputIdx() <= 0 {
-		elog.Debug("checkConfirm invalid proof",
-			"action", action, "txHash", txHash,
-			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
-		return nil
-	}
 
 	spendingTx := wire.MsgTx{}
 	err = spendingTx.DeserializeNoWitness(bytes.NewReader(confirm.GetProof().GetSpendingTx()))
@@ -150,6 +144,23 @@ func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
 			"expectInput", expectInput, "actualInput", actualInput)
 		return ErrSpendingInputNotEqual
+	}
+
+	// 表示op_return输出不存在，即utxo已经在btc链花费, 但没有构建rgbx所约束的op_return输出
+	if confirm.GetProof().GetOpRetOutputIdx() < 0 {
+		elog.Debug("checkConfirm opReturn output not exist",
+			"action", action, "txHash", txHash,
+			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
+		return nil
+	}
+
+	// 提供的op_return pkScript参数非法，和btc原始交易中的输出不符
+	if !bytes.Equal(confirm.GetProof().OpRetOutputPkScript,
+		spendingTx.TxOut[int(confirm.GetProof().GetOpRetOutputIdx())].PkScript) {
+		elog.Error("checkConfirm opReturn pkScript not equal",
+			"action", action, "txHash", txHash,
+			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
+		return ErrOpRetOutputPkScriptNotEqual
 	}
 
 	//check op_return commitment

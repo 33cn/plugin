@@ -1,11 +1,13 @@
 package executor
 
 import (
+	"bytes"
 	"encoding/hex"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -85,7 +87,15 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 	elog.Debug("Exec_Confirm", "opRetOutIdx", confirm.GetProof().GetOpRetOutputIdx(),
 		"timeout", confirm.GetTimeout(), "txHash", txHash, "confirmTx", confirmHash,
 		"action", rtypes.GetActionName(confirm.GetActionType()))
-	if confirm.GetTimeout() || confirm.GetProof().OpRetOutputIdx <= 0 {
+	if confirm.GetTimeout() {
+		return &types.Receipt{Ty: types.ExecOk}, nil
+	}
+
+	// 绑定资产的utxo已经在btc链上花费，但op return不存在或承诺数据不正确，
+	// 交易仅做标记并返回，相关资产永久冻结，无法转移
+	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
+	if confirm.GetProof().GetOpRetOutputIdx() < 0 ||
+		!bytes.Equal(commitment, confirm.GetProof().OpRetOutputPkScript) {
 		return &types.Receipt{Ty: types.ExecOk}, nil
 	}
 
@@ -124,7 +134,8 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash string) 
 		Value: types.Encode(asset),
 	})
 
-	owner := wire.NewOutPoint(&spendingTxHash, confirm.GetProof().GetOpRetOutputIdx()-1).String()
+	// 默认opReturn的下一个utxo作为资产所有者， 如果不存在，资产将被永久冻结，无法转移
+	owner := wire.NewOutPoint(&spendingTxHash, confirm.GetProof().GetOpRetOutputIdx()+1).String()
 	accDB, err := r.newAccount(mint.GetSymbol())
 	if err != nil {
 		elog.Error("Exec_Transfer newAccount", "txHash", txHash,

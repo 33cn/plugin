@@ -47,6 +47,7 @@ message utxoSpendingProof {
   uint32 spendingInputIdx = 1;
   uint32 opRetOutputIdx =2;
   bytes spendingTx = 3;
+  bytes opRetOutputPkScript = 4;
 }
 
 message AssetAccount {
