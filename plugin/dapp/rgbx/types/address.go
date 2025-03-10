@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 	"strconv"
 	"strings"
 )
@@ -14,8 +13,17 @@ func (o *OutPoint) ToString() string {
 		return "<nil>"
 	}
 	hash, _ := chainhash.NewHash(o.Hash)
-	op := wire.NewOutPoint(hash, o.Index)
-	return op.String()
+	return FormatUtxo(hash.String(), o.Index)
+}
+
+// FormatUtxo format utxo as string
+func FormatUtxo(hash string, index uint32) string {
+
+	buf := make([]byte, 2*chainhash.HashSize+1, 2*chainhash.HashSize+1+10)
+	copy(buf, hash)
+	buf[2*chainhash.HashSize] = ':'
+	buf = strconv.AppendUint(buf, uint64(index), 10)
+	return string(buf)
 }
 
 // FromString decode from string

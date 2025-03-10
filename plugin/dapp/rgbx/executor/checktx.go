@@ -6,7 +6,6 @@ import (
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -139,7 +138,8 @@ func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
 
 	// check input
 	expectInput := pendingTx.Utxo.ToString()
-	actualInput := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.String()
+	hash := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.Hash.String()
+	actualInput := rtypes.FormatUtxo(hash, confirm.GetProof().GetSpendingInputIdx())
 	if expectInput != actualInput {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
 			"expectInput", expectInput, "actualInput", actualInput)
@@ -161,18 +161,6 @@ func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
 			"action", action, "txHash", txHash,
 			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
 		return ErrOpRetOutputPkScriptNotEqual
-	}
-
-	//check op_return commitment
-	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
-	opRetOutScript := spendingTx.TxOut[int(confirm.GetProof().GetOpRetOutputIdx())].PkScript
-	if !bytes.Equal(opRetOutScript, commitment) {
-
-		elog.Error("checkConfirm op return commitment", "action", action,
-			"txHash", txHash, "confirmTxHash", confirmTxHash,
-			"spendingTxHash", spendingTxHash, "commit", hex.EncodeToString(opRetOutScript),
-			"expectCommit", hex.EncodeToString(commitment))
-		return ErrInvalidOpRetCommitment
 	}
 
 	return nil
