@@ -5,6 +5,7 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	rgbxtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"sync"
 )
 
 /*
@@ -14,13 +15,28 @@ import (
 
 var (
 	//日志
-	elog = log.New("module", "rgbx.executor")
+	elog        = log.New("module", "rgbx.executor")
+	cfgInitOnce sync.Once
 )
 
 var driverName = rgbxtypes.RgbxX
 
+type cfg struct {
+	CommitAddress string `json:"commitAddress"`
+}
+
+var rgbxCfg = cfg{}
+
+func initCfg(sub []byte) {
+
+	cfgInitOnce.Do(func() {
+		types.MustDecode(sub, &rgbxCfg)
+	})
+}
+
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
+	initCfg(sub)
 	drivers.Register(cfg, GetName(), newRgbx, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 }

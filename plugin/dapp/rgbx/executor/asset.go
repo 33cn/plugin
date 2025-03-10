@@ -12,16 +12,13 @@ var (
 	ErrNilGenesisOut               = errors.New("nil genesis output")
 	ErrDuplicateAssetSymbol        = errors.New("duplicate asset symbol")
 	ErrAssetNotExist               = errors.New("asset not exist")
-	ErrConfirmedTxNotExist         = errors.New("confirmed tx not exist")
-	ErrUnknownConfirmedAction      = errors.New("unknown confirmed action")
-	ErrInvalidOpRetCommitment      = errors.New("invalid op return commitment")
-	ErrGenesisOutNotEqual          = errors.New("genesis out not equal")
 	ErrDecodeBtcTx                 = errors.New("decode btc tx error")
 	ErrPendingTxNotExist           = errors.New("pending tx not exist")
 	ErrTxAlreadyConfirmed          = errors.New("tx already confirmed")
 	ErrConfirmedHashNotEqual       = errors.New("confirmed hash not equal")
 	ErrSpendingInputNotEqual       = errors.New("spending input not equal")
 	ErrOpRetOutputPkScriptNotEqual = errors.New("ErrOpRetOutputPkScriptNotEqual")
+	ErrInvalidCommitAddress        = errors.New("ErrInvalidCommitAddress")
 )
 
 const (

@@ -24,9 +24,11 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 
 	switch action.Ty {
 	case rtypes.TyMintAction:
-
+		err = r.checkMint(txHash, action.GetMint())
 	case rtypes.TyTransferAction:
+		err = r.checkTransfer(txHash, action.GetTransfer())
 	case rtypes.TyConfirmAction:
+		err = r.checkConfirm(tx.From(), txHash, action.GetConfirm())
 	default:
 		err = types.ErrActionNotSupport
 
@@ -90,10 +92,17 @@ func (r *rgbx) checkTransfer(txHash string, transfer *rtypes.TransferAsset) erro
 }
 
 // TODO check from address
-func (r *rgbx) checkConfirm(txHash string, confirm *rtypes.ConfirmTx) error {
+func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) error {
 
 	confirmTxHash := hex.EncodeToString(confirm.TxHash)
 	action := rtypes.GetActionName(confirm.GetActionType())
+
+	if fromAddr != rgbxCfg.CommitAddress {
+		elog.Error("checkConfirm fromAddr", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"fromAddr", fromAddr, "commitAddr", rgbxCfg.CommitAddress)
+		return ErrInvalidCommitAddress
+	}
 
 	pendingTx := &rtypes.PendingTx{}
 	err := readDB(r.GetLocalDB(), formatPendingTxKey(confirm.TxBlockHeight, confirm.TxIndex), pendingTx)
