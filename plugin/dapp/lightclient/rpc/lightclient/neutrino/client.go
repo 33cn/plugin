@@ -7,16 +7,20 @@ package neutrino
 
 import (
 	"context"
+	"github.com/lightninglabs/neutrino/headerfs"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/walletdb"
+	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 	"github.com/lightninglabs/neutrino"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 var log = log15.New("module", "neutrino")
@@ -33,12 +37,15 @@ func newClient() lightclient.Lighter {
 }
 
 type neutrinoClient struct {
-	ctx         context.Context
-	chain33Api  client.QueueProtocolAPI
-	cfg         config
-	commitAddr  string
-	neutrinoCfg neutrino.Config
-	neutrinoCS  *neutrino.ChainService
+	ctx            context.Context
+	chain33Api     client.QueueProtocolAPI
+	cfg            config
+	commitAddr     string
+	neutrinoCfg    neutrino.Config
+	neutrinoCS     *neutrino.ChainService
+	bestBlock      *headerfs.BlockStamp
+	lock           sync.Mutex
+	chain33FeeRate int64
 }
 
 // defaultBlockCacheSize is the size (in bytes) of blocks that will be
@@ -70,6 +77,7 @@ func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, 
 
 	n.ctx = ctx
 	n.chain33Api = api
+	n.chain33FeeRate = 100000
 
 	types.MustDecode(jsonCfg, &n.cfg)
 
@@ -135,6 +143,7 @@ func (n *neutrinoClient) Start() {
 		return
 	}
 
+	newRGBX().init(n)
 	go n.cleanUp()
 }
 
@@ -154,4 +163,39 @@ func (n *neutrinoClient) cleanUp() {
 		}
 	}
 
+}
+
+func (n *neutrinoClient) handleBestBlock() {
+
+	ticker := time.NewTicker(time.Second * 30)
+	for {
+
+		select {
+
+		case <-n.ctx.Done():
+			return
+		case <-ticker.C:
+
+			blk, err := n.neutrinoCS.BestBlock()
+			if err != nil {
+				log.Error("handleBestBlock", "err", err)
+				continue
+			}
+			n.setBestBlock(blk)
+		}
+	}
+}
+
+func (n *neutrinoClient) getBestBlock() *headerfs.BlockStamp {
+	n.lock.Lock()
+	defer n.lock.Unlock()
+	return n.bestBlock
+}
+
+func (n *neutrinoClient) setBestBlock(blk *headerfs.BlockStamp) {
+	n.lock.Lock()
+	defer n.lock.Unlock()
+	if blk != nil {
+		n.bestBlock = blk
+	}
 }
