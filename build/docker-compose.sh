@@ -139,20 +139,20 @@ function base_init() {
 
 function start() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
 
     # create and run docker-compose container
     #docker-compose -f docker-compose.yml -f docker-compose-paracross.yml -f docker-compose-relay.yml up --build -d
-    docker-compose up --build -d
+    docker compose up --build -d
 
     local SLEEP=10
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 
     set +e
     influxdbcontainer=$(docker ps -a | grep build_influxdb_1)
@@ -317,7 +317,7 @@ function check_docker_status() {
     statusPara=$(docker-compose ps | grep chain33_1 | awk '{print $3}')
     if [ "${status}" == "Exit" ] || [ "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
-        docker-compose logs chain33
+        docker compose logs chain33
         echo "=========== chain33 service Exit logs End========== "
     fi
 
