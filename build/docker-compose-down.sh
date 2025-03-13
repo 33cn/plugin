@@ -29,7 +29,7 @@ echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
 
 function down() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
+    docker compose ps
     # shellchk not recommend the first way
     # remains=( $(docker-compose ps -q | awk '{print $1}') )
     mapfile -t remains < <(docker-compose ps -q | awk '{print $1}')
@@ -39,7 +39,7 @@ function down() {
     if [ "$num" -gt 0 ]; then
         # remove exsit container
         echo "=========== # docker-compose down ============="
-        docker-compose down --rmi local
+        docker compose down --rmi local
     fi
 }
 
