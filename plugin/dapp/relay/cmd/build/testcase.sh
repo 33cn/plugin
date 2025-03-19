@@ -50,9 +50,9 @@ function wait_btcd_up() {
         if [ "${status}" == "Up" ]; then
             break
         fi
-        docker-compose logs btcd
-        docker-compose restart btcd
-        docker-compose ps
+        docker compose logs btcd
+        docker compose restart btcd
+        docker compose ps
         echo "==============btcd fail $count  ================="
         ((count--))
         if [ $count == 0 ]; then
@@ -61,9 +61,9 @@ function wait_btcd_up() {
         fi
         mod=$((count % 4))
         if [ $mod == 0 ]; then
-            docker-compose down
+            docker compose down
             sleep 5
-            docker-compose up --build -d
+            docker compose up --build -d
             sleep 60
             continue
         fi
