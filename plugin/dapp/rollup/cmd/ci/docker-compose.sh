@@ -333,19 +333,19 @@ function test_rollup() {
 
 function start_docker() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
 
     # create and run docker-compose container
-    docker-compose up --build -d
+    docker compose up --build -d
 
     local SLEEP=5
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 
     # query node run status
     #    check_docker_status
