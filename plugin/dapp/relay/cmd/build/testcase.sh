@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-BTCD="${1}_btcd_1"
+BTCD="${1}-btcd-1"
 
-RELAYD="${1}_relayd_1"
+RELAYD="${1}-relayd-1"
 
 BTC_CTL="docker exec ${BTCD} btcctl"
 

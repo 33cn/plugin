@@ -25,10 +25,10 @@ source ../dapp-test-common.sh
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-M1_NODE="${1}_chain33_1"
-M2_NODE="${1}_chain32_1"
-M3_NODE="${1}_chain31_1"
-M4_NODE="${1}_chain30_1"
+M1_NODE="${1}-chain33-1"
+M2_NODE="${1}-chain32-1"
+M3_NODE="${1}-chain31-1"
+M4_NODE="${1}-chain30-1"
 #测试节点
 M1_NODE_CLI="docker exec ${M1_NODE} /root/chain33-cli"
 ETH_CLI="docker exec ${M1_NODE} /root/chain33-cli --rpc_laddr http://localhost:8545"
