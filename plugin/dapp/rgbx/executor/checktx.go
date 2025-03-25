@@ -3,13 +3,28 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
 
-var ()
+var (
+	ErrInvalidSymbolLength         = errors.New("invalid asset symbol length")
+	ErrInvalidAssetAmount          = errors.New("invalid asset amount")
+	ErrInvalidMetaHashLength       = errors.New("invalid meta hash length")
+	ErrNilGenesisOut               = errors.New("nil genesis output")
+	ErrDuplicateAssetSymbol        = errors.New("duplicate asset symbol")
+	ErrAssetNotExist               = errors.New("asset not exist")
+	ErrDecodeBtcTx                 = errors.New("decode btc tx error")
+	ErrPendingTxNotExist           = errors.New("pending tx not exist")
+	ErrTxAlreadyConfirmed          = errors.New("tx already confirmed")
+	ErrConfirmedHashNotEqual       = errors.New("confirmed hash not equal")
+	ErrSpendingInputNotEqual       = errors.New("spending input not equal")
+	ErrOpRetOutputPkScriptNotEqual = errors.New("ErrOpRetOutputPkScriptNotEqual")
+	ErrInvalidCommitAddress        = errors.New("ErrInvalidCommitAddress")
+)
 
 // CheckTx 实现自定义检验交易接口，供框架调用
 func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
@@ -41,21 +56,21 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 
 func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 
-	if len(mint.GetSymbol()) <= 1 || len(mint.GetSymbol()) >= MaxAssetSymbolLength {
+	if len(mint.GetSymbol()) <= 1 || len(mint.GetSymbol()) >= rtypes.MaxAssetSymbolLength {
 		elog.Error("checkMint", "txHash", txHash,
 			"symbol", mint.Symbol, "symbolLen", len(mint.GetSymbol()))
 		return ErrInvalidSymbolLength
 	}
 
-	ty := Type(mint.GetType())
-	if (ty != Normal && mint.GetTotalAmount() != 1) ||
-		mint.GetTotalAmount() > MaxAssetAmount {
+	ty := rtypes.Type(mint.GetType())
+	if (ty != rtypes.Normal && mint.GetTotalAmount() != 1) ||
+		mint.GetTotalAmount() > rtypes.MaxAssetAmount {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
 			"amount", mint.GetTotalAmount(), "type", ty.String())
 		return ErrInvalidAssetAmount
 	}
 
-	if len(mint.GetMetaHash()) != MetaHashLen {
+	if len(mint.GetMetaHash()) != rtypes.MetaHashLen {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
 			"metaHashLen", len(mint.GetMetaHash()))
 		return ErrInvalidMetaHashLength
@@ -65,7 +80,7 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 		return ErrNilGenesisOut
 	}
 	_, err := r.GetStateDB().Get(formatAssetKey(mint.GetSymbol()))
-	if types.ErrNotFound != err {
+	if !errors.Is(err, types.ErrNotFound) {
 		elog.Error("checkMint duplicate asset", "txHash", txHash, "symbol", mint.Symbol)
 		return ErrDuplicateAssetSymbol
 	}

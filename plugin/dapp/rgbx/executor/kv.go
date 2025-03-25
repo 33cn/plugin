@@ -4,6 +4,7 @@ import (
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"strings"
 )
 
 /*
@@ -19,12 +20,16 @@ const (
 	KeyPrefixLocalDB = "LODB-rgbx-"
 )
 
+func formatSymbol(symbol string) string {
+	return strings.ToUpper(symbol)
+}
+
 func formatPayloadKey(hash []byte) []byte {
 	return append([]byte(KeyPrefixStateDB+"payload-"), hash...)
 }
 
 func formatAssetKey(symbol string) []byte {
-	return append([]byte(KeyPrefixStateDB+"asset-"), symbol...)
+	return append([]byte(KeyPrefixStateDB+"asset-"), formatSymbol(symbol)...)
 }
 
 const pendingTxKeyPrefix = KeyPrefixLocalDB + "pendtx-"

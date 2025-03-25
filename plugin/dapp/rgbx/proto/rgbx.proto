@@ -17,7 +17,7 @@ message asset {
   uint32 type = 1;
   int64 totalAmount = 2;
   string symbol = 3;
-  string metaHash =4;
+  bytes metaHash = 4;
   string genesisTxHash = 5;
 }
 
@@ -26,7 +26,7 @@ message mintAsset {
   uint32 type = 1;
   int64 totalAmount = 2;
   string symbol = 3;
-  string metaHash =4;
+  bytes metaHash =4;
   // represents the outpoint of the transaction's
   // input that resulted in the creation of the asset.
   outPoint genesisOut = 5;
