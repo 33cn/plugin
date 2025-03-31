@@ -1,0 +1,175 @@
+package commands
+
+import (
+	"encoding/hex"
+	"fmt"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/spf13/cobra"
+	"os"
+	"strconv"
+	"strings"
+)
+
+func mintAssetCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "mint",
+		//Aliases: []string{"cg"},
+		Short:   "mint asset",
+		Run:     mintAsset,
+		Example: "mint -t type -s symbol -a totalAmount -m metaHashHex -o genesisUtxo(hash:index:pkScript)",
+	}
+	mintAssetFlags(cmd)
+	return cmd
+}
+
+func transferAssetCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "transfer",
+		//Aliases: []string{"cg"},
+		Short:   "transfer asset",
+		Run:     transferAsset,
+		Example: "transfer",
+	}
+	transferAssetFlags(cmd)
+	return cmd
+}
+
+//func confirmTxCMD() *cobra.Command {
+//
+//	cmd := &cobra.Command{
+//		Use: "confirm",
+//		//Aliases: []string{"cg"},
+//		Short:   "confirm tx",
+//		Run:     confirmTx,
+//		Example: "confirm",
+//	}
+//	confirmTxFlags(cmd)
+//	return cmd
+//}
+
+func mintAssetFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("type", "t", 0, "asset type")
+	cmd.Flags().Uint64P("totalAmount", "a", 10000, "asset total amount")
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.Flags().StringP("metaHash", "m", "", "asset metaData or human-readable identifier hash")
+	cmd.Flags().StringP("genesisOut", "o", "", "genesis utxo, hash:index:pkScript format")
+	markRequired(cmd, "totalAmount", "symbol", "genesisOut")
+}
+
+func mintAsset(cmd *cobra.Command, args []string) {
+
+	symbol, _ := cmd.Flags().GetString("symbol")
+	metaHashStr, _ := cmd.Flags().GetString("metaHashStr")
+	genesisOutStr, _ := cmd.Flags().GetString("genesisOut")
+	totalAmount, _ := cmd.Flags().GetUint64("totalAmount")
+	ty, _ := cmd.Flags().GetUint32("type")
+
+	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, "+
+			"length must less than %d\n", symbol, rtypes.MaxAssetSymbolLength)
+		return
+	}
+
+	metaHash, err := hex.DecodeString(metaHashStr)
+	if err != nil || len(metaHash) != rtypes.MetaHashLen {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid meta hash: %s, decode err:%s", metaHashStr, err)
+		return
+	}
+
+	totalAmount = totalAmount * uint64(rtypes.DefaultPrecision)
+
+	if totalAmount < 1 ||
+		totalAmount > uint64(rtypes.MaxAssetAmount) {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid total amount: %s, overflow", totalAmount)
+		return
+	}
+
+	strs := strings.Split(genesisOutStr, ":")
+	if len(strs) != 3 {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid genesis out: %s, must  hash:index:pkScript format", genesisOutStr)
+		return
+	}
+
+	hash, err1 := hex.DecodeString(strs[0])
+	pkScript, err2 := hex.DecodeString(strs[2])
+	index, err3 := strconv.ParseUint(strs[1], 10, 32)
+
+	if err1 != nil || err2 != nil || err3 != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid genesis out: %s", genesisOutStr)
+		return
+	}
+
+	mint := &rtypes.MintAsset{
+		Symbol:      symbol,
+		TotalAmount: int64(totalAmount),
+		MetaHash:    metaHash,
+		Type:        ty,
+		GenesisOut: &rtypes.OutPoint{
+			Hash:     hash,
+			Index:    uint32(index),
+			PkScript: pkScript,
+		},
+	}
+
+	sendCreateTxRPC(cmd, rtypes.NameMintAction, mint)
+}
+
+func transferAssetFlags(cmd *cobra.Command) {
+
+	cmd.Flags().Uint64P("amount", "a", 1, "asset amount")
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.Flags().StringP("from", "f", "", "from address, hash:index format if utxo")
+	cmd.Flags().StringP("to", "t", "", "to address, hash:index format if utxo")
+	cmd.Flags().StringP("change", "c", "", "to address, hash:index format if utxo")
+	markRequired(cmd, "amount", "symbol", "from", "to")
+}
+
+func transferAsset(cmd *cobra.Command, args []string) {
+
+	symbol, _ := cmd.Flags().GetString("symbol")
+	from, _ := cmd.Flags().GetString("from")
+	to, _ := cmd.Flags().GetString("to")
+	change, _ := cmd.Flags().GetString("change")
+	amount, _ := cmd.Flags().GetUint64("amount")
+
+	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, "+
+			"length must less than %d\n", symbol, rtypes.MaxAssetSymbolLength)
+		return
+	}
+
+	amount = amount * uint64(rtypes.DefaultPrecision)
+
+	if amount < 1 ||
+		amount > uint64(rtypes.MaxAssetAmount) {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid amount: %s, overflow", amount)
+		return
+	}
+
+	transfer := &rtypes.TransferAsset{
+		Symbol: symbol,
+		Amount: int64(amount),
+		From:   toAssetAccount(from),
+		To:     toAssetAccount(to),
+		Change: toAssetAccount(change),
+	}
+
+	sendCreateTxRPC(cmd, rtypes.NameTransferAction, transfer)
+}
+
+func toAssetAccount(addr string) *rtypes.AssetAccount {
+
+	acc := &rtypes.AssetAccount{}
+	if !strings.Contains(addr, ":") {
+		acc.Value = &rtypes.AssetAccount_Address{Address: addr}
+		return acc
+	}
+	o := &rtypes.OutPoint{}
+	err := o.FromString(addr)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "parse out point err: %s\n", err)
+		return nil
+	}
+	acc.Value = &rtypes.AssetAccount_Utxo{Utxo: o}
+	return acc
+}
