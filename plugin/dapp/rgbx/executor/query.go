@@ -57,3 +57,43 @@ func (r *rgbx) Query_GetConfirmedHeight(_ *types.ReqNil) (types.Message, error) 
 	return reply, nil
 
 }
+
+func (r *rgbx) Query_GetAsset(req *types.ReqString) (types.Message, error) {
+
+	symbol := req.GetData()
+	v, err := r.GetStateDB().Get(formatAssetKey(symbol))
+	reply := &rtypes.Asset{}
+	if err != nil {
+		elog.Error("Query_GetAsset", "symbol", symbol, "get db err", err)
+		return nil, err
+	}
+
+	err = types.Decode(v, reply)
+	if err != nil {
+		elog.Error("Query_GetAsset", "symbol", symbol, "decode err", err)
+		return nil, err
+	}
+
+	return reply, nil
+}
+
+func (r *rgbx) Query_GetPendingTx(req *rtypes.ReqGetPendingTx) (types.Message, error) {
+
+	v, err := r.GetLocalDB().Get(formatPendingTxKey(req.GetHeight(), req.GetIndex()))
+
+	reply := &rtypes.PendingTx{}
+	if err != nil {
+		elog.Error("Query_GetPendingTx", "height", req.GetHeight(),
+			"index", req.GetIndex(), "get db err", err)
+		return nil, err
+	}
+
+	err = types.Decode(v, reply)
+	if err != nil {
+		elog.Error("Query_GetPendingTx", "height", req.GetHeight(),
+			"index", req.GetIndex(), "decode err", err)
+		return nil, err
+	}
+
+	return reply, nil
+}

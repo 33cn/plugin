@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/33cn/chain33/types"
-)
-
 const (
 	// MaxAssetSymbolLength is the maximum byte length of an asset's symbol.
 	// This byte length is equivalent to character count for single-byte
@@ -12,8 +8,10 @@ const (
 
 	// MetaHashLen is the length of the metadata hash.
 	MetaHashLen = 32
+	// DefaultPrecision default Precision
+	DefaultPrecision = int64(1e8)
 	// MaxAssetAmount max amount
-	MaxAssetAmount = 1e8 * 900 * types.DefaultCoinPrecision // 900 亿
+	MaxAssetAmount = 1e8 * 900 * DefaultPrecision // 900 亿
 )
 
 // Type denotes the asset types supported by the Taproot Asset protocol.

@@ -932,6 +932,61 @@ func (x *ReqListPendingTx) GetCount() int32 {
 	return 0
 }
 
+type ReqGetPendingTx struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Height int64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	Index  int64 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+}
+
+func (x *ReqGetPendingTx) Reset() {
+	*x = ReqGetPendingTx{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rgbx_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReqGetPendingTx) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReqGetPendingTx) ProtoMessage() {}
+
+func (x *ReqGetPendingTx) ProtoReflect() protoreflect.Message {
+	mi := &file_rgbx_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReqGetPendingTx.ProtoReflect.Descriptor instead.
+func (*ReqGetPendingTx) Descriptor() ([]byte, []int) {
+	return file_rgbx_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ReqGetPendingTx) GetHeight() int64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *ReqGetPendingTx) GetIndex() int64 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
 var File_rgbx_proto protoreflect.FileDescriptor
 
 var file_rgbx_proto_rawDesc = []byte{
@@ -1047,8 +1102,12 @@ var file_rgbx_proto_rawDesc = []byte{
 	0x0a, 0x73, 0x74, 0x61, 0x72, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x03, 0x52, 0x0a, 0x73, 0x74, 0x61, 0x72, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x14, 0x0a,
 	0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x32, 0x06, 0x0a, 0x04, 0x72, 0x67, 0x62, 0x78, 0x42, 0x0a, 0x5a, 0x08, 0x2e,
-	0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x75, 0x6e, 0x74, 0x22, 0x3f, 0x0a, 0x0f, 0x52, 0x65, 0x71, 0x47, 0x65, 0x74, 0x50, 0x65, 0x6e,
+	0x64, 0x69, 0x6e, 0x67, 0x54, 0x78, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x14,
+	0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x69,
+	0x6e, 0x64, 0x65, 0x78, 0x32, 0x06, 0x0a, 0x04, 0x72, 0x67, 0x62, 0x78, 0x42, 0x0a, 0x5a, 0x08,
+	0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1063,7 +1122,7 @@ func file_rgbx_proto_rawDescGZIP() []byte {
 	return file_rgbx_proto_rawDescData
 }
 
-var file_rgbx_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_rgbx_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_rgbx_proto_goTypes = []interface{}{
 	(*RgbxAction)(nil),        // 0: types.RgbxAction
 	(*Asset)(nil),             // 1: types.asset
@@ -1077,6 +1136,7 @@ var file_rgbx_proto_goTypes = []interface{}{
 	(*PendingTx)(nil),         // 9: types.pendingTx
 	(*PendingTxs)(nil),        // 10: types.pendingTxs
 	(*ReqListPendingTx)(nil),  // 11: types.ReqListPendingTx
+	(*ReqGetPendingTx)(nil),   // 12: types.ReqGetPendingTx
 }
 var file_rgbx_proto_depIdxs = []int32{
 	2,  // 0: types.RgbxAction.mint:type_name -> types.mintAsset
@@ -1247,6 +1307,18 @@ func file_rgbx_proto_init() {
 				return nil
 			}
 		}
+		file_rgbx_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReqGetPendingTx); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_rgbx_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*RgbxAction_Mint)(nil),
@@ -1263,7 +1335,7 @@ func file_rgbx_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_rgbx_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

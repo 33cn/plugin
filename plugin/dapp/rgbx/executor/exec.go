@@ -174,7 +174,8 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 
 	log.Debug("transferAsset", "symbol", transfer.Symbol, "amount", transfer.Amount,
 		"txHash", txHash, "confirmTx", confirmHash, "spendHash", spendHash,
-		"from", transfer.From.Address(), "to", transfer.To.Address())
+		"from", transfer.From.Address(), "to", transfer.To.Address(),
+		"change", transfer.Change.Address())
 
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
@@ -183,6 +184,8 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
+
+	changeAmount := accDB.LoadAccount(transfer.GetFrom().Address()).GetBalance() - transfer.GetAmount()
 	receipt, err := accDB.Transfer(transfer.GetFrom().Address(), transfer.GetTo().Address(), transfer.GetAmount())
 	if err != nil {
 		elog.Error("transferAsset transfer", "txHash", txHash, "confirmTx", confirmHash,
@@ -190,6 +193,21 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
-	return receipt, nil
 
+	// handle change
+	if changeAmount <= 0 || transfer.GetChange().Address() == "" {
+		return receipt, nil
+	}
+
+	changeReceipt, err := accDB.Transfer(transfer.GetFrom().Address(), transfer.GetChange().Address(), changeAmount)
+	if err != nil {
+		elog.Error("transferAsset change", "txHash", txHash, "confirmTx", confirmHash,
+			"from", transfer.From.Address(), "changeAddr", transfer.Change.Address(),
+			"symbol", transfer.Symbol, "amount", changeAmount, "err", err)
+		return nil, err
+	}
+
+	receipt.KV = append(receipt.KV, changeReceipt.KV...)
+	receipt.Logs = append(receipt.Logs, changeReceipt.Logs...)
+	return receipt, nil
 }
