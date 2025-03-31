@@ -12,7 +12,7 @@ message RgbxAction {
   }
 }
 
-message asset {
+message rgbxAsset {
 
   uint32 type = 1;
   int64 totalAmount = 2;

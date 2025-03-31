@@ -14,7 +14,7 @@ const (
 	MaxAssetAmount = 1e8 * 900 * DefaultPrecision // 900 亿
 )
 
-// Type denotes the asset types supported by the Taproot Asset protocol.
+// Type denotes the asset types supported by the Taproot RgbxAsset protocol.
 type Type uint8
 
 const (

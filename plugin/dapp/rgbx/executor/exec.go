@@ -126,7 +126,7 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 	log.Debug("mintAsset", "symbol", mint.Symbol, "amount", mint.TotalAmount,
 		"txHash", txHash, "confirmTx", confirmHash,
 		"spendingTxHash", spendHash, "metaHash", mint.MetaHash)
-	asset := &rtypes.Asset{
+	asset := &rtypes.RgbxAsset{
 		Symbol:        formatSymbol(mint.Symbol),
 		Type:          mint.Type,
 		TotalAmount:   mint.TotalAmount,

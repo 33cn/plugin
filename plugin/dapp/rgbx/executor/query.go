@@ -62,7 +62,7 @@ func (r *rgbx) Query_GetAsset(req *types.ReqString) (types.Message, error) {
 
 	symbol := req.GetData()
 	v, err := r.GetStateDB().Get(formatAssetKey(symbol))
-	reply := &rtypes.Asset{}
+	reply := &rtypes.RgbxAsset{}
 	if err != nil {
 		elog.Error("Query_GetAsset", "symbol", symbol, "get db err", err)
 		return nil, err

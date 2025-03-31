@@ -28,14 +28,15 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/qbftNode"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/relay"          //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/retrieve"       //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/rollup"         //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/storage"        //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/ticket"         //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/token"          //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/trade"          //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/unfreeze"       //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/valnode"        //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/vote"           //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/wasm"           //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/zksync"         //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/rgbx"
+	_ "github.com/33cn/plugin/plugin/dapp/rollup"   //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/storage"  //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/ticket"   //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/token"    //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/trade"    //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/unfreeze" //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/valnode"  //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/vote"     //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/wasm"     //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/zksync"   //auto gen
 )
