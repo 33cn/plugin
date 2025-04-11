@@ -14,8 +14,8 @@ var lightConfig = `
 clients=["neutrino"]
 commitAddr=""
 
-#[rpc.sub.light.neutrino]
-#netType="regress"
+[rpc.sub.light.neutrino]
+netType="regress"
 
 `
 

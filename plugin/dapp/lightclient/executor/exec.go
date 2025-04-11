@@ -2,7 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/types"
+	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 )
 
 /*

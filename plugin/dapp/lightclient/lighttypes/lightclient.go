@@ -1,4 +1,4 @@
-package types
+package lighttypes
 
 import (
 	"reflect"

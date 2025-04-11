@@ -5,7 +5,7 @@ import (
 
 	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/types"
-	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/types"
+	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用

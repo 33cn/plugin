@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-package types;
-option go_package = "../types";
+option go_package = "../lighttypes";
 
 message LightClientAction {
     int32 ty = 1;
@@ -59,7 +58,7 @@ message Vout {
 }
 
 message BtcSpv {
-    string   txHash              = 1;
+    string   txHash            = 1;
     int64    time              = 2;
     uint64   height            = 3;
     string   blockHash         = 4;

@@ -5,9 +5,9 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
+	lightclienttypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
 	_ "github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient/btc"
-	lightclienttypes "github.com/33cn/plugin/plugin/dapp/lightclient/types"
 )
 
 /*

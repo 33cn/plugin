@@ -4,8 +4,8 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/commands"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/executor"
+	lightclienttypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc"
-	lightclienttypes "github.com/33cn/plugin/plugin/dapp/lightclient/types"
 )
 
 /*
