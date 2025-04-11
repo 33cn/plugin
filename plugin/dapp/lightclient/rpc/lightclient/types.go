@@ -15,16 +15,17 @@ var (
 // Lighter light client interface
 type Lighter interface {
 	// Init init client context
-	Init(ctx context.Context, api client.QueueProtocolAPI, commitAddr string, jsonCfg []byte) error
+	Init(ctx context.Context, api client.QueueProtocolAPI, cfg *Config) error
 	// Start client routine
 	Start()
 }
 
 // Config light client config
 type Config struct {
-	EnableClients []string               `json:"clients,omitempty"`
-	CommitAddr    string                 `json:"commitAddr,omitempty"`
-	SubCfg        map[string]interface{} `json:"subCfg,omitempty"`
+	EnableClients []string    `json:"clients,omitempty"`
+	CommitAddr    string      `json:"commitAddr,omitempty"`
+	Neutrino      interface{} `json:"neutrino,omitempty"`
+	Btc           interface{} `json:"btc,omitempty"`
 }
 
 // Register register light client

@@ -2,9 +2,10 @@ package btc
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
 )
 
@@ -23,11 +24,12 @@ func newClient() lightclient.Lighter {
 	return &btcLight{}
 }
 
-func (b *btcLight) Init(ctx context.Context, api client.QueueProtocolAPI, commitAddr string, jsonCfg []byte) error {
+func (b *btcLight) Init(ctx context.Context, api client.QueueProtocolAPI, cfg *lightclient.Config) error {
 
 	b.ctx = ctx
 	b.api = api
-	types.MustDecode(jsonCfg, &b.cfg)
+	subCfg, _ := json.Marshal(cfg.Btc)
+	types.MustDecode(subCfg, &b.cfg)
 
 	return nil
 }

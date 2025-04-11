@@ -1,8 +1,6 @@
 package rpc
 
 import (
-	"encoding/json"
-
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/log/log15"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -51,9 +49,7 @@ func Init(name string, s rpctypes.RPCServer) {
 
 		if lc := lightclient.New(c); lc != nil {
 
-			sc := lightCfg.SubCfg[c]
-			jsonCfg, _ := json.Marshal(sc)
-			err := lc.Init(s.Context(), api, lightCfg.CommitAddr, jsonCfg)
+			err := lc.Init(s.Context(), api, lightCfg)
 
 			if err != nil {
 				log.Crit("Init", "light", c, "lightClient init err", err)

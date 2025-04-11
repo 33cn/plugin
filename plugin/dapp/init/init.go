@@ -17,17 +17,18 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/hashlock"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/issuance"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/js"             //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/lottery"        //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/mix"            //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/multisig"       //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/norm"           //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/oracle"         //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/paracross"      //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/pokerbull"      //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/privacy"        //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/qbftNode"       //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/relay"          //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/retrieve"       //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/lightclient"
+	_ "github.com/33cn/plugin/plugin/dapp/lottery"   //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/mix"       //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/multisig"  //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/norm"      //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/oracle"    //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/paracross" //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/pokerbull" //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/privacy"   //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/qbftNode"  //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/relay"     //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/retrieve"  //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/rgbx"
 	_ "github.com/33cn/plugin/plugin/dapp/rollup"   //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/storage"  //auto gen
