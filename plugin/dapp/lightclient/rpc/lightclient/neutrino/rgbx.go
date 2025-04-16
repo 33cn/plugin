@@ -32,11 +32,13 @@ type rgbx struct {
 }
 
 type utxoRescanInfo struct {
-	pendingTxHash string
-	out           wire.OutPoint
-	pkScript      []byte
-	startHeight   int32
-	startTime     int64
+	pendingTxHash   string
+	outPrint        string
+	out             wire.OutPoint
+	pkScript        []byte
+	startHeight     int32
+	startTime       int64
+	confirmedHeight int32
 }
 
 type utxoSpendInfo struct {
@@ -45,6 +47,7 @@ type utxoSpendInfo struct {
 	pendingTxHash      string
 	spendingTxHash     string
 	spendingTx         *wire.MsgTx
+	timeout            bool
 }
 
 func newRGBX() *rgbx {
@@ -56,6 +59,8 @@ func newRGBX() *rgbx {
 }
 
 func (r *rgbx) init(cli *neutrinoClient) {
+
+	log.Debug("init rgbx service start")
 	r.client = cli
 	var err error
 	r.commitAddressType, err = address.GetAddressType(cli.commitAddr)
@@ -66,27 +71,41 @@ func (r *rgbx) init(cli *neutrinoClient) {
 	r.commitTxKey = cli.getKeyFromWallet(cli.commitAddr)
 
 	// 等待同步
-	cli.waitUntilTrue("wait chain33 sync", cli.isChain33Sync)
-	height := cli.getRgbxConfirmedHeight()
-	if height == nil {
-		panic("getRgbxConfirmedHeight")
-	}
+	cli.waitTask("wait chain33 sync", cli.isChain33Sync)
+	cli.waitTask("wait getRgbxConfirmedHeight", func() bool {
+		if height := cli.getRgbxConfirmedHeight(); height != nil {
+			r.pendingTxConfirmedHeight = height.GetData()
+			if r.pendingTxConfirmedHeight > 0 {
+				r.pendingTxPullHeight = height.GetData() + 1
+			}
+			return true
+		}
+		return false
+	})
 
-	r.pendingTxConfirmedHeight = height.GetData()
-	r.pendingTxPullHeight = height.GetData() + 1
 	// 等待轻节点同步
-	cli.waitUntilTrue("wait neutrino sync", cli.neutrinoCS.IsCurrent)
-	cli.waitUntilTrue("wait neutrino best block", func() bool {
+	cli.waitTask("wait neutrino sync", func() bool {
+
+		if cli.neutrinoCS.IsCurrent() {
+			return true
+		}
+		log.Debug("wait neutrino sync", "currHeight", cli.getBestBlock().Height)
+		return false
+	})
+	cli.waitTask("wait neutrino best block", func() bool {
 		if r.client.getBestBlock() != nil {
 			return true
 		}
 		return false
 	})
 
+	go r.pullPendingTx()
 	go r.handleCommitPendingTx()
-	for i := 0; i < 2*runtime.NumCPU(); i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		go r.handleRescanUtxo()
 	}
+
+	log.Debug("init rgbx service done")
 
 }
 
@@ -107,24 +126,32 @@ func (r *rgbx) pullPendingTx() {
 		case <-ticker.C:
 
 			txs, err := r.client.getRgbxPendingTxs(req)
-			txNum := len(txs.GetPendingList())
-			log.Debug("pullPendingTx", "txNum", txNum, "err", err, "req", req)
-			if err != nil || txNum == 0 {
+			if err != nil {
+				log.Debug("pullPendingTx", "err", err, "req", req)
 				continue
 			}
+			txNum := len(txs.GetPendingList())
+			if txNum == 0 {
+				continue
+			}
+
+			log.Debug("pullPendingTx", "txNum", txNum, "req", req)
 			for _, tx := range txs.GetPendingList() {
 
 				if tx.Confirmed {
 					log.Debug("tx already confirmed", "txHash", hex.EncodeToString(tx.TxHash))
 					continue
 				}
-				hash, _ := chainhash.NewHash(tx.Utxo.Hash)
+
+				hashStr := hex.EncodeToString(tx.Utxo.Hash)
+				hash, _ := chainhash.NewHashFromStr(hashStr)
 				uri := &utxoRescanInfo{
 					pendingTxHash: hex.EncodeToString(tx.TxHash),
 					out: wire.OutPoint{
 						Hash:  *hash,
 						Index: tx.Utxo.Index,
 					},
+					outPrint:    rtypes.FormatUtxo(hashStr, tx.Utxo.Index),
 					pkScript:    tx.Utxo.PkScript,
 					startTime:   tx.Timestamp,
 					startHeight: 0,
@@ -143,25 +170,50 @@ func (r *rgbx) pullPendingTx() {
 func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 
 	bestBlk := r.client.getBestBlock()
-	startOpt := neutrino.StartTime(time.Unix(info.startTime, 0))
-	if info.startHeight > 0 {
-		startOpt = neutrino.StartBlock(&headerfs.BlockStamp{Height: info.startHeight})
+
+	// get start height from startTime
+	for height := bestBlk.Height; info.startHeight == 0 && height > 0; height-- {
+
+		header, err := r.client.neutrinoCS.BlockHeaders.FetchHeaderByHeight(uint32(height))
+		if err != nil {
+			log.Error("rescanUtxo", "pendHash", info.pendingTxHash,
+				"height", height, "FetchHeaderByHeight err", err)
+			return false
+		}
+
+		if header.Timestamp.Unix() < info.startTime {
+			info.startHeight = height + 1
+		}
 	}
+	if info.startHeight > bestBlk.Height || info.confirmedHeight > bestBlk.Height {
+		return false
+	}
+
+	log.Debug("rescanUtxo", "startHeight", info.startHeight,
+		"pendHash", info.pendingTxHash, "utxo", info.outPrint)
+
 	spendReport, err := r.client.neutrinoCS.GetUtxo(
 		neutrino.WatchInputs(neutrino.InputWithScript{
 			OutPoint: info.out,
 			PkScript: info.pkScript,
 		}),
-		startOpt)
-
-	info.startHeight = bestBlk.Height
-
+		neutrino.StartBlock(&headerfs.BlockStamp{Height: info.startHeight}))
 	if err != nil {
-		log.Error("rescanUtxo", "pendingTxHash", info.pendingTxHash, "err", err)
+		log.Error("rescanUtxo", "pendingTxHash", info.pendingTxHash,
+			"utxo", info.outPrint, "err", err)
 		return false
 	}
 
-	if spendReport.SpendingTx == nil {
+	if spendReport == nil || spendReport.SpendingTx == nil {
+		info.startHeight = bestBlk.Height + 1
+		return false
+	}
+
+	// make sure enough confirmations
+	if spendReport.SpendingTxHeight+r.client.cfg.BlockConfirmations > uint32(bestBlk.Height) {
+		info.confirmedHeight = int32(spendReport.SpendingTxHeight + r.client.cfg.BlockConfirmations)
+		log.Debug("rescanUtxo confirmations", "bestHeight", bestBlk.Height,
+			"confirmedHeight", info.confirmedHeight, "utxo", info.outPrint)
 		return false
 	}
 
@@ -175,7 +227,7 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 
 	r.commitChan <- spendInfo
 	log.Debug("rescanUtxo", "pendingHash", spendInfo.pendingTxHash,
-		"spendingHash", spendInfo.spendingTxHash)
+		"spendingHash", spendInfo.spendingTxHash, "utxo", info.outPrint)
 	return true
 
 }
@@ -183,7 +235,8 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 func (r *rgbx) handleRescanUtxo() {
 
 	rescanArr := make([]*utxoRescanInfo, 0, 16)
-	ticker := time.NewTicker(time.Minute * 5)
+	interval := r.client.cfg.BtcBlockInterval / 2
+	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
 
 		select {
@@ -193,7 +246,7 @@ func (r *rgbx) handleRescanUtxo() {
 
 		case info := <-r.rescanChan:
 
-			if !r.rescanUtxo(info) {
+			if !r.rescanUtxo(info) && !r.mayTimeout(info) {
 				rescanArr = append(rescanArr, info)
 			}
 
@@ -202,7 +255,7 @@ func (r *rgbx) handleRescanUtxo() {
 			rescanArr = rescanArr[:0]
 			for _, info := range tempArr {
 
-				if !r.rescanUtxo(info) {
+				if !r.rescanUtxo(info) && !r.mayTimeout(info) {
 					rescanArr = append(rescanArr, info)
 				}
 			}
@@ -211,15 +264,44 @@ func (r *rgbx) handleRescanUtxo() {
 	}
 }
 
+func (r *rgbx) mayTimeout(info *utxoRescanInfo) bool {
+
+	if r.client.cfg.MaxUtxoRescanTime == 0 ||
+		types.Now().Unix() < info.startTime+r.client.cfg.MaxUtxoRescanTime {
+		return false
+	}
+
+	spendInfo := &utxoSpendInfo{
+		pendingTxHash: info.pendingTxHash,
+		timeout:       true,
+	}
+	log.Debug("mayTimeout", "startTime", info.startTime, "pendingHash", info.pendingTxHash,
+		"utxo", info.outPrint)
+	r.commitChan <- spendInfo
+	return true
+}
+
 func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 
-	pendTx := r.pendingCache.getTx(info.pendingTxHash)
+	pendTx := r.pendingCache.removeTx(info.pendingTxHash)
 	minTxBlockHeight := r.pendingCache.getMinTxBlockHeight(pendTx.TxBlockHeight)
+	confirm := &rtypes.ConfirmTx{
+		ActionType:           pendTx.ActionType,
+		ConfirmedBlockHeight: minTxBlockHeight - 1,
+		TxBlockHeight:        pendTx.TxBlockHeight,
+		TxIndex:              pendTx.TxIndex,
+		TxHash:               pendTx.TxHash,
+	}
+
+	if info.timeout {
+		confirm.Timeout = true
+		return confirm
+	}
+
 	proof := &rtypes.UtxoSpendingProof{
 		SpendingInputIdx: info.spendingInputIndex,
 		OpRetOutputIdx:   -1,
 	}
-
 	for idx, out := range info.spendingTx.TxOut {
 		if out.PkScript[0] == txscript.OP_RETURN {
 			proof.OpRetOutputIdx = int32(idx)
@@ -229,25 +311,15 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 	buf := bytes.NewBuffer(make([]byte, 0, info.spendingTx.SerializeSizeStripped()))
 	_ = info.spendingTx.SerializeNoWitness(buf)
 	proof.SpendingTx = buf.Bytes()
+	confirm.Proof = proof
 
-	return &rtypes.ConfirmTx{
-		ActionType:           pendTx.ActionType,
-		ConfirmedBlockHeight: minTxBlockHeight - 1,
-		TxBlockHeight:        pendTx.TxBlockHeight,
-		TxIndex:              pendTx.TxIndex,
-		TxHash:               pendTx.TxHash,
-		Proof:                proof,
-	}
+	return confirm
 }
 
 func (r *rgbx) commitPendingTx(confirm *rtypes.ConfirmTx) (success bool) {
 
-	action := &rtypes.RgbxAction{
-		Ty:    rtypes.TyConfirmAction,
-		Value: &rtypes.RgbxAction_Confirm{Confirm: confirm},
-	}
 	confirmHash := hex.EncodeToString(confirm.TxHash)
-	tx, err := types.CallCreateTransaction(rtypes.RgbxX, rtypes.NameConfirmAction, action)
+	tx, err := types.CallCreateTransaction(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
 	if err != nil {
 		log.Error("commitPendingTx callCreateTransaction", "confirmHash", confirmHash, "err", err)
 		return false

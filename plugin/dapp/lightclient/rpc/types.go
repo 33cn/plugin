@@ -8,6 +8,7 @@ import (
 	lightclienttypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
 	_ "github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient/btc"
+	_ "github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient/neutrino"
 )
 
 /*
@@ -46,11 +47,9 @@ func Init(name string, s rpctypes.RPCServer) {
 	lightCfg := &lightclient.Config{}
 	types.MustDecode(s.GetQueueClient().GetConfig().GetSubConfig().RPC["light"], lightCfg)
 	for _, c := range lightCfg.EnableClients {
-
+		log.Info("Init", "new light client", c)
 		if lc := lightclient.New(c); lc != nil {
-
 			err := lc.Init(s.Context(), api, lightCfg)
-
 			if err != nil {
 				log.Crit("Init", "light", c, "lightClient init err", err)
 				continue

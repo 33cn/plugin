@@ -25,18 +25,18 @@ func (n *neutrinoClient) getKeyFromWallet(addr string) crypto.PrivKey {
 				continue
 			}
 			if !resp.(*types.WalletStatus).GetIsHasSeed() {
-				log.Info("getKeyFromWallet wait wallet save seed...")
+				log.Info("getKeyFromWallet, wait wallet save seed...")
 				continue
 			}
 
 			if resp.(*types.WalletStatus).GetIsWalletLock() {
-				log.Info("getKeyFromWallet wait wallet unlock...")
+				log.Info("getKeyFromWallet, wait wallet unlock...")
 				continue
 			}
 
 			resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: addr})
 			if err != nil {
-				log.Info("getKeyFromWallet", "addr", addr, "wait import key err", err)
+				log.Info("getKeyFromWallet", "addr", addr, "dump priv key err", err)
 				continue
 			}
 			_, key := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
@@ -79,7 +79,7 @@ func (n *neutrinoClient) isChain33Sync() bool {
 	return reply.GetIsOk()
 }
 
-func (n *neutrinoClient) waitUntilTrue(taskName string, isTrue func() bool) {
+func (n *neutrinoClient) waitTask(taskName string, isSatisfied func() bool) {
 
 	ticker := time.NewTicker(time.Second * 5)
 	for {
@@ -87,10 +87,10 @@ func (n *neutrinoClient) waitUntilTrue(taskName string, isTrue func() bool) {
 		select {
 
 		case <-ticker.C:
-			if isTrue() {
+			if isSatisfied() {
 				return
 			}
-			log.Debug("waitUntilTrue", "taskName", taskName)
+			log.Debug("waitTask", "taskName", taskName)
 		case <-n.ctx.Done():
 			return
 		}

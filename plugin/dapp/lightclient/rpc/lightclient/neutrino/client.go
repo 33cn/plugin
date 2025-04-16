@@ -51,19 +51,11 @@ func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, 
 	n.ctx = ctx
 	n.chain33Api = api
 	n.chain33FeeRate = 100000
-
+	n.commitAddr = cfg.CommitAddr
 	subCfg, _ := json.Marshal(cfg.Neutrino)
 	types.MustDecode(subCfg, &n.cfg)
 
-	if n.cfg.BlockCacheSize < 1024*1024 {
-		n.cfg.BlockCacheSize = defalutBlockCacheSize
-	}
-
-	if n.cfg.MaxPeer < 1 {
-		n.cfg.MaxPeer = 8
-	}
-
-	neutrinoCfg, err := initNeutrinoConfig(api, n.cfg)
+	neutrinoCfg, err := n.initNeutrinoConfig(api)
 	if err != nil {
 		log.Error("Init", "initNeutrinoConfig error", err)
 		return err
@@ -90,8 +82,9 @@ func (n *neutrinoClient) Start() {
 		return
 	}
 
-	newRGBX().init(n)
+	go n.handleBestBlock()
 	go n.cleanUp()
+	newRGBX().init(n)
 }
 
 func (n *neutrinoClient) cleanUp() {
@@ -114,7 +107,8 @@ func (n *neutrinoClient) cleanUp() {
 
 func (n *neutrinoClient) handleBestBlock() {
 
-	ticker := time.NewTicker(time.Second * 30)
+	interval := time.Duration(n.cfg.BtcBlockInterval) / 3
+	ticker := time.NewTicker(time.Second * interval)
 	for {
 
 		select {
@@ -123,12 +117,16 @@ func (n *neutrinoClient) handleBestBlock() {
 			return
 		case <-ticker.C:
 
+			bestBlock := n.getBestBlock()
 			blk, err := n.neutrinoCS.BestBlock()
 			if err != nil {
 				log.Error("handleBestBlock", "err", err)
 				continue
 			}
-			n.setBestBlock(blk)
+			if bestBlock == nil || bestBlock.Height < blk.Height {
+				log.Debug("handleBestBlock", "height", blk.Height, "hash", blk.Hash.String())
+				n.setBestBlock(blk)
+			}
 		}
 	}
 }

@@ -26,10 +26,12 @@ func (p *pendingTxCache) getTx(hash string) *rtypes.PendingTx {
 	return p.pendingCache[hash]
 }
 
-func (p *pendingTxCache) removeTx(hash string) {
+func (p *pendingTxCache) removeTx(hash string) *rtypes.PendingTx {
 	p.lock.Lock()
 	defer p.lock.Unlock()
+	tx := p.pendingCache[hash]
 	delete(p.pendingCache, hash)
+	return tx
 }
 
 func (p *pendingTxCache) getMinTxBlockHeight(minHeight int64) int64 {
