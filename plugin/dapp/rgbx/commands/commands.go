@@ -2,6 +2,7 @@
 package commands
 
 import (
+	"encoding/json"
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -42,6 +43,17 @@ func sendQueryRPC(cmd *cobra.Command, funcName string, req, reply types.Message)
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcAddr, "Chain33.Query", query, reply)
+	ctx.SetResultCb(func(res interface{}) (interface{}, error) {
+		msg, ok := res.(types.Message)
+		if !ok {
+			return res, nil
+		}
+		resData, err := types.PBToJSONUTF8(msg)
+		if err != nil {
+			return res, nil
+		}
+		return json.RawMessage(resData), nil
+	})
 	ctx.Run()
 }
 

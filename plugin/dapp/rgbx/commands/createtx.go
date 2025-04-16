@@ -52,14 +52,14 @@ func mintAssetFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("totalAmount", "a", 10000, "asset total amount")
 	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
 	cmd.Flags().StringP("metaHash", "m", "", "asset metaData or human-readable identifier hash")
-	cmd.Flags().StringP("genesisOut", "o", "", "genesis utxo, hash:index:pkScript format")
+	cmd.Flags().StringP("genesisOut", "o", "", "genesis utxo for binding, hash:index:scriptPubkey format")
 	markRequired(cmd, "totalAmount", "symbol", "genesisOut")
 }
 
 func mintAsset(cmd *cobra.Command, args []string) {
 
 	symbol, _ := cmd.Flags().GetString("symbol")
-	metaHashStr, _ := cmd.Flags().GetString("metaHashStr")
+	metaHashStr, _ := cmd.Flags().GetString("metaHash")
 	genesisOutStr, _ := cmd.Flags().GetString("genesisOut")
 	totalAmount, _ := cmd.Flags().GetUint64("totalAmount")
 	ty, _ := cmd.Flags().GetUint32("type")
@@ -71,7 +71,7 @@ func mintAsset(cmd *cobra.Command, args []string) {
 	}
 
 	metaHash, err := hex.DecodeString(metaHashStr)
-	if err != nil || len(metaHash) != rtypes.MetaHashLen {
+	if err != nil || len(metaHash) > rtypes.MetaHashLen {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid meta hash: %s, decode err:%s", metaHashStr, err)
 		return
 	}

@@ -3,6 +3,7 @@ package types
 import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"reflect"
 	//"reflect"
 )
 
@@ -31,6 +32,8 @@ const (
 	TyTransferLog
 	TyConfirmLog
 	TyPendingTxLog
+
+	NamePendingTxLog = "PendingTxLog"
 )
 
 var (
@@ -44,7 +47,7 @@ var (
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		//LogID:	{Ty: reflect.TypeOf(LogStruct), Name: LogName},
+		TyPendingTxLog: {Ty: reflect.TypeOf(PendingTx{}), Name: NamePendingTxLog},
 	}
 	tlog = log.New("module", "rgbx.types")
 )

@@ -49,7 +49,8 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 
 	}
 	if err != nil {
-		elog.Error("rgbx CheckTx", "txHash", txHash, "actionName", tx.ActionName(), "err", err)
+		elog.Error("rgbx CheckTx", "txHash", txHash, "actionName", tx.ActionName(),
+			"err", err, "action", action.String())
 	}
 	return err
 }
@@ -70,7 +71,7 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 		return ErrInvalidAssetAmount
 	}
 
-	if len(mint.GetMetaHash()) != rtypes.MetaHashLen {
+	if len(mint.GetMetaHash()) > rtypes.MetaHashLen {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
 			"metaHashLen", len(mint.GetMetaHash()))
 		return ErrInvalidMetaHashLength
@@ -162,8 +163,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 
 	// check input
 	expectInput := pendingTx.Utxo.ToString()
-	hash := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.Hash.String()
-	actualInput := rtypes.FormatUtxo(hash, confirm.GetProof().GetSpendingInputIdx())
+	actualInput := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.String()
 	if expectInput != actualInput {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
 			"expectInput", expectInput, "actualInput", actualInput)

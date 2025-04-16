@@ -15,7 +15,7 @@ func (r *rgbx) Query_ListPendingTx(req *rtypes.ReqListPendingTx) (types.Message,
 	}
 	startKey := formatPendingTxKey(req.GetStartHeight(), req.GetStartIndex())
 	values, err := r.GetLocalDB().List([]byte(pendingTxKeyPrefix), startKey, req.GetCount(), 1)
-	if err != nil {
+	if err != nil && !errors.Is(err, types.ErrNotFound) {
 		elog.Error("Query_GetPendingTxs", "list err", err, "req", req.String())
 		return nil, err
 	}

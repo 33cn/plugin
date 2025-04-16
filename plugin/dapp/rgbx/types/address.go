@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"strconv"
@@ -12,8 +13,7 @@ func (o *OutPoint) ToString() string {
 	if o == nil {
 		return "<nil>"
 	}
-	hash, _ := chainhash.NewHash(o.Hash)
-	return FormatUtxo(hash.String(), o.Index)
+	return FormatUtxo(hex.EncodeToString(o.Hash), o.Index)
 }
 
 // FormatUtxo format utxo as string

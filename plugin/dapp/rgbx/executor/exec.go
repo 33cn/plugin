@@ -29,10 +29,12 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
 		Ty: rtypes.TyPendingTxLog,
 		Log: types.Encode(&rtypes.PendingTx{
-			ActionType: rtypes.TyMintAction,
-			Timestamp:  r.GetBlockTime(),
-			TxHash:     tx.Hash(),
-			Utxo:       mint.GetGenesisOut(),
+			ActionType:    rtypes.TyMintAction,
+			Timestamp:     r.GetBlockTime(),
+			TxBlockHeight: r.GetHeight(),
+			TxIndex:       int64(index),
+			TxHash:        tx.Hash(),
+			Utxo:          mint.GetGenesisOut(),
 		}),
 	})
 
@@ -54,10 +56,12 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 		receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
 			Ty: rtypes.TyPendingTxLog,
 			Log: types.Encode(&rtypes.PendingTx{
-				ActionType: rtypes.TyTransferAction,
-				Timestamp:  r.GetBlockTime(),
-				TxHash:     tx.Hash(),
-				Utxo:       transfer.GetFrom().GetUtxo(),
+				ActionType:    rtypes.TyTransferAction,
+				Timestamp:     r.GetBlockTime(),
+				TxBlockHeight: r.GetHeight(),
+				TxIndex:       int64(index),
+				TxHash:        tx.Hash(),
+				Utxo:          transfer.GetFrom().GetUtxo(),
 			}),
 		})
 		return receipt, nil
