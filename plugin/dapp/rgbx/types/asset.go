@@ -8,10 +8,10 @@ const (
 
 	// MetaHashLen is the length of the metadata hash.
 	MetaHashLen = 32
-	// DefaultPrecision default Precision
-	DefaultPrecision = int64(1e8)
+	// MaxPrecision max Precision
+	MaxPrecision = 8
 	// MaxAssetAmount max amount
-	MaxAssetAmount = 1e8 * 900 * DefaultPrecision // 900 亿
+	MaxAssetAmount = 1e8 * 900 * 1e8 // 900 亿
 )
 
 // Type denotes the asset types supported by the Taproot RgbxAsset protocol.

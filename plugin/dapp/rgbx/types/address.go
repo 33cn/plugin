@@ -10,7 +10,7 @@ import (
 // ToString encode to string
 func (o *OutPoint) ToString() string {
 	if o == nil {
-		return ""
+		return "nil-OutPoint"
 	}
 	return FormatUtxo(o.Hash, o.Index)
 }
@@ -42,9 +42,28 @@ func (o *OutPoint) FromString(s string) error {
 	return nil
 }
 
-func (a *AssetAccount) Address() string {
-	if a.GetUtxo() != nil {
-		return a.GetUtxo().ToString()
+// NewOutPointFromString new out point
+func NewOutPointFromString(s string) (*OutPoint, error) {
+
+	o := &OutPoint{}
+	strs := strings.Split(s, ":")
+	if len(strs) != 2 {
+		return nil, fmt.Errorf("invalid outpoint: %s", s)
 	}
-	return a.GetAddress()
+	o.Hash = strs[0]
+	v, err := strconv.ParseInt(strs[1], 10, 32)
+	if err != nil {
+		return nil, err
+	}
+	o.Index = uint32(v)
+	return o, nil
+}
+
+// IsUtxoAddress check if utxo address
+func IsUtxoAddress(addr string) bool {
+
+	if strings.Contains(addr, ":") && len(addr) > 2*chainhash.HashSize {
+		return true
+	}
+	return false
 }

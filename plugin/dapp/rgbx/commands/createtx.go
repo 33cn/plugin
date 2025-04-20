@@ -113,7 +113,7 @@ func mintAsset(cmd *cobra.Command, args []string) {
 		Precision:   uint32(precision),
 		MetaHash:    metaHash,
 		Type:        ty,
-		GenesisOut: &rtypes.OutPoint{
+		BindUtxo: &rtypes.OutPoint{
 			Hash:     hash,
 			Index:    uint32(index),
 			PkScript: pkScript,
@@ -127,7 +127,7 @@ func transferAssetFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Int64P("amount", "a", 1, "asset amount")
 	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
-	cmd.Flags().StringP("from", "f", "", "from address, hash:index format for utxo")
+	cmd.Flags().StringP("from", "f", "", "from address, hash:index format for utxo, use sign address if not set")
 	cmd.Flags().StringP("to", "t", "", "to address, hash:index format for utxo")
 	cmd.Flags().StringP("pkScript", "p", "", "from pkScript( set only when from is an utxo)")
 	cmd.Flags().StringP("change", "c", "", "to address, hash:index format for utxo")
@@ -174,30 +174,10 @@ func transferAsset(cmd *cobra.Command, args []string) {
 	transfer := &rtypes.TransferAsset{
 		Symbol:       symbol,
 		Amount:       amount,
-		From:         toAssetAccount(from),
-		To:           toAssetAccount(to),
-		Change:       toAssetAccount(change),
+		From:         from,
+		To:           to,
+		ChangeAddr:   change,
 		FromPkScript: pkScript,
 	}
 	sendCreateTxRPC(cmd, rtypes.NameTransferAction, transfer)
-}
-
-func toAssetAccount(addr string) *rtypes.AssetAccount {
-
-	if addr == "" {
-		return nil
-	}
-	acc := &rtypes.AssetAccount{}
-	if !strings.Contains(addr, ":") {
-		acc.Value = &rtypes.AssetAccount_Address{Address: addr}
-		return acc
-	}
-	o := &rtypes.OutPoint{}
-	err := o.FromString(addr)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "parse out point err: %s\n", err)
-		return nil
-	}
-	acc.Value = &rtypes.AssetAccount_Utxo{Utxo: o}
-	return acc
 }

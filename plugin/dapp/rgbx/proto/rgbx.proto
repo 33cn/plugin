@@ -15,23 +15,22 @@ message RgbxAction {
 message rgbxAsset {
 
   uint32 type = 1;
-  uint32 precision = 6;
-  int64 totalAmount = 2;
-  string symbol = 3;
-  bytes metaHash = 4;
-  string genesisTxHash = 5;
+  uint32 precision = 2;
+  int64 totalAmount = 3;
+  string symbol = 4;
+  bytes metaHash = 5;
+  string genesisBtcTxHash = 6;
+  string owner = 7;
 }
 
 
 message mintAsset {
   uint32 type = 1;
-  uint32 precision = 6;
-  int64 totalAmount = 2;
-  string symbol = 3;
-  bytes metaHash =4;
-  // represents the outpoint of the transaction's
-  // input that resulted in the creation of the asset.
-  outPoint genesisOut = 5;
+  uint32 precision = 2;
+  int64 totalAmount = 3;
+  string symbol = 4;
+  bytes metaHash =5;
+  outPoint bindUtxo = 6;
 }
 
 message outPoint {
@@ -40,10 +39,6 @@ message outPoint {
   bytes pkScript = 3;
 }
 
-message txOut {
-  int64 value = 1;
-  bytes pkScript =2;
-}
 
 message utxoSpendingProof {
   uint32 spendingInputIdx = 1;
@@ -52,22 +47,14 @@ message utxoSpendingProof {
   bytes opRetOutputPkScript = 4;
 }
 
-message AssetAccount {
-
-  oneof value {
-    outPoint utxo =1;
-    string address = 2;
-  }
-}
-
 message transferAsset {
 
-  string symbol = 1;
-  int64 amount = 2;
-  AssetAccount from = 3;
-  AssetAccount to = 4;
-  AssetAccount change = 5;
-  bytes fromPkScript = 6;
+  string  symbol = 1;
+  int64   amount = 2;
+  string  from = 3;
+  string  to = 4;
+  string  changeAddr = 5;
+  bytes   fromPkScript = 6;
 }
 
 message confirmTx {

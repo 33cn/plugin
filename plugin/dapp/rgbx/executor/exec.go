@@ -20,7 +20,7 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 
 	txHash := hex.EncodeToString(tx.Hash())
 	elog.Debug("Exec_Mint", "txHash", txHash, "symbol", mint.Symbol,
-		"amount", mint.TotalAmount, "gensisOut", mint.GetGenesisOut().ToString())
+		"amount", mint.TotalAmount, "gensisOut", mint.GetBindUtxo().ToString())
 	receipt.KV = append(receipt.KV, &types.KeyValue{
 		Key:   formatPayloadKey(tx.Hash()),
 		Value: types.Encode(mint),
@@ -34,7 +34,7 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 			TxBlockHeight: r.GetHeight(),
 			TxIndex:       int64(index),
 			TxHash:        tx.Hash(),
-			Utxo:          mint.GetGenesisOut(),
+			Utxo:          mint.GetBindUtxo(),
 		}),
 	})
 
@@ -44,16 +44,21 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 
 	txHash := hex.EncodeToString(tx.Hash())
+	fromAddr := transfer.GetFrom()
+	if fromAddr == "" {
+		fromAddr = tx.From()
+	}
 	elog.Debug("Exec_Transfer", "txHash", txHash, "symbol", transfer.Symbol, "amount", transfer.Amount,
-		"from", transfer.GetFrom().Address(), "to", transfer.GetTo().Address())
+		"from", fromAddr, "to", transfer.GetTo(), "changeAddr", transfer.GetChangeAddr())
 
 	// from是btc utxo, 记录并等待confirm交易
-	if transfer.GetFrom().GetUtxo() != nil {
+	if rtypes.IsUtxoAddress(fromAddr) {
 		receipt := &types.Receipt{
 			Ty: types.ExecOk,
 			KV: []*types.KeyValue{{Key: formatPayloadKey(tx.Hash()), Value: types.Encode(transfer)}},
 		}
-		utxo := transfer.GetFrom().GetUtxo()
+		// check tx 阶段已经校验过地址
+		utxo, _ := rtypes.NewOutPointFromString(fromAddr)
 		utxo.PkScript = transfer.GetFromPkScript()
 		receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
 			Ty: rtypes.TyPendingTxLog,
@@ -70,16 +75,14 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 	}
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
-		elog.Error("Exec_Transfer newAccount", "txHash", txHash,
-			"from", transfer.From.Address(), "to", transfer.To.Address(),
-			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
+		elog.Error("Exec_Transfer newAccount", "txHash", txHash, "from", fromAddr,
+			"to", transfer.To, "symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
-	receipt, err := accDB.Transfer(transfer.GetFrom().Address(), transfer.GetTo().Address(), transfer.GetAmount())
+	receipt, err := accDB.Transfer(fromAddr, transfer.GetTo(), transfer.GetAmount())
 	if err != nil {
-		elog.Error("Exec_Transfer transfer", "txHash", txHash,
-			"from", transfer.From.Address(), "to", transfer.To.Address(),
-			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
+		elog.Error("Exec_Transfer transfer", "txHash", txHash, "from", fromAddr,
+			"to", transfer.To, "symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
 	return receipt, nil
@@ -133,12 +136,12 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 		"txHash", txHash, "confirmTx", confirmHash,
 		"spendingTxHash", spendHash, "metaHash", mint.MetaHash)
 	asset := &rtypes.RgbxAsset{
-		Symbol:        formatSymbol(mint.Symbol),
-		Type:          mint.Type,
-		TotalAmount:   mint.TotalAmount,
-		MetaHash:      mint.MetaHash,
-		GenesisTxHash: spendHash,
-		Precision:     mint.Precision,
+		Symbol:           formatSymbol(mint.Symbol),
+		Type:             mint.Type,
+		TotalAmount:      mint.TotalAmount,
+		MetaHash:         mint.MetaHash,
+		GenesisBtcTxHash: spendHash,
+		Precision:        mint.Precision,
 	}
 	receipt.KV = append(receipt.KV, &types.KeyValue{
 		Key:   formatAssetKey(mint.Symbol),
@@ -172,13 +175,12 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 	transfer := &rtypes.TransferAsset{}
 
 	err := readDB(r.GetStateDB(), formatPayloadKey(confirm.GetTxHash()), transfer)
-
 	if err != nil {
 		elog.Error("transferAsset readDB", "txHash", txHash,
 			"confirmTX", confirmHash, "err", err)
 		return nil, err
 	}
-	changeAddress := transfer.GetChange().Address()
+	changeAddress := transfer.GetChangeAddr()
 	// 未指定找零地址时， 则使用opReturn的下一个utxo， 如果不存在，资产将被永久冻结，无法转移
 	if changeAddress == "" {
 		changeAddress = rtypes.FormatUtxo(spendHash, uint32(confirm.GetProof().GetOpRetOutputIdx()+1))
@@ -186,21 +188,21 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 
 	log.Debug("transferAsset", "symbol", transfer.Symbol, "amount", transfer.Amount,
 		"txHash", txHash, "confirmTx", confirmHash, "spendHash", spendHash,
-		"from", transfer.From.Address(), "to", transfer.To.Address(), "change", changeAddress)
+		"from", transfer.From, "to", transfer.To, "change", changeAddress)
 
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
-		elog.Error("transferAsset newAccount", "txHash", txHash, "confirmTx", confirmHash,
-			"from", transfer.From.Address(), "to", transfer.To.Address(),
+		elog.Error("transferAsset newAccount", "txHash", txHash,
+			"confirmTx", confirmHash, "from", transfer.From, "to", transfer.To,
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
 
-	changeAmount := accDB.LoadAccount(transfer.GetFrom().Address()).GetBalance() - transfer.GetAmount()
-	receipt, err := accDB.Transfer(transfer.GetFrom().Address(), transfer.GetTo().Address(), transfer.GetAmount())
+	changeAmount := accDB.LoadAccount(transfer.GetFrom()).GetBalance() - transfer.GetAmount()
+	receipt, err := accDB.Transfer(transfer.GetFrom(), transfer.GetTo(), transfer.GetAmount())
 	if err != nil {
 		elog.Error("transferAsset transfer", "txHash", txHash, "confirmTx", confirmHash,
-			"from", transfer.From.Address(), "to", transfer.To.Address(),
+			"from", transfer.From, "to", transfer.To,
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
@@ -211,10 +213,10 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 		return receipt, nil
 	}
 
-	changeReceipt, err := accDB.Transfer(transfer.GetFrom().Address(), changeAddress, changeAmount)
+	changeReceipt, err := accDB.Transfer(transfer.GetFrom(), changeAddress, changeAmount)
 	if err != nil {
 		elog.Error("transferAsset change", "txHash", txHash, "confirmTx", confirmHash,
-			"from", transfer.From.Address(), "changeAddr", changeAddress,
+			"from", transfer.From, "changeAddr", changeAddress,
 			"symbol", transfer.Symbol, "amount", changeAmount, "err", err)
 		return nil, err
 	}

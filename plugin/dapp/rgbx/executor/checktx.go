@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -25,6 +26,7 @@ var (
 	ErrOpRetOutputPkScriptNotEqual = errors.New("ErrOpRetOutputPkScriptNotEqual")
 	ErrInvalidCommitAddress        = errors.New("ErrInvalidCommitAddress")
 	ErrFromUtxoPkScriptNotSet      = errors.New("ErrFromUtxoPkScriptNotSet")
+	ErrInvalidAssetPrecision       = errors.New("ErrInvalidAssetPrecision")
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -42,7 +44,7 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 	case rtypes.TyMintAction:
 		err = r.checkMint(txHash, action.GetMint())
 	case rtypes.TyTransferAction:
-		err = r.checkTransfer(txHash, action.GetTransfer())
+		err = r.checkTransfer(tx.From(), txHash, action.GetTransfer())
 	case rtypes.TyConfirmAction:
 		err = r.checkConfirm(tx.From(), txHash, action.GetConfirm())
 	default:
@@ -71,13 +73,18 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 			"amount", mint.GetTotalAmount(), "type", ty.String())
 		return ErrInvalidAssetAmount
 	}
+	if ty != rtypes.Collectible && mint.GetPrecision() > rtypes.MaxPrecision {
+		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
+			"precision", mint.GetPrecision(), "maxPrecision", rtypes.MaxPrecision)
+		return ErrInvalidAssetPrecision
+	}
 
 	if len(mint.GetMetaHash()) > rtypes.MetaHashLen {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
 			"metaHashLen", len(mint.GetMetaHash()))
 		return ErrInvalidMetaHashLength
 	}
-	if mint.GetGenesisOut() == nil {
+	if mint.GetBindUtxo() == nil {
 		elog.Error("checkMint nil out", "txHash", txHash, "symbol", mint.Symbol)
 		return ErrNilGenesisOut
 	}
@@ -90,17 +97,23 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 	return nil
 }
 
-func (r *rgbx) checkTransfer(txHash string, transfer *rtypes.TransferAsset) error {
+func (r *rgbx) checkTransfer(signAddr, txHash string, transfer *rtypes.TransferAsset) error {
 
-	if transfer.GetFrom().GetUtxo() != nil && len(transfer.GetFromPkScript()) == 0 {
-		elog.Error("checkTransfer pkScript is nil", "txHash", txHash, "symbol", transfer.GetSymbol(),
-			"from", transfer.GetFrom().Address())
-		return ErrFromUtxoPkScriptNotSet
+	fromAddr := transfer.GetFrom()
+	if fromAddr == "" {
+		fromAddr = signAddr
 	}
-	if transfer.GetTo().Address() == "" {
+	if address.CheckAddress(transfer.GetTo(), -1) != nil || address.CheckAddress(fromAddr, -1) != nil ||
+		(transfer.GetChangeAddr() != "" && address.CheckAddress(transfer.GetChangeAddr(), -1) != nil) {
 		elog.Error("checkTransfer address", "txHash", txHash, "symbol", transfer.GetSymbol(),
-			"from", transfer.GetFrom().Address(), "to", transfer.GetTo().Address())
+			"from", fromAddr, "to", transfer.GetTo(), "changeAddr", transfer.GetChangeAddr())
 		return types.ErrInvalidAddress
+	}
+
+	if rtypes.IsUtxoAddress(fromAddr) && len(transfer.GetFromPkScript()) == 0 {
+		elog.Error("checkTransfer pkScript is nil", "txHash", txHash,
+			"symbol", transfer.GetSymbol(), "from", transfer.GetFrom())
+		return ErrFromUtxoPkScriptNotSet
 	}
 
 	if transfer.GetAmount() > rtypes.MaxAssetAmount || transfer.GetAmount() <= 0 {
