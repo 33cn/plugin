@@ -15,6 +15,7 @@ message RgbxAction {
 message rgbxAsset {
 
   uint32 type = 1;
+  uint32 precision = 6;
   int64 totalAmount = 2;
   string symbol = 3;
   bytes metaHash = 4;
@@ -24,6 +25,7 @@ message rgbxAsset {
 
 message mintAsset {
   uint32 type = 1;
+  uint32 precision = 6;
   int64 totalAmount = 2;
   string symbol = 3;
   bytes metaHash =4;
@@ -33,7 +35,7 @@ message mintAsset {
 }
 
 message outPoint {
-  bytes hash = 1;
+  string hash = 1;
   uint32 index = 2;
   bytes pkScript = 3;
 }
@@ -65,6 +67,7 @@ message transferAsset {
   AssetAccount from = 3;
   AssetAccount to = 4;
   AssetAccount change = 5;
+  bytes fromPkScript = 6;
 }
 
 message confirmTx {

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"strconv"
@@ -11,9 +10,9 @@ import (
 // ToString encode to string
 func (o *OutPoint) ToString() string {
 	if o == nil {
-		return "<nil>"
+		return ""
 	}
-	return FormatUtxo(hex.EncodeToString(o.Hash), o.Index)
+	return FormatUtxo(o.Hash, o.Index)
 }
 
 // FormatUtxo format utxo as string
@@ -33,12 +32,8 @@ func (o *OutPoint) FromString(s string) error {
 	if len(strs) != 2 {
 		return fmt.Errorf("invalid outpoint: %s", s)
 	}
-	b, err := chainhash.NewHashFromStr(strs[0])
-	if err != nil {
-		return err
-	}
-	o.Hash = b.CloneBytes()
 
+	o.Hash = strs[0]
 	v, err := strconv.ParseInt(strs[1], 10, 32)
 	if err != nil {
 		return err

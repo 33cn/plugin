@@ -3,8 +3,10 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/spf13/cobra"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -49,10 +51,11 @@ func transferAssetCMD() *cobra.Command {
 
 func mintAssetFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("type", "t", 0, "asset type")
-	cmd.Flags().Uint64P("totalAmount", "a", 10000, "asset total amount")
+	cmd.Flags().Int64P("totalAmount", "a", 10000, "asset total amount")
 	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
 	cmd.Flags().StringP("metaHash", "m", "", "asset metaData or human-readable identifier hash")
 	cmd.Flags().StringP("genesisOut", "o", "", "genesis utxo for binding, hash:index:scriptPubkey format")
+	cmd.Flags().Int32P("precision", "p", -1, "asset precision length")
 	markRequired(cmd, "totalAmount", "symbol", "genesisOut")
 }
 
@@ -61,8 +64,9 @@ func mintAsset(cmd *cobra.Command, args []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 	metaHashStr, _ := cmd.Flags().GetString("metaHash")
 	genesisOutStr, _ := cmd.Flags().GetString("genesisOut")
-	totalAmount, _ := cmd.Flags().GetUint64("totalAmount")
+	totalAmount, _ := cmd.Flags().GetInt64("totalAmount")
 	ty, _ := cmd.Flags().GetUint32("type")
+	precision, _ := cmd.Flags().GetInt32("precision")
 
 	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, "+
@@ -76,10 +80,14 @@ func mintAsset(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	totalAmount = totalAmount * uint64(rtypes.DefaultPrecision)
+	if precision < 0 || precision > 8 {
+		precision = 8
+	}
+
+	totalAmount = totalAmount * int64(math.Pow(10, float64(precision)))
 
 	if totalAmount < 1 ||
-		totalAmount > uint64(rtypes.MaxAssetAmount) {
+		totalAmount > rtypes.MaxAssetAmount {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid total amount: %s, overflow", totalAmount)
 		return
 	}
@@ -90,18 +98,19 @@ func mintAsset(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	hash, err1 := hex.DecodeString(strs[0])
-	pkScript, err2 := hex.DecodeString(strs[2])
-	index, err3 := strconv.ParseUint(strs[1], 10, 32)
+	hash := strs[0]
+	pkScript, err1 := hex.DecodeString(strs[2])
+	index, err2 := strconv.ParseUint(strs[1], 10, 32)
 
-	if err1 != nil || err2 != nil || err3 != nil {
+	if err1 != nil || err2 != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid genesis out: %s", genesisOutStr)
 		return
 	}
 
 	mint := &rtypes.MintAsset{
 		Symbol:      symbol,
-		TotalAmount: int64(totalAmount),
+		TotalAmount: totalAmount,
+		Precision:   uint32(precision),
 		MetaHash:    metaHash,
 		Type:        ty,
 		GenesisOut: &rtypes.OutPoint{
@@ -116,12 +125,13 @@ func mintAsset(cmd *cobra.Command, args []string) {
 
 func transferAssetFlags(cmd *cobra.Command) {
 
-	cmd.Flags().Uint64P("amount", "a", 1, "asset amount")
+	cmd.Flags().Int64P("amount", "a", 1, "asset amount")
 	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
-	cmd.Flags().StringP("from", "f", "", "from address, hash:index format if utxo")
-	cmd.Flags().StringP("to", "t", "", "to address, hash:index format if utxo")
-	cmd.Flags().StringP("change", "c", "", "to address, hash:index format if utxo")
-	markRequired(cmd, "amount", "symbol", "from", "to")
+	cmd.Flags().StringP("from", "f", "", "from address, hash:index format for utxo")
+	cmd.Flags().StringP("to", "t", "", "to address, hash:index format for utxo")
+	cmd.Flags().StringP("pkScript", "p", "", "from pkScript( set only when from is an utxo)")
+	cmd.Flags().StringP("change", "c", "", "to address, hash:index format for utxo")
+	markRequired(cmd, "amount", "symbol", "to")
 }
 
 func transferAsset(cmd *cobra.Command, args []string) {
@@ -130,7 +140,8 @@ func transferAsset(cmd *cobra.Command, args []string) {
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
 	change, _ := cmd.Flags().GetString("change")
-	amount, _ := cmd.Flags().GetUint64("amount")
+	amount, _ := cmd.Flags().GetInt64("amount")
+	pkScriptStr, _ := cmd.Flags().GetString("pkScript")
 
 	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, "+
@@ -138,27 +149,44 @@ func transferAsset(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	amount = amount * uint64(rtypes.DefaultPrecision)
+	req := &types.ReqString{
+		Data: symbol,
+	}
+	reply := &rtypes.RgbxAsset{}
+	sendQueryRPC(cmd, "GetAsset", req, reply, true)
+	if reply.GetSymbol() == "" {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, asset not exist")
+		return
+	}
 
+	amount = amount * int64(math.Pow(10, float64(reply.Precision)))
 	if amount < 1 ||
-		amount > uint64(rtypes.MaxAssetAmount) {
+		amount > rtypes.MaxAssetAmount {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid amount: %s, overflow", amount)
+		return
+	}
+	pkScript, err := hex.DecodeString(pkScriptStr)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid pkScript: %s, decode err: %s", pkScriptStr, err)
 		return
 	}
 
 	transfer := &rtypes.TransferAsset{
-		Symbol: symbol,
-		Amount: int64(amount),
-		From:   toAssetAccount(from),
-		To:     toAssetAccount(to),
-		Change: toAssetAccount(change),
+		Symbol:       symbol,
+		Amount:       amount,
+		From:         toAssetAccount(from),
+		To:           toAssetAccount(to),
+		Change:       toAssetAccount(change),
+		FromPkScript: pkScript,
 	}
-
 	sendCreateTxRPC(cmd, rtypes.NameTransferAction, transfer)
 }
 
 func toAssetAccount(addr string) *rtypes.AssetAccount {
 
+	if addr == "" {
+		return nil
+	}
 	acc := &rtypes.AssetAccount{}
 	if !strings.Contains(addr, ":") {
 		acc.Value = &rtypes.AssetAccount_Address{Address: addr}

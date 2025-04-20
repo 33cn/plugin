@@ -24,6 +24,7 @@ var (
 	ErrSpendingInputNotEqual       = errors.New("spending input not equal")
 	ErrOpRetOutputPkScriptNotEqual = errors.New("ErrOpRetOutputPkScriptNotEqual")
 	ErrInvalidCommitAddress        = errors.New("ErrInvalidCommitAddress")
+	ErrFromUtxoPkScriptNotSet      = errors.New("ErrFromUtxoPkScriptNotSet")
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -50,7 +51,7 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 	}
 	if err != nil {
 		elog.Error("rgbx CheckTx", "txHash", txHash, "actionName", tx.ActionName(),
-			"err", err, "action", action.String())
+			"err", err, "action", string(types.MustPBToJSON(action)))
 	}
 	return err
 }
@@ -65,7 +66,7 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 
 	ty := rtypes.Type(mint.GetType())
 	if (ty != rtypes.Normal && mint.GetTotalAmount() != 1) ||
-		mint.GetTotalAmount() > rtypes.MaxAssetAmount {
+		mint.GetTotalAmount() > rtypes.MaxAssetAmount || mint.GetTotalAmount() <= 0 {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
 			"amount", mint.GetTotalAmount(), "type", ty.String())
 		return ErrInvalidAssetAmount
@@ -91,10 +92,21 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 
 func (r *rgbx) checkTransfer(txHash string, transfer *rtypes.TransferAsset) error {
 
-	if transfer.GetFrom().Address() == "" || transfer.GetTo().Address() == "" {
+	if transfer.GetFrom().GetUtxo() != nil && len(transfer.GetFromPkScript()) == 0 {
+		elog.Error("checkTransfer pkScript is nil", "txHash", txHash, "symbol", transfer.GetSymbol(),
+			"from", transfer.GetFrom().Address())
+		return ErrFromUtxoPkScriptNotSet
+	}
+	if transfer.GetTo().Address() == "" {
 		elog.Error("checkTransfer address", "txHash", txHash, "symbol", transfer.GetSymbol(),
 			"from", transfer.GetFrom().Address(), "to", transfer.GetTo().Address())
 		return types.ErrInvalidAddress
+	}
+
+	if transfer.GetAmount() > rtypes.MaxAssetAmount || transfer.GetAmount() <= 0 {
+		elog.Error("checkTransfer", "txHash", txHash,
+			"symbol", transfer.GetSymbol(), "amount", transfer.GetAmount())
+		return ErrInvalidAssetAmount
 	}
 
 	_, err := r.GetStateDB().Get(formatAssetKey(transfer.GetSymbol()))
@@ -166,6 +178,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 	actualInput := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.String()
 	if expectInput != actualInput {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
+			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
 			"expectInput", expectInput, "actualInput", actualInput)
 		return ErrSpendingInputNotEqual
 	}

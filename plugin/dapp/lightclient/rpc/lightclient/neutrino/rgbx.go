@@ -143,15 +143,14 @@ func (r *rgbx) pullPendingTx() {
 					continue
 				}
 
-				hashStr := hex.EncodeToString(tx.Utxo.Hash)
-				hash, _ := chainhash.NewHashFromStr(hashStr)
+				hash, _ := chainhash.NewHashFromStr(tx.Utxo.Hash)
 				uri := &utxoRescanInfo{
 					pendingTxHash: hex.EncodeToString(tx.TxHash),
 					out: wire.OutPoint{
 						Hash:  *hash,
 						Index: tx.Utxo.Index,
 					},
-					outPrint:    rtypes.FormatUtxo(hashStr, tx.Utxo.Index),
+					outPrint:    tx.Utxo.ToString(),
 					pkScript:    tx.Utxo.PkScript,
 					startTime:   tx.Timestamp,
 					startHeight: 0,

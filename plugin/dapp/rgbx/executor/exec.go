@@ -53,6 +53,8 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 			Ty: types.ExecOk,
 			KV: []*types.KeyValue{{Key: formatPayloadKey(tx.Hash()), Value: types.Encode(transfer)}},
 		}
+		utxo := transfer.GetFrom().GetUtxo()
+		utxo.PkScript = transfer.GetFromPkScript()
 		receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
 			Ty: rtypes.TyPendingTxLog,
 			Log: types.Encode(&rtypes.PendingTx{
@@ -61,7 +63,7 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 				TxBlockHeight: r.GetHeight(),
 				TxIndex:       int64(index),
 				TxHash:        tx.Hash(),
-				Utxo:          transfer.GetFrom().GetUtxo(),
+				Utxo:          utxo,
 			}),
 		})
 		return receipt, nil
@@ -136,6 +138,7 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 		TotalAmount:   mint.TotalAmount,
 		MetaHash:      mint.MetaHash,
 		GenesisTxHash: spendHash,
+		Precision:     mint.Precision,
 	}
 	receipt.KV = append(receipt.KV, &types.KeyValue{
 		Key:   formatAssetKey(mint.Symbol),
@@ -175,11 +178,15 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 			"confirmTX", confirmHash, "err", err)
 		return nil, err
 	}
+	changeAddress := transfer.GetChange().Address()
+	// 未指定找零地址时， 则使用opReturn的下一个utxo， 如果不存在，资产将被永久冻结，无法转移
+	if changeAddress == "" {
+		changeAddress = rtypes.FormatUtxo(spendHash, uint32(confirm.GetProof().GetOpRetOutputIdx()+1))
+	}
 
 	log.Debug("transferAsset", "symbol", transfer.Symbol, "amount", transfer.Amount,
 		"txHash", txHash, "confirmTx", confirmHash, "spendHash", spendHash,
-		"from", transfer.From.Address(), "to", transfer.To.Address(),
-		"change", transfer.Change.Address())
+		"from", transfer.From.Address(), "to", transfer.To.Address(), "change", changeAddress)
 
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
@@ -199,14 +206,15 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 	}
 
 	// handle change
-	if changeAmount <= 0 || transfer.GetChange().Address() == "" {
+	if changeAmount <= 0 {
+		elog.Debug("transferAsset transfer zero change", "txHash", txHash, "confirmTx", confirmHash)
 		return receipt, nil
 	}
 
-	changeReceipt, err := accDB.Transfer(transfer.GetFrom().Address(), transfer.GetChange().Address(), changeAmount)
+	changeReceipt, err := accDB.Transfer(transfer.GetFrom().Address(), changeAddress, changeAmount)
 	if err != nil {
 		elog.Error("transferAsset change", "txHash", txHash, "confirmTx", confirmHash,
-			"from", transfer.From.Address(), "changeAddr", transfer.Change.Address(),
+			"from", transfer.From.Address(), "changeAddr", changeAddress,
 			"symbol", transfer.Symbol, "amount", changeAmount, "err", err)
 		return nil, err
 	}

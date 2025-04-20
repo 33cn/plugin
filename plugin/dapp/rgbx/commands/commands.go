@@ -32,7 +32,7 @@ func Cmd() *cobra.Command {
 	return cmd
 }
 
-func sendQueryRPC(cmd *cobra.Command, funcName string, req, reply types.Message) {
+func sendQueryRPC(cmd *cobra.Command, funcName string, req, reply types.Message, runResult bool) {
 	rpcAddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	payLoad := types.MustPBToJSON(req)
@@ -43,6 +43,10 @@ func sendQueryRPC(cmd *cobra.Command, funcName string, req, reply types.Message)
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcAddr, "Chain33.Query", query, reply)
+	if runResult {
+		_, _ = ctx.RunResult()
+		return
+	}
 	ctx.SetResultCb(func(res interface{}) (interface{}, error) {
 		msg, ok := res.(types.Message)
 		if !ok {

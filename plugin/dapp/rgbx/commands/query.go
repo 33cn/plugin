@@ -39,7 +39,7 @@ func listPending(cmd *cobra.Command, _ []string) {
 		Count:       int32(count),
 	}
 	reply := &rtypes.PendingTxs{}
-	sendQueryRPC(cmd, "ListPendingTx", req, reply)
+	sendQueryRPC(cmd, "ListPendingTx", req, reply, false)
 }
 
 func getPendingTxCMD() *cobra.Command {
@@ -70,7 +70,7 @@ func getPending(cmd *cobra.Command, _ []string) {
 		Index:  int64(index),
 	}
 	reply := &rtypes.PendingTx{}
-	sendQueryRPC(cmd, "GetPendingTx", req, reply)
+	sendQueryRPC(cmd, "GetPendingTx", req, reply, false)
 }
 
 func getAssetCMD() *cobra.Command {
@@ -104,7 +104,7 @@ func getAsset(cmd *cobra.Command, _ []string) {
 		Data: symbol,
 	}
 	reply := &rtypes.RgbxAsset{}
-	sendQueryRPC(cmd, "GetAsset", req, reply)
+	sendQueryRPC(cmd, "GetAsset", req, reply, false)
 }
 
 func getConfirmedHeightCMD() *cobra.Command {
@@ -121,5 +121,5 @@ func getConfirmedHeightCMD() *cobra.Command {
 func getConfirmedHeight(cmd *cobra.Command, _ []string) {
 
 	reply := &types.Int64{}
-	sendQueryRPC(cmd, "GetConfirmedHeight", &types.ReqNil{}, reply)
+	sendQueryRPC(cmd, "GetConfirmedHeight", &types.ReqNil{}, reply, false)
 }
