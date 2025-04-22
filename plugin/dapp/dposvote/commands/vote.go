@@ -6,7 +6,7 @@ package commands
 
 import (
 	"bytes"
-	"crypto/ecdsa"
+
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -23,7 +23,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ttypes "github.com/33cn/plugin/plugin/consensus/dpos/types"
 	dty "github.com/33cn/plugin/plugin/dapp/dposvote/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -720,12 +720,12 @@ func verify(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	pubKey, err := secp256k1.ParsePubKey(bKey, secp256k1.S256())
+	pubKey, err := secp256k1.ParsePubKey(bKey)
 	if err != nil {
 		fmt.Println("vrf Verify failed: ", err)
 		return
 	}
-	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
+	vrfPub := &vrf.PublicKey{PublicKey: pubKey.ToECDSA()}
 	vrfHash, err := vrfPub.ProofToHash(m, p)
 	if err != nil {
 		fmt.Println("vrf Verify failed: ", err)
@@ -782,8 +782,8 @@ func evaluate(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), bKey)
-	vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+	privKey, _ := secp256k1.PrivKeyFromBytes(bKey)
+	vrfPriv := &vrf.PrivateKey{PrivateKey: privKey.ToECDSA()}
 	vrfHash, vrfProof := vrfPriv.Evaluate(m)
 	fmt.Println("vrf evaluate:")
 	fmt.Println("input:", data)
