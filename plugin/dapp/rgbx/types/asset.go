@@ -14,21 +14,21 @@ const (
 	MaxAssetAmount = 1e8 * 900 * 1e8 // 900 亿
 )
 
-// Type denotes the asset types supported by the Taproot RgbxAsset protocol.
-type Type uint8
+// AssetType denotes the asset types supported by the Taproot RgbxAsset protocol.
+type AssetType uint8
 
 const (
 	// Normal is an asset that can be represented in multiple units,
 	// resembling a divisible asset.
-	Normal Type = 0
+	Normal AssetType = 0
 
 	// Collectible is a unique asset, one that cannot be represented in
 	// multiple units.
-	Collectible Type = 1
+	Collectible AssetType = 1
 )
 
 // String returns a human-readable description of the type.
-func (t Type) String() string {
+func (t AssetType) String() string {
 	switch t {
 	case Normal:
 		return "Normal"

@@ -28,11 +28,10 @@ const (
 // log类型id值
 const (
 	TyUnknownLog = iota + 100
-	TyMintLog
-	TyTransferLog
-	TyConfirmLog
+	TyAssetLog
 	TyPendingTxLog
 
+	NameAssetLog     = "AssetLog"
 	NamePendingTxLog = "PendingTxLog"
 )
 
@@ -47,6 +46,7 @@ var (
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
+		TyAssetLog:     {Ty: reflect.TypeOf(RgbxAsset{}), Name: NameAssetLog},
 		TyPendingTxLog: {Ty: reflect.TypeOf(PendingTx{}), Name: NamePendingTxLog},
 	}
 	tlog = log.New("module", "rgbx.types")

@@ -20,7 +20,7 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 
 	txHash := hex.EncodeToString(tx.Hash())
 	elog.Debug("Exec_Mint", "txHash", txHash, "symbol", mint.Symbol,
-		"amount", mint.TotalAmount, "gensisOut", mint.GetBindUtxo().ToString())
+		"amount", mint.TotalAmount, "gensisOut", mint.GetGenesisOut().ToString())
 	receipt.KV = append(receipt.KV, &types.KeyValue{
 		Key:   formatPayloadKey(tx.Hash()),
 		Value: types.Encode(mint),
@@ -34,7 +34,7 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 			TxBlockHeight: r.GetHeight(),
 			TxIndex:       int64(index),
 			TxHash:        tx.Hash(),
-			Utxo:          mint.GetBindUtxo(),
+			Utxo:          mint.GetGenesisOut(),
 		}),
 	})
 
@@ -73,6 +73,18 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 		})
 		return receipt, nil
 	}
+	asset := &rtypes.RgbxAsset{}
+	err := readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
+	if err != nil {
+		elog.Error("Exec_Transfer get asset", "txHash", txHash, "symbol", transfer.GetSymbol(),
+			"err", err)
+		return nil, ErrAssetNotExist
+	}
+
+	if asset.Type == uint32(rtypes.Collectible) {
+		return r.assetReceipt(asset, transfer.GetTo()), nil
+	}
+
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
 		elog.Error("Exec_Transfer newAccount", "txHash", txHash, "from", fromAddr,
@@ -86,6 +98,20 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 		return nil, err
 	}
 	return receipt, nil
+}
+
+func (r *rgbx) assetReceipt(asset *rtypes.RgbxAsset, owner string) *types.Receipt {
+
+	if asset.Type == uint32(rtypes.Collectible) {
+		asset.Owner = owner
+	}
+	assetVal := types.Encode(asset)
+	receipt := &types.Receipt{
+		Ty:   types.ExecOk,
+		KV:   []*types.KeyValue{{Key: formatAssetKey(asset.Symbol), Value: assetVal}},
+		Logs: []*types.ReceiptLog{{Ty: rtypes.TyAssetLog, Log: assetVal}},
+	}
+	return receipt
 }
 
 func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -123,7 +149,6 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHash string) (*types.Receipt, error) {
 
 	mint := &rtypes.MintAsset{}
-
 	err := readDB(r.GetStateDB(), formatPayloadKey(confirm.GetTxHash()), mint)
 
 	if err != nil {
@@ -131,9 +156,9 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 			"confirmTX", confirmHash, "err", err)
 		return nil, err
 	}
-	receipt := &types.Receipt{Ty: types.ExecOk}
+	assetTy := rtypes.AssetType(mint.GetType())
 	log.Debug("mintAsset", "symbol", mint.Symbol, "amount", mint.TotalAmount,
-		"txHash", txHash, "confirmTx", confirmHash,
+		"txHash", txHash, "confirmTx", confirmHash, "assetTy", assetTy.String(),
 		"spendingTxHash", spendHash, "metaHash", mint.MetaHash)
 	asset := &rtypes.RgbxAsset{
 		Symbol:           formatSymbol(mint.Symbol),
@@ -143,13 +168,14 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 		GenesisBtcTxHash: spendHash,
 		Precision:        mint.Precision,
 	}
-	receipt.KV = append(receipt.KV, &types.KeyValue{
-		Key:   formatAssetKey(mint.Symbol),
-		Value: types.Encode(asset),
-	})
-
 	// 默认opReturn的下一个utxo作为资产所有者， 如果不存在，资产将被永久冻结，无法转移
 	owner := rtypes.FormatUtxo(spendHash, uint32(confirm.GetProof().GetOpRetOutputIdx()+1))
+	receipt := r.assetReceipt(asset, owner)
+	if assetTy == rtypes.Collectible {
+		return receipt, nil
+	}
+
+	// Normal asset
 	accDB, err := r.newAccount(mint.GetSymbol())
 	if err != nil {
 		elog.Error("Exec_Transfer newAccount", "txHash", txHash,
@@ -173,13 +199,24 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHash string) (*types.Receipt, error) {
 
 	transfer := &rtypes.TransferAsset{}
-
 	err := readDB(r.GetStateDB(), formatPayloadKey(confirm.GetTxHash()), transfer)
 	if err != nil {
 		elog.Error("transferAsset readDB", "txHash", txHash,
 			"confirmTX", confirmHash, "err", err)
 		return nil, err
 	}
+
+	asset := &rtypes.RgbxAsset{}
+	err = readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
+	if err != nil {
+		elog.Error("transferAsset get asset", "txHash", txHash, "confirmTx", confirmHash,
+			"symbol", transfer.GetSymbol(), "err", err)
+		return nil, ErrAssetNotExist
+	}
+	if asset.Type == uint32(rtypes.Collectible) {
+		return r.assetReceipt(asset, transfer.GetTo()), nil
+	}
+
 	changeAddress := transfer.GetChangeAddr()
 	// 未指定找零地址时， 则使用opReturn的下一个utxo， 如果不存在，资产将被永久冻结，无法转移
 	if changeAddress == "" {

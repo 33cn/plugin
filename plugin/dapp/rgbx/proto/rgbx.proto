@@ -30,7 +30,9 @@ message mintAsset {
   int64 totalAmount = 3;
   string symbol = 4;
   bytes metaHash =5;
-  outPoint bindUtxo = 6;
+  // represents the outpoint of the transaction's
+  // input that resulted in the creation of the asset.
+  outPoint genesisOut = 6;
 }
 
 message outPoint {

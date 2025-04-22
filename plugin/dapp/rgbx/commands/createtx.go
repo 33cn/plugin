@@ -113,7 +113,7 @@ func mintAsset(cmd *cobra.Command, args []string) {
 		Precision:   uint32(precision),
 		MetaHash:    metaHash,
 		Type:        ty,
-		BindUtxo: &rtypes.OutPoint{
+		GenesisOut: &rtypes.OutPoint{
 			Hash:     hash,
 			Index:    uint32(index),
 			PkScript: pkScript,

@@ -27,6 +27,7 @@ var (
 	ErrInvalidCommitAddress        = errors.New("ErrInvalidCommitAddress")
 	ErrFromUtxoPkScriptNotSet      = errors.New("ErrFromUtxoPkScriptNotSet")
 	ErrInvalidAssetPrecision       = errors.New("ErrInvalidAssetPrecision")
+	ErrInvalidAssetSender          = errors.New("ErrInvalidAssetSender")
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -66,7 +67,7 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 		return ErrInvalidSymbolLength
 	}
 
-	ty := rtypes.Type(mint.GetType())
+	ty := rtypes.AssetType(mint.GetType())
 	if (ty != rtypes.Normal && mint.GetTotalAmount() != 1) ||
 		mint.GetTotalAmount() > rtypes.MaxAssetAmount || mint.GetTotalAmount() <= 0 {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
@@ -84,7 +85,7 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 			"metaHashLen", len(mint.GetMetaHash()))
 		return ErrInvalidMetaHashLength
 	}
-	if mint.GetBindUtxo() == nil {
+	if mint.GetGenesisOut() == nil {
 		elog.Error("checkMint nil out", "txHash", txHash, "symbol", mint.Symbol)
 		return ErrNilGenesisOut
 	}
@@ -116,17 +117,26 @@ func (r *rgbx) checkTransfer(signAddr, txHash string, transfer *rtypes.TransferA
 		return ErrFromUtxoPkScriptNotSet
 	}
 
-	if transfer.GetAmount() > rtypes.MaxAssetAmount || transfer.GetAmount() <= 0 {
+	asset := &rtypes.RgbxAsset{}
+	err := readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
+	if err != nil {
+		elog.Error("checkTransfer get asset", "txHash", txHash, "symbol", transfer.GetSymbol(),
+			"err", err)
+		return ErrAssetNotExist
+	}
+
+	assetTy := rtypes.AssetType(asset.GetType())
+	if assetTy == rtypes.Normal &&
+		(transfer.GetAmount() > rtypes.MaxAssetAmount || transfer.GetAmount() <= 0) {
 		elog.Error("checkTransfer", "txHash", txHash,
 			"symbol", transfer.GetSymbol(), "amount", transfer.GetAmount())
 		return ErrInvalidAssetAmount
 	}
 
-	_, err := r.GetStateDB().Get(formatAssetKey(transfer.GetSymbol()))
-	if err != nil {
-		elog.Error("checkTransfer get asset", "txHash", txHash, "symbol", transfer.GetSymbol(),
-			"err", err)
-		return ErrAssetNotExist
+	if assetTy == rtypes.Collectible && fromAddr != asset.Owner {
+		elog.Error("checkTransfer invalid owner", "txHash", txHash, "symbol", transfer.GetSymbol(),
+			"from", fromAddr, "assetOwner", asset.Owner)
+		return ErrInvalidAssetSender
 	}
 
 	return nil
