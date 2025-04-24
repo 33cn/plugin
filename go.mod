@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/33cn/chain33 v1.69.0
+	github.com/33cn/chain33 v1.69.1-0.20250421040145-1bf4187c5141
 	github.com/BurntSushi/toml v1.2.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
