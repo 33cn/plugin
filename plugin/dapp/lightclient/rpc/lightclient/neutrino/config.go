@@ -7,7 +7,6 @@ import (
 	"github.com/lightninglabs/neutrino"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -22,7 +21,8 @@ type config struct {
 	// cache will hold in memory at most. If a BlockCache is provided then
 	// BlockCacheSize is ignored.
 	BlockCacheSize uint64 `json:"blockCacheSize"`
-	NetType        string `json:"netType"`
+	// NetName btc network name
+	NetName string `json:"netName"`
 	// AddPeers is a slice of hosts that should be connected to on startup,
 	// and be maintained as persistent peers.
 	AddPeers []string `json:"addPeers"`
@@ -43,17 +43,19 @@ type config struct {
 
 func (c config) getChainParams() chaincfg.Params {
 
-	if strings.Contains(c.NetType, "simple") {
+	if c.NetName == "simnet" {
 		return chaincfg.SimNetParams
-	} else if strings.Contains(c.NetType, "test") {
+	} else if c.NetName == "testnet3" {
 		return chaincfg.TestNet3Params
-	} else if strings.Contains(c.NetType, "regress") {
+	} else if c.NetName == "regtest" {
 		return chaincfg.RegressionNetParams
+	} else if c.NetName == "signet" {
+		return chaincfg.SigNetParams
 	}
 	return chaincfg.MainNetParams
 }
 
-func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) (neutrino.Config, error) {
+func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) error {
 
 	if n.cfg.BlockCacheSize < 1024*1024 {
 		n.cfg.BlockCacheSize = defalutBlockCacheSize
@@ -76,13 +78,13 @@ func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) (neutri
 	db, err := walletdb.Create("bdb", dbName, true, time.Second*10)
 	if err != nil {
 		log.Error("getNeutrinoConfig Create db error", "err", err)
-		return neutrino.Config{}, err
+		return err
 	}
 
 	neutrino.MaxPeers = n.cfg.MaxPeer
 	neutrino.BanDuration = time.Hour * 48
 
-	cfg := neutrino.Config{
+	n.neutrinoCfg = neutrino.Config{
 		DataDir:      dbPath,
 		Database:     db,
 		ChainParams:  n.cfg.getChainParams(),
@@ -92,6 +94,6 @@ func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) (neutri
 		BlockCacheSize: n.cfg.BlockCacheSize,
 	}
 
-	return cfg, nil
+	return nil
 
 }

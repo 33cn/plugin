@@ -55,17 +55,16 @@ func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, 
 	subCfg, _ := json.Marshal(cfg.Neutrino)
 	types.MustDecode(subCfg, &n.cfg)
 
-	neutrinoCfg, err := n.initNeutrinoConfig(api)
+	err := n.initNeutrinoConfig(api)
 	if err != nil {
 		log.Error("Init", "initNeutrinoConfig error", err)
 		return err
 	}
-	n.neutrinoCfg = neutrinoCfg
 
-	cs, err := neutrino.NewChainService(neutrinoCfg)
+	cs, err := neutrino.NewChainService(n.neutrinoCfg)
 	if err != nil {
 		log.Error("Init", "NewChainService error", err)
-		_ = neutrinoCfg.Database.Close()
+		_ = n.neutrinoCfg.Database.Close()
 		return err
 	}
 	n.neutrinoCS = cs
