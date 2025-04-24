@@ -52,8 +52,8 @@ dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153 h1:fG9c8gQK312kjhHGZhiAp3QTpUU9etMnvIJQtkVcITk=
 github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153/go.mod h1:SgoXVssKD3a3diOV4qaTkOEQ+2KEfErcdOASIhV6a1s=
-github.com/33cn/chain33 v1.69.0 h1:EhDtwQRyf9AKCCfIvFI2fzTe0R0GqIBWZMleKv0/vNg=
-github.com/33cn/chain33 v1.69.0/go.mod h1:Sr0PFcmd96zJcRxKYkgceZZRfFd5CfbdfbfAzghyhB4=
+github.com/33cn/chain33 v1.69.1-0.20250421040145-1bf4187c5141 h1:uAHCiv/wKCuQpgzwkgv6eer11y8wnLc/pBMVIUeFeQ4=
+github.com/33cn/chain33 v1.69.1-0.20250421040145-1bf4187c5141/go.mod h1:Sr0PFcmd96zJcRxKYkgceZZRfFd5CfbdfbfAzghyhB4=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 h1:cTp8I5+VIoKjsnZuH8vjyaysT/ses3EvZeaV/1UkF2M=
 github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
