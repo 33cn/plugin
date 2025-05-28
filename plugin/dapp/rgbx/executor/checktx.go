@@ -28,6 +28,7 @@ var (
 	ErrFromUtxoPkScriptNotSet      = errors.New("ErrFromUtxoPkScriptNotSet")
 	ErrInvalidAssetPrecision       = errors.New("ErrInvalidAssetPrecision")
 	ErrInvalidAssetSender          = errors.New("ErrInvalidAssetSender")
+	ErrInvalidSpendingTxIn         = errors.New("ErrInvalidSpendingTxIn")
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -38,14 +39,14 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 	err := types.Decode(tx.GetPayload(), action)
 	if err != nil {
 		elog.Error("CheckTx", "txHash", txHash, "Decode payload error", err)
-		return types.ErrDecode
+		return types.ErrActionNotSupport
 	}
 
 	switch action.Ty {
 	case rtypes.TyMintAction:
 		err = r.checkMint(txHash, action.GetMint())
 	case rtypes.TyTransferAction:
-		err = r.checkTransfer(tx.From(), txHash, action.GetTransfer())
+		err = r.checkTransfer(tx, txHash, action.GetTransfer())
 	case rtypes.TyConfirmAction:
 		err = r.checkConfirm(tx.From(), txHash, action.GetConfirm())
 	default:
@@ -61,15 +62,15 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 
 func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 
-	if len(mint.GetSymbol()) <= 1 || len(mint.GetSymbol()) >= rtypes.MaxAssetSymbolLength {
+	if len(mint.GetSymbol()) < 1 || len(mint.GetSymbol()) > rtypes.MaxAssetSymbolLength {
 		elog.Error("checkMint", "txHash", txHash,
 			"symbol", mint.Symbol, "symbolLen", len(mint.GetSymbol()))
 		return ErrInvalidSymbolLength
 	}
 
 	ty := rtypes.AssetType(mint.GetType())
-	if (ty != rtypes.Normal && mint.GetTotalAmount() != 1) ||
-		mint.GetTotalAmount() > rtypes.MaxAssetAmount || mint.GetTotalAmount() <= 0 {
+	if mint.GetTotalAmount() <= 0 || mint.GetTotalAmount() > rtypes.MaxAssetAmount ||
+		(ty == rtypes.Collectible && mint.GetTotalAmount() != 1) {
 		elog.Error("checkMint", "txHash", txHash, "symbol", mint.Symbol,
 			"amount", mint.GetTotalAmount(), "type", ty.String())
 		return ErrInvalidAssetAmount
@@ -85,26 +86,29 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 			"metaHashLen", len(mint.GetMetaHash()))
 		return ErrInvalidMetaHashLength
 	}
-	if mint.GetGenesisOut() == nil {
-		elog.Error("checkMint nil out", "txHash", txHash, "symbol", mint.Symbol)
-		return ErrNilGenesisOut
-	}
+
 	_, err := r.GetStateDB().Get(formatAssetKey(mint.GetSymbol()))
 	if !errors.Is(err, types.ErrNotFound) {
 		elog.Error("checkMint duplicate asset", "txHash", txHash, "symbol", mint.Symbol)
 		return ErrDuplicateAssetSymbol
 	}
 
+	if mint.GetGenesisOut().GetHash() == "" || mint.GetGenesisOut().GetPkScript() == nil {
+		elog.Error("checkMint invalid genesis out", "txHash", txHash, "symbol", mint.Symbol)
+		return ErrNilGenesisOut
+	}
+
 	return nil
 }
 
-func (r *rgbx) checkTransfer(signAddr, txHash string, transfer *rtypes.TransferAsset) error {
+func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rtypes.TransferAsset) error {
 
 	fromAddr := transfer.GetFrom()
 	if fromAddr == "" {
-		fromAddr = signAddr
+		fromAddr = tx.From()
 	}
-	if address.CheckAddress(transfer.GetTo(), -1) != nil || address.CheckAddress(fromAddr, -1) != nil ||
+	if address.CheckAddress(fromAddr, -1) != nil ||
+		address.CheckAddress(transfer.GetTo(), -1) != nil ||
 		(transfer.GetChangeAddr() != "" && address.CheckAddress(transfer.GetChangeAddr(), -1) != nil) {
 		elog.Error("checkTransfer address", "txHash", txHash, "symbol", transfer.GetSymbol(),
 			"from", fromAddr, "to", transfer.GetTo(), "changeAddr", transfer.GetChangeAddr())
@@ -127,9 +131,9 @@ func (r *rgbx) checkTransfer(signAddr, txHash string, transfer *rtypes.TransferA
 
 	assetTy := rtypes.AssetType(asset.GetType())
 	if assetTy == rtypes.Normal &&
-		(transfer.GetAmount() > rtypes.MaxAssetAmount || transfer.GetAmount() <= 0) {
+		(transfer.GetAmount() > asset.GetTotalAmount() || transfer.GetAmount() <= 0) {
 		elog.Error("checkTransfer", "txHash", txHash,
-			"symbol", transfer.GetSymbol(), "amount", transfer.GetAmount())
+			"symbol", transfer.GetSymbol(), "amount", transfer.GetAmount(), "total", asset.GetTotalAmount())
 		return ErrInvalidAssetAmount
 	}
 
@@ -142,7 +146,6 @@ func (r *rgbx) checkTransfer(signAddr, txHash string, transfer *rtypes.TransferA
 	return nil
 }
 
-// TODO check from address
 func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) error {
 
 	confirmTxHash := hex.EncodeToString(confirm.TxHash)
@@ -184,16 +187,23 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		return nil
 	}
 
-	spendingTxHash := chainhash.DoubleHashH(confirm.GetProof().GetSpendingTx()).String()
-
+	btcSpendHash := chainhash.DoubleHashH(confirm.GetProof().GetSpendingTx()).String()
 	spendingTx := wire.MsgTx{}
 	err = spendingTx.DeserializeNoWitness(bytes.NewReader(confirm.GetProof().GetSpendingTx()))
 	if err != nil {
 		elog.Error("checkConfirm decode spending tx", "action", action,
 			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"rawSpendingTx", hex.EncodeToString(confirm.GetProof().GetSpendingTx()),
+			"btcSpendingTx", hex.EncodeToString(confirm.GetProof().GetSpendingTx()),
 			"decode err", err)
 		return ErrDecodeBtcTx
+	}
+
+	spendingInputIdx := int(confirm.GetProof().GetSpendingInputIdx())
+	if spendingInputIdx >= len(spendingTx.TxIn) {
+		elog.Error("checkConfirm spending tx input", "action", action,
+			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
+			"inputIdx", spendingInputIdx, "txInLen", len(spendingTx.TxIn), "btcSpendHash", btcSpendHash)
+		return ErrInvalidSpendingTxIn
 	}
 
 	// check input
@@ -202,15 +212,16 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 	if expectInput != actualInput {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
 			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"expectInput", expectInput, "actualInput", actualInput)
+			"expectInput", expectInput, "actualInput", actualInput, "btcSpendHash", btcSpendHash)
 		return ErrSpendingInputNotEqual
 	}
 
+	opRetOutIdx := int(confirm.GetProof().GetOpRetOutputIdx())
 	// 表示op_return输出不存在，即utxo已经在btc链花费, 但没有构建rgbx所约束的op_return输出
-	if confirm.GetProof().GetOpRetOutputIdx() < 0 {
+	if opRetOutIdx < 0 || opRetOutIdx >= len(spendingTx.TxOut) {
 		elog.Debug("checkConfirm opReturn output not exist",
 			"action", action, "txHash", txHash,
-			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
+			"confirmTxHash", confirmTxHash, "btcSpendHash", btcSpendHash)
 		return nil
 	}
 
@@ -219,7 +230,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		spendingTx.TxOut[int(confirm.GetProof().GetOpRetOutputIdx())].PkScript) {
 		elog.Error("checkConfirm opReturn pkScript not equal",
 			"action", action, "txHash", txHash,
-			"confirmTxHash", confirmTxHash, "spendingTxHash", spendingTxHash)
+			"confirmTxHash", confirmTxHash, "btcSpendHash", btcSpendHash)
 		return ErrOpRetOutputPkScriptNotEqual
 	}
 

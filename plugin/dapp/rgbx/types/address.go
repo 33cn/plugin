@@ -44,19 +44,9 @@ func (o *OutPoint) FromString(s string) error {
 
 // NewOutPointFromString new out point
 func NewOutPointFromString(s string) (*OutPoint, error) {
-
 	o := &OutPoint{}
-	strs := strings.Split(s, ":")
-	if len(strs) != 2 {
-		return nil, fmt.Errorf("invalid outpoint: %s", s)
-	}
-	o.Hash = strs[0]
-	v, err := strconv.ParseInt(strs[1], 10, 32)
-	if err != nil {
-		return nil, err
-	}
-	o.Index = uint32(v)
-	return o, nil
+	err := o.FromString(s)
+	return o, err
 }
 
 // IsUtxoAddress check if utxo address

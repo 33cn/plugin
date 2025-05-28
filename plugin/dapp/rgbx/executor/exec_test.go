@@ -1,0 +1,165 @@
+package executor
+
+import (
+	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/system/dapp"
+	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/stretchr/testify/require"
+	"testing"
+)
+
+func testExec(t *testing.T, driver dapp.Driver, actionName string, action types.Message, expectErr error, index int) *types.Receipt {
+
+	tx, err := driver.GetExecutorType().CreateTransaction(actionName, action)
+	require.Nilf(t, err, "testcase %d", index)
+	tx.Sign(types.SECP256K1, testPriv)
+	recp, err := driver.Exec(tx, 0)
+	require.Equalf(t, expectErr, err, "testcase %d", index)
+	return recp
+}
+
+func TestRgbx_Exec_Mint(t *testing.T) {
+
+	r := newRgbx()
+	mint := &rtypes.MintAsset{}
+	testExec(t, r, rtypes.NameMintAction, mint, nil, 0)
+}
+
+func TestRgbx_Exec_Transfer(t *testing.T) {
+
+	r := newRgbx()
+	addr, _ := util.Genaddress()
+	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
+	tcArr := []*testCase{
+		{
+			expectErr: nil,
+			action:    &rtypes.TransferAsset{From: utxoAddr},
+		},
+		{
+			expectErr: ErrAssetNotExist,
+			action:    &rtypes.TransferAsset{Symbol: "test"},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.TransferAsset{Symbol: "collect"},
+		},
+		{
+			expectErr: types.ErrNoBalance,
+			action:    &rtypes.TransferAsset{Symbol: "normal", Amount: 1},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.TransferAsset{Symbol: "normal", From: addr, Amount: 1},
+		},
+	}
+
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api.On("GetConfig").Return(cfg)
+	r.SetStateDB(state)
+	require.Nil(t, state.Set(formatAssetKey("normal"), types.Encode(&rtypes.RgbxAsset{})))
+	require.Nil(t, state.Set(formatAssetKey("collect"), types.Encode(&rtypes.RgbxAsset{Type: 1})))
+
+	acc, err := r.(*rgbx).newAccount("normal")
+	require.Nil(t, err)
+	_, err = acc.Mint(addr, 1)
+	require.Nil(t, err)
+
+	for idx, tc := range tcArr {
+		testExec(t, r, rtypes.NameTransferAction, tc.action, tc.expectErr, idx)
+	}
+}
+
+func TestRgbx_Exec_Confirm(t *testing.T) {
+
+	r := newRgbx()
+	addr, _ := util.Genaddress()
+	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
+	normal, normal1, collect, collect1 := "normal", "normal1", "collect", "collect1"
+
+	mintScript, _ := txscript.NullDataScript([]byte(normal))
+	mintScript1, _ := txscript.NullDataScript([]byte(collect))
+	transferScript, _ := txscript.NullDataScript([]byte(normal1))
+	transferScript1, _ := txscript.NullDataScript([]byte(collect1))
+	tcArr := []*testCase{
+		{
+			expectErr: nil,
+			action:    &rtypes.ConfirmTx{Timeout: true},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{}},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(normal), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript}},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(collect), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript1}},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.ConfirmTx{TxHash: []byte(normal1), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript}},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.ConfirmTx{TxHash: []byte(collect1), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript1}},
+		},
+	}
+
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api.On("GetConfig").Return(cfg)
+	r.SetStateDB(state)
+
+	require.Nil(t, state.Set(formatPayloadKey([]byte(normal)), types.Encode(&rtypes.MintAsset{Symbol: normal, TotalAmount: 1})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte(collect)), types.Encode(&rtypes.MintAsset{Symbol: collect, Type: 1, TotalAmount: 1})))
+
+	require.Nil(t, state.Set(formatAssetKey(normal1), types.Encode(&rtypes.RgbxAsset{})))
+	require.Nil(t, state.Set(formatAssetKey(collect1), types.Encode(&rtypes.RgbxAsset{Type: 1, Symbol: collect1})))
+
+	require.Nil(t, state.Set(formatPayloadKey([]byte(normal1)),
+		types.Encode(&rtypes.TransferAsset{Symbol: normal1, Amount: 1, From: utxoAddr, To: addr})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte(collect1)),
+		types.Encode(&rtypes.TransferAsset{Symbol: collect1, To: addr})))
+
+	accDB, err := r.(*rgbx).newAccount(normal1)
+	require.Nil(t, err)
+	_, err = accDB.Mint(utxoAddr, 2)
+	require.Nil(t, err)
+
+	for idx, tc := range tcArr {
+		recp := testExec(t, r, rtypes.NameConfirmAction, tc.action, tc.expectErr, idx)
+		if len(recp.GetKV()) > 0 {
+			util.SaveKVList(state, recp.KV)
+		}
+	}
+	// check mint
+	asset := &rtypes.RgbxAsset{}
+	require.Nil(t, readDB(state, formatAssetKey(normal), asset))
+	require.Equal(t, formatSymbol(normal), asset.Symbol)
+	require.Nil(t, readDB(state, formatAssetKey(collect), asset))
+	require.Equal(t, formatSymbol(collect), asset.Symbol)
+	require.Equal(t, rtypes.Collectible, rtypes.AssetType(asset.Type))
+	owner := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
+	require.Equal(t, owner, asset.Owner)
+
+	// check transfer
+	require.Nil(t, readDB(state, formatAssetKey(collect1), asset))
+	require.Equal(t, addr, asset.Owner)
+	require.Equal(t, int64(0), accDB.LoadAccount(utxoAddr).Balance)
+	require.Equal(t, int64(1), accDB.LoadAccount(addr).Balance)
+	changeAddr := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
+	require.Equal(t, int64(1), accDB.LoadAccount(changeAddr).Balance)
+}

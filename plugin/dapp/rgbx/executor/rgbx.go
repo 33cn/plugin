@@ -21,11 +21,11 @@ var (
 
 var driverName = rgbxtypes.RgbxX
 
-type cfg struct {
+type config struct {
 	CommitAddress string `json:"commitAddress"`
 }
 
-var rgbxCfg = cfg{}
+var rgbxCfg = config{}
 
 func initCfg(sub []byte) {
 

@@ -9,7 +9,7 @@ import (
  */
 
 // ExecDelLocal localdb kv数据自动回滚接口
-func (r *rgbx) ExecDelLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rgbx) ExecDelLocal(tx *types.Transaction, _ *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kvs, err := r.DelRollbackKV(tx, tx.Execer)
 	if err != nil {
 		return nil, err

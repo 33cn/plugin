@@ -88,7 +88,7 @@ func mintAsset(cmd *cobra.Command, args []string) {
 
 	if totalAmount < 1 ||
 		totalAmount > rtypes.MaxAssetAmount {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid total amount: %s, overflow", totalAmount)
+		_, _ = fmt.Fprintf(os.Stderr, "invalid total amount: %d, overflow", totalAmount)
 		return
 	}
 
@@ -155,14 +155,14 @@ func transferAsset(cmd *cobra.Command, args []string) {
 	reply := &rtypes.RgbxAsset{}
 	sendQueryRPC(cmd, "GetAsset", req, reply, true)
 	if reply.GetSymbol() == "" {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, asset not exist")
+		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, asset not exist", symbol)
 		return
 	}
 
 	amount = amount * int64(math.Pow(10, float64(reply.Precision)))
 	if amount < 1 ||
 		amount > rtypes.MaxAssetAmount {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid amount: %s, overflow", amount)
+		_, _ = fmt.Fprintf(os.Stderr, "invalid amount: %d, overflow", amount)
 		return
 	}
 	pkScript, err := hex.DecodeString(pkScriptStr)
