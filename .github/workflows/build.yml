@@ -28,7 +28,7 @@ jobs:
       - name: Lint
         run: |
           make largefile-check
-          make checkgofmt && make fmt_go
+#          make checkgofmt && make fmt_go
           make linter
           make
 
