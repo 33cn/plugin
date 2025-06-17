@@ -313,8 +313,8 @@ function block_wait2height() {
 }
 
 function check_docker_status() {
-    status=$(docker-compose ps | grep chain33_1 | awk '{print $6}')
-    statusPara=$(docker-compose ps | grep chain33_1 | awk '{print $3}')
+    status=$(docker compose ps | grep chain33_1 | awk '{print $6}')
+    statusPara=$(docker compose ps | grep chain33_1 | awk '{print $3}')
     if [ "${status}" == "Exit" ] || [ "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
         docker compose logs chain33
