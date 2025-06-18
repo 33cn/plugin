@@ -155,10 +155,10 @@ function start() {
     docker compose ps
 
     set +e
-    influxdbcontainer=$(docker ps -a | grep build_influxdb_1)
+    influxdbcontainer=$(docker ps -a | grep build-influxdb-1)
     if [ -n "$influxdbcontainer" ]; then
         echo "create database chain33metrics in docker container build_influxdb_1"
-        docker exec build_influxdb_1 influx -execute 'create database chain33metrics'
+        docker exec build-influxdb-1 influx -execute 'create database chain33metrics'
     fi
     set -e
 
@@ -313,8 +313,8 @@ function block_wait2height() {
 }
 
 function check_docker_status() {
-    status=$(docker compose ps | grep chain33_1 | awk '{print $6}')
-    statusPara=$(docker compose ps | grep chain33_1 | awk '{print $3}')
+    status=$(docker compose ps | grep chain33-1 | awk '{print $6}')
+    statusPara=$(docker compose ps | grep chain33-1 | awk '{print $3}')
     if [ "${status}" == "Exit" ] || [ "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
         docker compose logs chain33
