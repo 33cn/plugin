@@ -377,7 +377,7 @@ function testProposalTerminate() {
 
 function mainTest() {
     # shellcheck disable=SC2154
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}-chain33-1")
     Chain33Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
     InitChain33Account
 
