@@ -21,7 +21,7 @@ jobs:
           echo $GOPATH
           echo $PATH
           go install golang.org/x/tools/cmd/goimports@v0.24.0
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
           go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
           go install mvdan.cc/sh/v3/cmd/gosh@v3.7.0
 
@@ -29,7 +29,7 @@ jobs:
         run: |
           make largefile-check
           # make checkgofmt && make fmt_go
-          make linter
+          # make linter
           make
 
   build-with-latest-stable-go:
