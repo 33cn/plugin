@@ -23,7 +23,10 @@ oracle_AddPublisher() {
 }
 
 oracle_publish_transaction() {
-    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":1747814996,"content":"test","introduction":"test"}}]}'
+    #  time 参数必须是未来时刻
+    timestamp=$(date +%s)
+    timestamp=$((timestamp+3600))
+    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":'$timestamp',"content":"test","introduction":"test"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
     eventId="${txhash}"
