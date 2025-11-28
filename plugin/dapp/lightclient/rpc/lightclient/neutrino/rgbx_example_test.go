@@ -101,9 +101,14 @@ func Test_btcExtendKey(t *testing.T) {
 	require.NoError(t, err)
 	script, err := txscript.PayToAddrScript(addr)
 	require.NoError(t, err)
-
+	ty, _, _, err := txscript.ExtractPkScriptAddrs(script, &chaincfg.RegressionNetParams)
+	require.NoError(t, err)
+	require.Equal(t, txscript.WitnessV0PubKeyHashTy, ty)
 	fmt.Println("script:", hex.EncodeToString(script))
 	address := addr.String()
 	fmt.Println(address)
 
+	addr1, err := btcutil.DecodeAddress(address, &chaincfg.RegressionNetParams)
+	require.NoError(t, err)
+	require.Equal(t, address, addr1.EncodeAddress())
 }
