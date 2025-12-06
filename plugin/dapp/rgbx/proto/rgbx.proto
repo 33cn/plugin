@@ -57,6 +57,7 @@ message transferAsset {
   string  to = 4;
   string  changeAddr = 5;
   bytes   fromPkScript = 6;
+  bool externalAsset = 7;
 }
 
 message confirmTx {
@@ -70,6 +71,34 @@ message confirmTx {
   utxoSpendingProof proof =7;
 }
 
+message commitDKG {
+
+  string assetSymbol = 1;
+  string dkgAddress = 2;
+}
+
+message depositAsset {
+
+  int64 amount = 1;
+  string senderAddr = 2;
+  string assetSymbol = 3;
+}
+
+message withdrawAsset {
+
+  int64 amount = 1;
+  string destinationAddr = 2;
+  string assetSymbol = 3;
+
+}
+
+message crossChainInfo {
+
+  string symbol = 1;
+  string depositAddress = 3;
+}
+
+
 
 message pendingTx {
   int32 actionType = 1;
@@ -78,7 +107,9 @@ message pendingTx {
   int64 txIndex = 4;
   bytes txHash = 5;
   outPoint utxo = 6;
-  bool confirmed = 7;
+  string assetSymbol = 7;
+  string targetAddress = 8;
+  bool confirmed = 9;
 }
 
 message pendingTxs {
@@ -95,6 +126,12 @@ message ReqListPendingTx {
 message ReqGetPendingTx {
   int64 height = 1;
   int64 index = 2;
+}
+
+message btcCommitment {
+  bytes protocol = 1;
+  uint32 action = 2;
+  bytes payload = 3;
 }
 
 service rgbx {

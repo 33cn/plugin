@@ -1,10 +1,11 @@
 package executor
 
 import (
+	"strings"
+
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	"strings"
 )
 
 /*
@@ -18,7 +19,18 @@ const (
 	KeyPrefixStateDB = "mavl-rgbx-"
 	//KeyPrefixLocalDB local db的key必须前缀
 	KeyPrefixLocalDB = "LODB-rgbx-"
+
+	dkgConfirmationsKeyPrefix         = KeyPrefixStateDB + "dkg-confirmations-"
+	crossChainDepositAddressKeyPrefix = KeyPrefixStateDB + "crosschain-deposit-addr-"
 )
+
+func formatDkgConfirmationsKey(dkgResult string) []byte {
+	return []byte(dkgConfirmationsKeyPrefix + dkgResult)
+}
+
+func formatCrossChainDepositAddressKey(symbol string) []byte {
+	return []byte(crossChainDepositAddressKeyPrefix + symbol)
+}
 
 func formatSymbol(symbol string) string {
 	return strings.ToUpper(symbol)
@@ -39,7 +51,7 @@ func formatPendingTxKey(height, txIndex int64) []byte {
 	return []byte(pendingTxKeyPrefix + dapp.HeightIndexStr(height, txIndex))
 }
 
-const confirmedHeightKey = KeyPrefixLocalDB + "confirmed-height-"
+const confirmedHeightKey = KeyPrefixLocalDB + "confirmed-height"
 
 func readDB(kdb db.KV, key []byte, result types.Message) error {
 

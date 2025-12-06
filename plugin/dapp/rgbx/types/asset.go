@@ -27,6 +27,12 @@ const (
 	Collectible AssetType = 1
 )
 
+// cross chain asset symbol
+const (
+	// BTCSymbol bitcoin
+	BTCSymbol = "BTC"
+)
+
 // String returns a human-readable description of the type.
 func (t AssetType) String() string {
 	switch t {

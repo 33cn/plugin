@@ -1,8 +1,12 @@
 package types
 
 import (
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"testing"
+
+	"github.com/33cn/chain33/types"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_GetActionName(t *testing.T) {
@@ -21,4 +25,16 @@ func Test_UtxoAddress(t *testing.T) {
 	out, err := NewOutPointFromString(utxoAddr)
 	require.NoError(t, err)
 	require.Equal(t, utxoAddr, out.ToString())
+}
+
+func Test_btcCommitment(t *testing.T) {
+
+	tx := &types.Transaction{Execer: []byte("coins")}
+	commit := &BtcCommitment{
+		Action:  TyConfirmAction,
+		Payload: tx.Hash(),
+	}
+	script, err := txscript.NullDataScript(types.Encode(commit))
+	require.NoError(t, err)
+	fmt.Println(len(script))
 }

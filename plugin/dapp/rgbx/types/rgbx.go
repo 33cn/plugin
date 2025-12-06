@@ -1,9 +1,10 @@
 package types
 
 import (
+	"reflect"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
-	"reflect"
 	//"reflect"
 )
 
@@ -19,10 +20,16 @@ const (
 	TyMintAction
 	TyTransferAction
 	TyConfirmAction
+	TyCommitDKGAction
+	TyDepositAsset
+	TyWithDrawAsset
 
-	NameMintAction     = "Mint"
-	NameTransferAction = "Transfer"
-	NameConfirmAction  = "Confirm"
+	NameMintAction          = "Mint"
+	NameTransferAction      = "Transfer"
+	NameConfirmAction       = "Confirm"
+	NameCommitDKGAction     = "CommitDKG"
+	NameDepositAssetAction  = "DepositAsset"
+	NameWithdrawAssetAction = "WithdrawAsset"
 )
 
 // log类型id值
@@ -30,9 +37,15 @@ const (
 	TyUnknownLog = iota + 100
 	TyAssetLog
 	TyPendingTxLog
+	TyCommitDKGLog
+	TyDepositAssetLog
+	TyWithdrawAssetLog
 
-	NameAssetLog     = "AssetLog"
-	NamePendingTxLog = "PendingTxLog"
+	NameAssetLog         = "AssetLog"
+	NamePendingTxLog     = "PendingTxLog"
+	NameCommitDKGLog     = "CommitDKGLog"
+	NameDepositAssetLog  = "DepositAssetLog"
+	NameWithdrawAssetLog = "WithdrawAssetLog"
 )
 
 var (
@@ -40,14 +53,18 @@ var (
 	RgbxX = "rgbx"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameMintAction:     TyMintAction,
-		NameTransferAction: TyTransferAction,
-		NameConfirmAction:  TyConfirmAction,
+		NameMintAction:          TyMintAction,
+		NameTransferAction:      TyTransferAction,
+		NameConfirmAction:       TyConfirmAction,
+		NameCommitDKGAction:     TyCommitDKGAction,
+		NameDepositAssetAction:  TyDepositAsset,
+		NameWithdrawAssetAction: TyWithDrawAsset,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
 		TyAssetLog:     {Ty: reflect.TypeOf(RgbxAsset{}), Name: NameAssetLog},
 		TyPendingTxLog: {Ty: reflect.TypeOf(PendingTx{}), Name: NamePendingTxLog},
+		TyCommitDKGLog: {Ty: reflect.TypeOf(types.ReqAddrs{}), Name: NameCommitDKGLog},
 	}
 	tlog = log.New("module", "rgbx.types")
 )
