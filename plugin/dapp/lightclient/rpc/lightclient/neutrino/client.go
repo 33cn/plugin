@@ -8,10 +8,11 @@ package neutrino
 import (
 	"context"
 	"encoding/json"
-	"github.com/33cn/chain33/types"
-	"github.com/lightninglabs/neutrino/headerfs"
 	"sync"
 	"time"
+
+	"github.com/33cn/chain33/types"
+	"github.com/lightninglabs/neutrino/headerfs"
 
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/log/log15"
@@ -20,7 +21,7 @@ import (
 	"github.com/lightninglabs/neutrino"
 )
 
-var log = log15.New("module", "neutrino")
+var log = log15.New("module", "lightclient.neutrino")
 
 var _ lightclient.Lighter = &neutrinoClient{}
 
@@ -40,6 +41,7 @@ type neutrinoClient struct {
 	commitAddr     string
 	neutrinoCfg    neutrino.Config
 	neutrinoCS     *neutrino.ChainService
+	bw             *btcWallet
 	bestBlock      *headerfs.BlockStamp
 	lock           sync.Mutex
 	chain33FeeRate int64
@@ -68,6 +70,12 @@ func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, 
 		return err
 	}
 	n.neutrinoCS = cs
+	bw, err := newBtcWallet(n)
+	if err != nil {
+		log.Error("Init", "newBtcWallet error", err)
+		return err
+	}
+	n.bw = bw
 	return nil
 
 }
@@ -75,10 +83,18 @@ func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, 
 // Start starting routine
 func (n *neutrinoClient) Start() {
 
+	if !n.cfg.IsOfficialNode {
+		return
+	}
 	if err := n.neutrinoCS.Start(); err != nil {
 		log.Error("Start", "neutrinoCS start error", err)
 		_ = n.neutrinoCfg.Database.Close()
-		return
+		panic(err)
+	}
+	if err := n.bw.start(); err != nil {
+		log.Error("Start", "btcwallet start error", err)
+		n.bw.stop()
+		panic(err)
 	}
 
 	go n.handleBestBlock()
@@ -99,6 +115,7 @@ func (n *neutrinoClient) cleanUp() {
 			if err := n.neutrinoCfg.Database.Close(); err != nil {
 				log.Error("cleanUp Unable to close neutrino db", "err", err)
 			}
+			n.bw.stop()
 		}
 	}
 

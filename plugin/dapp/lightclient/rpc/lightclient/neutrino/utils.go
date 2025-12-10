@@ -1,12 +1,14 @@
 package neutrino
 
 import (
+	"os"
+	"time"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
-	"time"
 )
 
 func (n *neutrinoClient) getKeyFromWallet(addr string) crypto.PrivKey {
@@ -138,4 +140,15 @@ func (n *neutrinoClient) getProperFeeRate() int64 {
 	}
 
 	return n.chain33FeeRate
+}
+
+func fileExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }

@@ -51,8 +51,8 @@ func Init(name string, s rpctypes.RPCServer) {
 		if lc := lightclient.New(c); lc != nil {
 			err := lc.Init(s.Context(), api, lightCfg)
 			if err != nil {
-				log.Crit("Init", "light", c, "lightClient init err", err)
-				continue
+				log.Error("Init", "light", c, "lightClient init err", err)
+				panic(err)
 			}
 			go lc.Start()
 		}

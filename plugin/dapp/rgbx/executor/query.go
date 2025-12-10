@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
@@ -92,6 +93,25 @@ func (r *rgbx) Query_GetPendingTx(req *rtypes.ReqGetPendingTx) (types.Message, e
 	if err != nil {
 		elog.Error("Query_GetPendingTx", "height", req.GetHeight(),
 			"index", req.GetIndex(), "decode err", err)
+		return nil, err
+	}
+
+	return reply, nil
+}
+
+func (r *rgbx) Query_GetCrossChainInfo(req *types.ReqString) (types.Message, error) {
+
+	symbol := req.GetData()
+	v, err := r.GetStateDB().Get(formatCrossChainDepositAddressKey(symbol))
+	reply := &rtypes.CrossChainInfo{}
+	if err != nil {
+		elog.Error("Query_GetCrossChainInfo", "symbol", symbol, "get db err", err)
+		return nil, err
+	}
+
+	err = types.Decode(v, reply)
+	if err != nil {
+		elog.Error("Query_GetCrossChainInfo", "symbol", symbol, "decode err", err)
 		return nil, err
 	}
 

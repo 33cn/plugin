@@ -1,13 +1,14 @@
 package neutrino
 
 import (
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/33cn/chain33/client"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 // defaultBlockCacheSize is the size (in bytes) of blocks that will be
@@ -15,6 +16,9 @@ import (
 const defalutBlockCacheSize = 20 * 1024 * 1024 //20 MB
 
 type config struct {
+
+	// IsOfficialNode 是否为官方主节点
+	IsOfficialNode bool
 	// MaxPeers is the maximum number of connections the client maintains.
 	MaxPeer int `json:"maxPeer"`
 	// BlockCacheSize indicates the size (in bytes) of blocks the block
@@ -74,10 +78,9 @@ func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) error {
 
 	dbPath := filepath.Join(api.GetConfig().GetModuleConfig().BlockChain.DbPath, "lightclient")
 	_ = os.MkdirAll(dbPath, 0755)
-	dbName := filepath.Join(dbPath, "neutrino.db")
-	db, err := walletdb.Create("bdb", dbName, true, time.Second*10)
+	_, db, err := openWalletDB(dbPath, "neutrino.db")
 	if err != nil {
-		log.Error("getNeutrinoConfig Create db error", "err", err)
+		log.Error("initNeutrinoConfig open db error", "err", err)
 		return err
 	}
 
@@ -96,4 +99,19 @@ func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) error {
 
 	return nil
 
+}
+
+func openWalletDB(path, dbName string) (exist bool, db walletdb.DB, err error) {
+
+	dbPath := filepath.Join(path, dbName)
+	exist, err = fileExists(dbPath)
+	if err != nil {
+		return false, nil, err
+	}
+	if exist {
+		db, err = walletdb.Open("bdb", dbPath, true, time.Second*10)
+	} else {
+		db, err = walletdb.Create("bdb", dbPath, false, time.Second*10)
+	}
+	return exist, db, err
 }
