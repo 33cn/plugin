@@ -3,7 +3,10 @@ package neutrino
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/33cn/chain33/common/address"
+	"runtime"
+	"sync"
+	"time"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
@@ -13,15 +16,11 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/lightninglabs/neutrino"
 	"github.com/lightninglabs/neutrino/headerfs"
-	"runtime"
-	"sync"
-	"time"
 )
 
 type rgbx struct {
 	client                   *neutrinoClient
 	commitTxKey              crypto.PrivKey
-	commitAddressType        int32
 	pendingTxConfirmedHeight int64
 	pendingTxPullHeight      int64
 
@@ -62,13 +61,7 @@ func (r *rgbx) init(cli *neutrinoClient) {
 
 	log.Debug("init rgbx service start")
 	r.client = cli
-	var err error
-	r.commitAddressType, err = address.GetAddressType(cli.commitAddr)
-	if err != nil {
-		panic("invalid address type for authAccount config, " + cli.commitAddr)
-	}
-
-	r.commitTxKey = cli.getKeyFromWallet(cli.commitAddr)
+	r.commitTxKey = cli.getCommitKey()
 
 	// 等待同步
 	cli.waitTask("wait chain33 sync", cli.isChain33Sync)
@@ -330,7 +323,7 @@ func (r *rgbx) commitPendingTx(confirm *rtypes.ConfirmTx) (success bool) {
 		return false
 	}
 	tx.Fee, _ = tx.GetRealFee(r.client.getProperFeeRate())
-	tx.Sign(types.EncodeSignID(secp256k1.ID, r.commitAddressType), r.commitTxKey)
+	tx.Sign(types.EncodeSignID(secp256k1.ID, r.client.commitAddressType), r.commitTxKey)
 	txHash := hex.EncodeToString(tx.Hash())
 	_, err = r.client.chain33Api.SendTx(tx)
 	if err != nil {

@@ -88,7 +88,7 @@ func (r *rgbx) Exec_DepositAsset(deposit *rtypes.DepositAsset, tx *types.Transac
 
 }
 
-func (r *rgbx) Exec_WithDrawAsset(confirm *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (r *rgbx) Exec_WithdrawAsset(confirm *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	return receipt, nil

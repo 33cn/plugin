@@ -11,8 +11,11 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
 
-func (n *neutrinoClient) getKeyFromWallet(addr string) crypto.PrivKey {
+func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
 
+	if n.commitKey != nil {
+		return n.commitKey
+	}
 	ticker := time.NewTicker(time.Second * 3)
 	for {
 
@@ -36,9 +39,9 @@ func (n *neutrinoClient) getKeyFromWallet(addr string) crypto.PrivKey {
 				continue
 			}
 
-			resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: addr})
+			resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: n.commitAddr})
 			if err != nil {
-				log.Info("getKeyFromWallet", "addr", addr, "dump priv key err", err)
+				log.Info("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
 				continue
 			}
 			_, key := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
@@ -128,18 +131,6 @@ func (n *neutrinoClient) getRgbxPendingTxs(req *rtypes.ReqListPendingTx) (*rtype
 	}
 
 	return reply.(*rtypes.PendingTxs), nil
-}
-
-func (n *neutrinoClient) getProperFeeRate() int64 {
-
-	reply, err := n.chain33Api.GetProperFee(&types.ReqProperFee{})
-	if err != nil {
-		log.Error("getProperFeeRate", "err", err)
-	} else {
-		n.chain33FeeRate = reply.GetProperFee()
-	}
-
-	return n.chain33FeeRate
 }
 
 func fileExists(filePath string) (bool, error) {

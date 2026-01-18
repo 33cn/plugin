@@ -7,6 +7,8 @@ datadir*
 *.log.last
 .idea
 .vscode
+.kiro
+build/temp
 build/chain33*
 chain33_raft-1
 build/datadir

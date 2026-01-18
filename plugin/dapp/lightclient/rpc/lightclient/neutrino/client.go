@@ -11,6 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/queue"
+	"github.com/33cn/chain33/rpc/grpcclient"
+	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	"github.com/lightninglabs/neutrino/headerfs"
 
@@ -35,34 +40,56 @@ func newClient() lightclient.Lighter {
 }
 
 type neutrinoClient struct {
-	ctx            context.Context
-	chain33Api     client.QueueProtocolAPI
-	cfg            config
-	commitAddr     string
-	neutrinoCfg    neutrino.Config
-	neutrinoCS     *neutrino.ChainService
-	bw             *btcWallet
-	bestBlock      *headerfs.BlockStamp
-	lock           sync.Mutex
-	chain33FeeRate int64
+	ctx               context.Context
+	qclient           queue.Client
+	chain33Api        client.QueueProtocolAPI
+	mainChainGrpc     types.Chain33Client
+	cfg               config
+	commitAddressType int32
+	commitAddr        string
+	commitKey         crypto.PrivKey
+	neutrinoCfg       neutrino.Config
+	tss               *tssService
+	neutrinoCS        *neutrino.ChainService
+	bw                *btcWallet
+	bestBlock         *headerfs.BlockStamp
+	lock              sync.Mutex
+	chain33FeeRate    int64
 }
 
 // Init init client context
-func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, cfg *lightclient.Config) error {
+func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclient.Config) error {
 
 	n.ctx = ctx
-	n.chain33Api = api
+	n.qclient = q.Client()
+	n.chain33Api, _ = client.New(n.qclient, nil)
 	n.chain33FeeRate = 100000
 	n.commitAddr = cfg.CommitAddr
+	commitAddressType, err := address.GetAddressType(n.commitAddr)
+	if err != nil {
+		panic("invalid address type for authAccount config, " + n.commitAddr)
+	}
+	n.commitAddressType = commitAddressType
+	if cfg.CommitKey != "" {
+		_, n.commitKey = getPrivKey(secp256k1.Name, cfg.CommitKey)
+	}
 	subCfg, _ := json.Marshal(cfg.Neutrino)
 	types.MustDecode(subCfg, &n.cfg)
 
-	err := n.initNeutrinoConfig(api)
+	err = n.initNeutrinoConfig(n.chain33Api)
 	if err != nil {
 		log.Error("Init", "initNeutrinoConfig error", err)
 		return err
 	}
-
+	chainCfg := n.chain33Api.GetConfig()
+	n.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, "")
+	if err != nil {
+		panic("init main chain grpc client err:" + err.Error())
+	}
+	n.tss = newTssService(n)
+	if !n.cfg.IsOfficialNode {
+		return nil
+	}
 	cs, err := neutrino.NewChainService(n.neutrinoCfg)
 	if err != nil {
 		log.Error("Init", "NewChainService error", err)
@@ -83,6 +110,9 @@ func (n *neutrinoClient) Init(ctx context.Context, api client.QueueProtocolAPI, 
 // Start starting routine
 func (n *neutrinoClient) Start() {
 
+	n.tss.start()
+	go n.cleanUp()
+	go n.subMsg()
 	if !n.cfg.IsOfficialNode {
 		return
 	}
@@ -98,8 +128,31 @@ func (n *neutrinoClient) Start() {
 	}
 
 	go n.handleBestBlock()
-	go n.cleanUp()
 	newRGBX().init(n)
+}
+
+// handle subscription messages
+func (n *neutrinoClient) subMsg() {
+
+	n.qclient.Sub(moduleName)
+	for {
+
+		select {
+		case <-n.ctx.Done():
+			return
+		case msg := <-n.qclient.Recv():
+
+			if msg == nil {
+				log.Error("SubMsg", "err", "receive nil msg")
+				return
+			}
+			data, ok := msg.Data.(*types.TopicData)
+			if msg.Ty == types.EventReceiveSubData && ok && data.Topic == tssSignNotifyTopic {
+				n.tss.subChan <- data
+			}
+			log.Error("SubMsg receive invalid msg", "ty", msg.Ty, "ok", ok)
+		}
+	}
 }
 
 func (n *neutrinoClient) cleanUp() {
@@ -109,13 +162,17 @@ func (n *neutrinoClient) cleanUp() {
 		select {
 
 		case <-n.ctx.Done():
-			if err := n.neutrinoCS.Stop(); err != nil {
-				log.Error("cleanUp Unable to stop neutrino server", "err", err)
-			}
 			if err := n.neutrinoCfg.Database.Close(); err != nil {
 				log.Error("cleanUp Unable to close neutrino db", "err", err)
 			}
+			if !n.cfg.IsOfficialNode {
+				return
+			}
+			if err := n.neutrinoCS.Stop(); err != nil {
+				log.Error("cleanUp Unable to stop neutrino server", "err", err)
+			}
 			n.bw.stop()
+			return
 		}
 	}
 

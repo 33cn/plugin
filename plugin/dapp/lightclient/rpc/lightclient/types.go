@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/queue"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 // Lighter light client interface
 type Lighter interface {
 	// Init init client context
-	Init(ctx context.Context, api client.QueueProtocolAPI, cfg *Config) error
+	Init(ctx context.Context, q queue.Queue, cfg *Config) error
 	// Start client routine
 	Start()
 }
@@ -24,6 +24,7 @@ type Lighter interface {
 type Config struct {
 	EnableClients []string    `json:"clients,omitempty"`
 	CommitAddr    string      `json:"commitAddr,omitempty"`
+	CommitKey     string      `json:"commitKey,omitempty"`
 	Neutrino      interface{} `json:"neutrino,omitempty"`
 	Btc           interface{} `json:"btc,omitempty"`
 }

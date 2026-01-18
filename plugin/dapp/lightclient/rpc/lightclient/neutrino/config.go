@@ -43,6 +43,17 @@ type config struct {
 	BlockConfirmations uint32 `json:"blockConfirmations"`
 	// MaxUtxoRescanTime, utxo 检索最大时长，hour, 0为永不超时
 	MaxUtxoRescanTime int64 `json:"maxUtxoRescanTime"`
+	// Tss tss config
+	Tss tssConfig `json:"tss"`
+}
+
+type tssConfig struct {
+	// Peers peers name
+	Peers []string `json:"peers"`
+	// Threshold peer threshold
+	Threshold uint32 `json:"threshold"`
+	// Rank peer rank
+	Rank uint32 `json:"rank"`
 }
 
 func (c config) getChainParams() chaincfg.Params {

@@ -104,6 +104,9 @@ func (r *rgbx) Query_GetCrossChainInfo(req *types.ReqString) (types.Message, err
 	symbol := req.GetData()
 	v, err := r.GetStateDB().Get(formatCrossChainDepositAddressKey(symbol))
 	reply := &rtypes.CrossChainInfo{}
+	if errors.Is(err, types.ErrNotFound) {
+		return reply, nil
+	}
 	if err != nil {
 		elog.Error("Query_GetCrossChainInfo", "symbol", symbol, "get db err", err)
 		return nil, err
