@@ -67,6 +67,13 @@ message BtcSpv {
 }
 
 
+message tssSignNotify {
+  repeated int64 inputAmounts = 1;
+  bytes payload = 2;
+  string txType = 3;
+  bytes btcTxData = 4;
+}
+
 
 service Lightclient {
 

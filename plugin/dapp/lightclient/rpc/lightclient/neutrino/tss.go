@@ -1,7 +1,9 @@
 package neutrino
 
 import (
+	"bytes"
 	"encoding/hex"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -10,9 +12,12 @@ import (
 	"github.com/33cn/chain33/system/crypto/tss"
 	"github.com/33cn/chain33/system/crypto/tss/gg18"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/walletdb"
 )
 
@@ -40,7 +45,8 @@ type tssService struct {
 	// TSS related
 	dkgResult    *tss.DKGResult
 	tssPublicKey *btcec.PublicKey
-	btcAddress   string
+	btcAddress   btcutil.Address
+	pkScript     []byte
 	dkgCompleted atomic.Bool
 
 	// P2P channels
@@ -95,7 +101,6 @@ func (t *tssService) ensureCommitDKG() {
 	err := t.loadDKGFromDB()
 	if err == nil && t.dkgResult != nil {
 		log.Debug("ensureDKG loaded existing DKG from database")
-		t.dkgCompleted.Store(true)
 		// Commit existing DKG result to main chain
 		t.commitDKGResult()
 		return
@@ -221,8 +226,12 @@ func (t *tssService) generateBitcoinAddress() error {
 		return err
 	}
 
-	t.btcAddress = addr.EncodeAddress()
-	log.Info("generateBitcoinAddress", "address", t.btcAddress)
+	t.btcAddress = addr
+	t.pkScript, err = txscript.PayToAddrScript(addr)
+	if err != nil {
+		panic("payToAddrScript error " + err.Error())
+	}
+	log.Info("generateBitcoinAddress", "address", t.btcAddress.String())
 
 	return nil
 }
@@ -251,15 +260,11 @@ func (t *tssService) coordinatesToPublicKey(pubX, pubY []byte) (*btcec.PublicKey
 
 // commitDKGResult commits DKG result to main chain with retry until success
 func (t *tssService) commitDKGResult() {
-	if t.btcAddress == "" {
-		log.Error("commitDKGResult", "err", "bitcoin address is empty")
-		return
-	}
 
 	// Create CommitDKG transaction
 	commitDKG := &rtypes.CommitDKG{
 		AssetSymbol: "BTC",
-		DkgAddress:  t.btcAddress,
+		DkgAddress:  t.btcAddress.EncodeAddress(),
 	}
 
 	for {
@@ -278,29 +283,59 @@ func (t *tssService) commitDKGResult() {
 		// Send transaction to main chain
 		err = t.client.sendTx2MainChain(tx)
 		if err != nil {
-			log.Error("commitDKGResult sendTx retry", "err", err)
+			log.Error("commitDKGResult sendTx retry", "txHash", hex.EncodeToString(tx.Hash()), "err", err)
 			time.Sleep(time.Second * 3)
 			continue
 		}
 
 		log.Debug("commitDKGResult success", "txHash", hex.EncodeToString(tx.Hash()), "btcAddress", t.btcAddress)
-		return
+		break
 	}
+	t.dkgCompleted.Store(true)
 }
 
 // signMsg signs a message using TSS protocol
 // This is called by the main node to initiate TSS signing
-func (t *tssService) signMsg(msg []byte) ([]byte, error) {
+func (t *tssService) signBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int64, payload []byte) error {
 	if !t.dkgCompleted.Load() {
-		return nil, types.ErrNotFound
+		log.Error("signMsg dkg not completed")
+		return types.ErrNotSupport
 	}
 
+	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSizeStripped()))
+	_ = tx.SerializeNoWitness(buf)
+	notify := &lighttypes.TssSignNotify{
+		TxType:    txType,
+		Payload:   payload,
+		BtcTxData: buf.Bytes(),
+	}
 	// Publish notification to all TSS nodes
-	t.pubMsg(tssSignNotifyTopic, msg)
+	t.pubMsg(tssSignNotifyTopic, types.Encode(notify))
+	log.Debug("signMsg published notification", "txType", txType, "payload", hex.EncodeToString(payload))
+	txSigHashes := txscript.NewTxSigHashes(tx, nil)
+	for idx, in := range tx.TxIn {
+		// 计算签名哈希（使用预计算的脚本）
+		sigHash, err := txscript.CalcWitnessSigHash(t.pkScript, txSigHashes, txscript.SigHashAll, tx, idx, inputAmounts[idx])
+		if err != nil {
+			return fmt.Errorf("calc sig hash failed for input %d: %w", idx, err)
+		}
+		sig, err := t.signMsg(sigHash)
+		if err != nil {
+			return fmt.Errorf("signMsg failed for input %d: %w", idx, err)
+		}
+		pubKeyBytes := t.tssPublicKey.SerializeCompressed()
+		sigWithHashType := append(sig, byte(txscript.SigHashAll))
 
-	log.Debug("signMsg published notification", "msg", hex.EncodeToString(msg))
+		// 构建witness（P2WPKH格式）
+		// witness = [signature + hashType, pubkey]
+		in.Witness = wire.TxWitness{sigWithHashType, pubKeyBytes}
+		log.Debug("signWithdrawTx applied signature to input", "idx", idx)
+	}
 
-	// Main node also participates in signing
+	return nil
+}
+
+func (t *tssService) signMsg(msg []byte) ([]byte, error) {
 	sigResult, err := gg18.ProcessSign(t.cfg.Peers, msg, t.dkgResult)
 	if err != nil {
 		log.Error("signMsg ProcessSign", "err", err)
@@ -409,7 +444,7 @@ func (t *tssService) handleSubMsg() {
 }
 
 // getBitcoinAddress returns the Bitcoin address generated from TSS public key
-func (t *tssService) getBitcoinAddress() string {
+func (t *tssService) getBitcoinAddress() btcutil.Address {
 	return t.btcAddress
 }
 

@@ -58,16 +58,20 @@ type tssConfig struct {
 
 func (c config) getChainParams() chaincfg.Params {
 
-	if c.NetName == "simnet" {
+	switch c.NetName {
+	case "simnet":
 		return chaincfg.SimNetParams
-	} else if c.NetName == "testnet3" {
+	case "mainnet":
+		return chaincfg.MainNetParams
+	case "testnet3":
 		return chaincfg.TestNet3Params
-	} else if c.NetName == "regtest" {
+	case "regtest":
 		return chaincfg.RegressionNetParams
-	} else if c.NetName == "signet" {
+	case "signet":
 		return chaincfg.SigNetParams
+	default:
+		return chaincfg.MainNetParams
 	}
-	return chaincfg.MainNetParams
 }
 
 func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) error {
