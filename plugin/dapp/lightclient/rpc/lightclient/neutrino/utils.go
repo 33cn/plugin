@@ -1,6 +1,7 @@
 package neutrino
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -12,13 +13,11 @@ import (
 )
 
 func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
-
 	if n.commitKey != nil {
 		return n.commitKey
 	}
 	ticker := time.NewTicker(time.Second * 3)
 	for {
-
 		select {
 		case <-n.ctx.Done():
 			return nil
@@ -48,11 +47,9 @@ func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
 			return key
 		}
 	}
-
 }
 
 func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
-
 	if privKey == "" {
 		panic("getPrivKey: empty  privKey")
 	}
@@ -73,9 +70,7 @@ func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
 }
 
 func (n *neutrinoClient) isChain33Sync() bool {
-
 	reply, err := n.chain33Api.IsSync()
-
 	if err != nil {
 		log.Error("isChain33Sync", "err", err)
 		return false
@@ -85,10 +80,8 @@ func (n *neutrinoClient) isChain33Sync() bool {
 }
 
 func (n *neutrinoClient) waitTask(taskName string, isSatisfied func() bool) {
-
 	ticker := time.NewTicker(time.Second * 5)
 	for {
-
 		select {
 
 		case <-ticker.C:
@@ -103,12 +96,10 @@ func (n *neutrinoClient) waitTask(taskName string, isSatisfied func() bool) {
 }
 
 func (n *neutrinoClient) getRgbxConfirmedHeight() *types.Int64 {
-
 	reply, err := n.chain33Api.QueryChain(&types.ChainExecutor{
 		Driver:   rtypes.RgbxX,
 		FuncName: "GetConfirmedHeight",
 	})
-
 	if err != nil {
 		log.Error("getRgbxConfirmedHeight", "query err", err)
 		return nil
@@ -118,19 +109,39 @@ func (n *neutrinoClient) getRgbxConfirmedHeight() *types.Int64 {
 }
 
 func (n *neutrinoClient) getRgbxPendingTxs(req *rtypes.ReqListPendingTx) (*rtypes.PendingTxs, error) {
-
 	reply, err := n.chain33Api.QueryChain(&types.ChainExecutor{
 		Driver:   rtypes.RgbxX,
 		FuncName: "ListPendingTx",
 		Param:    types.Encode(req),
 	})
-
 	if err != nil {
 		log.Error("getRgbxPendingTxs", "query err", err, "req", req.String())
 		return nil, err
 	}
 
 	return reply.(*rtypes.PendingTxs), nil
+}
+
+func (n *neutrinoClient) getRgbxWithdrawAsset(txHash []byte) (*rtypes.WithdrawAsset, error) {
+	if len(txHash) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	reply, err := n.mainChainGrpc.QueryTransaction(n.ctx, &types.ReqHash{Hash: txHash})
+	if err != nil {
+		log.Error("getRgbxWithdrawAsset", "txHash", fmt.Sprintf("%x", txHash), "err", err)
+		return nil, err
+	}
+
+	action := &rtypes.RgbxAction{}
+	if err := types.Decode(reply.GetTx().Payload, action); err != nil {
+		log.Error("getRgbxWithdrawAsset decode action", "txHash", fmt.Sprintf("%x", txHash), "err", err)
+		return nil, err
+	}
+	if action.Ty != rtypes.TyWithDrawAsset {
+		return nil, fmt.Errorf("withdraw action not found")
+	}
+
+	return action.GetWithdraw(), nil
 }
 
 func fileExists(filePath string) (bool, error) {

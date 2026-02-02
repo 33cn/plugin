@@ -260,7 +260,6 @@ func (t *tssService) coordinatesToPublicKey(pubX, pubY []byte) (*btcec.PublicKey
 
 // commitDKGResult commits DKG result to main chain with retry until success
 func (t *tssService) commitDKGResult() {
-
 	// Create CommitDKG transaction
 	commitDKG := &rtypes.CommitDKG{
 		AssetSymbol: "BTC",
@@ -294,9 +293,9 @@ func (t *tssService) commitDKGResult() {
 	t.dkgCompleted.Store(true)
 }
 
-// signMsg signs a message using TSS protocol
+// processSignBtcTx processes a Bitcoin transaction using TSS protocol
 // This is called by the main node to initiate TSS signing
-func (t *tssService) signBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int64, payload []byte) error {
+func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int64, payload []byte) error {
 	if !t.dkgCompleted.Load() {
 		log.Error("signMsg dkg not completed")
 		return types.ErrNotSupport
@@ -305,13 +304,36 @@ func (t *tssService) signBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int
 	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSizeStripped()))
 	_ = tx.SerializeNoWitness(buf)
 	notify := &lighttypes.TssSignNotify{
-		TxType:    txType,
-		Payload:   payload,
-		BtcTxData: buf.Bytes(),
+		InputAmounts: inputAmounts,
+		TxType:       txType,
+		Payload:      payload,
+		BtcTxData:    buf.Bytes(),
 	}
 	// Publish notification to all TSS nodes
 	t.pubMsg(tssSignNotifyTopic, types.Encode(notify))
 	log.Debug("signMsg published notification", "txType", txType, "payload", hex.EncodeToString(payload))
+	return t.signBtcTx(tx, inputAmounts)
+}
+
+func (t *tssService) signMsg(msg []byte) ([]byte, error) {
+	sigResult, err := gg18.ProcessSign(t.cfg.Peers, msg, t.dkgResult)
+	if err != nil {
+		log.Error("signMsg ProcessSign", "err", err)
+		return nil, err
+	}
+
+	// Extract R and S from signature result and serialize
+	// sigResult contains R and S as big.Int coordinates
+	signature := append(sigResult.R.Bytes(), sigResult.S.Bytes()...)
+
+	log.Debug("signMsg success", "signature", hex.EncodeToString(signature))
+	return signature, nil
+}
+
+func (t *tssService) signBtcTx(tx *wire.MsgTx, inputAmounts []int64) error {
+	if len(tx.TxIn) != len(inputAmounts) {
+		return fmt.Errorf("input count mismatch: tx=%d inputAmounts=%d", len(tx.TxIn), len(inputAmounts))
+	}
 	txSigHashes := txscript.NewTxSigHashes(tx, nil)
 	for idx, in := range tx.TxIn {
 		// 计算签名哈希（使用预计算的脚本）
@@ -335,19 +357,92 @@ func (t *tssService) signBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int
 	return nil
 }
 
-func (t *tssService) signMsg(msg []byte) ([]byte, error) {
-	sigResult, err := gg18.ProcessSign(t.cfg.Peers, msg, t.dkgResult)
+func (t *tssService) parseTxFromNotify(notify *lighttypes.TssSignNotify) (*wire.MsgTx, []int64, error) {
+	if notify == nil {
+		return nil, nil, types.ErrInvalidParam
+	}
+	if len(notify.BtcTxData) == 0 {
+		return nil, nil, fmt.Errorf("empty BtcTxData")
+	}
+	if len(notify.InputAmounts) == 0 {
+		return nil, nil, fmt.Errorf("empty input amounts")
+	}
+	var tx wire.MsgTx
+	if err := tx.DeserializeNoWitness(bytes.NewReader(notify.BtcTxData)); err != nil {
+		return nil, nil, fmt.Errorf("deserialize tx failed: %w", err)
+	}
+	if len(tx.TxIn) != len(notify.InputAmounts) {
+		return nil, nil, fmt.Errorf("input count mismatch: tx=%d inputAmounts=%d", len(tx.TxIn), len(notify.InputAmounts))
+	}
+	return &tx, notify.InputAmounts, nil
+}
+
+func (t *tssService) validateWithdrawSignNotify(notify *lighttypes.TssSignNotify) (*wire.MsgTx, []int64, error) {
+	tx, inputAmounts, err := t.parseTxFromNotify(notify)
 	if err != nil {
-		log.Error("signMsg ProcessSign", "err", err)
-		return nil, err
+		return nil, nil, err
+	}
+	if notify.TxType != transactionTypeWithdraw {
+		return tx, inputAmounts, nil
 	}
 
-	// Extract R and S from signature result and serialize
-	// sigResult contains R and S as big.Int coordinates
-	signature := append(sigResult.R.Bytes(), sigResult.S.Bytes()...)
-
-	log.Debug("signMsg success", "signature", hex.EncodeToString(signature))
-	return signature, nil
+	var withdrawAmount int64
+	var withdrawAddress string
+	for _, output := range tx.TxOut {
+		if len(output.PkScript) > 0 && output.PkScript[0] == txscript.OP_RETURN {
+			continue
+		}
+		if len(t.pkScript) > 0 && bytes.Equal(output.PkScript, t.pkScript) {
+			continue
+		}
+		withdrawAmount += output.Value
+		if withdrawAddress == "" {
+			_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, &t.client.neutrinoCfg.ChainParams)
+			if err != nil || len(addrs) == 0 {
+				return nil, nil, fmt.Errorf("extract withdraw address failed: %w", err)
+			}
+			withdrawAddress = addrs[0].String()
+		} else {
+			_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, &t.client.neutrinoCfg.ChainParams)
+			if err == nil && len(addrs) > 0 && addrs[0].String() != withdrawAddress {
+				return nil, nil, fmt.Errorf("multiple withdraw addresses in tx")
+			}
+		}
+	}
+	if withdrawAddress == "" || withdrawAmount <= 0 {
+		return nil, nil, fmt.Errorf("invalid withdraw output")
+	}
+	if len(notify.Payload) == 0 {
+		return nil, nil, fmt.Errorf("empty withdraw asset hash")
+	}
+	// payload is the chain33 tx hash
+	withdraw, err := t.client.getRgbxWithdrawAsset(notify.Payload)
+	if err != nil {
+		return nil, nil, err
+	}
+	if withdraw.GetDestinationAddr() != withdrawAddress {
+		return nil, nil, fmt.Errorf("withdraw address mismatch")
+	}
+	var totalInput int64
+	for _, amount := range inputAmounts {
+		totalInput += amount
+	}
+	var totalOutput int64
+	for _, out := range tx.TxOut {
+		totalOutput += out.Value
+	}
+	fee := totalInput - totalOutput
+	if fee < 0 {
+		return nil, nil, fmt.Errorf("invalid fee calculation")
+	}
+	expectedAmount := withdraw.GetAmount() - fee
+	if expectedAmount <= 0 {
+		return nil, nil, fmt.Errorf("withdraw amount too small for fee")
+	}
+	if expectedAmount != withdrawAmount {
+		return nil, nil, fmt.Errorf("withdraw amount mismatch")
+	}
+	return tx, inputAmounts, nil
 }
 
 // handleSignNotify handles incoming TSS sign notifications
@@ -358,19 +453,24 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		return
 	}
 
-	log.Debug("handleSignNotify", "msg", hex.EncodeToString(msg))
-
-	// Perform TSS signing
-	sigResult, err := gg18.ProcessSign(t.cfg.Peers, msg, t.dkgResult)
+	notify := &lighttypes.TssSignNotify{}
+	err := types.Decode(msg, notify)
 	if err != nil {
-		log.Error("handleSignNotify ProcessSign", "err", err)
+		log.Error("handleSignNotify Decode", "err", err)
 		return
 	}
 
-	// Extract R and S from signature result and serialize
-	signature := append(sigResult.R.Bytes(), sigResult.S.Bytes()...)
+	tx, inputAmounts, err := t.validateWithdrawSignNotify(notify)
+	if err != nil {
+		log.Error("handleSignNotify validate", "err", err)
+		return
+	}
 
-	log.Debug("handleSignNotify success", "signature", hex.EncodeToString(signature))
+	if err := t.signBtcTx(tx, inputAmounts); err != nil {
+		log.Error("handleSignNotify signBtcTxData", "err", err)
+		return
+	}
+	log.Debug("handleSignNotify success", "txType", notify.TxType)
 }
 
 // subTopic subscribes to a P2P topic

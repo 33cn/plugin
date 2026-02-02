@@ -9,6 +9,8 @@ message RgbxAction {
     mintAsset mint = 2;
     transferAsset transfer = 3;
     confirmTx confirm = 4;
+    depositAsset deposit = 5;
+    withdrawAsset withdraw = 6;
   }
 }
 
@@ -87,8 +89,9 @@ message depositAsset {
 message withdrawAsset {
 
   int64 amount = 1;
-  string destinationAddr = 2;
-  string assetSymbol = 3;
+  int64 feeRate = 2;
+  string destinationAddr = 3;
+  string assetSymbol = 4;
 
 }
 

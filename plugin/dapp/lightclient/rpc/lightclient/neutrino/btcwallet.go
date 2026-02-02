@@ -41,6 +41,12 @@ const (
 	utxoLeaseDuration = 24 * time.Hour
 )
 
+const (
+	withdrawOpReturnPrefix    = "rgbx:" + transactionTypeWithdraw + ":"
+	withdrawOpReturnDataLen   = len(withdrawOpReturnPrefix) + 32
+	withdrawOpReturnScriptLen = 1 + 1 + withdrawOpReturnDataLen
+)
+
 // utxoWithdrawLockID UTXO锁定ID
 var utxoWithdrawLockID = wtxmgr.LockID{
 	'R', 'G', 'B', 'X', '-', 'W', 'I', 'T', 'H',
@@ -209,7 +215,6 @@ func (b *btcWallet) waitAndImportTSSAddress() {
 
 // monitorTransactions 监听交易通知
 func (b *btcWallet) monitorTransactions() {
-
 	for {
 		if b.client.tss.isDKGCompleted() {
 			break
@@ -252,7 +257,6 @@ func (b *btcWallet) monitorTransactions() {
 
 // handleTransaction 处理单个交易
 func (b *btcWallet) handleTransaction(tx *wallet.TransactionSummary, blockHeight int32) {
-
 	txHash := *tx.Hash
 	// 检查提现交易是否已在pending缓存中（避免重复解析）
 	b.txLock.RLock()
@@ -285,7 +289,6 @@ func (b *btcWallet) handleTransaction(tx *wallet.TransactionSummary, blockHeight
 
 // handleUnminedTransaction 处理未确认交易（重置确认数）
 func (b *btcWallet) handleUnminedTransaction(txHash chainhash.Hash) {
-
 	b.txLock.Lock()
 	defer b.txLock.Unlock()
 
@@ -307,7 +310,6 @@ func (b *btcWallet) handleUnminedTransaction(txHash chainhash.Hash) {
 
 // updateTransactionConfirmations 更新已存在交易的确认数
 func (b *btcWallet) updateTransactionConfirmations() {
-
 	bestBlock := b.client.getBestBlock()
 	var readyHashes []chainhash.Hash
 	b.txLock.Lock()
@@ -346,7 +348,6 @@ type opReturnData struct {
 
 // parseOpReturn 解析OP_RETURN数据
 func (b *btcWallet) parseOpReturn(pkScript []byte) (*opReturnData, error) {
-
 	// 提取数据（跳过OP_RETURN和长度字节, 解析格式: protocol:action:payload
 	dataStr := string(pkScript[2:])
 	parts := strings.Split(dataStr, ":")
@@ -361,7 +362,7 @@ func (b *btcWallet) parseOpReturn(pkScript []byte) (*opReturnData, error) {
 		payload:  parts[2],
 	}
 
-	if opData.action == transactionTypeWithdraw { //chain33 tx hash
+	if opData.action == transactionTypeWithdraw { // chain33 tx hash
 		opData.payload = hex.EncodeToString([]byte(parts[2]))
 	}
 
@@ -449,7 +450,6 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 
 // sendTransactionNotification 发送交易确认通知
 func (b *btcWallet) sendTransactionNotification(txHash chainhash.Hash, pending *pendingTx) {
-
 	if pending.txType == "deposit" {
 		b.depositChan <- pending
 	} else {
@@ -491,7 +491,7 @@ func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64,
 	}
 
 	// 手动选择UTXO并构建交易
-	tx, inputAmounts, lockedUTXOs, err := b.buildTransaction(outputs, feeRate, req.chain33WithDrawHash)
+	tx, inputAmounts, lockedUTXOs, err := b.buildTransaction(outputs, feeRate, req.chain33WithDrawHash, true)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -504,7 +504,7 @@ func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64,
 
 // buildTransaction 手动构建交易
 // 返回: (交易, 输入金额列表, 选中的UTXO列表, 错误)
-func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amount, chain33Hash []byte) (*wire.MsgTx, []int64, []*UTXO, error) {
+func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amount, chain33Hash []byte, receiverPaysFee bool) (*wire.MsgTx, []int64, []*UTXO, error) {
 	// 计算输出总额
 	var outputTotal btcutil.Amount
 	for _, output := range outputs {
@@ -522,7 +522,11 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 	}
 
 	// 选择并锁定UTXO（防止并发双花）
-	selectedUTXOs, inputTotal, err := b.selectAndLockUTXOs(utxos, outputTotal, feeRate)
+	selectionFeeRate := feeRate
+	if receiverPaysFee {
+		selectionFeeRate = 0
+	}
+	selectedUTXOs, inputTotal, err := b.selectAndLockUTXOs(utxos, outputTotal, selectionFeeRate)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -537,8 +541,8 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 		inputAmounts = append(inputAmounts, int64(utxo.Amount))
 	}
 
-	buf := make([]byte, 0, len(transactionTypeWithdraw)+32+6)
-	buf = append(buf, []byte("rgbx:"+transactionTypeWithdraw+":")...)
+	buf := make([]byte, 0, withdrawOpReturnDataLen)
+	buf = append(buf, []byte(withdrawOpReturnPrefix)...)
 	buf = append(buf, chain33Hash...)
 	opScript, err := txscript.NullDataScript(buf)
 	if err != nil {
@@ -556,7 +560,18 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 	fee := btcutil.Amount(txSize) * feeRate
 
 	// 计算找零
-	change := inputTotal - outputTotal - fee
+	change := inputTotal - outputTotal
+	if receiverPaysFee {
+		if fee >= outputTotal {
+			b.releaseUTXOs(selectedUTXOs)
+			return nil, nil, nil, fmt.Errorf("withdraw amount too small for fee: amount %d, fee %d", outputTotal, fee)
+		}
+		outputs[0].Value = int64(outputTotal - fee)
+	} else {
+		change = inputTotal - outputTotal - fee
+	}
+
+	// TODO 找零过小是否由提现地址承担
 	if change > minChangeAmount {
 		// 添加找零输出（使用预计算的脚本）
 		tx.AddTxOut(wire.NewTxOut(int64(change), b.tssPkScript))
@@ -706,7 +721,7 @@ func (b *btcWallet) findMinimumInputCount(utxos []*UTXO, targetAmount, feeRate b
 		total += utxo.Amount
 
 		// 估算手续费
-		txSize := b.estimateTxSize(len(selected), 2) // 2个输出（目标+找零）
+		txSize := b.estimateTxSize(len(selected), 2, withdrawOpReturnScriptLen) // 目标+找零+OP_RETURN
 		fee := btcutil.Amount(txSize) * feeRate
 
 		if total >= targetAmount+fee {
@@ -737,7 +752,7 @@ func (b *btcWallet) optimizeSelection(utxos []*UTXO, targetAmount, feeRate btcut
 
 	for len(selected) < maxCount {
 		// 估算当前手续费
-		txSize := b.estimateTxSize(len(selected)+1, 2)
+		txSize := b.estimateTxSize(len(selected)+1, 2, withdrawOpReturnScriptLen)
 		fee := btcutil.Amount(txSize) * feeRate
 		needed := remaining + fee
 
@@ -810,9 +825,10 @@ func (b *btcWallet) findLargestUnselected(utxos []*UTXO, selected []*UTXO) *UTXO
 
 // estimateTxSize 估算交易大小
 // inputCount: 输入数量
-// outputCount: 输出数量
+// p2wpkhOutputCount: P2WPKH输出数量
+// opReturnScriptSize: OP_RETURN脚本长度（字节）
 // 返回: 交易大小（字节）
-func (b *btcWallet) estimateTxSize(inputCount, outputCount int) int {
+func (b *btcWallet) estimateTxSize(inputCount, p2wpkhOutputCount, opReturnScriptSize int) int {
 	// 基本交易大小
 	baseSize := 10 // version(4) + locktime(4) + input_count(1) + output_count(1)
 
@@ -826,7 +842,10 @@ func (b *btcWallet) estimateTxSize(inputCount, outputCount int) int {
 	// P2WPKH输出大小
 	// - Value: 8字节
 	// - ScriptPubKey: 23字节 (OP_0 + 20字节pubkey hash)
-	outputSize := outputCount * (8 + 23)
+	outputSize := p2wpkhOutputCount * (8 + 23)
+	if opReturnScriptSize > 0 {
+		outputSize += 8 + 1 + opReturnScriptSize // value + script len + script
+	}
 
 	return baseSize + inputSize + outputSize
 }
@@ -930,7 +949,6 @@ type SignFunc func(sigHash []byte) ([]byte, error)
 // signWithdrawTx 签名提现交易
 // signFunc: 签名函数，如果为nil则使用默认的TSS签名
 func (b *btcWallet) signWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, signFunc SignFunc) error {
-
 	// 使用默认TSS签名函数
 	if signFunc == nil {
 		signFunc = b.client.tss.signMsg
