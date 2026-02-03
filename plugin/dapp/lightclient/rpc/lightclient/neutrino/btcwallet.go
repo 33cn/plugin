@@ -3,6 +3,7 @@ package neutrino
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -47,6 +48,11 @@ const (
 	withdrawOpReturnScriptLen = 1 + 1 + withdrawOpReturnDataLen
 )
 
+const (
+	btcwalletMonitorBucket = "rgbx-btcwallet-monitor"
+	minPendingHeightKey    = "min-pending-height"
+)
+
 // utxoWithdrawLockID UTXO锁定ID
 var utxoWithdrawLockID = wtxmgr.LockID{
 	'R', 'G', 'B', 'X', '-', 'W', 'I', 'T', 'H',
@@ -86,6 +92,8 @@ type btcWallet struct {
 	chainParams chaincfg.Params
 	chainClient chain.Interface
 	db          walletdb.DB
+
+	monitorStartHeight int32
 
 	// TSS相关
 	tssAddress  btcutil.Address
@@ -200,16 +208,111 @@ func (b *btcWallet) waitAndImportTSSAddress() {
 		b.tssPkScript = b.client.tss.pkScript
 
 		// 显式导入TSS公钥到钱包
-		err := b.Wallet.ImportPublicKey(b.tssPubKey, waddrmgr.WitnessPubKey)
-		if err != nil {
-			log.Error("waitAndImportTSSAddress ImportPublicKey failed", "err", err)
-			time.Sleep(time.Second * 3)
-			continue
+		if _, err := b.Wallet.AddressInfo(addr); err != nil {
+			if !waddrmgr.IsError(err, waddrmgr.ErrAddressNotFound) {
+				log.Error("waitAndImportTSSAddress AddressInfo failed", "err", err)
+				time.Sleep(time.Second * 3)
+				continue
+			}
+			err = b.Wallet.ImportPublicKey(b.tssPubKey, waddrmgr.WitnessPubKey)
+			if err != nil {
+				log.Error("waitAndImportTSSAddress ImportPublicKey failed", "err", err)
+				time.Sleep(time.Second * 3)
+				continue
+			}
 		}
 
 		log.Info("waitAndImportTSSAddress success", "address", addr.String())
 		return
 
+	}
+}
+
+func (b *btcWallet) loadMinPendingHeight() int32 {
+	var height int32
+	err := walletdb.View(b.db, func(tx walletdb.ReadTx) error {
+		bucket := tx.ReadBucket([]byte(btcwalletMonitorBucket))
+		if bucket == nil {
+			return walletdb.ErrBucketNotFound
+		}
+		val := bucket.Get([]byte(minPendingHeightKey))
+		if val == nil {
+			return types.ErrNotFound
+		}
+		reply := &types.Int64{}
+		if err := types.Decode(val, reply); err != nil {
+			return err
+		}
+		height = int32(reply.GetData())
+		return nil
+	})
+	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) && !errors.Is(err, types.ErrNotFound) {
+		log.Error("loadMinPendingHeight", "err", err)
+	}
+	return height
+}
+
+func (b *btcWallet) saveMinPendingHeight(height int32) {
+	err := walletdb.Update(b.db, func(tx walletdb.ReadWriteTx) error {
+		bucket, err := tx.CreateTopLevelBucket([]byte(btcwalletMonitorBucket))
+		if err != nil {
+			return err
+		}
+		if height <= 0 {
+			return bucket.Delete([]byte(minPendingHeightKey))
+		}
+		data := types.Encode(&types.Int64{Data: int64(height)})
+		return bucket.Put([]byte(minPendingHeightKey), data)
+	})
+	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) {
+		log.Error("saveMinPendingHeight", "err", err, "height", height)
+	}
+}
+
+func (b *btcWallet) updateMinPendingHeightLocked() {
+	minHeight := int32(0)
+	for _, pending := range b.pendingTxs {
+		if pending.blockHeight <= 0 {
+			continue
+		}
+		if minHeight == 0 || pending.blockHeight < minHeight {
+			minHeight = pending.blockHeight
+		}
+	}
+	if b.monitorStartHeight < minHeight {
+		b.monitorStartHeight = minHeight
+		b.saveMinPendingHeight(minHeight)
+	}
+}
+
+func (b *btcWallet) rescanFromHeight(height int32) error {
+	if height <= 0 {
+		return nil
+	}
+	if b.tssAddress == nil {
+		return fmt.Errorf("TSS address not ready")
+	}
+	hash, err := b.chainClient.GetBlockHash(int64(height))
+	if err != nil {
+		return err
+	}
+	stamp := waddrmgr.BlockStamp{
+		Hash:   *hash,
+		Height: height,
+	}
+	if header, err := b.chainClient.GetBlockHeader(hash); err == nil {
+		stamp.Timestamp = header.Timestamp
+	}
+	job := &wallet.RescanJob{
+		InitialSync: true,
+		Addrs:       []btcutil.Address{b.tssAddress},
+		BlockStamp:  stamp,
+	}
+	select {
+	case err := <-b.Wallet.SubmitRescan(job):
+		return err
+	case <-b.client.ctx.Done():
+		return types.ErrChannelClosed
 	}
 }
 
@@ -222,8 +325,16 @@ func (b *btcWallet) monitorTransactions() {
 		time.Sleep(time.Second * 3)
 	}
 
+	b.monitorStartHeight = b.loadMinPendingHeight()
+
 	// 注册通知客户端
 	client := b.Wallet.NtfnServer.TransactionNotifications()
+	if b.monitorStartHeight > 0 {
+		log.Debug("monitorTransactions resume from height", "height", b.monitorStartHeight)
+		if err := b.rescanFromHeight(b.monitorStartHeight); err != nil {
+			log.Error("monitorTransactions rescan", "height", b.monitorStartHeight, "err", err)
+		}
+	}
 	ticker := time.NewTicker(time.Second * time.Duration(b.client.cfg.BtcBlockInterval) / 2)
 
 	for {
@@ -276,6 +387,7 @@ func (b *btcWallet) handleTransaction(tx *wallet.TransactionSummary, blockHeight
 		log.Debug("handleTransaction not deposit/withdraw", "txHash", txHash.String())
 		return
 	}
+	pending.blockHeight = blockHeight
 
 	// 记录关键交易信息
 	log.Info("handleTransaction detected "+pending.txType, "blockHeight", blockHeight, "txHash", txHash.String(),
@@ -330,12 +442,16 @@ func (b *btcWallet) updateTransactionConfirmations() {
 			log.Info("updateTransactionConfirmations ready for notification", "txHash", txHash.String(), "type", pending.txType,
 				"confirmations", pending.confirmations, "required", b.requiredConfs)
 			b.sendTransactionNotification(txHash, pending)
+			readyHashes = append(readyHashes, txHash)
 		}
 
 	}
 
 	for _, txHash := range readyHashes {
 		delete(b.pendingTxs, txHash)
+	}
+	if len(readyHashes) > 0 {
+		b.updateMinPendingHeightLocked()
 	}
 }
 
