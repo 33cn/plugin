@@ -8,10 +8,11 @@ import (
 	"math"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
+	lighttypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -101,8 +102,9 @@ type btcWallet struct {
 	tssPkScript []byte // 预计算的TSS地址脚本
 
 	// 通知channel
-	depositChan  chan *pendingTx
-	withdrawChan chan *pendingTx
+	depositChan    chan *pendingTx
+	withdrawChan   chan *pendingTx
+	addPendingChan chan *pendingTx
 
 	// 配置
 	requiredConfs int32
@@ -110,31 +112,36 @@ type btcWallet struct {
 
 	// 交易监控
 	pendingTxs map[chainhash.Hash]*pendingTx
-	txLock     sync.RWMutex
+	// txLock     sync.RWMutex
 }
 
 type pendingTx struct {
-	tx              *wire.MsgTx
-	submitTime      time.Time
-	confirmations   int32
-	blockHeight     int32
-	txType          string // "deposit" or "withdraw"
-	depositAmount   btcutil.Amount
-	withdrawAmount  btcutil.Amount
-	withdrawAddress string
+	tx                    *wire.MsgTx
+	submitTime            time.Time
+	confirmations         int32
+	blockHeight           int32
+	blockHash             chainhash.Hash
+	txHash                chainhash.Hash
+	txType                string // "deposit" or "withdraw"
+	depositAmount         btcutil.Amount
+	withdrawAmount        btcutil.Amount
+	chain33DepositAddress string // Chain33充值地址
+	withdrawAddress       string
+	chain33WithDrawHash   string // Chain33提现交易哈希
 	// OP_RETURN数据
 	opReturnData opReturnData // 原始OP_RETURN解析数据
 }
 
 func newBtcWallet(n *neutrinoClient) (*btcWallet, error) {
 	bw := &btcWallet{
-		client:        n,
-		chainParams:   n.neutrinoCfg.ChainParams,
-		depositChan:   make(chan *pendingTx, 100),
-		withdrawChan:  make(chan *pendingTx, 100),
-		requiredConfs: defaultRequiredConfs,
-		feeRate:       defaultFeeRate,
-		pendingTxs:    make(map[chainhash.Hash]*pendingTx),
+		client:         n,
+		chainParams:    n.neutrinoCfg.ChainParams,
+		depositChan:    make(chan *pendingTx, 100),
+		withdrawChan:   make(chan *pendingTx, 100),
+		addPendingChan: make(chan *pendingTx, 100),
+		requiredConfs:  defaultRequiredConfs,
+		feeRate:        defaultFeeRate,
+		pendingTxs:     make(map[chainhash.Hash]*pendingTx),
 	}
 
 	exist, db, err := openWalletDB(n.neutrinoCfg.DataDir, "btcwallet.db")
@@ -285,6 +292,7 @@ func (b *btcWallet) updateMinPendingHeightLocked() {
 	}
 }
 
+// rescanFromHeight 从指定高度开始重新扫描
 func (b *btcWallet) rescanFromHeight(height int32) error {
 	if height <= 0 {
 		return nil
@@ -314,6 +322,11 @@ func (b *btcWallet) rescanFromHeight(height int32) error {
 	case <-b.client.ctx.Done():
 		return types.ErrChannelClosed
 	}
+}
+
+// addPendingTx 添加待确认交易
+func (b *btcWallet) addPendingTx(pending *pendingTx) {
+	b.addPendingChan <- pending
 }
 
 // monitorTransactions 监听交易通知
@@ -351,7 +364,7 @@ func (b *btcWallet) monitorTransactions() {
 			// 处理已确认交易
 			for _, block := range ntfn.AttachedBlocks {
 				for _, tx := range block.Transactions {
-					b.handleTransaction(&tx, block.Height)
+					b.handleTransaction(&tx, block.Height, *block.Hash)
 				}
 			}
 
@@ -360,6 +373,11 @@ func (b *btcWallet) monitorTransactions() {
 				b.handleUnminedTransaction(*tx.Hash)
 			}
 
+		case pending := <-b.addPendingChan:
+			b.pendingTxs[pending.txHash] = pending
+			log.Debug("addPendingTx", "txHash", pending.txHash.String(), "blockHeight", pending.blockHeight,
+				"blockHash", pending.blockHash.String(), "txType", pending.txType)
+
 		case <-ticker.C:
 			b.updateTransactionConfirmations()
 		}
@@ -367,13 +385,13 @@ func (b *btcWallet) monitorTransactions() {
 }
 
 // handleTransaction 处理单个交易
-func (b *btcWallet) handleTransaction(tx *wallet.TransactionSummary, blockHeight int32) {
+func (b *btcWallet) handleTransaction(tx *wallet.TransactionSummary, blockHeight int32, blockHash chainhash.Hash) {
 	txHash := *tx.Hash
-	// 检查提现交易是否已在pending缓存中（避免重复解析）
-	b.txLock.RLock()
-	_, exists := b.pendingTxs[txHash]
-	b.txLock.RUnlock()
+	// 检查提现交易是否已在pending缓存中（避免重复解析），如果存在，则更新区块高度和区块哈希
+	pending, exists := b.pendingTxs[txHash]
 	if exists {
+		pending.blockHeight = blockHeight
+		pending.blockHash = blockHash
 		log.Debug("handleTransaction already in pending", "txHash", txHash.String())
 		return
 	}
@@ -382,29 +400,26 @@ func (b *btcWallet) handleTransaction(tx *wallet.TransactionSummary, blockHeight
 		"inputs", len(tx.Tx.TxIn), "outputs", len(tx.Tx.TxOut))
 
 	// 分析交易类型和相关信息
-	pending := b.analyzeTransaction(tx.Hash, tx.Tx)
+	pending = b.analyzeTransaction(tx.Hash, tx.Tx)
 	if pending == nil {
 		log.Debug("handleTransaction not deposit/withdraw", "txHash", txHash.String())
 		return
 	}
+	pending.tx = tx.Tx
 	pending.blockHeight = blockHeight
-
+	pending.blockHash = blockHash
+	pending.txHash = txHash
 	// 记录关键交易信息
 	log.Info("handleTransaction detected "+pending.txType, "blockHeight", blockHeight, "txHash", txHash.String(),
 		"depositAmount", pending.depositAmount, "withdrawAmount", pending.withdrawAmount)
 
 	// 添加到待确认列表
-	b.txLock.Lock()
 	b.pendingTxs[txHash] = pending
-	b.txLock.Unlock()
 }
 
 // handleUnminedTransaction 处理未确认交易（重置确认数）
 func (b *btcWallet) handleUnminedTransaction(txHash chainhash.Hash) {
-	b.txLock.Lock()
-	defer b.txLock.Unlock()
-
-	if pending, exists := b.pendingTxs[txHash]; exists {
+	if pending, exists := b.pendingTxs[txHash]; exists && pending.blockHeight > 0 {
 		// 重置确认数和区块高度
 		oldConfirmations := pending.confirmations
 		oldBlockHeight := pending.blockHeight
@@ -412,11 +427,8 @@ func (b *btcWallet) handleUnminedTransaction(txHash chainhash.Hash) {
 		pending.confirmations = 0
 		pending.blockHeight = -1
 
-		log.Info("handleUnminedTransaction reset confirmations",
-			"txHash", txHash.String(),
-			"oldConfirmations", oldConfirmations,
-			"oldBlockHeight", oldBlockHeight,
-			"type", pending.txType)
+		log.Debug("handleUnminedTransaction reset confirmations", "txHash", txHash.String(),
+			"oldConfirmations", oldConfirmations, "oldBlockHeight", oldBlockHeight, "type", pending.txType)
 	}
 }
 
@@ -424,8 +436,7 @@ func (b *btcWallet) handleUnminedTransaction(txHash chainhash.Hash) {
 func (b *btcWallet) updateTransactionConfirmations() {
 	bestBlock := b.client.getBestBlock()
 	var readyHashes []chainhash.Hash
-	b.txLock.Lock()
-	defer b.txLock.Unlock()
+
 	for txHash, pending := range b.pendingTxs {
 
 		txRes, err := b.Wallet.GetTransaction(txHash)
@@ -439,7 +450,7 @@ func (b *btcWallet) updateTransactionConfirmations() {
 		}
 		// 如果达到要求的确认数，发送通知
 		if pending.confirmations >= b.requiredConfs {
-			log.Info("updateTransactionConfirmations ready for notification", "txHash", txHash.String(), "type", pending.txType,
+			log.Debug("updateTransactionConfirmations ready for notification", "txHash", txHash.String(), "type", pending.txType,
 				"confirmations", pending.confirmations, "required", b.requiredConfs)
 			b.sendTransactionNotification(txHash, pending)
 			readyHashes = append(readyHashes, txHash)
@@ -494,17 +505,19 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 	var hasTssOutput bool
 	var depositAmount, withdrawAmount btcutil.Amount
 	var firstNonTssOutputAddress string
-	var opReturnData *opReturnData
+	var parsed *opReturnData
+	var err error
 
 	for i, output := range tx.TxOut {
 		// 检查并解析 OP_RETURN 输出
-		if output.PkScript[0] == txscript.OP_RETURN && opReturnData == nil && len(output.PkScript) > 2 {
-			parsed, err := b.parseOpReturn(output.PkScript)
+		if output.PkScript[0] == txscript.OP_RETURN && parsed == nil && len(output.PkScript) > 2 {
+			parsed, err = b.parseOpReturn(output.PkScript)
 			if err != nil {
 				log.Debug("analyzeTransaction parseOpReturn failed", "txHash", hash.String(),
 					"outputIndex", i, "err", err)
 			} else {
-				opReturnData = parsed
+
+				info.opReturnData = *parsed
 				log.Info("analyzeTransaction parseOpReturn success", "txHash", hash.String(),
 					"protocol", parsed.protocol, "action", parsed.action, "payload", parsed.payload)
 			}
@@ -531,9 +544,6 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 		}
 	}
 
-	if opReturnData != nil {
-		info.opReturnData = *opReturnData
-	}
 	hasTssInput := false
 	// 检查输入：直接从witness解析公钥验证是否来自TSS地址
 	if witness := tx.TxIn[0].Witness; len(witness) == 2 &&
@@ -551,10 +561,12 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 		info.withdrawAddress = firstNonTssOutputAddress
 		info.txType = transactionTypeWithdraw
 		info.withdrawAmount = withdrawAmount
+		info.chain33WithDrawHash = parsed.payload
 		return info
 	} else if hasTssOutput && !hasTssInput { // 充值交易特征：有TSS输出，无TSS输入
 		info.depositAmount = depositAmount
 		info.txType = transactionTypeDeposit
+		info.chain33DepositAddress = parsed.payload
 		return info
 	}
 
@@ -1123,7 +1135,7 @@ func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, locke
 	// 计算交易哈希
 	txHash := tx.TxHash()
 
-	log.Info("BroadcastTransaction start", "txHash", txHash.String(), "toAddress", toAddress,
+	log.Debug("BroadcastTransaction start", "txHash", txHash.String(), "toAddress", toAddress,
 		"inputs", len(tx.TxIn), "outputs", len(tx.TxOut), "lockedUTXOs", len(lockedUTXOs))
 
 	// 广播交易
@@ -1153,21 +1165,65 @@ func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, locke
 	}
 
 	// 记录待确认交易
-	b.txLock.Lock()
-	b.pendingTxs[txHash] = &pendingTx{
-		submitTime:      types.Now(),
-		confirmations:   0,
-		blockHeight:     -1,
-		txType:          "withdraw",
-		withdrawAddress: toAddress,
-	}
-	b.txLock.Unlock()
+
+	// b.pendingTxs[txHash] = &pendingTx{
+	// 	tx:              tx,
+	// 	submitTime:      types.Now(),
+	// 	confirmations:   0,
+	// 	blockHeight:     -1,
+	// 	txType:          "withdraw",
+	// 	withdrawAddress: toAddress,
+	// 	txHash:          txHash,
+	// }
 
 	log.Info("broadcastTransaction success", "txHash", txHash.String(),
 		"toAddress", toAddress, "withdrawAmount", withdrawAmount, "changeAmount", changeAmount, "totalOutputs", len(tx.TxOut))
 
 	// 注意: 广播成功后，UTXO锁定会在交易确认后自动释放（由btcwallet管理）
 	return nil
+}
+
+// buildTxExistenceProof 计算交易存在性证明（SPV）
+// 输入: pendingTx（需要包含 tx 和 blockHash）
+// 输出: lighttypes.BtcSpv
+func (b *btcWallet) buildTxExistenceProof(pending *pendingTx) (*lighttypes.BtcSpv, error) {
+	if pending == nil || pending.tx == nil {
+		return nil, fmt.Errorf("pending tx data missing")
+	}
+	if pending.blockHeight <= 0 {
+		return nil, fmt.Errorf("invalid pending block height")
+	}
+	txHashStr := pending.tx.TxHash().String()
+	block, err := b.chainClient.GetBlock(&pending.blockHash)
+	if err != nil {
+		return nil, err
+	}
+
+	var txIndex uint32
+	found := false
+	txs := make([][]byte, 0, len(block.Transactions))
+	for index, tx := range block.Transactions {
+		hash := tx.TxHash()
+		txs = append(txs, hash.CloneBytes())
+		if hash == pending.txHash {
+			txIndex = uint32(index)
+			found = true
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("tx not found in block")
+	}
+
+	proof := merkle.GetMerkleBranch(txs, txIndex)
+	spv := &lighttypes.BtcSpv{
+		TxHash:      txHashStr,
+		Time:        block.Header.Timestamp.Unix(),
+		Height:      uint64(pending.blockHeight),
+		BlockHash:   pending.blockHash.String(),
+		TxIndex:     txIndex,
+		BranchProof: proof,
+	}
+	return spv, nil
 }
 
 // GetBalance 获取余额

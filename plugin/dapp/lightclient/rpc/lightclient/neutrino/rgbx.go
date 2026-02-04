@@ -58,7 +58,6 @@ func newRGBX() *rgbx {
 }
 
 func (r *rgbx) init(cli *neutrinoClient) {
-
 	log.Debug("init rgbx service start")
 	r.client = cli
 	r.commitTxKey = cli.getCommitKey()
@@ -78,7 +77,6 @@ func (r *rgbx) init(cli *neutrinoClient) {
 
 	// 等待轻节点同步
 	cli.waitTask("wait neutrino sync", func() bool {
-
 		if cli.neutrinoCS.IsCurrent() {
 			return true
 		}
@@ -99,11 +97,9 @@ func (r *rgbx) init(cli *neutrinoClient) {
 	}
 
 	log.Debug("init rgbx service done")
-
 }
 
 func (r *rgbx) pullPendingTx() {
-
 	ticker := time.NewTicker(time.Second * 10)
 	req := &rtypes.ReqListPendingTx{
 		StartHeight: r.pendingTxPullHeight,
@@ -111,7 +107,6 @@ func (r *rgbx) pullPendingTx() {
 		Count:       128,
 	}
 	for {
-
 		select {
 
 		case <-r.client.ctx.Done():
@@ -160,7 +155,6 @@ func (r *rgbx) pullPendingTx() {
 }
 
 func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
-
 	bestBlk := r.client.getBestBlock()
 
 	// get start height from startTime
@@ -221,16 +215,13 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 	log.Debug("rescanUtxo", "pendingHash", spendInfo.pendingTxHash,
 		"spendingHash", spendInfo.spendingTxHash, "utxo", info.outPrint)
 	return true
-
 }
 
 func (r *rgbx) handleRescanUtxo() {
-
 	rescanArr := make([]*utxoRescanInfo, 0, 16)
 	interval := r.client.cfg.BtcBlockInterval / 2
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
-
 		select {
 
 		case <-r.client.ctx.Done():
@@ -246,18 +237,15 @@ func (r *rgbx) handleRescanUtxo() {
 			tempArr := rescanArr
 			rescanArr = rescanArr[:0]
 			for _, info := range tempArr {
-
 				if !r.rescanUtxo(info) && !r.mayTimeout(info) {
 					rescanArr = append(rescanArr, info)
 				}
 			}
 		}
-
 	}
 }
 
 func (r *rgbx) mayTimeout(info *utxoRescanInfo) bool {
-
 	if r.client.cfg.MaxUtxoRescanTime == 0 ||
 		types.Now().Unix() < info.startTime+r.client.cfg.MaxUtxoRescanTime {
 		return false
@@ -274,7 +262,6 @@ func (r *rgbx) mayTimeout(info *utxoRescanInfo) bool {
 }
 
 func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
-
 	pendTx := r.pendingCache.removeTx(info.pendingTxHash)
 	minTxBlockHeight := r.pendingCache.getMinTxBlockHeight(pendTx.TxBlockHeight)
 	confirm := &rtypes.ConfirmTx{
@@ -309,7 +296,6 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 }
 
 func (r *rgbx) commitPendingTx(confirm *rtypes.ConfirmTx) (success bool) {
-
 	confirmHash := hex.EncodeToString(confirm.TxHash)
 	tx, err := types.CallCreateTransaction(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
 	if err != nil {
@@ -336,11 +322,9 @@ func (r *rgbx) commitPendingTx(confirm *rtypes.ConfirmTx) (success bool) {
 }
 
 func (r *rgbx) handleCommitPendingTx() {
-
 	ticker := time.NewTicker(time.Second * 10)
 	confirmArr := make([]*rtypes.ConfirmTx, 0, 8)
 	for {
-
 		select {
 
 		case <-r.client.ctx.Done():
@@ -357,13 +341,10 @@ func (r *rgbx) handleCommitPendingTx() {
 			tempArr := confirmArr
 			confirmArr = confirmArr[:0]
 			for _, confirm := range tempArr {
-
 				if !r.commitPendingTx(confirm) {
 					confirmArr = append(confirmArr, confirm)
 				}
 			}
 		}
-
 	}
-
 }
