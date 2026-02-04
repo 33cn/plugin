@@ -10,6 +10,8 @@ import (
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 )
 
 func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
@@ -153,4 +155,9 @@ func fileExists(filePath string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func estimateBtcFee(tx *wire.MsgTx, feeRate btcutil.Amount) btcutil.Amount {
+	txSize := tx.SerializeSize() + len(tx.TxIn)*108 // 估算witness大小
+	return btcutil.Amount(txSize) * feeRate
 }

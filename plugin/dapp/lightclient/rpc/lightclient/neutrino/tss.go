@@ -302,7 +302,11 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSizeStripped()))
-	_ = tx.SerializeNoWitness(buf)
+	err := tx.SerializeNoWitness(buf)
+	if err != nil {
+		log.Error("processSignBtcTx SerializeNoWitness", "err", err)
+		return err
+	}
 	notify := &lighttypes.TssSignNotify{
 		InputAmounts: inputAmounts,
 		TxType:       txType,
@@ -312,6 +316,14 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 	// Publish notification to all TSS nodes
 	t.pubMsg(tssSignNotifyTopic, types.Encode(notify))
 	log.Debug("signMsg published notification", "txType", txType, "payload", hex.EncodeToString(payload))
+	// 主节点也进行验证，保证各节点执行相同的逻辑
+	if txType == transactionTypeWithdraw {
+		err = t.validateWithdrawTx(tx, inputAmounts, payload)
+		if err != nil {
+			log.Error("processSignBtcTx validateWithdrawTx", "err", err)
+			return err
+		}
+	}
 	return t.signBtcTx(tx, inputAmounts)
 }
 
@@ -377,52 +389,37 @@ func (t *tssService) parseTxFromNotify(notify *lighttypes.TssSignNotify) (*wire.
 	return &tx, notify.InputAmounts, nil
 }
 
-func (t *tssService) validateWithdrawSignNotify(notify *lighttypes.TssSignNotify) (*wire.MsgTx, []int64, error) {
-	tx, inputAmounts, err := t.parseTxFromNotify(notify)
-	if err != nil {
-		return nil, nil, err
+func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, chain33WithDrawHash []byte) error {
+	if len(chain33WithDrawHash) == 0 {
+		return fmt.Errorf("empty withdraw asset hash")
 	}
-	if notify.TxType != transactionTypeWithdraw {
-		return tx, inputAmounts, nil
+	withdraw, err := t.client.getRgbxWithdrawAsset(chain33WithDrawHash)
+	if err != nil {
+		log.Error("validateWithdrawTx getRgbxWithdrawAsset", "err", err, "chain33WithDrawHash", hex.EncodeToString(chain33WithDrawHash))
+		return err
 	}
 
-	var withdrawAmount int64
-	var withdrawAddress string
+	var withdrawAmount, changeAmount int64
 	for _, output := range tx.TxOut {
 		if len(output.PkScript) > 0 && output.PkScript[0] == txscript.OP_RETURN {
 			continue
 		}
 		if len(t.pkScript) > 0 && bytes.Equal(output.PkScript, t.pkScript) {
+			changeAmount += output.Value
 			continue
 		}
 		withdrawAmount += output.Value
-		if withdrawAddress == "" {
-			_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, &t.client.neutrinoCfg.ChainParams)
-			if err != nil || len(addrs) == 0 {
-				return nil, nil, fmt.Errorf("extract withdraw address failed: %w", err)
-			}
-			withdrawAddress = addrs[0].String()
-		} else {
-			_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, &t.client.neutrinoCfg.ChainParams)
-			if err == nil && len(addrs) > 0 && addrs[0].String() != withdrawAddress {
-				return nil, nil, fmt.Errorf("multiple withdraw addresses in tx")
-			}
+		_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, &t.client.neutrinoCfg.ChainParams)
+		if err != nil || len(addrs) == 0 {
+			log.Error("validateWithdrawSignNotify extract withdraw address failed", "pkscript", hex.EncodeToString(output.PkScript), "err", err)
+			return fmt.Errorf("extract withdraw address failed")
+		}
+		if withdraw.GetDestinationAddr() != addrs[0].String() {
+			log.Error("validateWithdrawSignNotify withdraw address mismatch", "expected", withdraw.GetDestinationAddr(), "actual", addrs[0].String())
+			return fmt.Errorf("withdraw address mismatch")
 		}
 	}
-	if withdrawAddress == "" || withdrawAmount <= 0 {
-		return nil, nil, fmt.Errorf("invalid withdraw output")
-	}
-	if len(notify.Payload) == 0 {
-		return nil, nil, fmt.Errorf("empty withdraw asset hash")
-	}
-	// payload is the chain33 tx hash
-	withdraw, err := t.client.getRgbxWithdrawAsset(notify.Payload)
-	if err != nil {
-		return nil, nil, err
-	}
-	if withdraw.GetDestinationAddr() != withdrawAddress {
-		return nil, nil, fmt.Errorf("withdraw address mismatch")
-	}
+
 	var totalInput int64
 	for _, amount := range inputAmounts {
 		totalInput += amount
@@ -432,17 +429,27 @@ func (t *tssService) validateWithdrawSignNotify(notify *lighttypes.TssSignNotify
 		totalOutput += out.Value
 	}
 	fee := totalInput - totalOutput
-	if fee < 0 {
-		return nil, nil, fmt.Errorf("invalid fee calculation")
+	if withdraw.GetFeeRate() <= 0 {
+		withdraw.FeeRate = defaultFeeRate
 	}
-	expectedAmount := withdraw.GetAmount() - fee
-	if expectedAmount <= 0 {
-		return nil, nil, fmt.Errorf("withdraw amount too small for fee")
+	expectedFee := int64(estimateBtcFee(tx, btcutil.Amount(withdraw.GetFeeRate())))
+	// 控制手续费在合理范围内
+	if fee > 2*expectedFee || fee < 0 {
+		log.Error("validateWithdrawSignNotify invalid fee", "fee", fee, "expected", expectedFee)
+		return fmt.Errorf("invalid fee")
 	}
-	if expectedAmount != withdrawAmount {
-		return nil, nil, fmt.Errorf("withdraw amount mismatch")
+	// 验证提现的关键是总支出不能超过提现金额，允许的最大磨损不能超过最小找零金额
+	if totalInput-changeAmount > withdraw.GetAmount()+minChangeAmount {
+		log.Error("validateWithdrawSignNotify withdraw overflowed",
+			"actualWithdraw", withdrawAmount, "changeAmount", changeAmount,
+			"totalInput", totalInput, "expectWithdraw", withdraw.GetAmount())
+		return fmt.Errorf("withdraw overflowed")
 	}
-	return tx, inputAmounts, nil
+	if withdrawAmount > withdraw.GetAmount() || withdrawAmount < minChangeAmount {
+		log.Error("validateWithdrawSignNotify invalid withdraw amount", "actualWithdraw", withdrawAmount, "expectWithdraw", withdraw.GetAmount())
+		return fmt.Errorf("invalid withdraw amount")
+	}
+	return nil
 }
 
 // handleSignNotify handles incoming TSS sign notifications
@@ -460,13 +467,21 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		return
 	}
 
-	tx, inputAmounts, err := t.validateWithdrawSignNotify(notify)
+	tx, inputAmounts, err := t.parseTxFromNotify(notify)
 	if err != nil {
-		log.Error("handleSignNotify validate", "err", err)
+		log.Error("handleSignNotify parseTxFromNotify", "err", err)
 		return
 	}
 
-	if err := t.signBtcTx(tx, inputAmounts); err != nil {
+	if notify.TxType == transactionTypeWithdraw {
+		err = t.validateWithdrawTx(tx, inputAmounts, notify.Payload)
+		if err != nil {
+			log.Error("handleSignNotify validateWithdrawTx", "err", err)
+			return
+		}
+	}
+
+	if err = t.signBtcTx(tx, inputAmounts); err != nil {
 		log.Error("handleSignNotify signBtcTxData", "err", err)
 		return
 	}

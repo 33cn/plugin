@@ -684,13 +684,13 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 	}
 
 	// 计算实际手续费
-	txSize := tx.SerializeSize() + len(tx.TxIn)*108 // 估算witness大小
-	fee := btcutil.Amount(txSize) * feeRate
+	fee := estimateBtcFee(tx, feeRate)
 
 	// 计算找零
 	change := inputTotal - outputTotal
 	if receiverPaysFee {
-		if fee >= outputTotal {
+		// 提现输出金额过小，则不构建交易
+		if fee+minChangeAmount >= outputTotal {
 			b.releaseUTXOs(selectedUTXOs)
 			return nil, nil, nil, fmt.Errorf("withdraw amount too small for fee: amount %d, fee %d", outputTotal, fee)
 		}
@@ -699,7 +699,8 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 		change = inputTotal - outputTotal - fee
 	}
 
-	// TODO 找零过小是否由提现地址承担
+	// 注意：如果找零过小，会被用于交易费，由平台承担
+	// 还有种方案是将这部分补贴给提现地址，减少用户提现成本
 	if change > minChangeAmount {
 		// 添加找零输出（使用预计算的脚本）
 		tx.AddTxOut(wire.NewTxOut(int64(change), b.tssPkScript))
@@ -794,10 +795,7 @@ func (b *btcWallet) selectUTXOs(utxos []*UTXO, targetAmount, feeRate btcutil.Amo
 		return nil, 0, err
 	}
 
-	log.Debug("selectUTXOs minimum input count",
-		"count", len(minResult.selected),
-		"total", minResult.total,
-		"target", targetAmount)
+	log.Debug("selectUTXOs minimum input count", "count", len(minResult.selected), "total", minResult.total, "target", targetAmount)
 
 	// 如果最少数量 > 4，直接返回
 	if len(minResult.selected) > 4 {
@@ -816,10 +814,8 @@ func (b *btcWallet) selectUTXOs(utxos []*UTXO, targetAmount, feeRate btcutil.Amo
 		return minResult.selected, minResult.total, nil
 	}
 
-	log.Info("selectUTXOs using optimized strategy",
-		"selected", len(optimizedResult.selected),
-		"total", optimizedResult.total,
-		"saved", minResult.total-optimizedResult.total)
+	log.Info("selectUTXOs using optimized strategy", "selected", len(optimizedResult.selected),
+		"total", optimizedResult.total, "saved", minResult.total-optimizedResult.total)
 
 	return optimizedResult.selected, optimizedResult.total, nil
 }
@@ -1025,16 +1021,10 @@ func (b *btcWallet) selectAndLockUTXOs(utxos []*UTXO, targetAmount, feeRate btcu
 		}
 
 		lockedUTXOs = append(lockedUTXOs, utxo)
-		log.Debug("selectAndLockUTXOs locked UTXO",
-			"outpoint", utxo.OutPoint.String(),
-			"amount", utxo.Amount,
-			"expiry", expiry)
+		log.Debug("selectAndLockUTXOs locked UTXO", "outpoint", utxo.OutPoint.String(), "amount", utxo.Amount, "expiry", expiry)
 	}
 
-	log.Info("selectAndLockUTXOs success",
-		"selected", len(lockedUTXOs),
-		"totalAmount", total,
-		"targetAmount", targetAmount)
+	log.Debug("selectAndLockUTXOs success", "selected", len(lockedUTXOs), "totalAmount", total, "targetAmount", targetAmount, "feeRate", feeRate)
 
 	return lockedUTXOs, total, nil
 }
@@ -1071,64 +1061,6 @@ type UTXO struct {
 	PkScript []byte
 }
 
-// SignFunc 签名函数类型，用于依赖注入
-type SignFunc func(sigHash []byte) ([]byte, error)
-
-// signWithdrawTx 签名提现交易
-// signFunc: 签名函数，如果为nil则使用默认的TSS签名
-func (b *btcWallet) signWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, signFunc SignFunc) error {
-	// 使用默认TSS签名函数
-	if signFunc == nil {
-		signFunc = b.client.tss.signMsg
-	}
-
-	// 计算所有输入的签名哈希
-	var sigHashes [][]byte
-	txSigHashes := txscript.NewTxSigHashes(tx, nil)
-
-	for idx := range tx.TxIn {
-		// 计算签名哈希（使用预计算的脚本）
-		sigHash, err := txscript.CalcWitnessSigHash(b.tssPkScript, txSigHashes, txscript.SigHashAll, tx, idx, inputAmounts[idx])
-		if err != nil {
-			return fmt.Errorf("calc sig hash failed for input %d: %w", idx, err)
-		}
-
-		sigHashes = append(sigHashes, sigHash)
-		log.Debug("signWithdrawTx calculated sigHash", "idx", idx, "sigHash", hex.EncodeToString(sigHash))
-	}
-
-	// 优化：对于提现交易，所有input来自同一个TSS地址
-	// 相同的签名哈希只需要签名一次，减少TSS跨节点调用开销
-	hashToSignature := make(map[string][]byte)
-
-	for idx, sigHash := range sigHashes {
-		hashKey := hex.EncodeToString(sigHash)
-
-		// 如果这个哈希还没有被签名过，进行TSS签名
-		if _, exists := hashToSignature[hashKey]; !exists {
-			signature, err := signFunc(sigHash)
-			if err != nil {
-				return fmt.Errorf("TSS sign failed for input %d: %w", idx, err)
-			}
-			hashToSignature[hashKey] = signature
-			log.Debug("signWithdrawTx TSS signature completed", "idx", idx, "sigHash", hashKey)
-		}
-
-		// 应用签名到对应的输入
-		signature := hashToSignature[hashKey]
-		pubKeyBytes := b.tssPubKey.SerializeCompressed()
-		sigWithHashType := append(signature, byte(txscript.SigHashAll))
-
-		// 构建witness（P2WPKH格式）
-		// witness = [signature + hashType, pubkey]
-		tx.TxIn[idx].Witness = wire.TxWitness{sigWithHashType, pubKeyBytes}
-
-		log.Debug("signWithdrawTx applied signature to input", "idx", idx)
-	}
-
-	return nil
-}
-
 // broadcastTransaction 广播交易
 // lockedUTXOs: 已锁定的UTXO列表，广播失败时会自动释放
 func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, lockedUTXOs []*UTXO) error {
@@ -1148,22 +1080,6 @@ func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, locke
 		return fmt.Errorf("broadcast transaction failed: %w", err)
 	}
 
-	// 计算提现金额（排除找零）
-	var withdrawAmount btcutil.Amount
-	var changeAmount btcutil.Amount
-	for i, output := range tx.TxOut {
-		// 使用预计算的脚本比较，跳过找零地址（TSS地址）
-		if !bytes.Equal(output.PkScript, b.tssPkScript) {
-			withdrawAmount += btcutil.Amount(output.Value)
-			log.Debug("BroadcastTransaction withdraw output", "txHash", txHash.String(),
-				"outputIndex", i, "amount", btcutil.Amount(output.Value))
-		} else {
-			changeAmount += btcutil.Amount(output.Value)
-			log.Debug("BroadcastTransaction change output", "txHash", txHash.String(),
-				"outputIndex", i, "amount", btcutil.Amount(output.Value))
-		}
-	}
-
 	// 记录待确认交易
 
 	// b.pendingTxs[txHash] = &pendingTx{
@@ -1176,8 +1092,7 @@ func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, locke
 	// 	txHash:          txHash,
 	// }
 
-	log.Info("broadcastTransaction success", "txHash", txHash.String(),
-		"toAddress", toAddress, "withdrawAmount", withdrawAmount, "changeAmount", changeAmount, "totalOutputs", len(tx.TxOut))
+	log.Debug("broadcastTransaction success", "txHash", txHash.String())
 
 	// 注意: 广播成功后，UTXO锁定会在交易确认后自动释放（由btcwallet管理）
 	return nil
