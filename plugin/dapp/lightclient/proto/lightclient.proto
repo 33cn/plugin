@@ -5,10 +5,9 @@ option go_package = "../lighttypes";
 message LightClientAction {
     int32 ty = 1;
     oneof value {
-        BtcHeaders  btcHeaders = 2;
+        BtcHeaders btcHeaders = 2;
     }
 }
-
 
 message BtcHeader {
     string hash          = 1;
@@ -24,13 +23,12 @@ message BtcHeader {
     string nextHash      = 11;
 }
 
-
 message BtcHeadersLog {
     uint64 confirmations = 1;
-    uint64 lastHeight = 2;
-    uint64 commitHeight = 3;
-    string lastHash = 4;
-    string commitHash = 5;
+    uint64 lastHeight    = 2;
+    uint64 commitHeight  = 3;
+    string lastHash      = 4;
+    string commitHash    = 5;
 }
 
 message BtcHeaders {
@@ -38,9 +36,9 @@ message BtcHeaders {
 }
 
 message BtcTransaction {
-    string   hash               = 1;
-    uint64   blockHeight        = 2;
-    repeated Vin vin            = 3;
+    string        hash          = 1;
+    uint64        blockHeight   = 2;
+    repeated Vin  vin           = 3;
     repeated Vout vout          = 4;
     int64         time          = 5;
     uint64        confirmations = 6;
@@ -58,24 +56,20 @@ message Vout {
 }
 
 message BtcSpv {
-    string   txHash            = 1;
-    int64    time              = 2;
-    uint64   height            = 3;
-    string   blockHash         = 4;
-    uint32   txIndex           = 5;
+    string         txHash      = 1;
+    int64          time        = 2;
+    uint64         height      = 3;
+    string         blockHash   = 4;
+    uint32         txIndex     = 5;
     repeated bytes branchProof = 6;
 }
 
-
 message tssSignNotify {
-  repeated int64 inputAmounts = 1;
-  bytes payload = 2;
-  string txType = 3;
-  bytes btcTxData = 4;
+    repeated int64  inputAmounts = 1;
+    bytes           payload      = 2;
+    string          txType       = 3;
+    bytes           btcTxData    = 4;
+    repeated string signers      = 5;
 }
 
-
-service Lightclient {
-
-}
-
+service Lightclient {}

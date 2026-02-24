@@ -27,8 +27,9 @@ const (
 	tssSignNotifyTopic = "rgbx/tssSignNotify/1.0"
 
 	// Database bucket and keys
-	tssBucketName = "rgbx-tss"
-	dkgResultKey  = "dkg-result"
+	tssBucketName  = "rgbx-tss"
+	dkgResultKey   = "dkg-result"
+	dkgSessionName = "rgbx-btc-dkg"
 )
 
 // tssSignNotify is the notification message for TSS signing
@@ -50,7 +51,8 @@ type tssService struct {
 	dkgCompleted atomic.Bool
 
 	// P2P channels
-	subChan chan *types.TopicData
+	subChan    chan *types.TopicData
+	selfPeerId string
 }
 
 func newTssService(n *neutrinoClient) *tssService {
@@ -72,10 +74,10 @@ func (t *tssService) start() {
 	go t.handleSubMsg()
 
 	// Ensure DKG is completed
-	go t.ensureCommitDKG()
+	go t.init()
 }
 
-func (t *tssService) ensureCommitDKG() {
+func (t *tssService) init() {
 	// Wait for cross chain info to be available
 	info := t.client.getCrossChainInfo()
 	for info == nil {
@@ -88,30 +90,20 @@ func (t *tssService) ensureCommitDKG() {
 		log.Debug("ensureDKG already exist, loading from database")
 		err := t.loadDKGFromDB()
 		if err != nil {
-			log.Error("ensureDKG loadDKGFromDB error", "err", err)
-		} else {
-			t.dkgCompleted.Store(true)
+			panic("ensureDKG loadDKGFromDB error: " + err.Error())
 		}
+		t.dkgCompleted.Store(true)
 		return
 	}
 
 	t.commitTxKey = t.client.getCommitKey()
-
-	// Try to load existing DKG result from database
-	err := t.loadDKGFromDB()
-	if err == nil && t.dkgResult != nil {
-		log.Debug("ensureDKG loaded existing DKG from database")
-		// Commit existing DKG result to main chain
-		t.commitDKGResult()
-		return
-	}
-
 	log.Info("ensureDKG starting new DKG process")
 
 	// Perform DKG process with retry
 	var dkgResult *tss.DKGResult
+	var err error
 	for {
-		dkgResult, err = gg18.ProcessDKG(t.cfg.Peers, t.cfg.Threshold, t.cfg.Rank)
+		dkgResult, err = gg18.ProcessDKG(t.cfg.Peers, t.cfg.Threshold, t.cfg.Rank, dkgSessionName)
 		if err == nil {
 			break
 		}
@@ -122,12 +114,12 @@ func (t *tssService) ensureCommitDKG() {
 	t.dkgResult = dkgResult
 
 	// Extract public key from DKG result (PubX, PubY coordinates)
-	pubKey, err := t.coordinatesToPublicKey(dkgResult.PubX, dkgResult.PubY)
+	pubkey, err := tss.ParseBtcecPublicKey(dkgResult)
 	if err != nil {
-		log.Error("ensureDKG coordinatesToPublicKey error", "err", err)
+		log.Error("ensureDKG ParseBtcecPublicKey error", "err", err)
 		return
 	}
-	t.tssPublicKey = pubKey
+	t.tssPublicKey = pubkey
 
 	// Generate Bitcoin address from public key
 	err = t.generateBitcoinAddress()
@@ -139,11 +131,18 @@ func (t *tssService) ensureCommitDKG() {
 	// Save DKG result to database with retry
 	t.saveDKGToDB()
 
-	// Mark DKG as completed
-	t.dkgCompleted.Store(true)
-
 	// Commit DKG result to main chain with retry
 	t.commitDKGResult()
+	for {
+		peers, err := tss.FetchConnectedPeers(t.client.qclient, time.Second*3)
+		if err == nil && len(peers) > 0 && peers[len(peers)-1].Self {
+			t.selfPeerId = peers[len(peers)-1].Name
+			break
+		}
+		log.Debug("waitForSelfPeerId FetchConnectedPeers retry", "err", err)
+		time.Sleep(time.Second * 3)
+	}
+
 }
 
 func (t *tssService) loadDKGFromDB() error {
@@ -176,8 +175,9 @@ func (t *tssService) loadDKGFromDB() error {
 	t.dkgResult = &dkgResult
 
 	// Extract public key from DKG result coordinates
-	pubKey, err := t.coordinatesToPublicKey(dkgResult.PubX, dkgResult.PubY)
+	pubKey, err := tss.ParseBtcecPublicKey(&dkgResult)
 	if err != nil {
+		log.Error("loadDKGFromDB ParseBtcecPublicKey error", "err", err)
 		return err
 	}
 	t.tssPublicKey = pubKey
@@ -236,28 +236,6 @@ func (t *tssService) generateBitcoinAddress() error {
 	return nil
 }
 
-// coordinatesToPublicKey converts PubX and PubY coordinates to btcec.PublicKey
-func (t *tssService) coordinatesToPublicKey(pubX, pubY []byte) (*btcec.PublicKey, error) {
-	// Create field values from coordinates
-	var fieldX, fieldY btcec.FieldVal
-	if fieldX.SetByteSlice(pubX) {
-		return nil, types.ErrInvalidParam
-	}
-	if fieldY.SetByteSlice(pubY) {
-		return nil, types.ErrInvalidParam
-	}
-
-	// Create public key from field values
-	pubKey := btcec.NewPublicKey(&fieldX, &fieldY)
-
-	// Verify the point is on the curve
-	if !pubKey.IsOnCurve() {
-		return nil, types.ErrInvalidParam
-	}
-
-	return pubKey, nil
-}
-
 // commitDKGResult commits DKG result to main chain with retry until success
 func (t *tssService) commitDKGResult() {
 	// Create CommitDKG transaction
@@ -293,6 +271,17 @@ func (t *tssService) commitDKGResult() {
 	t.dkgCompleted.Store(true)
 }
 
+func (t *tssService) waitForSufficientSigners() []string {
+	for {
+		signers := tss.GetValidPeerCombination(t.client.qclient, t.cfg.Threshold, t.dkgResult.Bks)
+		if len(signers) > 0 {
+			return signers
+		}
+		log.Debug("waitForSufficientSigners no valid signers, wait 3 seconds...")
+		time.Sleep(time.Second * 3)
+	}
+}
+
 // processSignBtcTx processes a Bitcoin transaction using TSS protocol
 // This is called by the main node to initiate TSS signing
 func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int64, payload []byte) error {
@@ -300,7 +289,7 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 		log.Error("signMsg dkg not completed")
 		return types.ErrNotSupport
 	}
-
+	signers := t.waitForSufficientSigners()
 	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSizeStripped()))
 	err := tx.SerializeNoWitness(buf)
 	if err != nil {
@@ -312,6 +301,7 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 		TxType:       txType,
 		Payload:      payload,
 		BtcTxData:    buf.Bytes(),
+		Signers:      signers,
 	}
 	// Publish notification to all TSS nodes
 	t.pubMsg(tssSignNotifyTopic, types.Encode(notify))
@@ -324,36 +314,39 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 			return err
 		}
 	}
-	return t.signBtcTx(tx, inputAmounts)
+	return t.signBtcTx(tx, inputAmounts, signers)
 }
 
-func (t *tssService) signMsg(msg []byte) ([]byte, error) {
-	sigResult, err := gg18.ProcessSign(t.cfg.Peers, msg, t.dkgResult)
+func (t *tssService) signMsg(msg []byte, seesionName string, signers []string) ([]byte, error) {
+	sigResult, err := gg18.ProcessSign(signers, msg, t.dkgResult, seesionName)
 	if err != nil {
 		log.Error("signMsg ProcessSign", "err", err)
 		return nil, err
 	}
 
-	// Extract R and S from signature result and serialize
-	// sigResult contains R and S as big.Int coordinates
-	signature := append(sigResult.R.Bytes(), sigResult.S.Bytes()...)
-
-	log.Debug("signMsg success", "signature", hex.EncodeToString(signature))
-	return signature, nil
+	signature, err := gg18.AliceToBtcecSignature(sigResult)
+	if err != nil {
+		log.Error("signMsg AliceToBtcecSignature", "err", err)
+		return nil, err
+	}
+	signatureBytes := signature.Serialize()
+	log.Debug("signMsg success", "signature", hex.EncodeToString(signatureBytes))
+	return signatureBytes, nil
 }
 
-func (t *tssService) signBtcTx(tx *wire.MsgTx, inputAmounts []int64) error {
+func (t *tssService) signBtcTx(tx *wire.MsgTx, inputAmounts []int64, signers []string) error {
 	if len(tx.TxIn) != len(inputAmounts) {
 		return fmt.Errorf("input count mismatch: tx=%d inputAmounts=%d", len(tx.TxIn), len(inputAmounts))
 	}
 	txSigHashes := txscript.NewTxSigHashes(tx, nil)
+	txHash := tx.TxID()
 	for idx, in := range tx.TxIn {
 		// 计算签名哈希（使用预计算的脚本）
 		sigHash, err := txscript.CalcWitnessSigHash(t.pkScript, txSigHashes, txscript.SigHashAll, tx, idx, inputAmounts[idx])
 		if err != nil {
 			return fmt.Errorf("calc sig hash failed for input %d: %w", idx, err)
 		}
-		sig, err := t.signMsg(sigHash)
+		sig, err := t.signMsg(sigHash, fmt.Sprintf("btctx-%s-%d", txHash, idx), signers)
 		if err != nil {
 			return fmt.Errorf("signMsg failed for input %d: %w", idx, err)
 		}
@@ -466,6 +459,17 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		log.Error("handleSignNotify Decode", "err", err)
 		return
 	}
+	isSigner := false
+	for _, signer := range notify.Signers {
+		if signer == t.selfPeerId {
+			isSigner = true
+			break
+		}
+	}
+	if !isSigner {
+		log.Debug("handleSignNotify not signer", "signers", notify.Signers, "selfPeerId", t.selfPeerId)
+		return
+	}
 
 	tx, inputAmounts, err := t.parseTxFromNotify(notify)
 	if err != nil {
@@ -481,7 +485,7 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		}
 	}
 
-	if err = t.signBtcTx(tx, inputAmounts); err != nil {
+	if err = t.signBtcTx(tx, inputAmounts, notify.Signers); err != nil {
 		log.Error("handleSignNotify signBtcTxData", "err", err)
 		return
 	}

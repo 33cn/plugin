@@ -15,6 +15,8 @@ import (
 )
 
 func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
+	n.lock.Lock()
+	defer n.lock.Unlock()
 	if n.commitKey != nil {
 		return n.commitKey
 	}
@@ -42,7 +44,7 @@ func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
 
 			resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: n.commitAddr})
 			if err != nil {
-				log.Info("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
+				log.Error("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
 				continue
 			}
 			_, key := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
