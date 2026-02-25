@@ -290,7 +290,7 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 	buf := bytes.NewBuffer(make([]byte, 0, info.spendingTx.SerializeSizeStripped()))
 	_ = info.spendingTx.SerializeNoWitness(buf)
 	proof.SpendingTx = buf.Bytes()
-	confirm.Proof = proof
+	confirm.UtxoProof = proof
 
 	return confirm
 }

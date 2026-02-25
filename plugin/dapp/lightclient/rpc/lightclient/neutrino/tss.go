@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/system/crypto/tss"
 	"github.com/33cn/chain33/system/crypto/tss/gg18"
 	"github.com/33cn/chain33/types"
@@ -64,7 +63,7 @@ type tssService struct {
 	// TSS related
 	dkgResult    *tss.DKGResult
 	tssPublicKey *btcec.PublicKey
-	btcAddress   btcutil.Address
+	tssAddress   btcutil.Address
 	pkScript     []byte
 	dkgCompleted atomic.Bool
 
@@ -131,7 +130,7 @@ func (t *tssService) init() {
 		info = t.client.getCrossChainInfo()
 	}
 
-	if info.DepositAddress != "" {
+	if info.GetTssAddress() != "" {
 		log.Debug("ensureDKG already exist, loading from database")
 		err := t.loadDKGFromDB()
 		if err != nil {
@@ -142,7 +141,7 @@ func (t *tssService) init() {
 	}
 
 	t.commitTxKey = t.client.getCommitKey()
-	log.Info("ensureDKG starting new DKG process")
+	log.Info("init tssService starting new DKG process")
 
 	// Perform DKG process with retry
 	var dkgResult *tss.DKGResult
@@ -152,7 +151,7 @@ func (t *tssService) init() {
 		if err == nil {
 			break
 		}
-		log.Error("ensureDKG ProcessDKG retry", "err", err)
+		log.Error("init tssService ProcessDKG retry", "err", err)
 		time.Sleep(time.Minute)
 	}
 
@@ -161,15 +160,15 @@ func (t *tssService) init() {
 	// Extract public key from DKG result (PubX, PubY coordinates)
 	pubkey, err := tss.ParseBtcecPublicKey(dkgResult)
 	if err != nil {
-		log.Error("ensureDKG ParseBtcecPublicKey error", "err", err)
+		log.Error("init tssService ParseBtcecPublicKey error", "err", err)
 		return
 	}
 	t.tssPublicKey = pubkey
 
 	// Generate Bitcoin address from public key
-	err = t.generateBitcoinAddress()
+	err = t.generateTssAddress()
 	if err != nil {
-		log.Error("ensureDKG generateBitcoinAddress error", "err", err)
+		log.Error("init tssService generateTssAddress error", "err", err)
 		return
 	}
 
@@ -177,14 +176,20 @@ func (t *tssService) init() {
 	t.saveDKGToDB()
 
 	// Commit DKG result to main chain with retry
-	t.commitDKGResult()
+	commitDKG := &rtypes.CommitDKG{
+		AssetSymbol: "BTC",
+		DkgAddress:  t.tssAddress.EncodeAddress(),
+		PkScript:    t.pkScript,
+	}
+	t.client.submitMainchainTxUntilSuccess(rtypes.RgbxX, rtypes.NameCommitDKGAction, commitDKG)
+	t.dkgCompleted.Store(true)
 	for {
 		peers, err := tss.FetchConnectedPeers(t.client.qclient, time.Second*3)
 		if err == nil && len(peers) > 0 && peers[len(peers)-1].Self {
 			t.selfPeerId = peers[len(peers)-1].Name
 			break
 		}
-		log.Debug("waitForSelfPeerId FetchConnectedPeers retry", "err", err)
+		log.Debug("init tssService waitForSelfPeerId FetchConnectedPeers retry", "err", err)
 		time.Sleep(time.Second * 3)
 	}
 
@@ -228,7 +233,7 @@ func (t *tssService) loadDKGFromDB() error {
 	t.tssPublicKey = pubKey
 
 	// Generate Bitcoin address
-	return t.generateBitcoinAddress()
+	return t.generateTssAddress()
 }
 
 // saveDKGToDB saves DKG result to database with retry until success
@@ -258,7 +263,7 @@ func (t *tssService) saveDKGToDB() {
 }
 
 // generateBitcoinAddress generates Bitcoin address from TSS public key
-func (t *tssService) generateBitcoinAddress() error {
+func (t *tssService) generateTssAddress() error {
 	if t.tssPublicKey == nil {
 		return types.ErrInvalidParam
 	}
@@ -271,49 +276,14 @@ func (t *tssService) generateBitcoinAddress() error {
 		return err
 	}
 
-	t.btcAddress = addr
+	t.tssAddress = addr
 	t.pkScript, err = txscript.PayToAddrScript(addr)
 	if err != nil {
-		panic("payToAddrScript error " + err.Error())
+		panic("generateTssAddress payToAddrScript error " + err.Error())
 	}
-	log.Info("generateBitcoinAddress", "address", t.btcAddress.String())
+	log.Info("generateTssAddress", "address", t.tssAddress.String())
 
 	return nil
-}
-
-// commitDKGResult commits DKG result to main chain with retry until success
-func (t *tssService) commitDKGResult() {
-	// Create CommitDKG transaction
-	commitDKG := &rtypes.CommitDKG{
-		AssetSymbol: "BTC",
-		DkgAddress:  t.btcAddress.EncodeAddress(),
-	}
-
-	for {
-		// Create transaction
-		tx, err := t.client.createTx(rtypes.RgbxX, rtypes.NameCommitDKGAction, types.Encode(commitDKG))
-		if err != nil {
-			log.Error("commitDKGResult createTx retry", "err", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-
-		// Set fee and sign
-		tx.Fee, _ = tx.GetRealFee(t.client.getProperFeeRate())
-		tx.Sign(types.EncodeSignID(secp256k1.ID, t.client.commitAddressType), t.commitTxKey)
-
-		// Send transaction to main chain
-		err = t.client.sendTx2MainChain(tx)
-		if err != nil {
-			log.Error("commitDKGResult sendTx retry", "txHash", hex.EncodeToString(tx.Hash()), "err", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-
-		log.Debug("commitDKGResult success", "txHash", hex.EncodeToString(tx.Hash()), "btcAddress", t.btcAddress)
-		break
-	}
-	t.dkgCompleted.Store(true)
 }
 
 func (t *tssService) waitForSufficientSigners() []string {
@@ -622,9 +592,9 @@ func (t *tssService) handleSubMsg() {
 	}
 }
 
-// getBitcoinAddress returns the Bitcoin address generated from TSS public key
-func (t *tssService) getBitcoinAddress() btcutil.Address {
-	return t.btcAddress
+// getTssAddress returns the TSS address generated from TSS public key
+func (t *tssService) getTssAddress() btcutil.Address {
+	return t.tssAddress
 }
 
 // isDKGCompleted checks if DKG is completed using atomic operation

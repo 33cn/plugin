@@ -49,11 +49,12 @@ func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, i
 	if len(strings.Split(guardianAddrs, ",")) == len(addrs.Addrs) {
 
 		info := &rtypes.CrossChainInfo{
-			Symbol:         commit.AssetSymbol,
-			DepositAddress: commit.DkgAddress,
+			AssetSymbol:    commit.AssetSymbol,
+			TssAddress:     commit.DkgAddress,
+			PkScript:       commit.PkScript,
 		}
 		receipt.KV = append(receipt.KV, &types.KeyValue{
-			Key:   formatCrossChainDepositAddressKey(commit.GetAssetSymbol()),
+			Key:   formatCrossChainInfoKey(commit.GetAssetSymbol()),
 			Value: types.Encode(info),
 		})
 	}
@@ -80,7 +81,6 @@ func (r *rgbx) Exec_DepositAsset(deposit *rtypes.DepositAsset, tx *types.Transac
 			TxBlockHeight: r.GetHeight(),
 			TxIndex:       int64(index),
 			TxHash:        tx.Hash(),
-			TargetAddress: deposit.SenderAddr,
 		}),
 	})
 

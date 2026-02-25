@@ -21,15 +21,15 @@ const (
 	KeyPrefixLocalDB = "LODB-rgbx-"
 
 	dkgConfirmationsKeyPrefix         = KeyPrefixStateDB + "dkg-confirmations-"
-	crossChainDepositAddressKeyPrefix = KeyPrefixStateDB + "crosschain-deposit-addr-"
+	crossChainInfoKeyPrefix           = KeyPrefixStateDB + "crosschain-info-"
 )
 
 func formatDkgConfirmationsKey(dkgResult string) []byte {
 	return []byte(dkgConfirmationsKeyPrefix + dkgResult)
 }
 
-func formatCrossChainDepositAddressKey(symbol string) []byte {
-	return []byte(crossChainDepositAddressKeyPrefix + symbol)
+func formatCrossChainInfoKey(symbol string) []byte {
+	return []byte(crossChainInfoKeyPrefix + symbol)
 }
 
 func formatSymbol(symbol string) string {

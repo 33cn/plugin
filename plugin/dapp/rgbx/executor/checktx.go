@@ -187,18 +187,18 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		return nil
 	}
 
-	btcSpendHash := chainhash.DoubleHashH(confirm.GetProof().GetSpendingTx()).String()
+	btcSpendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()
 	spendingTx := wire.MsgTx{}
-	err = spendingTx.DeserializeNoWitness(bytes.NewReader(confirm.GetProof().GetSpendingTx()))
+	err = spendingTx.DeserializeNoWitness(bytes.NewReader(confirm.GetUtxoProof().GetSpendingTx()))
 	if err != nil {
 		elog.Error("checkConfirm decode spending tx", "action", action,
 			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"btcSpendingTx", hex.EncodeToString(confirm.GetProof().GetSpendingTx()),
+			"btcSpendingTx", hex.EncodeToString(confirm.GetUtxoProof().GetSpendingTx()),
 			"decode err", err)
 		return ErrDecodeBtcTx
 	}
 
-	spendingInputIdx := int(confirm.GetProof().GetSpendingInputIdx())
+	spendingInputIdx := int(confirm.GetUtxoProof().GetSpendingInputIdx())
 	if spendingInputIdx >= len(spendingTx.TxIn) {
 		elog.Error("checkConfirm spending tx input", "action", action,
 			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
@@ -208,7 +208,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 
 	// check input
 	expectInput := pendingTx.Utxo.ToString()
-	actualInput := spendingTx.TxIn[int(confirm.GetProof().GetSpendingInputIdx())].PreviousOutPoint.String()
+	actualInput := spendingTx.TxIn[int(confirm.GetUtxoProof().GetSpendingInputIdx())].PreviousOutPoint.String()
 	if expectInput != actualInput {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
 			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
@@ -216,7 +216,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		return ErrSpendingInputNotEqual
 	}
 
-	opRetOutIdx := int(confirm.GetProof().GetOpRetOutputIdx())
+	opRetOutIdx := int(confirm.GetUtxoProof().GetOpRetOutputIdx())
 	// 表示op_return输出不存在，即utxo已经在btc链花费, 但没有构建rgbx所约束的op_return输出
 	if opRetOutIdx < 0 || opRetOutIdx >= len(spendingTx.TxOut) {
 		elog.Debug("checkConfirm opReturn output not exist",
@@ -226,8 +226,8 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 	}
 
 	// 提供的op_return pkScript参数非法，和btc原始交易中的输出不符
-	if !bytes.Equal(confirm.GetProof().OpRetOutputPkScript,
-		spendingTx.TxOut[int(confirm.GetProof().GetOpRetOutputIdx())].PkScript) {
+	if !bytes.Equal(confirm.GetUtxoProof().OpRetOutputPkScript,
+		spendingTx.TxOut[int(confirm.GetUtxoProof().GetOpRetOutputIdx())].PkScript) {
 		elog.Error("checkConfirm opReturn pkScript not equal",
 			"action", action, "txHash", txHash,
 			"confirmTxHash", confirmTxHash, "btcSpendHash", btcSpendHash)

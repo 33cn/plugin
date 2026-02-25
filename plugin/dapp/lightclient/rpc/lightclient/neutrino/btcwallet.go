@@ -207,7 +207,7 @@ func (b *btcWallet) waitAndImportTSSAddress() {
 			time.Sleep(time.Second * 3)
 			continue
 		}
-		addr := b.client.tss.getBitcoinAddress()
+		addr := b.client.tss.getTssAddress()
 
 		// 保存TSS地址、公钥和脚本
 		b.tssAddress = addr

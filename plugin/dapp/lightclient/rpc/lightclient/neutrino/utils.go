@@ -1,6 +1,7 @@
 package neutrino
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"time"
@@ -162,4 +163,27 @@ func fileExists(filePath string) (bool, error) {
 func estimateBtcFee(tx *wire.MsgTx, feeRate btcutil.Amount) btcutil.Amount {
 	txSize := tx.SerializeSize() + len(tx.TxIn)*108 // 估算witness大小
 	return btcutil.Amount(txSize) * feeRate
+}
+
+func (n *neutrinoClient) submitMainchainTxUntilSuccess(exec string, action string, payload types.Message) {
+
+	for {
+		tx, err := n.createTx(exec, action, types.Encode(payload))
+		if err != nil {
+			log.Error("submitMainchainTxUntilSuccess", "createTx err", err)
+			time.Sleep(time.Second * 3)
+			continue
+		}
+		tx.Fee, _ = tx.GetRealFee(n.getProperFeeRate())
+		tx.Sign(types.EncodeSignID(secp256k1.ID, n.commitAddressType), n.commitKey)
+		err = n.sendTx2MainChain(tx)
+		if err != nil {
+			log.Error("submitMainchainTxUntilSuccess", "sendTx2MainChain err", err)
+			time.Sleep(time.Second * 3)
+			continue
+		}
+
+		log.Debug("submitMainchainTxUntilSuccess", "txHash", hex.EncodeToString(tx.Hash()))
+		break
+	}
 }

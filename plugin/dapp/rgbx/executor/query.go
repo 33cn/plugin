@@ -102,7 +102,7 @@ func (r *rgbx) Query_GetPendingTx(req *rtypes.ReqGetPendingTx) (types.Message, e
 func (r *rgbx) Query_GetCrossChainInfo(req *types.ReqString) (types.Message, error) {
 
 	symbol := req.GetData()
-	v, err := r.GetStateDB().Get(formatCrossChainDepositAddressKey(symbol))
+	v, err := r.GetStateDB().Get(formatCrossChainInfoKey(symbol))
 	reply := &rtypes.CrossChainInfo{}
 	if errors.Is(err, types.ErrNotFound) {
 		return reply, nil

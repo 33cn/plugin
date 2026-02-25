@@ -2,6 +2,9 @@ package executor
 
 import (
 	"bytes"
+	"strings"
+	"testing"
+
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/dapp"
@@ -10,8 +13,6 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 var testCommitAddr string
@@ -223,27 +224,27 @@ func Test_checkConfirm(t *testing.T) {
 		},
 		{
 			expectErr: ErrDecodeBtcTx,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{SpendingTx: []byte("invalidBtcTxData")}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: []byte("invalidBtcTxData")}},
 		},
 		{
 			expectErr: ErrInvalidSpendingTxIn,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), SpendingInputIdx: 2}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), SpendingInputIdx: 2}},
 		},
 		{
 			expectErr: ErrSpendingInputNotEqual,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), SpendingInputIdx: 1}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), SpendingInputIdx: 1}},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), OpRetOutputIdx: -1}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), OpRetOutputIdx: -1}},
 		},
 		{
 			expectErr: ErrOpRetOutputPkScriptNotEqual,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes()}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes()}},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), OpRetOutputPkScript: []byte("testScript")}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), OpRetOutputPkScript: []byte("testScript")}},
 		},
 	}
 

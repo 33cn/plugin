@@ -95,23 +95,23 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{Proof: &rtypes.UtxoSpendingProof{}},
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{}},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(normal), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript}},
+			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(normal), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript}},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(collect), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript1}},
+			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(collect), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript1}},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{TxHash: []byte(normal1), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript}},
+			action:    &rtypes.ConfirmTx{TxHash: []byte(normal1), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript}},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{TxHash: []byte(collect1), Proof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript1}},
+			action:    &rtypes.ConfirmTx{TxHash: []byte(collect1), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript1}},
 		},
 	}
 
