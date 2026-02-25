@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -25,6 +26,10 @@ const (
 	moduleName = "dapp-lightclient-neutrino"
 	// TSS pubsub topic - notification only
 	tssSignNotifyTopic = "rgbx/tssSignNotify/1.0"
+	// 单个 txIn 的 TSS 签名超时时间
+	singleInputSignTimeout = time.Minute
+	// txIn 签名常驻协程数量
+	inputSignWorkerCount = 4
 
 	// Database bucket and keys
 	tssBucketName  = "rgbx-tss"
@@ -36,6 +41,19 @@ const (
 type tssSignNotify struct {
 	TxHash    []byte
 	Timestamp int64
+}
+
+type signTask struct {
+	idx         int
+	sigHash     []byte
+	sessionName string
+	signers     []string
+	result      chan *signResult
+}
+
+type signResult struct {
+	sig []byte
+	err error
 }
 
 type tssService struct {
@@ -53,12 +71,14 @@ type tssService struct {
 	// P2P channels
 	subChan    chan *types.TopicData
 	selfPeerId string
+	signTaskCh chan *signTask
 }
 
 func newTssService(n *neutrinoClient) *tssService {
 	t := &tssService{
-		client:  n,
-		subChan: make(chan *types.TopicData, 100),
+		client:     n,
+		subChan:    make(chan *types.TopicData, 100),
+		signTaskCh: make(chan *signTask, 1024),
 	}
 	t.cfg = n.cfg.Tss
 	return t
@@ -73,8 +93,33 @@ func (t *tssService) start() {
 	// Handle subscribed messages
 	go t.handleSubMsg()
 
+	// Dedicated signing worker.
+	for i := 0; i < runtime.NumCPU(); i++ {
+		go t.handleSignTask()
+	}
+
 	// Ensure DKG is completed
 	go t.init()
+}
+
+func (t *tssService) handleSignTask() {
+	for {
+		select {
+		case <-t.client.ctx.Done():
+			return
+		case task := <-t.signTaskCh:
+
+			select {
+			case task.result <- t.signMsg(task.sigHash, task.sessionName, task.signers):
+			case <-time.After(singleInputSignTimeout):
+				log.Error("handleSignTask signMsg timeout", "sessionName", task.sessionName)
+				task.result <- &signResult{err: fmt.Errorf("signMsg timeout")}
+			case <-t.client.ctx.Done():
+				task.result <- &signResult{err: types.ErrChannelClosed}
+				return
+			}
+		}
+	}
 }
 
 func (t *tssService) init() {
@@ -317,21 +362,25 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 	return t.signBtcTx(tx, inputAmounts, signers)
 }
 
-func (t *tssService) signMsg(msg []byte, seesionName string, signers []string) ([]byte, error) {
+func (t *tssService) signMsg(msg []byte, seesionName string, signers []string) *signResult {
+	result := &signResult{}
 	sigResult, err := gg18.ProcessSign(signers, msg, t.dkgResult, seesionName)
 	if err != nil {
 		log.Error("signMsg ProcessSign", "err", err)
-		return nil, err
+		result.err = err
+		return result
 	}
 
 	signature, err := gg18.AliceToBtcecSignature(sigResult)
 	if err != nil {
 		log.Error("signMsg AliceToBtcecSignature", "err", err)
-		return nil, err
+		result.err = err
+		return result
 	}
 	signatureBytes := signature.Serialize()
 	log.Debug("signMsg success", "signature", hex.EncodeToString(signatureBytes))
-	return signatureBytes, nil
+	result.sig = signatureBytes
+	return result
 }
 
 func (t *tssService) signBtcTx(tx *wire.MsgTx, inputAmounts []int64, signers []string) error {
@@ -340,23 +389,34 @@ func (t *tssService) signBtcTx(tx *wire.MsgTx, inputAmounts []int64, signers []s
 	}
 	txSigHashes := txscript.NewTxSigHashes(tx, nil)
 	txHash := tx.TxID()
-	for idx, in := range tx.TxIn {
+	pubKeyBytes := t.tssPublicKey.SerializeCompressed()
+	sigTasks := make([]*signTask, 0, len(tx.TxIn))
+	for idx := range tx.TxIn {
 		// 计算签名哈希（使用预计算的脚本）
 		sigHash, err := txscript.CalcWitnessSigHash(t.pkScript, txSigHashes, txscript.SigHashAll, tx, idx, inputAmounts[idx])
 		if err != nil {
 			return fmt.Errorf("calc sig hash failed for input %d: %w", idx, err)
 		}
-		sig, err := t.signMsg(sigHash, fmt.Sprintf("btctx-%s-%d", txHash, idx), signers)
-		if err != nil {
-			return fmt.Errorf("signMsg failed for input %d: %w", idx, err)
-		}
-		pubKeyBytes := t.tssPublicKey.SerializeCompressed()
-		sigWithHashType := append(sig, byte(txscript.SigHashAll))
 
-		// 构建witness（P2WPKH格式）
-		// witness = [signature + hashType, pubkey]
-		in.Witness = wire.TxWitness{sigWithHashType, pubKeyBytes}
-		log.Debug("signWithdrawTx applied signature to input", "idx", idx)
+		sigTask := &signTask{
+			idx:         idx,
+			sigHash:     sigHash,
+			sessionName: fmt.Sprintf("btctx-%s-%d", txHash, idx),
+			signers:     signers,
+			result:      make(chan *signResult, 1),
+		}
+		sigTasks = append(sigTasks, sigTask)
+		t.signTaskCh <- sigTask
+	}
+
+	for _, sigTask := range sigTasks {
+		result := <-sigTask.result
+		if result.err != nil {
+			return fmt.Errorf("signMsg failed for input %d: %w", sigTask.idx, result.err)
+		}
+		sigWithHashType := append(result.sig, byte(txscript.SigHashAll))
+		tx.TxIn[sigTask.idx].Witness = wire.TxWitness{sigWithHashType, pubKeyBytes}
+		log.Debug("signBtcTx applied signature to input", "idx", sigTask.idx)
 	}
 
 	return nil
@@ -486,7 +546,7 @@ func (t *tssService) handleSignNotify(msg []byte) {
 	}
 
 	if err = t.signBtcTx(tx, inputAmounts, notify.Signers); err != nil {
-		log.Error("handleSignNotify signBtcTxData", "err", err)
+		log.Error("handleSignNotify signBtcTx", "err", err)
 		return
 	}
 	log.Debug("handleSignNotify success", "txType", notify.TxType)
