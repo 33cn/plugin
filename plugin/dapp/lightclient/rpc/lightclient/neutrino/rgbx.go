@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -62,9 +61,8 @@ func (r *rgbx) init(cli *neutrinoClient) {
 	r.client = cli
 	r.commitTxKey = cli.getCommitKey()
 
-	// 等待同步
-	cli.waitTask("wait chain33 sync", cli.isChain33Sync)
-	cli.waitTask("wait getRgbxConfirmedHeight", func() bool {
+	log.Debug("wait getRgbxConfirmedHeight")
+	cli.waitUntilDone("wait getRgbxConfirmedHeight", func() bool {
 		if height := cli.getRgbxConfirmedHeight(); height != nil {
 			r.pendingTxConfirmedHeight = height.GetData()
 			if r.pendingTxConfirmedHeight > 0 {
@@ -73,22 +71,17 @@ func (r *rgbx) init(cli *neutrinoClient) {
 			return true
 		}
 		return false
-	})
+	}, 0)
 
 	// 等待轻节点同步
-	cli.waitTask("wait neutrino sync", func() bool {
-		if cli.neutrinoCS.IsCurrent() {
-			return true
-		}
-		log.Debug("wait neutrino sync", "currHeight", cli.getBestBlock().Height)
-		return false
-	})
-	cli.waitTask("wait neutrino best block", func() bool {
-		if r.client.getBestBlock() != nil {
-			return true
-		}
-		return false
-	})
+	log.Debug("wait neutrino sync", "currHeight", cli.getBestBlock().Height)
+	cli.waitUntilDone("wait neutrino sync", func() bool {
+		return cli.neutrinoCS.IsCurrent()
+	}, 0)
+	log.Debug("wait neutrino best block")
+	cli.waitUntilDone("wait neutrino best block", func() bool {
+		return cli.getBestBlock() != nil
+	}, 0)
 
 	go r.pullPendingTx()
 	go r.handleCommitPendingTx()
@@ -219,7 +212,7 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 
 func (r *rgbx) handleRescanUtxo() {
 	rescanArr := make([]*utxoRescanInfo, 0, 16)
-	interval := r.client.cfg.BtcBlockInterval / 2
+	interval := r.client.cfg.BtcBlockInterval/2 + 1
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
 		select {
@@ -297,27 +290,14 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 
 func (r *rgbx) commitPendingTx(confirm *rtypes.ConfirmTx) (success bool) {
 	confirmHash := hex.EncodeToString(confirm.TxHash)
-	tx, err := types.CallCreateTransaction(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
+
+	err := r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
 	if err != nil {
-		log.Error("commitPendingTx callCreateTransaction", "confirmHash", confirmHash, "err", err)
+		log.Error("commitPendingTx submitMainchainTx", "confirmHash", confirmHash, "err", err)
 		return false
 	}
 
-	tx, err = types.FormatTx(r.client.chain33Api.GetConfig(), rtypes.RgbxX, tx)
-	if err != nil {
-		log.Error("commitPendingTx formatTx", "confirmHash", confirmHash, "err", err)
-		return false
-	}
-	tx.Fee, _ = tx.GetRealFee(r.client.getProperFeeRate())
-	tx.Sign(types.EncodeSignID(secp256k1.ID, r.client.commitAddressType), r.commitTxKey)
-	txHash := hex.EncodeToString(tx.Hash())
-	_, err = r.client.chain33Api.SendTx(tx)
-	if err != nil {
-		log.Error("commitPendingTx SendTx", "txHash", txHash, "confirmHash", confirmHash, "err", err)
-		return false
-	}
-
-	log.Debug("commitPendingTx success", "txHash", txHash, "confirmHash", confirmHash)
+	log.Debug("commitPendingTx success", "confirmHash", confirmHash)
 	return true
 }
 

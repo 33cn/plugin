@@ -2,14 +2,14 @@ package neutrino
 
 import (
 	"encoding/json"
-	"github.com/33cn/chain33/client"
+	"testing"
+	"time"
+
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 var lightConfig = `
@@ -46,10 +46,9 @@ func Test_config(t *testing.T) {
 	n.cfg = *subCfg
 	q := queue.New("test")
 	q.SetConfig(cfg)
-	api, err := client.New(q.Client(), nil)
 	require.NoError(t, err)
 	util.ResetDatadir(cfg.GetModuleConfig(), "$TEMP/")
-	err = n.initNeutrinoConfig(api)
+	err = n.initNeutrinoConfig(cfg)
 	require.NoError(t, err)
 
 	require.True(t, n.cfg.BlockCacheSize == defalutBlockCacheSize)

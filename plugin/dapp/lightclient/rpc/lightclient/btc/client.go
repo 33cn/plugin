@@ -3,6 +3,8 @@ package btc
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/client"
@@ -24,10 +26,10 @@ func newClient() lightclient.Lighter {
 	return &btcLight{}
 }
 
-func (b *btcLight) Init(ctx context.Context, api client.QueueProtocolAPI, cfg *lightclient.Config) error {
+func (b *btcLight) Init(ctx context.Context, q queue.Queue, cfg *lightclient.Config) error {
 
 	b.ctx = ctx
-	b.api = api
+	b.api, _ = client.New(q.Client(), nil)
 	subCfg, _ := json.Marshal(cfg.Btc)
 	types.MustDecode(subCfg, &b.cfg)
 

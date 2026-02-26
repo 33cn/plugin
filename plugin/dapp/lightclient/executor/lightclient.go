@@ -29,7 +29,7 @@ var (
 var driverName = ltypes.LightclientX
 
 // Init register dapp
-func Init(name string, cfg *types.Chain33Config, sub []byte) {
+func Init(_ string, cfg *types.Chain33Config, sub []byte) {
 	initCfg(sub)
 	drivers.Register(cfg, GetName(), newLightclient, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
@@ -86,7 +86,14 @@ func getBtcLastHeader(sdb db.KV) (*ltypes.BtcHeader, error) {
 
 	header := &ltypes.BtcHeader{}
 	err := readDB(sdb, btcLastHeaderKey(), header)
-	return header, err
+	if err != nil && err != types.ErrNotFound {
+		elog.Error("getBtcLastHeader", "readDB err", err)
+		return nil, err
+	}
+	if err == types.ErrNotFound {
+		return nil, nil
+	}
+	return header, nil
 }
 
 func getBtcHeader(ldb db.KV, height uint64) (*ltypes.BtcHeader, error) {

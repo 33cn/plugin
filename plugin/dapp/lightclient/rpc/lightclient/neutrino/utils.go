@@ -1,8 +1,6 @@
 package neutrino
 
 import (
-	"encoding/hex"
-	"fmt"
 	"os"
 	"time"
 
@@ -10,48 +8,57 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
-	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
 )
 
 func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.lock.RLock()
+	defer n.lock.RUnlock()
+	return n.commitKey
+}
+
+func (n *neutrinoClient) initCommitKey() {
 	if n.commitKey != nil {
-		return n.commitKey
+		return
 	}
-	ticker := time.NewTicker(time.Second * 3)
-	for {
-		select {
-		case <-n.ctx.Done():
-			return nil
-		case <-ticker.C:
+	n.lock.Lock()
+	go func() {
+		defer n.lock.Unlock()
+		ticker := time.NewTicker(time.Second * 3)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-n.ctx.Done():
+				return
+			case <-ticker.C:
 
-			resp, err := n.chain33Api.ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
-			if err != nil {
-				log.Error("getKeyFromWallet", "GetWalletStatus err", err)
-				continue
-			}
-			if !resp.(*types.WalletStatus).GetIsHasSeed() {
-				log.Info("getKeyFromWallet, wait wallet save seed...")
-				continue
-			}
+				resp, err := n.chain33Api.ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
+				if err != nil {
+					log.Error("getKeyFromWallet", "GetWalletStatus err", err)
+					continue
+				}
+				if !resp.(*types.WalletStatus).GetIsHasSeed() {
+					log.Info("getKeyFromWallet, wait wallet save seed...")
+					continue
+				}
 
-			if resp.(*types.WalletStatus).GetIsWalletLock() {
-				log.Info("getKeyFromWallet, wait wallet unlock...")
-				continue
-			}
+				if resp.(*types.WalletStatus).GetIsWalletLock() {
+					log.Info("getKeyFromWallet, wait wallet unlock...")
+					continue
+				}
 
-			resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: n.commitAddr})
-			if err != nil {
-				log.Error("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
-				continue
+				resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: n.commitAddr})
+				if err != nil {
+					log.Error("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
+					continue
+				}
+				_, key := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
+				n.commitKey = key
+				return
 			}
-			_, key := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
-			return key
 		}
-	}
+	}()
 }
 
 func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
@@ -84,69 +91,26 @@ func (n *neutrinoClient) isChain33Sync() bool {
 	return reply.GetIsOk()
 }
 
-func (n *neutrinoClient) waitTask(taskName string, isSatisfied func() bool) {
-	ticker := time.NewTicker(time.Second * 5)
+func (n *neutrinoClient) waitUntilDone(taskName string, done func() bool, interval time.Duration) {
+	if done() {
+		return
+	}
+	if interval <= 0 {
+		interval = time.Second * 3
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
 		select {
 
 		case <-ticker.C:
-			if isSatisfied() {
+			if done() {
 				return
 			}
-			log.Debug("waitTask", "taskName", taskName)
 		case <-n.ctx.Done():
 			return
 		}
 	}
-}
-
-func (n *neutrinoClient) getRgbxConfirmedHeight() *types.Int64 {
-	reply, err := n.chain33Api.QueryChain(&types.ChainExecutor{
-		Driver:   rtypes.RgbxX,
-		FuncName: "GetConfirmedHeight",
-	})
-	if err != nil {
-		log.Error("getRgbxConfirmedHeight", "query err", err)
-		return nil
-	}
-
-	return reply.(*types.Int64)
-}
-
-func (n *neutrinoClient) getRgbxPendingTxs(req *rtypes.ReqListPendingTx) (*rtypes.PendingTxs, error) {
-	reply, err := n.chain33Api.QueryChain(&types.ChainExecutor{
-		Driver:   rtypes.RgbxX,
-		FuncName: "ListPendingTx",
-		Param:    types.Encode(req),
-	})
-	if err != nil {
-		log.Error("getRgbxPendingTxs", "query err", err, "req", req.String())
-		return nil, err
-	}
-
-	return reply.(*rtypes.PendingTxs), nil
-}
-
-func (n *neutrinoClient) getRgbxWithdrawAsset(txHash []byte) (*rtypes.WithdrawAsset, error) {
-	if len(txHash) == 0 {
-		return nil, types.ErrInvalidParam
-	}
-	reply, err := n.mainChainGrpc.QueryTransaction(n.ctx, &types.ReqHash{Hash: txHash})
-	if err != nil {
-		log.Error("getRgbxWithdrawAsset", "txHash", fmt.Sprintf("%x", txHash), "err", err)
-		return nil, err
-	}
-
-	action := &rtypes.RgbxAction{}
-	if err := types.Decode(reply.GetTx().Payload, action); err != nil {
-		log.Error("getRgbxWithdrawAsset decode action", "txHash", fmt.Sprintf("%x", txHash), "err", err)
-		return nil, err
-	}
-	if action.Ty != rtypes.TyWithDrawAsset {
-		return nil, fmt.Errorf("withdraw action not found")
-	}
-
-	return action.GetWithdraw(), nil
 }
 
 func fileExists(filePath string) (bool, error) {
@@ -163,27 +127,4 @@ func fileExists(filePath string) (bool, error) {
 func estimateBtcFee(tx *wire.MsgTx, feeRate btcutil.Amount) btcutil.Amount {
 	txSize := tx.SerializeSize() + len(tx.TxIn)*108 // 估算witness大小
 	return btcutil.Amount(txSize) * feeRate
-}
-
-func (n *neutrinoClient) submitMainchainTxUntilSuccess(exec string, action string, payload types.Message) {
-
-	for {
-		tx, err := n.createTx(exec, action, types.Encode(payload))
-		if err != nil {
-			log.Error("submitMainchainTxUntilSuccess", "createTx err", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		tx.Fee, _ = tx.GetRealFee(n.getProperFeeRate())
-		tx.Sign(types.EncodeSignID(secp256k1.ID, n.commitAddressType), n.commitKey)
-		err = n.sendTx2MainChain(tx)
-		if err != nil {
-			log.Error("submitMainchainTxUntilSuccess", "sendTx2MainChain err", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-
-		log.Debug("submitMainchainTxUntilSuccess", "txHash", hex.EncodeToString(tx.Hash()))
-		break
-	}
 }

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
@@ -41,6 +41,8 @@ type config struct {
 	BtcBlockInterval uint32 `json:"btcBlockInterval"`
 	// BlockConfirmations 区块确认数
 	BlockConfirmations uint32 `json:"blockConfirmations"`
+	// BtcHeaderStartHeight 首次启动提交btc header的起始高度
+	BtcHeaderStartHeight uint64 `json:"btcHeaderStartHeight"`
 	// MaxUtxoRescanTime, utxo 检索最大时长，hour, 0为永不超时
 	MaxUtxoRescanTime int64 `json:"maxUtxoRescanTime"`
 	// Tss tss config
@@ -74,7 +76,7 @@ func (c config) getChainParams() chaincfg.Params {
 	}
 }
 
-func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) error {
+func (n *neutrinoClient) initNeutrinoConfig(chainCfg *types.Chain33Config) error {
 
 	if n.cfg.BlockCacheSize < 1024*1024 {
 		n.cfg.BlockCacheSize = defalutBlockCacheSize
@@ -86,12 +88,15 @@ func (n *neutrinoClient) initNeutrinoConfig(api client.QueueProtocolAPI) error {
 	if n.cfg.BtcBlockInterval <= 0 {
 		n.cfg.BtcBlockInterval = 600
 	}
+	if n.cfg.BtcHeaderStartHeight == 0 {
+		n.cfg.BtcHeaderStartHeight = 1
+	}
 	// convert to second
 	if n.cfg.MaxUtxoRescanTime > 0 {
 		n.cfg.MaxUtxoRescanTime *= int64(time.Hour / time.Second)
 	}
 
-	dbPath := filepath.Join(api.GetConfig().GetModuleConfig().BlockChain.DbPath, "lightclient")
+	dbPath := filepath.Join(chainCfg.GetModuleConfig().BlockChain.DbPath, "lightclient")
 	_ = os.MkdirAll(dbPath, 0755)
 	_, db, err := openWalletDB(dbPath, "neutrino.db")
 	if err != nil {

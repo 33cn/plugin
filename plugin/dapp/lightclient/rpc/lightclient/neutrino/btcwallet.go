@@ -348,7 +348,8 @@ func (b *btcWallet) monitorTransactions() {
 			log.Error("monitorTransactions rescan", "height", b.monitorStartHeight, "err", err)
 		}
 	}
-	ticker := time.NewTicker(time.Second * time.Duration(b.client.cfg.BtcBlockInterval) / 2)
+	interval := b.client.cfg.BtcBlockInterval/2 + 1
+	ticker := time.NewTicker(time.Second * time.Duration(interval))
 
 	for {
 		select {

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/queue"
@@ -19,7 +20,6 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/lightninglabs/neutrino/headerfs"
 
-	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
@@ -53,7 +53,7 @@ type neutrinoClient struct {
 	neutrinoCS        *neutrino.ChainService
 	bw                *btcWallet
 	bestBlock         *headerfs.BlockStamp
-	lock              sync.Mutex
+	lock              sync.RWMutex
 	chain33FeeRate    int64
 }
 
@@ -75,13 +75,7 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 	}
 	subCfg, _ := json.Marshal(cfg.Neutrino)
 	types.MustDecode(subCfg, &n.cfg)
-
-	err = n.initNeutrinoConfig(n.chain33Api)
-	if err != nil {
-		log.Error("Init", "initNeutrinoConfig error", err)
-		return err
-	}
-	chainCfg := n.chain33Api.GetConfig()
+	chainCfg := q.GetConfig()
 	n.mainChainGrpc, err = grpcclient.NewMainChainClient(chainCfg, "")
 	if err != nil {
 		panic("init main chain grpc client err:" + err.Error())
@@ -89,6 +83,11 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 	n.tss = newTssService(n)
 	if !n.cfg.IsOfficialNode {
 		return nil
+	}
+	err = n.initNeutrinoConfig(chainCfg)
+	if err != nil {
+		log.Error("Init", "initNeutrinoConfig error", err)
+		return err
 	}
 	cs, err := neutrino.NewChainService(n.neutrinoCfg)
 	if err != nil {
@@ -110,8 +109,8 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 // Start starting routine
 func (n *neutrinoClient) Start() {
 
+	n.initCommitKey()
 	n.tss.start()
-	go n.cleanUp()
 	go n.subMsg()
 	if !n.cfg.IsOfficialNode {
 		return
@@ -126,8 +125,9 @@ func (n *neutrinoClient) Start() {
 		n.bw.stop()
 		panic(err)
 	}
-
+	go n.cleanUp()
 	go n.handleBestBlock()
+	go n.submitBitcoinHeaders()
 	newRGBX().init(n)
 }
 
@@ -162,16 +162,14 @@ func (n *neutrinoClient) cleanUp() {
 		select {
 
 		case <-n.ctx.Done():
-			if err := n.neutrinoCfg.Database.Close(); err != nil {
-				log.Error("cleanUp Unable to close neutrino db", "err", err)
-			}
-			if !n.cfg.IsOfficialNode {
-				return
-			}
+
 			if err := n.neutrinoCS.Stop(); err != nil {
 				log.Error("cleanUp Unable to stop neutrino server", "err", err)
 			}
 			n.bw.stop()
+			if err := n.neutrinoCfg.Database.Close(); err != nil {
+				log.Error("cleanUp Unable to close neutrino db", "err", err)
+			}
 			return
 		}
 	}
@@ -180,7 +178,8 @@ func (n *neutrinoClient) cleanUp() {
 
 func (n *neutrinoClient) handleBestBlock() {
 
-	interval := time.Duration(n.cfg.BtcBlockInterval) / 3
+	n.syncBestBlock()
+	interval := time.Duration(n.cfg.BtcBlockInterval)/3 + 1
 	ticker := time.NewTicker(time.Second * interval)
 	for {
 
@@ -190,23 +189,24 @@ func (n *neutrinoClient) handleBestBlock() {
 			return
 		case <-ticker.C:
 
-			bestBlock := n.getBestBlock()
-			blk, err := n.neutrinoCS.BestBlock()
-			if err != nil {
-				log.Error("handleBestBlock", "err", err)
-				continue
-			}
-			if bestBlock == nil || bestBlock.Height < blk.Height {
-				log.Debug("handleBestBlock", "height", blk.Height, "hash", blk.Hash.String())
-				n.setBestBlock(blk)
-			}
+			n.syncBestBlock()
 		}
 	}
 }
 
+func (n *neutrinoClient) syncBestBlock() {
+	blk, err := n.neutrinoCS.BestBlock()
+	if err != nil {
+		log.Error("syncBestBlock", "err", err)
+		return
+	}
+	log.Debug("syncBestBlock", "height", blk.Height, "hash", blk.Hash.String())
+	n.setBestBlock(blk)
+}
+
 func (n *neutrinoClient) getBestBlock() *headerfs.BlockStamp {
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.lock.RLock()
+	defer n.lock.RUnlock()
 	return n.bestBlock
 }
 

@@ -1,11 +1,12 @@
 package executor
 
 import (
+	"sync"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	rgbxtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
-	"sync"
 )
 
 /*
@@ -35,7 +36,7 @@ func initCfg(sub []byte) {
 }
 
 // Init register dapp
-func Init(name string, cfg *types.Chain33Config, sub []byte) {
+func Init(_ string, cfg *types.Chain33Config, sub []byte) {
 	initCfg(sub)
 	drivers.Register(cfg, GetName(), newRgbx, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
