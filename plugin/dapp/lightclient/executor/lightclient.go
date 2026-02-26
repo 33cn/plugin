@@ -17,6 +17,7 @@ import (
 
 type config struct {
 	CommitAddress string `json:"commitAddress"`
+	BtcNetName    string `json:"btcNetName"`
 }
 
 var (
@@ -39,6 +40,9 @@ func initCfg(sub []byte) {
 
 	cfgInitOnce.Do(func() {
 		types.MustDecode(sub, &lightCfg)
+		if lightCfg.BtcNetName == "" {
+			lightCfg.BtcNetName = "mainnet"
+		}
 	})
 }
 

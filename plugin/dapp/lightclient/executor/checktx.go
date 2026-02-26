@@ -2,10 +2,11 @@ package executor
 
 import (
 	"encoding/hex"
+	"errors"
 
-	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/types"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
+	"github.com/btcsuite/btcd/blockchain"
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -40,7 +41,7 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 	}
 
 	prevHeader, err := getBtcLastHeader(l.GetStateDB())
-	if err != nil && err != types.ErrNotFound {
+	if err != nil {
 		elog.Error("checkBtcHeaders", "getBtcLastHeader err", err)
 		return ErrBtcGetLastHeader
 	}
@@ -50,23 +51,25 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 		return types.ErrInvalidParam
 	}
 
+	params := ltypes.GetBtcChainParams(lightCfg.BtcNetName)
+	chainCtx := newBtcChainContext(params)
+	timeSource := blockchain.NewMedianTime()
+	isBootstrap := prevHeader == nil
+	var prevCtx blockchain.HeaderCtx
+	if prevHeader != nil {
+		prevCtx = newBtcHeaderContext(prevHeader, nil, l.GetLocalDB())
+	}
+
 	for _, h := range headers.GetHeaders() {
 
 		if h == nil {
 			elog.Error("checkBtcHeaders nil header")
 			return types.ErrInvalidParam
 		}
-		if prevHeader.Height > 0 && (prevHeader.Height+1 != h.GetHeight() || prevHeader.Hash != h.PreviousHash) {
+		if prevHeader != nil && (prevHeader.Height+1 != h.GetHeight() || prevHeader.Hash != h.PreviousHash) {
 			elog.Error("checkBtcHeaders", "prevHeight", prevHeader.Height, "prevHash", prevHeader.Hash,
 				"commitHeight", h.GetHeight(), "commitPrevHash", h.GetPreviousHash())
 			return ErrBtcHeaderDisorder
-		}
-
-		targetBits := calcNextRequiredDifficulty(prevHeader.Time, prevHeader.Bits, prevHeader.Height, l.GetLocalDB())
-		if targetBits != 0 && h.Bits != targetBits {
-			elog.Error("checkBtcHeaders", "height", h.GetHeight(), "hash", h.GetHash(),
-				"targetBits", targetBits, "commitBits", h.Bits)
-			return ErrBtcTargetBits
 		}
 
 		btcHeader, err := toWireHeader(h)
@@ -80,17 +83,46 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 			return ErrInvalidBtcBlockHash
 		}
 
-		// The block hash must be less than the claimed target.
-		hashNum := difficulty.HashToBig(hash[:])
-		target := difficulty.CompactToBig(uint32(h.Bits))
-		if hashNum.Cmp(target) > 0 {
-			elog.Error("checkBtcHeaders", hash, "height", h.GetHeight(), "hash", h.GetHash(), "bits", h.Bits)
-			return ErrInvalidBtcBlockHash
+		if err = blockchain.CheckBlockHeaderSanity(btcHeader, params.PowLimit, timeSource, blockchain.BFNone); err != nil {
+			elog.Error("checkBtcHeaders CheckBlockHeaderSanity", "height", h.GetHeight(), "hash", h.GetHash(), "err", err)
+			return mapBtcHeaderVerifyErr(err)
+		}
+		// 首次提交时(prevCtx=nil)无法获取前置上下文，首个header只做sanity校验。
+		if prevCtx != nil {
+			// 首次导入且刚好在难度调整点，如果缺少历史祖先，则仅校验sanity与顺序。
+			if isBootstrap && !canValidateHeaderContext(prevCtx, chainCtx) {
+				prevHeader = h
+				prevCtx = newBtcHeaderContext(h, prevCtx, l.GetLocalDB())
+				continue
+			}
+			if err = blockchain.CheckBlockHeaderContext(btcHeader, prevCtx, blockchain.BFNone, chainCtx, true); err != nil {
+				elog.Error("checkBtcHeaders CheckBlockHeaderContext", "height", h.GetHeight(), "hash", h.GetHash(), "err", err)
+				return mapBtcHeaderVerifyErr(err)
+			}
 		}
 		prevHeader = h
+		prevCtx = newBtcHeaderContext(h, prevCtx, l.GetLocalDB())
 
 	}
 
 	return nil
 
+}
+
+func mapBtcHeaderVerifyErr(err error) error {
+	var ruleErr blockchain.RuleError
+	if errors.As(err, &ruleErr) && ruleErr.ErrorCode == blockchain.ErrUnexpectedDifficulty {
+		return ErrBtcTargetBits
+	}
+	return ErrInvalidBtcBlockHash
+}
+
+func canValidateHeaderContext(prevCtx blockchain.HeaderCtx, chainCtx *btcChainContext) bool {
+	if prevCtx == nil {
+		return false
+	}
+	if (prevCtx.Height()+1)%chainCtx.BlocksPerRetarget() != 0 {
+		return true
+	}
+	return prevCtx.RelativeAncestorCtx(chainCtx.BlocksPerRetarget()-1) != nil
 }

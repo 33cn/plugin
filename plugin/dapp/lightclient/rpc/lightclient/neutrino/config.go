@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/types"
+	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
@@ -60,20 +61,8 @@ type tssConfig struct {
 
 func (c config) getChainParams() chaincfg.Params {
 
-	switch c.NetName {
-	case "simnet":
-		return chaincfg.SimNetParams
-	case "mainnet":
-		return chaincfg.MainNetParams
-	case "testnet3":
-		return chaincfg.TestNet3Params
-	case "regtest":
-		return chaincfg.RegressionNetParams
-	case "signet":
-		return chaincfg.SigNetParams
-	default:
-		return chaincfg.MainNetParams
-	}
+	params := ltypes.GetBtcChainParams(c.NetName)
+	return *params
 }
 
 func (n *neutrinoClient) initNeutrinoConfig(chainCfg *types.Chain33Config) error {
