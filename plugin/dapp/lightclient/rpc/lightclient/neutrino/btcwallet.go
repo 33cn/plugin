@@ -17,6 +17,7 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/chain"
@@ -92,6 +93,7 @@ type btcWallet struct {
 	client      *neutrinoClient
 	chainParams chaincfg.Params
 	chainClient chain.Interface
+	rpcClient   *rpcclient.Client
 	db          walletdb.DB
 
 	monitorStartHeight int32
@@ -144,6 +146,20 @@ func newBtcWallet(n *neutrinoClient) (*btcWallet, error) {
 		pendingTxs:     make(map[chainhash.Hash]*pendingTx),
 	}
 
+	if n.cfg.BtcRPC.Host != "" {
+		connCfg, err := n.cfg.BtcRPC.toConnConfig()
+		if err != nil {
+			log.Error("newBtcWallet btc rpc conn config error", "err", err)
+			return nil, err
+		}
+		rpcCli, err := rpcclient.New(connCfg, nil)
+		if err != nil {
+			log.Error("newBtcWallet create btc rpc client error", "err", err)
+			return nil, err
+		}
+		bw.rpcClient = rpcCli
+	}
+
 	exist, db, err := openWalletDB(n.neutrinoCfg.DataDir, "btcwallet.db")
 	if err != nil {
 		log.Error("newBtcWallet open db error", "err", err)
@@ -194,6 +210,9 @@ func (b *btcWallet) start() error {
 func (b *btcWallet) stop() {
 	b.Wallet.Stop()
 	b.chainClient.Stop()
+	if b.rpcClient != nil {
+		b.rpcClient.Shutdown()
+	}
 	_ = b.db.Close()
 	close(b.depositChan)
 	close(b.withdrawChan)
@@ -1099,6 +1118,56 @@ func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, locke
 	return nil
 }
 
+func buildBtcSpv(txHash, blockHash string, blockTime int64, blockHeight uint64, txs [][]byte, txIndex uint32) *lighttypes.BtcSpv {
+	return &lighttypes.BtcSpv{
+		TxHash:      txHash,
+		Time:        blockTime,
+		Height:      blockHeight,
+		BlockHash:   blockHash,
+		TxIndex:     txIndex,
+		BranchProof: merkle.GetMerkleBranch(txs, txIndex),
+	}
+}
+
+func buildTxHashesFromVerbose(txIDs []string, targetTxHash string) ([][]byte, uint32, error) {
+	txs := make([][]byte, 0, len(txIDs))
+	txIndex := uint32(0)
+	found := false
+	for idx, txID := range txIDs {
+		hash, err := chainhash.NewHashFromStr(txID)
+		if err != nil {
+			return nil, 0, err
+		}
+		txs = append(txs, hash.CloneBytes())
+		if txID == targetTxHash {
+			txIndex = uint32(idx)
+			found = true
+		}
+	}
+	if !found {
+		return nil, 0, fmt.Errorf("tx not found in block")
+	}
+	return txs, txIndex, nil
+}
+
+func buildTxHashesFromBlockTxs(blockTxs []*wire.MsgTx, targetTxHash chainhash.Hash) ([][]byte, uint32, error) {
+	txs := make([][]byte, 0, len(blockTxs))
+	txIndex := uint32(0)
+	found := false
+	for idx, tx := range blockTxs {
+		hash := tx.TxHash()
+		txs = append(txs, hash.CloneBytes())
+		if hash == targetTxHash {
+			txIndex = uint32(idx)
+			found = true
+		}
+	}
+	if !found {
+		return nil, 0, fmt.Errorf("tx not found in block")
+	}
+	return txs, txIndex, nil
+}
+
 // buildTxExistenceProof 计算交易存在性证明（SPV）
 // 输入: pendingTx（需要包含 tx 和 blockHash）
 // 输出: lighttypes.BtcSpv
@@ -1110,36 +1179,40 @@ func (b *btcWallet) buildTxExistenceProof(pending *pendingTx) (*lighttypes.BtcSp
 		return nil, fmt.Errorf("invalid pending block height")
 	}
 	txHashStr := pending.tx.TxHash().String()
+	if b.rpcClient != nil {
+		block, err := b.rpcClient.GetBlockVerbose(&pending.blockHash)
+		if err != nil {
+			log.Error("buildTxExistenceProof GetBlockVerbose failed, fallback neutrino",
+				"txHash", txHashStr, "blockHash", pending.blockHash.String(), "err", err)
+		} else {
+			txs, txIndex, err := buildTxHashesFromVerbose(block.Tx, txHashStr)
+			if err != nil {
+				log.Error("buildTxExistenceProof buildTxHashesFromVerbose failed",
+					"txHash", txHashStr, "blockHash", pending.blockHash.String(), "err", err)
+				return nil, err
+			}
+			return buildBtcSpv(
+				txHashStr, pending.blockHash.String(), block.Time, uint64(block.Height), txs, txIndex,
+			), nil
+		}
+	}
+
 	block, err := b.chainClient.GetBlock(&pending.blockHash)
 	if err != nil {
+		log.Error("buildTxExistenceProof GetBlock failed",
+			"txHash", txHashStr, "blockHash", pending.blockHash.String(), "err", err)
 		return nil, err
 	}
 
-	var txIndex uint32
-	found := false
-	txs := make([][]byte, 0, len(block.Transactions))
-	for index, tx := range block.Transactions {
-		hash := tx.TxHash()
-		txs = append(txs, hash.CloneBytes())
-		if hash == pending.txHash {
-			txIndex = uint32(index)
-			found = true
-		}
+	txs, txIndex, err := buildTxHashesFromBlockTxs(block.Transactions, pending.txHash)
+	if err != nil {
+		log.Error("buildTxExistenceProof buildTxHashesFromBlockTxs failed",
+			"txHash", txHashStr, "blockHash", pending.blockHash.String(), "err", err)
+		return nil, err
 	}
-	if !found {
-		return nil, fmt.Errorf("tx not found in block")
-	}
-
-	proof := merkle.GetMerkleBranch(txs, txIndex)
-	spv := &lighttypes.BtcSpv{
-		TxHash:      txHashStr,
-		Time:        block.Header.Timestamp.Unix(),
-		Height:      uint64(pending.blockHeight),
-		BlockHash:   pending.blockHash.String(),
-		TxIndex:     txIndex,
-		BranchProof: proof,
-	}
-	return spv, nil
+	return buildBtcSpv(
+		txHashStr, pending.blockHash.String(), block.Header.Timestamp.Unix(), uint64(pending.blockHeight), txs, txIndex,
+	), nil
 }
 
 // GetBalance 获取余额

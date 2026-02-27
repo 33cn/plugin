@@ -5,10 +5,12 @@
 package neutrino
 
 import (
+	"bytes"
 	"time"
 
 	"github.com/33cn/chain33/types"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
 
 // headerPublisher 提交比特币区块头到链上
@@ -99,17 +101,68 @@ func (n *neutrinoClient) getChain33BtcLastHeader() *ltypes.BtcHeader {
 func (n *neutrinoClient) depositWatcher() {
 
 	depositChan := n.bw.GetDepositChannel()
+	retryTicker := time.NewTicker(time.Second * 30)
+	var retryList []*pendingTx
 	for {
 		select {
 		case <-n.ctx.Done():
 			return
+		case <-retryTicker.C:
+			temp := retryList
+			retryList = retryList[:0]
+			for _, pendingTx := range temp {
+				if err := n.commitDepositTx(pendingTx); err != nil {
+					log.Error("depositWatcher commitDepositTx retry", "txHash", pendingTx.txHash.String(), "err", err)
+					retryList = append(retryList, pendingTx)
+				}
+			}
 		case pendingTx := <-depositChan:
 
-			if pendingTx == nil {
+			// 如果chain33DepositAddress为空，则使用第一个输入的utxo地址
+			if pendingTx.chain33DepositAddress == "" {
+				firstInputUtxo := pendingTx.tx.TxIn[0].PreviousOutPoint
+				pendingTx.chain33DepositAddress = rtypes.FormatUtxo(firstInputUtxo.Hash.String(), firstInputUtxo.Index)
+			}
+			if pendingTx.depositAmount <= 0 {
+				log.Error("depositWatcher invalid deposit amount", "txHash", pendingTx.txHash.String(),
+					"amount", pendingTx.depositAmount)
 				continue
+			}
+
+			if err := n.commitDepositTx(pendingTx); err != nil {
+				log.Error("depositWatcher commitDepositTx", "txHash", pendingTx.txHash.String(), "err", err)
+				retryList = append(retryList, pendingTx)
 			}
 		}
 	}
+}
+func (n *neutrinoClient) commitDepositTx(pendingTx *pendingTx) error {
+	spv, err := n.bw.buildTxExistenceProof(pendingTx)
+	if err != nil {
+		log.Error("commitDepositTx buildTxExistenceProof", "txHash", pendingTx.txHash.String(), "err", err)
+		return err
+	}
+	buf := bytes.NewBuffer(make([]byte, 0, pendingTx.tx.SerializeSizeStripped()))
+	if err = pendingTx.tx.SerializeNoWitness(buf); err != nil {
+		log.Error("commitDepositTx SerializeNoWitness", "txHash", pendingTx.txHash.String(), "err", err)
+		return err
+	}
+	deposit := &rtypes.DepositAsset{
+		Amount:         int64(pendingTx.depositAmount),
+		DepositAddress: pendingTx.chain33DepositAddress,
+		AssetSymbol:    rtypes.BTCSymbol,
+		TxProof: &rtypes.BtcTxProof{
+			TxData:      buf.Bytes(),
+			BlockHash:   pendingTx.blockHash.CloneBytes(),
+			BlockHeight: int64(pendingTx.blockHeight),
+			TxIndex:     int64(spv.GetTxIndex()),
+			MerkleProof: spv.GetBranchProof(),
+		},
+	}
+	n.submitMainchainTxUntilSuccess(rtypes.RgbxX, rtypes.NameDepositAssetAction, deposit)
+	log.Debug("commitDepositTx submit deposit success", "txHash", pendingTx.txHash.String(),
+		"depositAddr", deposit.GetDepositAddress(), "amount", deposit.GetAmount())
+	return nil
 }
 
 // withdrawalProcessor 监听chain33主链上比特币提现请求, 构造提现交易到比特币网络，并向chain33主链提交rgbx confirm交易

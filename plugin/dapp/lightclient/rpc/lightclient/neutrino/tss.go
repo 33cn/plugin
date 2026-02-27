@@ -177,7 +177,7 @@ func (t *tssService) init() {
 
 	// Commit DKG result to main chain with retry
 	commitDKG := &rtypes.CommitDKG{
-		AssetSymbol: "BTC",
+		AssetSymbol: rtypes.BTCSymbol,
 		DkgAddress:  t.tssAddress.EncodeAddress(),
 		PkScript:    t.pkScript,
 	}

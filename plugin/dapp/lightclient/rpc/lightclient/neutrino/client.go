@@ -128,6 +128,7 @@ func (n *neutrinoClient) Start() {
 	go n.cleanUp()
 	go n.handleBestBlock()
 	go n.submitBitcoinHeaders()
+	go n.depositWatcher()
 	newRGBX().init(n)
 }
 
@@ -157,23 +158,14 @@ func (n *neutrinoClient) subMsg() {
 
 func (n *neutrinoClient) cleanUp() {
 
-	for {
-
-		select {
-
-		case <-n.ctx.Done():
-
-			if err := n.neutrinoCS.Stop(); err != nil {
-				log.Error("cleanUp Unable to stop neutrino server", "err", err)
-			}
-			n.bw.stop()
-			if err := n.neutrinoCfg.Database.Close(); err != nil {
-				log.Error("cleanUp Unable to close neutrino db", "err", err)
-			}
-			return
-		}
+	<-n.ctx.Done()
+	if err := n.neutrinoCS.Stop(); err != nil {
+		log.Error("cleanUp Unable to stop neutrino server", "err", err)
 	}
-
+	n.bw.stop()
+	if err := n.neutrinoCfg.Database.Close(); err != nil {
+		log.Error("cleanUp Unable to close neutrino db", "err", err)
+	}
 }
 
 func (n *neutrinoClient) handleBestBlock() {

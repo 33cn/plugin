@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/types"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
 )
@@ -46,8 +47,50 @@ type config struct {
 	BtcHeaderStartHeight uint64 `json:"btcHeaderStartHeight"`
 	// MaxUtxoRescanTime, utxo 检索最大时长，hour, 0为永不超时
 	MaxUtxoRescanTime int64 `json:"maxUtxoRescanTime"`
+	// BtcFullNodeRPC 可选，比特币全节点 RPC 配置，用于查询 block 构造SPV
+	BtcRPC btcRPCConfig `json:"btcRPC"`
 	// Tss tss config
 	Tss tssConfig `json:"tss"`
+}
+
+type btcRPCConfig struct {
+	// Host 例如: 127.0.0.1:8332 或 btc-node.example.com:8332
+	Host string `json:"host"`
+	// User/Pass 对应 bitcoin.conf 的 rpcuser/rpcpassword
+	User string `json:"user"`
+	Pass string `json:"pass"`
+	// Mode: ws(默认) 或 http
+	Mode string `json:"mode"`
+	// DisableTLS 是否禁用 TLS
+	DisableTLS bool `json:"disableTLS"`
+	// CertFile TLS 证书文件（可选）
+	CertFile string `json:"certFile"`
+}
+
+func (c *btcRPCConfig) toConnConfig() (*rpcclient.ConnConfig, error) {
+	endpoint := "ws"
+	httpPostMode := false
+	if c.Mode == "http" {
+		endpoint = "http"
+		httpPostMode = true
+	}
+	conn := &rpcclient.ConnConfig{
+		Host:         c.Host,
+		Endpoint:     endpoint,
+		User:         c.User,
+		Pass:         c.Pass,
+		DisableTLS:   c.DisableTLS,
+		HTTPPostMode: httpPostMode,
+	}
+	if c.CertFile == "" {
+		return conn, nil
+	}
+	certs, err := os.ReadFile(c.CertFile)
+	if err != nil {
+		return nil, err
+	}
+	conn.Certificates = certs
+	return conn, nil
 }
 
 type tssConfig struct {
@@ -84,7 +127,6 @@ func (n *neutrinoClient) initNeutrinoConfig(chainCfg *types.Chain33Config) error
 	if n.cfg.MaxUtxoRescanTime > 0 {
 		n.cfg.MaxUtxoRescanTime *= int64(time.Hour / time.Second)
 	}
-
 	dbPath := filepath.Join(chainCfg.GetModuleConfig().BlockChain.DbPath, "lightclient")
 	_ = os.MkdirAll(dbPath, 0755)
 	_, db, err := openWalletDB(dbPath, "neutrino.db")
