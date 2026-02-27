@@ -129,7 +129,7 @@ type pendingTx struct {
 	withdrawAmount        btcutil.Amount
 	chain33DepositAddress string // Chain33充值地址
 	withdrawAddress       string
-	chain33WithDrawHash   string // Chain33提现交易哈希
+	chain33WithdrawTxHash string // Chain33提现交易哈希
 	// OP_RETURN数据
 	opReturnData opReturnData // 原始OP_RETURN解析数据
 }
@@ -214,8 +214,6 @@ func (b *btcWallet) stop() {
 		b.rpcClient.Shutdown()
 	}
 	_ = b.db.Close()
-	close(b.depositChan)
-	close(b.withdrawChan)
 }
 
 // waitAndImportTSSAddress 等待TSS地址生成并导入
@@ -581,7 +579,7 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 		info.withdrawAddress = firstNonTssOutputAddress
 		info.txType = transactionTypeWithdraw
 		info.withdrawAmount = withdrawAmount
-		info.chain33WithDrawHash = parsed.payload
+		info.chain33WithdrawTxHash = parsed.payload
 		return info
 	} else if hasTssOutput && !hasTssInput { // 充值交易特征：有TSS输出，无TSS输入
 		info.depositAmount = depositAmount

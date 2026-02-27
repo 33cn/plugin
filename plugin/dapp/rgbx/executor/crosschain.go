@@ -49,9 +49,9 @@ func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, i
 	if len(strings.Split(guardianAddrs, ",")) == len(addrs.Addrs) {
 
 		info := &rtypes.CrossChainInfo{
-			AssetSymbol:    commit.AssetSymbol,
-			TssAddress:     commit.DkgAddress,
-			PkScript:       commit.PkScript,
+			AssetSymbol: commit.AssetSymbol,
+			TssAddress:  commit.DkgAddress,
+			PkScript:    commit.PkScript,
 		}
 		receipt.KV = append(receipt.KV, &types.KeyValue{
 			Key:   formatCrossChainInfoKey(commit.GetAssetSymbol()),
@@ -88,9 +88,28 @@ func (r *rgbx) Exec_DepositAsset(deposit *rtypes.DepositAsset, tx *types.Transac
 
 }
 
-func (r *rgbx) Exec_WithdrawAsset(confirm *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
-
+func (r *rgbx) Exec_WithdrawAsset(withdraw *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
+	txHash := tx.Hash()
+
+	receipt.KV = append(receipt.KV, &types.KeyValue{
+		Key:   formatPayloadKey(txHash),
+		Value: types.Encode(withdraw),
+	})
+	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
+		Ty: rtypes.TyPendingTxLog,
+		Log: types.Encode(&rtypes.PendingTx{
+			ActionType:    rtypes.TyWithDrawAsset,
+			Timestamp:     r.GetBlockTime(),
+			TxBlockHeight: r.GetHeight(),
+			TxIndex:       int64(index),
+			TxHash:        txHash,
+			AssetSymbol:   withdraw.GetAssetSymbol(),
+			TargetAddress: withdraw.GetDestinationAddr(),
+			Amount:        withdraw.GetAmount(),
+			FeeRate:       withdraw.GetFeeRate(),
+		}),
+	})
 	return receipt, nil
 }
 

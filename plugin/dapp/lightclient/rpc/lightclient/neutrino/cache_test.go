@@ -1,9 +1,10 @@
 package neutrino
 
 import (
+	"testing"
+
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestPendingTxCache(t *testing.T) {
@@ -21,6 +22,6 @@ func TestPendingTxCache(t *testing.T) {
 
 	tx.TxBlockHeight = 1
 	c.addTx("test", tx)
-	require.Equal(t, int64(0), c.getMinTxBlockHeight(0))
-	require.Equal(t, int64(1), c.getMinTxBlockHeight(2))
+	require.Equal(t, int64(0), c.getMinPendingHeight())
+	require.Equal(t, int64(1), c.getMinPendingHeight())
 }

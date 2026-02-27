@@ -75,8 +75,8 @@ message confirmTx {
 message btcTxProof {
     bytes          txData      = 1;
     bytes          blockHash   = 2;
-    int64          blockHeight = 3;
-    int64          txIndex     = 4;
+    uint64         blockHeight = 3;
+    uint32         txIndex     = 4;
     repeated bytes merkleProof = 5;
 }
 
@@ -115,11 +115,13 @@ message pendingTx {
     int64    timestamp     = 2;
     int64    txBlockHeight = 3;
     int64    txIndex       = 4;
-    bytes    txHash        = 5;
-    outPoint utxo          = 6;
-    string   assetSymbol   = 7;
-    string   targetAddress = 8;
-    bool     confirmed     = 9;
+    int64    amount        = 5;
+    int64    feeRate       = 6;
+    bytes    txHash        = 7;
+    outPoint utxo          = 8;
+    string   assetSymbol   = 9;
+    string   targetAddress = 10;
+    bool     confirmed     = 11;
 }
 
 message pendingTxs {

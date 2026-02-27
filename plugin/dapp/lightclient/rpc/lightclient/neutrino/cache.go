@@ -1,8 +1,10 @@
 package neutrino
 
 import (
-	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"math"
 	"sync"
+
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
 
 type pendingTxCache struct {
@@ -34,10 +36,10 @@ func (p *pendingTxCache) removeTx(hash string) *rtypes.PendingTx {
 	return tx
 }
 
-func (p *pendingTxCache) getMinTxBlockHeight(minHeight int64) int64 {
+func (p *pendingTxCache) getMinPendingHeight() int64 {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
-
+	minHeight := int64(math.MaxInt64)
 	for _, tx := range p.pendingCache {
 		if tx.TxBlockHeight < minHeight {
 			minHeight = tx.TxBlockHeight

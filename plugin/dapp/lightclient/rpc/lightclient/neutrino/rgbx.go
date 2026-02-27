@@ -56,7 +56,7 @@ func newRGBX() *rgbx {
 	return r
 }
 
-func (r *rgbx) init(cli *neutrinoClient) {
+func (r *rgbx) start(cli *neutrinoClient) {
 	log.Debug("init rgbx service start")
 	r.client = cli
 	r.commitTxKey = cli.getCommitKey()
@@ -119,14 +119,25 @@ func (r *rgbx) pullPendingTx() {
 			log.Debug("pullPendingTx", "txNum", txNum, "req", req)
 			for _, tx := range txs.GetPendingList() {
 
+				txHash := hex.EncodeToString(tx.TxHash)
 				if tx.Confirmed {
-					log.Debug("tx already confirmed", "txHash", hex.EncodeToString(tx.TxHash))
+					log.Debug("tx already confirmed", "txHash", txHash)
+					continue
+				}
+				r.pendingCache.addTx(txHash, tx)
+				if tx.GetActionType() == rtypes.TyWithDrawAsset {
+					r.client.withdrawReqChan <- tx
 					continue
 				}
 
-				hash, _ := chainhash.NewHashFromStr(tx.Utxo.Hash)
-				uri := &utxoRescanInfo{
-					pendingTxHash: hex.EncodeToString(tx.TxHash),
+				hash, err := chainhash.NewHashFromStr(tx.Utxo.Hash)
+				if err != nil {
+					log.Error("pullPendingTx", "txHash", txHash, "err", err)
+					r.pendingCache.removeTx(txHash)
+					continue
+				}
+				r.rescanChan <- &utxoRescanInfo{
+					pendingTxHash: txHash,
 					out: wire.OutPoint{
 						Hash:  *hash,
 						Index: tx.Utxo.Index,
@@ -136,8 +147,6 @@ func (r *rgbx) pullPendingTx() {
 					startTime:   tx.Timestamp,
 					startHeight: 0,
 				}
-				r.pendingCache.addTx(uri.pendingTxHash, tx)
-				r.rescanChan <- uri
 			}
 
 			lastTx := txs.GetPendingList()[txNum-1]
@@ -254,12 +263,12 @@ func (r *rgbx) mayTimeout(info *utxoRescanInfo) bool {
 	return true
 }
 
-func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
-	pendTx := r.pendingCache.removeTx(info.pendingTxHash)
-	minTxBlockHeight := r.pendingCache.getMinTxBlockHeight(pendTx.TxBlockHeight)
+func (r *rgbx) createConfirmPayload(info *utxoSpendInfo, pendTx *rtypes.PendingTx) (*rtypes.ConfirmTx, error) {
+
+	minPendingHeight := r.pendingCache.getMinPendingHeight()
 	confirm := &rtypes.ConfirmTx{
 		ActionType:           pendTx.ActionType,
-		ConfirmedBlockHeight: minTxBlockHeight - 1,
+		ConfirmedBlockHeight: minPendingHeight - 1,
 		TxBlockHeight:        pendTx.TxBlockHeight,
 		TxIndex:              pendTx.TxIndex,
 		TxHash:               pendTx.TxHash,
@@ -267,7 +276,7 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 
 	if info.timeout {
 		confirm.Timeout = true
-		return confirm
+		return confirm, nil
 	}
 
 	proof := &rtypes.UtxoSpendingProof{
@@ -281,29 +290,43 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo) *rtypes.ConfirmTx {
 		}
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, info.spendingTx.SerializeSizeStripped()))
-	_ = info.spendingTx.SerializeNoWitness(buf)
+	err := info.spendingTx.SerializeNoWitness(buf)
+	if err != nil {
+		log.Error("createConfirmPayload", "pendingTxHash", info.pendingTxHash, "serialize spending tx err", err)
+		return nil, err
+	}
 	proof.SpendingTx = buf.Bytes()
 	confirm.UtxoProof = proof
 
-	return confirm
+	return confirm, nil
 }
 
-func (r *rgbx) commitPendingTx(confirm *rtypes.ConfirmTx) (success bool) {
-	confirmHash := hex.EncodeToString(confirm.TxHash)
+func (r *rgbx) commitPendingTx(request *confrimRequest) error {
 
-	err := r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
+	confirmHash := request.spendingInfo.pendingTxHash
+	confirm, err := r.createConfirmPayload(request.spendingInfo, request.pendTx)
 	if err != nil {
+		log.Error("commitPendingTx createConfirmPayload", "confirmHash", confirmHash, "err", err)
+		return err
+	}
+	if err = r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm); err != nil {
 		log.Error("commitPendingTx submitMainchainTx", "confirmHash", confirmHash, "err", err)
-		return false
+		return err
 	}
 
+	r.pendingCache.removeTx(confirmHash)
 	log.Debug("commitPendingTx success", "confirmHash", confirmHash)
-	return true
+	return nil
+}
+
+type confrimRequest struct {
+	spendingInfo *utxoSpendInfo
+	pendTx       *rtypes.PendingTx
 }
 
 func (r *rgbx) handleCommitPendingTx() {
 	ticker := time.NewTicker(time.Second * 10)
-	confirmArr := make([]*rtypes.ConfirmTx, 0, 8)
+	retryList := make([]*confrimRequest, 0, 8)
 	for {
 		select {
 
@@ -312,17 +335,24 @@ func (r *rgbx) handleCommitPendingTx() {
 
 		case info := <-r.commitChan:
 
-			confirm := r.createConfirmPayload(info)
-			if !r.commitPendingTx(confirm) {
-				confirmArr = append(confirmArr, confirm)
+			pendTx := r.pendingCache.getTx(info.pendingTxHash)
+			if pendTx == nil {
+				log.Error("handleCommitPendingTx pendingTx not found", "pendingTxHash", info.pendingTxHash)
+				continue
+			}
+			request := &confrimRequest{spendingInfo: info, pendTx: pendTx}
+			if err := r.commitPendingTx(request); err != nil {
+				log.Error("handleCommitPendingTx commitPendingTx", "confirmHash", info.pendingTxHash, "err", err)
+				retryList = append(retryList, request)
 			}
 
 		case <-ticker.C:
-			tempArr := confirmArr
-			confirmArr = confirmArr[:0]
-			for _, confirm := range tempArr {
-				if !r.commitPendingTx(confirm) {
-					confirmArr = append(confirmArr, confirm)
+			tempRequests := retryList
+			retryList = retryList[:0]
+			for _, request := range tempRequests {
+				if err := r.commitPendingTx(request); err != nil {
+					log.Error("handleCommitPendingTx retry", "confirmHash", request.spendingInfo.pendingTxHash, "commitPendingTx err", err)
+					retryList = append(retryList, request)
 				}
 			}
 		}

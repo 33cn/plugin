@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
@@ -29,6 +30,16 @@ var (
 	ErrInvalidAssetPrecision       = errors.New("ErrInvalidAssetPrecision")
 	ErrInvalidAssetSender          = errors.New("ErrInvalidAssetSender")
 	ErrInvalidSpendingTxIn         = errors.New("ErrInvalidSpendingTxIn")
+	ErrInvalidWithdrawAmount       = errors.New("invalid withdraw amount")
+	ErrInvalidWithdrawDestination  = errors.New("invalid withdraw destination")
+	ErrInvalidBtcTxProof           = errors.New("invalid btc tx proof")
+	ErrInvalidBtcProofIndex        = errors.New("invalid btc proof tx index")
+	ErrInvalidBtcBlockHash         = errors.New("invalid btc block hash")
+	ErrGetBtcHeader                = errors.New("get btc header error")
+	ErrInvalidBtcProofBlock        = errors.New("invalid btc proof block info")
+	ErrInvalidBtcProofCommitment   = errors.New("invalid btc withdraw commitment")
+	ErrInvalidBtcProofMerkle       = errors.New("invalid btc merkle proof")
+	ErrCalcBtcMerkleRoot           = errors.New("calc btc merkle root error")
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -47,6 +58,8 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 		err = r.checkMint(txHash, action.GetMint())
 	case rtypes.TyTransferAction:
 		err = r.checkTransfer(tx, txHash, action.GetTransfer())
+	case rtypes.TyWithDrawAsset:
+		err = r.checkWithdraw(txHash, action.GetWithdraw())
 	case rtypes.TyConfirmAction:
 		err = r.checkConfirm(tx.From(), txHash, action.GetConfirm())
 	default:
@@ -146,6 +159,21 @@ func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rty
 	return nil
 }
 
+func (r *rgbx) checkWithdraw(txHash string, withdraw *rtypes.WithdrawAsset) error {
+	if withdraw == nil {
+		return types.ErrInvalidParam
+	}
+	if withdraw.GetAmount() <= 0 {
+		elog.Error("checkWithdraw amount", "txHash", txHash, "amount", withdraw.GetAmount())
+		return ErrInvalidWithdrawAmount
+	}
+	if withdraw.GetDestinationAddr() == "" {
+		elog.Error("checkWithdraw destination", "txHash", txHash)
+		return ErrInvalidWithdrawDestination
+	}
+	return nil
+}
+
 func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) error {
 
 	confirmTxHash := hex.EncodeToString(confirm.TxHash)
@@ -185,6 +213,9 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		elog.Debug("checkConfirm timeout", "action", action,
 			"txHash", txHash, "confirmTxHash", confirmTxHash)
 		return nil
+	}
+	if confirm.GetActionType() == rtypes.TyWithDrawAsset {
+		return r.checkWithdrawConfirm(txHash, confirmTxHash, confirm)
 	}
 
 	btcSpendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()

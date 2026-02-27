@@ -45,6 +45,16 @@ func (r *rgbx) ExecLocal_Transfer(_ *rtypes.TransferAsset, tx *types.Transaction
 	return r.addAutoRollBack(tx, dbSet.KV), nil
 }
 
+func (r *rgbx) ExecLocal_WithdrawAsset(_ *rtypes.WithdrawAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	dbSet := &types.LocalDBSet{}
+	for _, log := range receiptData.Logs {
+		if log.Ty == rtypes.TyPendingTxLog {
+			r.addPendingTxKV(dbSet, log.Log, index)
+		}
+	}
+	return r.addAutoRollBack(tx, dbSet.KV), nil
+}
+
 func (r *rgbx) ExecLocal_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	// remove pending tx record

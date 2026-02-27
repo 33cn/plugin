@@ -72,4 +72,8 @@ message tssSignNotify {
     repeated string signers      = 5;
 }
 
+message reqGetBtcHeader {
+    uint64 height = 1;
+}
+
 service Lightclient {}

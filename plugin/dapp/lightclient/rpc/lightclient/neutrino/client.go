@@ -22,6 +22,7 @@ import (
 
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/lightclient/rpc/lightclient"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 	"github.com/lightninglabs/neutrino"
 )
@@ -52,9 +53,11 @@ type neutrinoClient struct {
 	tss               *tssService
 	neutrinoCS        *neutrino.ChainService
 	bw                *btcWallet
+	rgbx              *rgbx
 	bestBlock         *headerfs.BlockStamp
 	lock              sync.RWMutex
 	chain33FeeRate    int64
+	withdrawReqChan   chan *rtypes.PendingTx
 }
 
 // Init init client context
@@ -84,6 +87,7 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 	if !n.cfg.IsOfficialNode {
 		return nil
 	}
+	n.withdrawReqChan = make(chan *rtypes.PendingTx, 256)
 	err = n.initNeutrinoConfig(chainCfg)
 	if err != nil {
 		log.Error("Init", "initNeutrinoConfig error", err)
@@ -102,6 +106,7 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 		return err
 	}
 	n.bw = bw
+	n.rgbx = newRGBX()
 	return nil
 
 }
@@ -129,7 +134,8 @@ func (n *neutrinoClient) Start() {
 	go n.handleBestBlock()
 	go n.submitBitcoinHeaders()
 	go n.depositWatcher()
-	newRGBX().init(n)
+	go n.withdrawalProcessor()
+	n.rgbx.start(n)
 }
 
 // handle subscription messages
