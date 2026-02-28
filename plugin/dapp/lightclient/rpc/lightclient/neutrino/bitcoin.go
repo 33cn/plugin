@@ -155,7 +155,7 @@ func (n *neutrinoClient) commitDepositTx(pendingTx *pendingTx) error {
 		AssetSymbol:    rtypes.BTCSymbol,
 		TxProof: &rtypes.BtcTxProof{
 			TxData:      buf.Bytes(),
-			BlockHash:   pendingTx.blockHash.CloneBytes(),
+			BlockHash:   pendingTx.blockHash.String(),
 			BlockHeight: uint64(pendingTx.blockHeight),
 			TxIndex:     spv.GetTxIndex(),
 			MerkleProof: spv.GetBranchProof(),
@@ -274,7 +274,7 @@ func (n *neutrinoClient) buildWithdrawConfirm(btcPending *pendingTx, chain33With
 		TxHash:               chain33WithdrawTx.TxHash,
 		BtcTxProof: &rtypes.BtcTxProof{
 			TxData:      buf.Bytes(),
-			BlockHash:   btcPending.blockHash.CloneBytes(),
+			BlockHash:   btcPending.blockHash.String(),
 			BlockHeight: uint64(btcPending.blockHeight),
 			TxIndex:     spv.GetTxIndex(),
 			MerkleProof: spv.GetBranchProof(),

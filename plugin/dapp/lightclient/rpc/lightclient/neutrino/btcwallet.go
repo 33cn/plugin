@@ -528,7 +528,7 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 
 	for i, output := range tx.TxOut {
 		// 检查并解析 OP_RETURN 输出
-		if output.PkScript[0] == txscript.OP_RETURN && parsed == nil && len(output.PkScript) > 2 {
+		if len(output.PkScript) > 2 && output.PkScript[0] == txscript.OP_RETURN && parsed == nil {
 			parsed, err = b.parseOpReturn(output.PkScript)
 			if err != nil {
 				log.Debug("analyzeTransaction parseOpReturn failed", "txHash", hash.String(),
@@ -595,7 +595,7 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 }
 
 // sendTransactionNotification 发送交易确认通知
-func (b *btcWallet) sendTransactionNotification(txHash chainhash.Hash, pending *pendingTx) {
+func (b *btcWallet) sendTransactionNotification(_ chainhash.Hash, pending *pendingTx) {
 	if pending.txType == "deposit" {
 		b.depositChan <- pending
 	} else {

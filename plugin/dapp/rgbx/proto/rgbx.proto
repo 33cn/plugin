@@ -6,11 +6,12 @@ option  go_package = "../types";
 message RgbxAction {
     int32 ty = 1;
     oneof value {
-        mintAsset     mint     = 2;
-        transferAsset transfer = 3;
-        confirmTx     confirm  = 4;
-        depositAsset  deposit  = 5;
-        withdrawAsset withdraw = 6;
+        mintAsset     mint      = 2;
+        transferAsset transfer  = 3;
+        confirmTx     confirm   = 4;
+        commitDKG     commitDKG = 5;
+        depositAsset  deposit   = 6;
+        withdrawAsset withdraw  = 7;
     }
 }
 
@@ -73,10 +74,10 @@ message confirmTx {
 }
 
 message btcTxProof {
-    bytes          txData      = 1;
-    bytes          blockHash   = 2;
-    uint64         blockHeight = 3;
-    uint32         txIndex     = 4;
+    uint64         blockHeight = 1;
+    uint32         txIndex     = 2;
+    string         blockHash   = 3;
+    bytes          txData      = 4;
     repeated bytes merkleProof = 5;
 }
 

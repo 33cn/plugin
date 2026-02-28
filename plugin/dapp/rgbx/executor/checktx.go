@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"strings"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
@@ -13,33 +14,47 @@ import (
 )
 
 var (
-	ErrInvalidSymbolLength         = errors.New("invalid asset symbol length")
-	ErrInvalidAssetAmount          = errors.New("invalid asset amount")
-	ErrInvalidMetaHashLength       = errors.New("invalid meta hash length")
-	ErrNilGenesisOut               = errors.New("nil genesis output")
-	ErrDuplicateAssetSymbol        = errors.New("duplicate asset symbol")
-	ErrAssetNotExist               = errors.New("asset not exist")
-	ErrDecodeBtcTx                 = errors.New("decode btc tx error")
-	ErrPendingTxNotExist           = errors.New("pending tx not exist")
-	ErrTxAlreadyConfirmed          = errors.New("tx already confirmed")
-	ErrConfirmedHashNotEqual       = errors.New("confirmed hash not equal")
-	ErrSpendingInputNotEqual       = errors.New("spending input not equal")
-	ErrOpRetOutputPkScriptNotEqual = errors.New("ErrOpRetOutputPkScriptNotEqual")
-	ErrInvalidCommitAddress        = errors.New("ErrInvalidCommitAddress")
-	ErrFromUtxoPkScriptNotSet      = errors.New("ErrFromUtxoPkScriptNotSet")
-	ErrInvalidAssetPrecision       = errors.New("ErrInvalidAssetPrecision")
-	ErrInvalidAssetSender          = errors.New("ErrInvalidAssetSender")
-	ErrInvalidSpendingTxIn         = errors.New("ErrInvalidSpendingTxIn")
-	ErrInvalidWithdrawAmount       = errors.New("invalid withdraw amount")
-	ErrInvalidWithdrawDestination  = errors.New("invalid withdraw destination")
-	ErrInvalidBtcTxProof           = errors.New("invalid btc tx proof")
-	ErrInvalidBtcProofIndex        = errors.New("invalid btc proof tx index")
-	ErrInvalidBtcBlockHash         = errors.New("invalid btc block hash")
-	ErrGetBtcHeader                = errors.New("get btc header error")
-	ErrInvalidBtcProofBlock        = errors.New("invalid btc proof block info")
-	ErrInvalidBtcProofCommitment   = errors.New("invalid btc withdraw commitment")
-	ErrInvalidBtcProofMerkle       = errors.New("invalid btc merkle proof")
-	ErrCalcBtcMerkleRoot           = errors.New("calc btc merkle root error")
+	ErrInvalidSymbolLength              = errors.New("invalid asset symbol length")
+	ErrInvalidAssetAmount               = errors.New("invalid asset amount")
+	ErrInvalidMetaHashLength            = errors.New("invalid meta hash length")
+	ErrNilGenesisOut                    = errors.New("nil genesis output")
+	ErrDuplicateAssetSymbol             = errors.New("duplicate asset symbol")
+	ErrAssetNotExist                    = errors.New("asset not exist")
+	ErrDecodeBtcTx                      = errors.New("decode btc tx error")
+	ErrPendingTxNotExist                = errors.New("pending tx not exist")
+	ErrConfirmPayloadNotExist           = errors.New("confirm payload not exist")
+	ErrTxAlreadyConfirmed               = errors.New("tx already confirmed")
+	ErrConfirmedHashNotEqual            = errors.New("confirmed hash not equal")
+	ErrSpendingInputNotEqual            = errors.New("spending input not equal")
+	ErrOpRetOutputPkScriptNotEqual      = errors.New("ErrOpRetOutputPkScriptNotEqual")
+	ErrInvalidCommitAddress             = errors.New("ErrInvalidCommitAddress")
+	ErrFromUtxoPkScriptNotSet           = errors.New("ErrFromUtxoPkScriptNotSet")
+	ErrInvalidAssetPrecision            = errors.New("ErrInvalidAssetPrecision")
+	ErrInvalidAssetSender               = errors.New("ErrInvalidAssetSender")
+	ErrInvalidSpendingTxIn              = errors.New("ErrInvalidSpendingTxIn")
+	ErrInvalidWithdrawAmount            = errors.New("invalid withdraw amount")
+	ErrInvalidWithdrawDestination       = errors.New("invalid withdraw destination")
+	ErrInvalidWithdrawDestinationScript = errors.New("invalid withdraw destination script")
+	ErrInvalidDepositAmount             = errors.New("invalid deposit amount")
+	ErrInvalidDepositAddress            = errors.New("invalid deposit address")
+	ErrInvalidDepositCommitment         = errors.New("invalid deposit opreturn commitment")
+	ErrInvalidWithdrawFeeRate           = errors.New("invalid withdraw fee rate")
+	ErrInvalidAssetSymbol               = errors.New("invalid asset symbol")
+	ErrInvalidBtcTxProof                = errors.New("invalid btc tx proof")
+	ErrInvalidBtcProofIndex             = errors.New("invalid btc proof tx index")
+	ErrInvalidBtcBlockHash              = errors.New("invalid btc block hash")
+	ErrGetBtcHeader                     = errors.New("get btc header error")
+	ErrInvalidBtcProofBlock             = errors.New("invalid btc proof block info")
+	ErrInvalidBtcProofCommitment        = errors.New("invalid btc withdraw commitment")
+	ErrInvalidBtcProofMerkle            = errors.New("invalid btc merkle proof")
+	ErrCalcBtcMerkleRoot                = errors.New("calc btc merkle root error")
+	ErrInvalidCrossChainInfo            = errors.New("invalid cross chain info")
+	ErrGetCrossChainInfo                = errors.New("get cross chain info error")
+)
+
+const (
+	maxBtcFeeRate        = int64(1000)
+	minBtcWithdrawAmount = int64(546)
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -58,6 +73,10 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 		err = r.checkMint(txHash, action.GetMint())
 	case rtypes.TyTransferAction:
 		err = r.checkTransfer(tx, txHash, action.GetTransfer())
+	case rtypes.TyCommitDKGAction:
+		err = r.checkCommitDKG(txHash, action.GetCommitDKG())
+	case rtypes.TyDepositAsset:
+		err = r.checkDeposit(txHash, action.GetDeposit())
 	case rtypes.TyWithDrawAsset:
 		err = r.checkWithdraw(txHash, action.GetWithdraw())
 	case rtypes.TyConfirmAction:
@@ -159,17 +178,63 @@ func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rty
 	return nil
 }
 
-func (r *rgbx) checkWithdraw(txHash string, withdraw *rtypes.WithdrawAsset) error {
-	if withdraw == nil {
+func (r *rgbx) checkCommitDKG(txHash string, commitDKG *rtypes.CommitDKG) error {
+	if commitDKG.GetAssetSymbol() == "" || commitDKG.GetDkgAddress() == "" {
+		elog.Error("checkCommitDKG invalid asset symbol or dkg address", "txHash", txHash,
+			"assetSymbol", commitDKG.GetAssetSymbol(), "dkgAddress", commitDKG.GetDkgAddress())
 		return types.ErrInvalidParam
 	}
-	if withdraw.GetAmount() <= 0 {
+	return nil
+}
+
+func (r *rgbx) checkWithdraw(txHash string, withdraw *rtypes.WithdrawAsset) error {
+
+	if !strings.EqualFold(withdraw.GetAssetSymbol(), rtypes.BTCSymbol) {
+		elog.Error("checkWithdraw invalid asset symbol", "txHash", txHash, "symbol", withdraw.GetAssetSymbol())
+		return ErrInvalidAssetSymbol
+	}
+	if withdraw.GetAmount() < minBtcWithdrawAmount {
 		elog.Error("checkWithdraw amount", "txHash", txHash, "amount", withdraw.GetAmount())
 		return ErrInvalidWithdrawAmount
 	}
-	if withdraw.GetDestinationAddr() == "" {
-		elog.Error("checkWithdraw destination", "txHash", txHash)
+
+	if _, err := r.decodeBtcAddressScript(withdraw.GetDestinationAddr()); err != nil {
+		elog.Error("checkWithdraw invalid btc destination", "txHash", txHash, "address", withdraw.GetDestinationAddr(), "err", err)
 		return ErrInvalidWithdrawDestination
+	}
+	if withdraw.GetFeeRate() < 1 || withdraw.GetFeeRate() > maxBtcFeeRate {
+		elog.Error("checkWithdraw feeRate", "txHash", txHash, "feeRate", withdraw.GetFeeRate())
+		return ErrInvalidWithdrawFeeRate
+	}
+	//TODO validate withdraw amount
+	return nil
+}
+
+func (r *rgbx) checkDeposit(txHash string, deposit *rtypes.DepositAsset) error {
+	if !strings.EqualFold(deposit.GetAssetSymbol(), rtypes.BTCSymbol) {
+		elog.Error("checkDeposit invalid asset symbol", "txHash", txHash, "symbol", deposit.GetAssetSymbol())
+		return ErrInvalidAssetSymbol
+	}
+	if deposit.GetAmount() <= 0 {
+		elog.Error("checkDeposit amount", "txHash", txHash, "amount", deposit.GetAmount())
+		return ErrInvalidDepositAmount
+	}
+	addr := deposit.GetDepositAddress()
+	if addr == "" || (!rtypes.IsUtxoAddress(addr) && address.CheckAddress(addr, -1) != nil) {
+		elog.Error("checkDeposit address invalid", "txHash", txHash, "address", addr)
+		return ErrInvalidDepositAddress
+	}
+	btcTx, err := r.validateBtcTxProof(txHash, deposit.GetTxProof())
+	if err != nil {
+		elog.Error("checkDeposit validate btc tx proof", "txHash", txHash, "btcProof", btcProof2String(deposit.GetTxProof()), "err", err)
+		return err
+	}
+	if !hasDepositCommitment(btcTx, addr) {
+		elog.Error("checkDeposit commitment mismatch", "txHash", txHash, "depositAddress", addr)
+		return ErrInvalidDepositCommitment
+	}
+	if err = r.validateDepositTxContent(txHash, deposit, btcTx); err != nil {
+		return err
 	}
 	return nil
 }
@@ -202,6 +267,11 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 	}
 
 	_, err = r.GetStateDB().Get(formatPayloadKey(confirm.GetTxHash()))
+	if err != nil {
+		elog.Error("checkConfirm get payload", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash, "err", err)
+		return ErrConfirmPayloadNotExist
+	}
 	if !bytes.Equal(confirm.GetTxHash(), pendingTx.GetTxHash()) {
 		elog.Error("checkConfirm tx hash not equal", "action", action,
 			"txHash", txHash, "confirmTxHash", confirmTxHash,
@@ -215,7 +285,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		return nil
 	}
 	if confirm.GetActionType() == rtypes.TyWithDrawAsset {
-		return r.checkWithdrawConfirm(txHash, confirmTxHash, confirm)
+		return r.checkWithdrawConfirm(txHash, confirmTxHash, confirm, pendingTx)
 	}
 
 	btcSpendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()

@@ -27,3 +27,7 @@ func (l *lightclient) Query_GetBtcHeaderByHash(req *types.ReqString) (types.Mess
 	header, err := getBtcHeader(l.GetLocalDB(), uint64(height.GetData()))
 	return header, err
 }
+
+func (l *lightclient) Query_GetBtcNetName(req *types.ReqNil) (types.Message, error) {
+	return &types.ReplyString{Data: lightCfg.BtcNetName}, nil
+}
