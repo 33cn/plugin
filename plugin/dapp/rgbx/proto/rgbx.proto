@@ -146,4 +146,9 @@ message btcCommitment {
     bytes  payload  = 3;
 }
 
+message txBlockIndex {
+    int64 blockHeight = 1;
+    int64 txIndex     = 2;
+}
+
 service rgbx {}

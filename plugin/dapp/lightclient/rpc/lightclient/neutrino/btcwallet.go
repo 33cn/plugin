@@ -129,7 +129,7 @@ type pendingTx struct {
 	withdrawAmount        btcutil.Amount
 	chain33DepositAddress string // Chain33充值地址
 	withdrawAddress       string
-	chain33WithdrawTxHash string // Chain33提现交易哈希
+	chain33WithdrawTxHash []byte // Chain33提现交易哈希
 	// OP_RETURN数据
 	opReturnData opReturnData // 原始OP_RETURN解析数据
 }
@@ -507,9 +507,9 @@ func (b *btcWallet) parseOpReturn(pkScript []byte) (*opReturnData, error) {
 		payload:  parts[2],
 	}
 
-	if opData.action == transactionTypeWithdraw { // chain33 tx hash
-		opData.payload = hex.EncodeToString([]byte(parts[2]))
-	}
+	// if opData.action == transactionTypeWithdraw { // chain33 tx hash
+	// 	opData.payload = hex.EncodeToString([]byte(parts[2]))
+	// }
 
 	return opData, nil
 }
@@ -579,7 +579,7 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 		info.withdrawAddress = firstNonTssOutputAddress
 		info.txType = transactionTypeWithdraw
 		info.withdrawAmount = withdrawAmount
-		info.chain33WithdrawTxHash = parsed.payload
+		info.chain33WithdrawTxHash = []byte(parsed.payload)
 		return info
 	} else if hasTssOutput && !hasTssInput { // 充值交易特征：有TSS输出，无TSS输入
 		info.depositAmount = depositAmount

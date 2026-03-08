@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -309,7 +310,8 @@ func (r *rgbx) commitPendingTx(request *confrimRequest) error {
 		log.Error("commitPendingTx createConfirmPayload", "confirmHash", confirmHash, "err", err)
 		return err
 	}
-	if err = r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm); err != nil {
+	err = r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
+	if err != nil && !strings.Contains(err.Error(), "already confirmed") {
 		log.Error("commitPendingTx submitMainchainTx", "confirmHash", confirmHash, "err", err)
 		return err
 	}

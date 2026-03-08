@@ -7,12 +7,14 @@ package neutrino
 import (
 	"bytes"
 	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/33cn/chain33/types"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcwallet/walletdb"
 )
 
 // headerPublisher 提交比特币区块头到链上
@@ -190,14 +192,71 @@ func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx
 		log.Error("processWithdrawRequest broadcastTransaction", "txHash", txHash, "err", err)
 		return err
 	}
-	log.Debug("processWithdrawRequest success", "txHash", txHash, "btcTxHash", tx.TxHash().String())
+	btcTxHash := tx.TxHash().String()
+	if err = n.setWithdrawState(chain33Pending.GetTxHash(), withdrawStatusSent); err != nil {
+		log.Error("processWithdrawRequest setWithdrawState", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
+	}
+	log.Debug("processWithdrawRequest success", "txHash", txHash, "btcTxHash", btcTxHash)
 	return nil
 }
 
 type confirmWithdraw struct {
-	btcPending        *pendingTx
-	chain33WithdrawTx *rtypes.PendingTx
-	confirmTx         *rtypes.ConfirmTx
+	btcPending          *pendingTx
+	pendingTxBlockIndex *rtypes.TxBlockIndex
+	confirmTx           *rtypes.ConfirmTx
+}
+
+var (
+	withdrawStateBucket     = []byte("rgbx-withdraw-state")
+	withdrawStatusSent      = []byte("broadcasted")
+	withdrawStatusConfirmed = []byte("confirmed")
+)
+
+func (n *neutrinoClient) hasWithdrawState(chain33TxHash []byte) bool {
+
+	var data []byte
+	err := walletdb.View(n.neutrinoCfg.Database, func(tx walletdb.ReadTx) error {
+		bucket := tx.ReadBucket([]byte(withdrawStateBucket))
+		if bucket == nil {
+			return walletdb.ErrBucketNotFound
+		}
+		data = bucket.Get(chain33TxHash)
+		return nil
+	})
+	if err != nil {
+		log.Debug("hasWithdrawState read db", "chain33TxHash", hex.EncodeToString(chain33TxHash), "err", err)
+		return false
+	}
+	return len(data) > 0
+}
+
+func (n *neutrinoClient) setWithdrawState(txHash []byte, status []byte) error {
+
+	return walletdb.Update(n.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
+		bucket, err := tx.CreateTopLevelBucket(withdrawStateBucket)
+		if err != nil {
+			return err
+		}
+		return bucket.Put(txHash, status)
+	})
+}
+
+func (n *neutrinoClient) getPendingTxBlockIndex(txHash []byte) *rtypes.TxBlockIndex {
+	hashStr := hex.EncodeToString(txHash)
+	pendingTx := n.rgbx.pendingCache.getTx(hashStr)
+	if pendingTx != nil {
+		return &rtypes.TxBlockIndex{
+			BlockHeight: pendingTx.TxBlockHeight,
+			TxIndex:     pendingTx.TxIndex,
+		}
+	}
+	txDetail, err := n.getTxDetail(txHash)
+	if err != nil {
+		log.Error("getPendingTxBlockIndex getTxDetail", "txHash", hashStr, "err", err)
+		return nil
+	}
+	txBlockIndex := &rtypes.TxBlockIndex{BlockHeight: txDetail.GetHeight(), TxIndex: txDetail.GetIndex()}
+	return txBlockIndex
 }
 
 // withdrawalProcessor 监听chain33主链上比特币提现请求, 构造提现交易到比特币网络，并向chain33主链提交rgbx confirm交易
@@ -218,7 +277,6 @@ func (n *neutrinoClient) withdrawalProcessor() {
 			withdrawRetryList = withdrawRetryList[:0]
 			for _, p := range tempWithdraws {
 				if err := n.processWithdrawRequest(p); err != nil {
-					log.Error("withdrawalProcessor processWithdrawRequest retry", "txHash", hex.EncodeToString(p.GetTxHash()), "err", err)
 					withdrawRetryList = append(withdrawRetryList, p)
 				}
 			}
@@ -229,49 +287,49 @@ func (n *neutrinoClient) withdrawalProcessor() {
 					confirmRetryList = append(confirmRetryList, p)
 				}
 			}
-		case pendingBtc := <-withdrawalChan:
-			chain33WithdrawTx := n.rgbx.pendingCache.getTx(pendingBtc.chain33WithdrawTxHash)
-			if chain33WithdrawTx == nil {
-				log.Error("withdrawalProcessor chain33WithdrawTx not found", "txHash", pendingBtc.chain33WithdrawTxHash)
-				continue
-			}
+		case pendingBtc := <-withdrawalChan: // 向chain33主链提交确认提现交易
 			confirm := &confirmWithdraw{
-				btcPending:        pendingBtc,
-				chain33WithdrawTx: chain33WithdrawTx,
+				btcPending: pendingBtc,
 			}
 			if !n.processWithdrawConfirm(confirm) {
 				confirmRetryList = append(confirmRetryList, confirm)
 			}
 
-		case pending := <-withdrawReqChan:
+		case pending := <-withdrawReqChan: // 向btc链提交提现交易
+			if n.hasWithdrawState(pending.GetTxHash()) {
+				log.Debug("withdrawalProcessor hasWithdrawState", "txHash", hex.EncodeToString(pending.GetTxHash()))
+				continue
+			}
 			if err := n.processWithdrawRequest(pending); err != nil {
-				log.Error("withdrawalProcessor processWithdrawRequest", "txHash", hex.EncodeToString(pending.GetTxHash()), "err", err)
 				withdrawRetryList = append(withdrawRetryList, pending)
 			}
 		}
 	}
 }
 
-func (n *neutrinoClient) buildWithdrawConfirm(btcPending *pendingTx, chain33WithdrawTx *rtypes.PendingTx) *rtypes.ConfirmTx {
+func (n *neutrinoClient) buildWithdrawConfirm(btcPending *pendingTx, pendingTxBlockIndex *rtypes.TxBlockIndex) *rtypes.ConfirmTx {
+	if pendingTxBlockIndex == nil {
+		return nil
+	}
 	spv, err := n.bw.buildTxExistenceProof(btcPending)
 	if err != nil {
 		log.Error("buildWithdrawConfirmPayload buildTxExistenceProof", "btcTxHash", btcPending.txHash.String(),
-			"chain33WithdrawTxHash", btcPending.chain33WithdrawTxHash, "err", err)
+			"chain33WithdrawTxHash", hex.EncodeToString(btcPending.chain33WithdrawTxHash), "err", err)
 		return nil
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, btcPending.tx.SerializeSizeStripped()))
 	if err = btcPending.tx.SerializeNoWitness(buf); err != nil {
 		log.Error("buildWithdrawConfirmPayload SerializeNoWitness", "btcTxHash", btcPending.txHash.String(),
-			"chain33WithdrawTxHash", btcPending.chain33WithdrawTxHash, "err", err)
+			"chain33WithdrawTxHash", hex.EncodeToString(btcPending.chain33WithdrawTxHash), "err", err)
 		return nil
 	}
 	minPendingHeight := n.rgbx.pendingCache.getMinPendingHeight()
 	return &rtypes.ConfirmTx{
 		ActionType:           rtypes.TyWithDrawAsset,
 		ConfirmedBlockHeight: minPendingHeight - 1,
-		TxBlockHeight:        chain33WithdrawTx.TxBlockHeight,
-		TxIndex:              chain33WithdrawTx.TxIndex,
-		TxHash:               chain33WithdrawTx.TxHash,
+		TxBlockHeight:        pendingTxBlockIndex.GetBlockHeight(),
+		TxIndex:              pendingTxBlockIndex.GetTxIndex(),
+		TxHash:               btcPending.chain33WithdrawTxHash,
 		BtcTxProof: &rtypes.BtcTxProof{
 			TxData:      buf.Bytes(),
 			BlockHash:   btcPending.blockHash.String(),
@@ -284,21 +342,30 @@ func (n *neutrinoClient) buildWithdrawConfirm(btcPending *pendingTx, chain33With
 
 func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 
+	if confirm.pendingTxBlockIndex == nil {
+		confirm.pendingTxBlockIndex = n.getPendingTxBlockIndex(confirm.btcPending.chain33WithdrawTxHash)
+	}
+
 	if confirm.confirmTx == nil {
-		confirm.confirmTx = n.buildWithdrawConfirm(confirm.btcPending, confirm.chain33WithdrawTx)
+		confirm.confirmTx = n.buildWithdrawConfirm(confirm.btcPending, confirm.pendingTxBlockIndex)
 	}
 	if confirm.confirmTx == nil {
 		return false
 	}
+	chain33WithdrawTxHash := hex.EncodeToString(confirm.confirmTx.TxHash)
 	err := n.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm.confirmTx)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already confirmed") {
 		log.Error("processWithdrawConfirm submitMainchainTx", "btcTxHash", confirm.btcPending.txHash.String(),
-			"chain33WithdrawTxHash", confirm.btcPending.chain33WithdrawTxHash, "err", err)
+			"chain33WithdrawTxHash", chain33WithdrawTxHash, "err", err)
 		return false
 	}
-	n.rgbx.pendingCache.removeTx(hex.EncodeToString(confirm.confirmTx.TxHash))
+	n.rgbx.pendingCache.removeTx(chain33WithdrawTxHash)
+	if err := n.setWithdrawState(confirm.confirmTx.GetTxHash(), withdrawStatusConfirmed); err != nil {
+		log.Error("processWithdrawConfirm setWithdrawState", "txHash", chain33WithdrawTxHash,
+			"btcTxHash", confirm.btcPending.txHash.String(), "err", err)
+	}
 	log.Debug("processWithdrawConfirm success", "btcTxHash", confirm.btcPending.txHash.String(),
-		"chain33WithdrawTxHash", confirm.btcPending.chain33WithdrawTxHash)
+		"chain33WithdrawTxHash", chain33WithdrawTxHash)
 	return true
 
 }

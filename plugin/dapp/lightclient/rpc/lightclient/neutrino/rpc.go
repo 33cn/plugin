@@ -112,13 +112,17 @@ func (n *neutrinoClient) getRgbxPendingTxs(req *rtypes.ReqListPendingTx) (*rtype
 	return data, nil
 }
 
+func (n *neutrinoClient) getTxDetail(txHash []byte) (*types.TransactionDetail, error) {
+	return n.mainChainGrpc.QueryTransaction(n.ctx, &types.ReqHash{Hash: txHash})
+}
+
 func (n *neutrinoClient) getRgbxWithdrawAsset(txHash []byte) (*rtypes.WithdrawAsset, error) {
 	if len(txHash) == 0 {
 		return nil, types.ErrInvalidParam
 	}
-	reply, err := n.mainChainGrpc.QueryTransaction(n.ctx, &types.ReqHash{Hash: txHash})
+	reply, err := n.getTxDetail(txHash)
 	if err != nil {
-		log.Error("getRgbxWithdrawAsset", "txHash", fmt.Sprintf("%x", txHash), "err", err)
+		log.Error("getRgbxWithdrawAsset", "txHash", fmt.Sprintf("%x", txHash), "get txDetail err", err)
 		return nil, err
 	}
 
