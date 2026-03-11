@@ -38,8 +38,6 @@ const (
 	defaultRequiredConfs = 6
 	// 最小找零金额（粉尘限制）
 	minChangeAmount = 546
-	// 默认手续费率 sat/byte
-	defaultFeeRate = 20
 	// UTXO锁定时长
 	utxoLeaseDuration = 24 * time.Hour
 )
@@ -110,7 +108,6 @@ type btcWallet struct {
 
 	// 配置
 	requiredConfs int32
-	feeRate       btcutil.Amount
 
 	// 交易监控
 	pendingTxs map[chainhash.Hash]*pendingTx
@@ -142,7 +139,6 @@ func newBtcWallet(n *neutrinoClient) (*btcWallet, error) {
 		withdrawChan:   make(chan *pendingTx, 100),
 		addPendingChan: make(chan *pendingTx, 100),
 		requiredConfs:  defaultRequiredConfs,
-		feeRate:        defaultFeeRate,
 		pendingTxs:     make(map[chainhash.Hash]*pendingTx),
 	}
 
@@ -617,12 +613,6 @@ func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64,
 		return nil, nil, nil, fmt.Errorf("invalid to address: %w", err)
 	}
 
-	// 获取手续费率
-	feeRate := req.feeRate
-	if feeRate == 0 {
-		feeRate = b.feeRate
-	}
-
 	// 构建输出
 	pkScript, err := txscript.PayToAddrScript(toAddr)
 	if err != nil {
@@ -637,12 +627,12 @@ func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64,
 	}
 
 	// 手动选择UTXO并构建交易
-	tx, inputAmounts, lockedUTXOs, err := b.buildTransaction(outputs, feeRate, req.chain33WithDrawHash, true)
+	tx, inputAmounts, lockedUTXOs, err := b.buildTransaction(outputs, req.feeRate, req.chain33WithDrawHash, true)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	log.Debug("buildWithdrawTx", "to", req.toAddress, "amount", req.amount, "feeRate", feeRate,
+	log.Debug("buildWithdrawTx", "to", req.toAddress, "amount", req.amount, "feeRate", req.feeRate,
 		"inputs", len(tx.TxIn), "outputs", len(tx.TxOut), "lockedUTXOs", len(lockedUTXOs))
 
 	return tx, inputAmounts, lockedUTXOs, nil

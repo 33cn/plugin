@@ -164,23 +164,33 @@ func (n *neutrinoClient) commitDepositTx(pendingTx *pendingTx) error {
 		},
 	}
 	n.submitMainchainTxUntilSuccess(rtypes.RgbxX, rtypes.NameDepositAssetAction, deposit)
-	log.Debug("commitDepositTx submit deposit success", "txHash", pendingTx.txHash.String(),
+	log.Debug("commitDepositTx submit deposit success", "btxHash", pendingTx.txHash.String(),
 		"depositAddr", deposit.GetDepositAddress(), "amount", deposit.GetAmount())
 	return nil
 }
 
-func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx) error {
-
-	req := &withdrawRequest{
+func pending2WithdrawRequest(chain33Pending *rtypes.PendingTx) *withdrawRequest {
+	return &withdrawRequest{
 		chain33WithDrawHash: chain33Pending.GetTxHash(),
 		amount:              btcutil.Amount(chain33Pending.GetAmount()),
 		feeRate:             btcutil.Amount(chain33Pending.GetFeeRate()),
 		toAddress:           chain33Pending.GetTargetAddress(),
 	}
+}
+
+func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx) error {
+
+	req := pending2WithdrawRequest(chain33Pending)
 	txHash := hex.EncodeToString(chain33Pending.GetTxHash())
 	tx, inputAmounts, lockedUTXOs, err := n.bw.buildWithdrawTx(req)
 	if err != nil {
 		log.Error("processWithdrawRequest buildWithdrawTx", "txHash", txHash, "err", err)
+		return err
+	}
+	// 主节点也进行验证，保证各节点执行相同的逻辑
+	err = n.tss.validateWithdrawTx(tx, inputAmounts, req)
+	if err != nil {
+		log.Error("processSignBtcTx validateWithdrawTx", "err", err)
 		return err
 	}
 	if err = n.tss.processSignBtcTx(tx, transactionTypeWithdraw, inputAmounts, req.chain33WithDrawHash); err != nil {
@@ -307,6 +317,20 @@ func (n *neutrinoClient) withdrawalProcessor() {
 	}
 }
 
+func (n *neutrinoClient) commitWithdrawConfirm(confirm *rtypes.ConfirmTx, confirmHash string) (string, error) {
+
+	txHash, err := n.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
+	if err != nil && !strings.Contains(err.Error(), "already confirmed") {
+		return "", err
+	}
+	n.rgbx.pendingCache.removeTx(confirmHash)
+	if err := n.setWithdrawState(confirm.TxHash, withdrawStatusConfirmed); err != nil {
+		log.Error("commitWithdrawConfirm setWithdrawState", "txHash", txHash,
+			"confirmHash", confirmHash, "err", err)
+	}
+	return txHash, nil
+}
+
 func (n *neutrinoClient) buildWithdrawConfirm(btcPending *pendingTx, pendingTxBlockIndex *rtypes.TxBlockIndex) *rtypes.ConfirmTx {
 	if pendingTxBlockIndex == nil {
 		return nil
@@ -352,20 +376,15 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 	if confirm.confirmTx == nil {
 		return false
 	}
-	chain33WithdrawTxHash := hex.EncodeToString(confirm.confirmTx.TxHash)
-	err := n.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm.confirmTx)
-	if err != nil && !strings.Contains(err.Error(), "already confirmed") {
-		log.Error("processWithdrawConfirm submitMainchainTx", "btcTxHash", confirm.btcPending.txHash.String(),
-			"chain33WithdrawTxHash", chain33WithdrawTxHash, "err", err)
+
+	confirmHash := hex.EncodeToString(confirm.confirmTx.TxHash)
+	txHash, err := n.commitWithdrawConfirm(confirm.confirmTx, confirmHash)
+	if err != nil {
+		log.Error("processWithdrawConfirm commitWithdrawConfirm", "txHash", txHash, "confirmHash", confirmHash, "err", err)
 		return false
 	}
-	n.rgbx.pendingCache.removeTx(chain33WithdrawTxHash)
-	if err := n.setWithdrawState(confirm.confirmTx.GetTxHash(), withdrawStatusConfirmed); err != nil {
-		log.Error("processWithdrawConfirm setWithdrawState", "txHash", chain33WithdrawTxHash,
-			"btcTxHash", confirm.btcPending.txHash.String(), "err", err)
-	}
-	log.Debug("processWithdrawConfirm success", "btcTxHash", confirm.btcPending.txHash.String(),
-		"chain33WithdrawTxHash", chain33WithdrawTxHash)
+	log.Debug("processWithdrawConfirm success", "txHash", txHash,
+		"btcTxHash", confirm.btcPending.txHash.String(), "confirmHash", confirmHash)
 	return true
 
 }

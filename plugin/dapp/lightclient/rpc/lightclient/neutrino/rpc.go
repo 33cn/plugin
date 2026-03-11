@@ -139,29 +139,65 @@ func (n *neutrinoClient) getRgbxWithdrawAsset(txHash []byte) (*rtypes.WithdrawAs
 	return action.GetWithdraw(), nil
 }
 
-func (n *neutrinoClient) submitMainchainTx(exec string, action string, payload types.Message) error {
+func (n *neutrinoClient) getRgbxPendingTx(height, index int64) (*rtypes.PendingTx, error) {
+	req := &rtypes.ReqGetPendingTx{
+		Height: height,
+		Index:  index,
+	}
+	reply, err := n.mainChainGrpc.QueryChain(n.ctx, &types.ChainExecutor{
+		Driver:   rtypes.RgbxX,
+		FuncName: "GetPendingTx",
+		Param:    types.Encode(req),
+	})
+	if err != nil {
+		log.Error("getRgbxPendingTx", "height", height, "index", index, "query err", err)
+		return nil, err
+	}
+	data := &rtypes.PendingTx{}
+	if err = types.Decode(reply.GetMsg(), data); err != nil {
+		log.Error("getRgbxPendingTx", "height", height, "index", index, "decode err", err)
+		return nil, err
+	}
+	return data, nil
+}
+
+func (n *neutrinoClient) getRgbxPendingTxByHash(txHash []byte) (*rtypes.PendingTx, error) {
+	if len(txHash) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	detail, err := n.getTxDetail(txHash)
+	if err != nil {
+		log.Error("getRgbxPendingTxByHash", "txHash", fmt.Sprintf("%x", txHash), "get txDetail err", err)
+		return nil, err
+	}
+	return n.getRgbxPendingTx(detail.GetHeight(), detail.GetIndex())
+}
+
+func (n *neutrinoClient) submitMainchainTx(exec string, action string, payload types.Message) (string, error) {
 	tx, err := n.createTx(exec, action, types.Encode(payload))
 	if err != nil {
 		log.Error("submitMainchainTx", "createTx err", err)
-		return err
+		return "", err
 	}
+	txHash := hex.EncodeToString(tx.Hash())
 	tx.Fee, err = tx.GetRealFee(n.getProperFeeRate())
 	if err != nil {
-		log.Error("submitMainchainTx", "txHash", hex.EncodeToString(tx.Hash()), "GetRealFee err", err)
-		return err
+		log.Error("submitMainchainTx", "txHash", txHash, "GetRealFee err", err)
+		return "", err
 	}
 	tx.Sign(types.EncodeSignID(secp256k1.ID, n.commitAddressType), n.getCommitKey())
 	err = n.sendTx2MainChain(tx)
 	if err != nil {
-		log.Error("submitMainchainTx", "txHash", hex.EncodeToString(tx.Hash()), "sendTx2MainChain err", err)
-		return err
+		log.Error("submitMainchainTx", "txHash", txHash, "sendTx2MainChain err", err)
+		return "", err
 	}
-	return nil
+	return txHash, nil
 }
 
 func (n *neutrinoClient) submitMainchainTxUntilSuccess(exec string, action string, payload types.Message) {
 
 	n.waitUntilDone("submitMainchainTxUntilSuccess", func() bool {
-		return n.submitMainchainTx(exec, action, payload) == nil
+		_, err := n.submitMainchainTx(exec, action, payload)
+		return err == nil
 	}, 0)
 }

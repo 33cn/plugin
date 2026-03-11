@@ -310,14 +310,14 @@ func (r *rgbx) commitPendingTx(request *confrimRequest) error {
 		log.Error("commitPendingTx createConfirmPayload", "confirmHash", confirmHash, "err", err)
 		return err
 	}
-	err = r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
+	txHash, err := r.client.submitMainchainTx(rtypes.RgbxX, rtypes.NameConfirmAction, confirm)
 	if err != nil && !strings.Contains(err.Error(), "already confirmed") {
-		log.Error("commitPendingTx submitMainchainTx", "confirmHash", confirmHash, "err", err)
+		log.Error("commitPendingTx submitMainchainTx", "txHash", txHash, "confirmHash", confirmHash, "err", err)
 		return err
 	}
 
 	r.pendingCache.removeTx(confirmHash)
-	log.Debug("commitPendingTx success", "confirmHash", confirmHash)
+	log.Debug("commitPendingTx success", "txHash", txHash, "confirmHash", confirmHash)
 	return nil
 }
 

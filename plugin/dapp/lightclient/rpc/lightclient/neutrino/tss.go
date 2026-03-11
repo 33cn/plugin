@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -27,20 +28,12 @@ const (
 	tssSignNotifyTopic = "rgbx/tssSignNotify/1.0"
 	// 单个 txIn 的 TSS 签名超时时间
 	singleInputSignTimeout = time.Minute
-	// txIn 签名常驻协程数量
-	inputSignWorkerCount = 4
 
 	// Database bucket and keys
 	tssBucketName  = "rgbx-tss"
 	dkgResultKey   = "dkg-result"
 	dkgSessionName = "rgbx-btc-dkg"
 )
-
-// tssSignNotify is the notification message for TSS signing
-type tssSignNotify struct {
-	TxHash    []byte
-	Timestamp int64
-}
 
 type signTask struct {
 	idx         int
@@ -53,6 +46,12 @@ type signTask struct {
 type signResult struct {
 	sig []byte
 	err error
+}
+
+type withdrawSignState struct {
+	pendingTs int64
+	signedAt  int64
+	signed    bool
 }
 
 type tssService struct {
@@ -71,13 +70,17 @@ type tssService struct {
 	subChan    chan *types.TopicData
 	selfPeerId string
 	signTaskCh chan *signTask
+	// non-official节点提现签名防重缓存
+	withdrawSeenLock sync.Mutex
+	withdrawSeenTx   map[string]*withdrawSignState
 }
 
 func newTssService(n *neutrinoClient) *tssService {
 	t := &tssService{
-		client:     n,
-		subChan:    make(chan *types.TopicData, 100),
-		signTaskCh: make(chan *signTask, 1024),
+		client:         n,
+		subChan:        make(chan *types.TopicData, 100),
+		signTaskCh:     make(chan *signTask, 1024),
+		withdrawSeenTx: make(map[string]*withdrawSignState, 256),
 	}
 	t.cfg = n.cfg.Tss
 	return t
@@ -287,14 +290,12 @@ func (t *tssService) generateTssAddress() error {
 }
 
 func (t *tssService) waitForSufficientSigners() []string {
-	for {
-		signers := tss.GetValidPeerCombination(t.client.qclient, t.cfg.Threshold, t.dkgResult.Bks)
-		if len(signers) > 0 {
-			return signers
-		}
-		log.Debug("waitForSufficientSigners no valid signers, wait 3 seconds...")
-		time.Sleep(time.Second * 3)
-	}
+	var signers []string
+	t.client.waitUntilDone("waitForSufficientSigners", func() bool {
+		signers = tss.GetValidPeerCombination(t.client.qclient, t.cfg.Threshold, t.dkgResult.Bks)
+		return len(signers) > 0
+	}, time.Second*3)
+	return signers
 }
 
 // processSignBtcTx processes a Bitcoin transaction using TSS protocol
@@ -321,14 +322,6 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 	// Publish notification to all TSS nodes
 	t.pubMsg(tssSignNotifyTopic, types.Encode(notify))
 	log.Debug("signMsg published notification", "txType", txType, "payload", hex.EncodeToString(payload))
-	// 主节点也进行验证，保证各节点执行相同的逻辑
-	if txType == transactionTypeWithdraw {
-		err = t.validateWithdrawTx(tx, inputAmounts, payload)
-		if err != nil {
-			log.Error("processSignBtcTx validateWithdrawTx", "err", err)
-			return err
-		}
-	}
 	return t.signBtcTx(tx, inputAmounts, signers)
 }
 
@@ -412,16 +405,24 @@ func (t *tssService) parseTxFromNotify(notify *lighttypes.TssSignNotify) (*wire.
 	return &tx, notify.InputAmounts, nil
 }
 
-func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, chain33WithDrawHash []byte) error {
-	if len(chain33WithDrawHash) == 0 {
-		return fmt.Errorf("empty withdraw asset hash")
-	}
-	withdraw, err := t.client.getRgbxWithdrawAsset(chain33WithDrawHash)
-	if err != nil {
-		log.Error("validateWithdrawTx getRgbxWithdrawAsset", "err", err, "chain33WithDrawHash", hex.EncodeToString(chain33WithDrawHash))
-		return err
-	}
+func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, req *withdrawRequest) error {
 
+	if !t.dkgCompleted.Load() {
+		log.Error("validateWithdrawTx DKG not completed", "withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
+		return fmt.Errorf("DKG not completed")
+	}
+	btcAddr, err := btcutil.DecodeAddress(req.toAddress, &t.client.neutrinoCfg.ChainParams)
+	if err != nil {
+		log.Error("validateWithdrawTx decode address", "err", err, "address", req.toAddress,
+			"withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
+		return fmt.Errorf("decode address failed")
+	}
+	btcAddrScript, err := txscript.PayToAddrScript(btcAddr)
+	if err != nil {
+		log.Error("validateWithdrawTx pay to addr script", "address", req.toAddress,
+			"withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash), "err", err)
+		return fmt.Errorf("pay to addr script failed")
+	}
 	var withdrawAmount, changeAmount int64
 	for _, output := range tx.TxOut {
 		if len(output.PkScript) > 0 && output.PkScript[0] == txscript.OP_RETURN {
@@ -431,16 +432,13 @@ func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, ch
 			changeAmount += output.Value
 			continue
 		}
+		if !bytes.Equal(output.PkScript, btcAddrScript) {
+			log.Error("validateWithdrawTx unexpected output script", "address", req.toAddress,
+				"expected", hex.EncodeToString(btcAddrScript), "actual", hex.EncodeToString(output.PkScript),
+				"withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
+			return fmt.Errorf("unexpected output script")
+		}
 		withdrawAmount += output.Value
-		_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, &t.client.neutrinoCfg.ChainParams)
-		if err != nil || len(addrs) == 0 {
-			log.Error("validateWithdrawSignNotify extract withdraw address failed", "pkscript", hex.EncodeToString(output.PkScript), "err", err)
-			return fmt.Errorf("extract withdraw address failed")
-		}
-		if withdraw.GetDestinationAddr() != addrs[0].String() {
-			log.Error("validateWithdrawSignNotify withdraw address mismatch", "expected", withdraw.GetDestinationAddr(), "actual", addrs[0].String())
-			return fmt.Errorf("withdraw address mismatch")
-		}
 	}
 
 	var totalInput int64
@@ -452,27 +450,41 @@ func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, ch
 		totalOutput += out.Value
 	}
 	fee := totalInput - totalOutput
-	if withdraw.GetFeeRate() <= 0 {
-		withdraw.FeeRate = defaultFeeRate
-	}
-	expectedFee := int64(estimateBtcFee(tx, btcutil.Amount(withdraw.GetFeeRate())))
+	expectedFee := int64(estimateBtcFee(tx, btcutil.Amount(req.feeRate)))
 	// 控制手续费在合理范围内
 	if fee > 2*expectedFee || fee < 0 {
-		log.Error("validateWithdrawSignNotify invalid fee", "fee", fee, "expected", expectedFee)
+		log.Error("validateWithdrawSignNotify invalid fee", "fee", fee, "expected", expectedFee,
+			"withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
 		return fmt.Errorf("invalid fee")
 	}
 	// 验证提现的关键是总支出不能超过提现金额，允许的最大磨损不能超过最小找零金额
-	if totalInput-changeAmount > withdraw.GetAmount()+minChangeAmount {
+	if totalInput-changeAmount > int64(req.amount)+minChangeAmount {
 		log.Error("validateWithdrawSignNotify withdraw overflowed",
 			"actualWithdraw", withdrawAmount, "changeAmount", changeAmount,
-			"totalInput", totalInput, "expectWithdraw", withdraw.GetAmount())
+			"totalInput", totalInput, "expectWithdraw", int64(req.amount),
+			"withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
 		return fmt.Errorf("withdraw overflowed")
 	}
-	if withdrawAmount > withdraw.GetAmount() || withdrawAmount < minChangeAmount {
-		log.Error("validateWithdrawSignNotify invalid withdraw amount", "actualWithdraw", withdrawAmount, "expectWithdraw", withdraw.GetAmount())
+	if withdrawAmount > int64(req.amount) || withdrawAmount < minChangeAmount {
+		log.Error("validateWithdrawSignNotify invalid withdraw amount", "actualWithdraw", withdrawAmount,
+			"expectWithdraw", int64(req.amount), "withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
 		return fmt.Errorf("invalid withdraw amount")
 	}
 	return nil
+}
+
+func (t *tssService) checkNonOfficialWithdrawSign(chain33WithDrawHash []byte) (*rtypes.PendingTx, error) {
+
+	txHash := hex.EncodeToString(chain33WithDrawHash)
+	pendingTx, err := t.client.getRgbxPendingTxByHash(chain33WithDrawHash)
+	if err != nil {
+		log.Error("checkNonOfficialWithdrawSign getRgbxPendingTxByHash", "txHash", txHash, "err", err)
+		return nil, err
+	}
+	if pendingTx.GetConfirmed() {
+		return nil, fmt.Errorf("withdraw already confirmed")
+	}
+	return pendingTx, nil
 }
 
 // handleSignNotify handles incoming TSS sign notifications
@@ -497,26 +509,32 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		}
 	}
 	if !isSigner {
-		log.Debug("handleSignNotify not signer", "signers", notify.Signers, "selfPeerId", t.selfPeerId)
+		log.Debug("handleSignNotify not signer", "signers", notify.Signers, "selfPeerId", t.selfPeerId, "type", notify.TxType)
 		return
 	}
 
 	tx, inputAmounts, err := t.parseTxFromNotify(notify)
 	if err != nil {
-		log.Error("handleSignNotify parseTxFromNotify", "err", err)
+		log.Error("handleSignNotify parseTxFromNotify", "type", notify.TxType, "err", err)
 		return
 	}
-
 	if notify.TxType == transactionTypeWithdraw {
-		err = t.validateWithdrawTx(tx, inputAmounts, notify.Payload)
+		pendingTx, err := t.checkNonOfficialWithdrawSign(notify.Payload)
 		if err != nil {
-			log.Error("handleSignNotify validateWithdrawTx", "err", err)
+			log.Error("handleSignNotify checkNonOfficialWithdrawSign", "type", notify.TxType,
+				"chain33WithDrawHash", hex.EncodeToString(notify.Payload), "err", err)
+			return
+		}
+		req := pending2WithdrawRequest(pendingTx)
+		err = t.validateWithdrawTx(tx, inputAmounts, req)
+		if err != nil {
+			log.Error("handleSignNotify validateWithdrawTx", "err", err, "withdrawTxHash", hex.EncodeToString(notify.Payload))
 			return
 		}
 	}
 
 	if err = t.signBtcTx(tx, inputAmounts, notify.Signers); err != nil {
-		log.Error("handleSignNotify signBtcTx", "err", err)
+		log.Error("handleSignNotify signBtcTx", "type", notify.TxType, "err", err)
 		return
 	}
 	log.Debug("handleSignNotify success", "txType", notify.TxType)
