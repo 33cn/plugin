@@ -102,19 +102,19 @@ type btcWallet struct {
 	tssPkScript []byte // 预计算的TSS地址脚本
 
 	// 通知channel
-	depositChan    chan *pendingTx
-	withdrawChan   chan *pendingTx
-	addPendingChan chan *pendingTx
+	depositChan    chan *btcPendingTx
+	withdrawChan   chan *btcPendingTx
+	addPendingChan chan *btcPendingTx
 
 	// 配置
 	requiredConfs int32
 
 	// 交易监控
-	pendingTxs map[chainhash.Hash]*pendingTx
+	pendingTxs map[chainhash.Hash]*btcPendingTx
 	// txLock     sync.RWMutex
 }
 
-type pendingTx struct {
+type btcPendingTx struct {
 	tx                    *wire.MsgTx
 	submitTime            time.Time
 	confirmations         int32
@@ -135,11 +135,11 @@ func newBtcWallet(n *neutrinoClient) (*btcWallet, error) {
 	bw := &btcWallet{
 		client:         n,
 		chainParams:    n.neutrinoCfg.ChainParams,
-		depositChan:    make(chan *pendingTx, 100),
-		withdrawChan:   make(chan *pendingTx, 100),
-		addPendingChan: make(chan *pendingTx, 100),
+		depositChan:    make(chan *btcPendingTx, 100),
+		withdrawChan:   make(chan *btcPendingTx, 100),
+		addPendingChan: make(chan *btcPendingTx, 100),
 		requiredConfs:  defaultRequiredConfs,
-		pendingTxs:     make(map[chainhash.Hash]*pendingTx),
+		pendingTxs:     make(map[chainhash.Hash]*btcPendingTx),
 	}
 
 	if n.cfg.BtcRPC.Host != "" {
@@ -337,11 +337,6 @@ func (b *btcWallet) rescanFromHeight(height int32) error {
 	}
 }
 
-// addPendingTx 添加待确认交易
-func (b *btcWallet) addPendingTx(pending *pendingTx) {
-	b.addPendingChan <- pending
-}
-
 // monitorTransactions 监听交易通知
 func (b *btcWallet) monitorTransactions() {
 	for {
@@ -512,8 +507,8 @@ func (b *btcWallet) parseOpReturn(pkScript []byte) (*opReturnData, error) {
 
 // analyzeTransaction 分析交易类型（优化版本）
 // 返回: ("deposit"|"withdraw"|"", pendingTx)
-func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pendingTx {
-	info := &pendingTx{}
+func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *btcPendingTx {
+	info := &btcPendingTx{}
 
 	// 检查输出：查找TSS地址、非TSS地址的输出和OP_RETURN
 	var hasTssOutput bool
@@ -591,7 +586,7 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *pe
 }
 
 // sendTransactionNotification 发送交易确认通知
-func (b *btcWallet) sendTransactionNotification(_ chainhash.Hash, pending *pendingTx) {
+func (b *btcWallet) sendTransactionNotification(_ chainhash.Hash, pending *btcPendingTx) {
 	if pending.txType == "deposit" {
 		b.depositChan <- pending
 	} else {
@@ -1159,7 +1154,7 @@ func buildTxHashesFromBlockTxs(blockTxs []*wire.MsgTx, targetTxHash chainhash.Ha
 // buildTxExistenceProof 计算交易存在性证明（SPV）
 // 输入: pendingTx（需要包含 tx 和 blockHash）
 // 输出: lighttypes.BtcSpv
-func (b *btcWallet) buildTxExistenceProof(pending *pendingTx) (*lighttypes.BtcSpv, error) {
+func (b *btcWallet) buildTxExistenceProof(pending *btcPendingTx) (*lighttypes.BtcSpv, error) {
 	if pending == nil || pending.tx == nil {
 		return nil, fmt.Errorf("pending tx data missing")
 	}
@@ -1219,11 +1214,11 @@ func (b *btcWallet) GetBalance() (btcutil.Amount, error) {
 }
 
 // GetDepositChannel 获取充值通知channel
-func (b *btcWallet) GetDepositChannel() <-chan *pendingTx {
+func (b *btcWallet) GetDepositChannel() <-chan *btcPendingTx {
 	return b.depositChan
 }
 
 // GetWithdrawChannel 获取提现通知channel
-func (b *btcWallet) GetWithdrawChannel() <-chan *pendingTx {
+func (b *btcWallet) GetWithdrawChannel() <-chan *btcPendingTx {
 	return b.withdrawChan
 }

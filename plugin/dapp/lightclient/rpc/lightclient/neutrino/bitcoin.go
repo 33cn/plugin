@@ -106,7 +106,7 @@ func (n *neutrinoClient) depositWatcher() {
 
 	depositChan := n.bw.GetDepositChannel()
 	retryTicker := time.NewTicker(time.Second * 30)
-	var retryList []*pendingTx
+	var retryList []*btcPendingTx
 	for {
 		select {
 		case <-n.ctx.Done():
@@ -140,7 +140,7 @@ func (n *neutrinoClient) depositWatcher() {
 		}
 	}
 }
-func (n *neutrinoClient) commitDepositTx(pendingTx *pendingTx) error {
+func (n *neutrinoClient) commitDepositTx(pendingTx *btcPendingTx) error {
 	spv, err := n.bw.buildTxExistenceProof(pendingTx)
 	if err != nil {
 		log.Error("commitDepositTx buildTxExistenceProof", "txHash", pendingTx.txHash.String(), "err", err)
@@ -211,7 +211,7 @@ func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx
 }
 
 type confirmWithdraw struct {
-	btcPending          *pendingTx
+	btcPending          *btcPendingTx
 	pendingTxBlockIndex *rtypes.TxBlockIndex
 	confirmTx           *rtypes.ConfirmTx
 }
@@ -331,7 +331,7 @@ func (n *neutrinoClient) commitWithdrawConfirm(confirm *rtypes.ConfirmTx, confir
 	return txHash, nil
 }
 
-func (n *neutrinoClient) buildWithdrawConfirm(btcPending *pendingTx, pendingTxBlockIndex *rtypes.TxBlockIndex) *rtypes.ConfirmTx {
+func (n *neutrinoClient) buildWithdrawConfirm(btcPending *btcPendingTx, pendingTxBlockIndex *rtypes.TxBlockIndex) *rtypes.ConfirmTx {
 	if pendingTxBlockIndex == nil {
 		return nil
 	}
