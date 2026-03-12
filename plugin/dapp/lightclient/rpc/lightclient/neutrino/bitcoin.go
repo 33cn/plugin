@@ -7,6 +7,7 @@ package neutrino
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"strings"
 	"time"
 
@@ -141,6 +142,11 @@ func (n *neutrinoClient) depositWatcher() {
 	}
 }
 func (n *neutrinoClient) commitDepositTx(pendingTx *btcPendingTx) error {
+	if state := n.getDepositState(pendingTx.txHash[:]); bytes.Equal(state, depositStatusProcessed) {
+		log.Debug("commitDepositTx already processed", "txHash", pendingTx.txHash.String())
+		n.bw.removePendingTx(pendingTx.txHash)
+		return nil
+	}
 	spv, err := n.bw.buildTxExistenceProof(pendingTx)
 	if err != nil {
 		log.Error("commitDepositTx buildTxExistenceProof", "txHash", pendingTx.txHash.String(), "err", err)
@@ -164,6 +170,10 @@ func (n *neutrinoClient) commitDepositTx(pendingTx *btcPendingTx) error {
 		},
 	}
 	n.submitMainchainTxUntilSuccess(rtypes.RgbxX, rtypes.NameDepositAssetAction, deposit)
+	if err = n.setDepositState(pendingTx.txHash[:], depositStatusProcessed); err != nil {
+		log.Error("commitDepositTx setDepositState processed", "txHash", pendingTx.txHash.String(), "err", err)
+	}
+	n.bw.removePendingTx(pendingTx.txHash)
 	log.Debug("commitDepositTx submit deposit success", "btxHash", pendingTx.txHash.String(),
 		"depositAddr", deposit.GetDepositAddress(), "amount", deposit.GetAmount())
 	return nil
@@ -202,6 +212,16 @@ func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx
 		log.Error("processWithdrawRequest broadcastTransaction", "txHash", txHash, "err", err)
 		return err
 	}
+	n.bw.addPendingTx(&btcPendingTx{
+		tx:                    tx,
+		submitTime:            types.Now(),
+		confirmations:         0,
+		blockHeight:           -1,
+		txHash:                tx.TxHash(),
+		txType:                transactionTypeWithdraw,
+		withdrawAddress:       req.toAddress,
+		chain33WithdrawTxHash: req.chain33WithDrawHash,
+	})
 	btcTxHash := tx.TxHash().String()
 	if err = n.setWithdrawState(chain33Pending.GetTxHash(), withdrawStatusSent); err != nil {
 		log.Error("processWithdrawRequest setWithdrawState", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
@@ -220,30 +240,57 @@ var (
 	withdrawStateBucket     = []byte("rgbx-withdraw-state")
 	withdrawStatusSent      = []byte("broadcasted")
 	withdrawStatusConfirmed = []byte("confirmed")
+
+	depositStateBucket     = []byte("rgbx-deposit-state")
+	depositStatusProcessed = []byte("processed")
 )
 
-func (n *neutrinoClient) hasWithdrawState(chain33TxHash []byte) bool {
-
+func (n *neutrinoClient) getWithdrawState(chain33TxHash []byte) []byte {
 	var data []byte
 	err := walletdb.View(n.neutrinoCfg.Database, func(tx walletdb.ReadTx) error {
-		bucket := tx.ReadBucket([]byte(withdrawStateBucket))
+		bucket := tx.ReadBucket(withdrawStateBucket)
 		if bucket == nil {
 			return walletdb.ErrBucketNotFound
 		}
 		data = bucket.Get(chain33TxHash)
 		return nil
 	})
-	if err != nil {
-		log.Debug("hasWithdrawState read db", "chain33TxHash", hex.EncodeToString(chain33TxHash), "err", err)
-		return false
+	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) {
+		log.Error("getWithdrawState", "txHash", hex.EncodeToString(chain33TxHash), "err", err)
 	}
-	return len(data) > 0
+	return data
 }
 
 func (n *neutrinoClient) setWithdrawState(txHash []byte, status []byte) error {
 
 	return walletdb.Update(n.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
 		bucket, err := tx.CreateTopLevelBucket(withdrawStateBucket)
+		if err != nil {
+			return err
+		}
+		return bucket.Put(txHash, status)
+	})
+}
+
+func (n *neutrinoClient) getDepositState(txHash []byte) []byte {
+	var data []byte
+	err := walletdb.View(n.neutrinoCfg.Database, func(tx walletdb.ReadTx) error {
+		bucket := tx.ReadBucket(depositStateBucket)
+		if bucket == nil {
+			return walletdb.ErrBucketNotFound
+		}
+		data = bucket.Get(txHash)
+		return nil
+	})
+	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) {
+		log.Error("getDepositState", "txHash", hex.EncodeToString(txHash), "err", err)
+	}
+	return data
+}
+
+func (n *neutrinoClient) setDepositState(txHash []byte, status []byte) error {
+	return walletdb.Update(n.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
+		bucket, err := tx.CreateTopLevelBucket(depositStateBucket)
 		if err != nil {
 			return err
 		}
@@ -306,7 +353,7 @@ func (n *neutrinoClient) withdrawalProcessor() {
 			}
 
 		case pending := <-withdrawReqChan: // 向btc链提交提现交易
-			if n.hasWithdrawState(pending.GetTxHash()) {
+			if len(n.getWithdrawState(pending.GetTxHash())) > 0 {
 				log.Debug("withdrawalProcessor hasWithdrawState", "txHash", hex.EncodeToString(pending.GetTxHash()))
 				continue
 			}
@@ -376,13 +423,20 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 	if confirm.confirmTx == nil {
 		return false
 	}
-
 	confirmHash := hex.EncodeToString(confirm.confirmTx.TxHash)
+	if state := n.getWithdrawState(confirm.confirmTx.GetTxHash()); bytes.Equal(state, withdrawStatusConfirmed) {
+		n.rgbx.pendingCache.removeTx(confirmHash)
+		n.bw.removePendingTx(confirm.btcPending.txHash)
+		log.Debug("processWithdrawConfirm already confirmed local state", "confirmHash", confirmHash)
+		return true
+	}
+
 	txHash, err := n.commitWithdrawConfirm(confirm.confirmTx, confirmHash)
 	if err != nil {
 		log.Error("processWithdrawConfirm commitWithdrawConfirm", "txHash", txHash, "confirmHash", confirmHash, "err", err)
 		return false
 	}
+	n.bw.removePendingTx(confirm.btcPending.txHash)
 	log.Debug("processWithdrawConfirm success", "txHash", txHash,
 		"btcTxHash", confirm.btcPending.txHash.String(), "confirmHash", confirmHash)
 	return true
