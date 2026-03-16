@@ -81,17 +81,7 @@ func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
 	return driver, key
 }
 
-func (n *neutrinoClient) isChain33Sync() bool {
-	reply, err := n.chain33Api.IsSync()
-	if err != nil {
-		log.Error("isChain33Sync", "err", err)
-		return false
-	}
-
-	return reply.GetIsOk()
-}
-
-func (n *neutrinoClient) waitUntilDone(taskName string, done func() bool, interval time.Duration) {
+func (n *neutrinoClient) waitUntilDone(_ string, done func() bool, interval time.Duration) {
 	if done() {
 		return
 	}

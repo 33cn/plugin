@@ -197,9 +197,6 @@ func (b *btcWallet) start() error {
 	b.Wallet.Start()
 	b.Wallet.SynchronizeRPC(b.chainClient)
 
-	// 等待TSS地址生成
-	go b.waitAndImportTSSAddress()
-
 	// 启动交易监听
 	go b.monitorTransactions()
 
@@ -217,38 +214,34 @@ func (b *btcWallet) stop() {
 
 // waitAndImportTSSAddress 等待TSS地址生成并导入
 func (b *btcWallet) waitAndImportTSSAddress() {
-	for {
-		if !b.client.tss.isDKGCompleted() {
 
-			time.Sleep(time.Second * 3)
-			continue
-		}
-		addr := b.client.tss.getTssAddress()
+	b.client.waitUntilDone("waitDKGCompleted", func() bool {
+		return b.client.tss.isDKGCompleted()
+	}, time.Second*3)
 
-		// 保存TSS地址、公钥和脚本
-		b.tssAddress = addr
-		b.tssPubKey = b.client.tss.tssPublicKey
-		b.tssPkScript = b.client.tss.pkScript
+	addr := b.client.tss.getTssAddress()
+	// 保存TSS地址、公钥和脚本
+	b.tssAddress = addr
+	b.tssPubKey = b.client.tss.tssPublicKey
+	b.tssPkScript = b.client.tss.pkScript
 
+	log.Debug("waitAndImportTSSAddress", "address", addr.String())
+	b.client.waitUntilDone("waitImportTSSAddress", func() bool {
 		// 显式导入TSS公钥到钱包
 		if _, err := b.Wallet.AddressInfo(addr); err != nil {
 			if !waddrmgr.IsError(err, waddrmgr.ErrAddressNotFound) {
 				log.Error("waitAndImportTSSAddress AddressInfo failed", "err", err)
-				time.Sleep(time.Second * 3)
-				continue
+				return false
 			}
 			err = b.Wallet.ImportPublicKey(b.tssPubKey, waddrmgr.WitnessPubKey)
 			if err != nil {
 				log.Error("waitAndImportTSSAddress ImportPublicKey failed", "err", err)
-				time.Sleep(time.Second * 3)
-				continue
+				return false
 			}
 		}
-
-		log.Info("waitAndImportTSSAddress success", "address", addr.String())
-		return
-
-	}
+		return true
+	}, time.Second*3)
+	log.Info("waitAndImportTSSAddress success", "address", addr.String())
 }
 
 func (b *btcWallet) loadMinPendingHeight() int32 {
@@ -342,13 +335,8 @@ func (b *btcWallet) rescanFromHeight(height int32) error {
 
 // monitorTransactions 监听交易通知
 func (b *btcWallet) monitorTransactions() {
-	for {
-		if b.client.tss.isDKGCompleted() {
-			break
-		}
-		time.Sleep(time.Second * 3)
-	}
 
+	b.waitAndImportTSSAddress()
 	b.monitorStartHeight = b.loadMinPendingHeight()
 
 	// 注册通知客户端
