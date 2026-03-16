@@ -54,9 +54,8 @@ const (
 )
 
 // utxoWithdrawLockID UTXO锁定ID
-var utxoWithdrawLockID = wtxmgr.LockID{
-	'R', 'G', 'B', 'X', '-', 'W', 'I', 'T', 'H',
-	'D', 'R', 'A', 'W', '-', 'L', 'O', 'C', 'K',
+var utxoLockID = wtxmgr.LockID{
+	'R', 'G', 'B', 'X', '-', 'L', 'O', 'C', 'K',
 	'-', 'I', 'D', '-', 'V', '1', '.', '0', '.', '0',
 	0, 0, 0, 0,
 }
@@ -84,6 +83,7 @@ type withdrawRequest struct {
 	amount              btcutil.Amount
 	feeRate             btcutil.Amount // sat/byte，0表示使用默认
 	toAddress           string
+	stickyUTXO          *UTXO
 }
 
 type btcWallet struct {
@@ -629,7 +629,7 @@ func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64,
 	}
 
 	// 手动选择UTXO并构建交易
-	tx, inputAmounts, lockedUTXOs, err := b.buildTransaction(outputs, req.feeRate, req.chain33WithDrawHash, true)
+	tx, inputAmounts, lockedUTXOs, err := b.buildTransaction(outputs, req.feeRate, req.chain33WithDrawHash, true, req.stickyUTXO)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -642,21 +642,21 @@ func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64,
 
 // buildTransaction 手动构建交易
 // 返回: (交易, 输入金额列表, 选中的UTXO列表, 错误)
-func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amount, chain33Hash []byte, receiverPaysFee bool) (*wire.MsgTx, []int64, []*UTXO, error) {
+func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amount, chain33Hash []byte,
+	receiverPaysFee bool, stickyUTXO *UTXO) (*wire.MsgTx, []int64, []*UTXO, error) {
 	// 计算输出总额
 	var outputTotal btcutil.Amount
 	for _, output := range outputs {
 		outputTotal += btcutil.Amount(output.Value)
 	}
 
+	hashStr := hex.EncodeToString(chain33Hash)
 	// 获取可用UTXO
 	utxos, err := b.listUnspent()
 	if err != nil {
+		log.Error("buildTransaction listUnspent failed", "hash", hashStr, "targetAmount", outputTotal,
+			"utxos", len(utxos), "err", err)
 		return nil, nil, nil, fmt.Errorf("list unspent failed: %w", err)
-	}
-
-	if len(utxos) == 0 {
-		return nil, nil, nil, fmt.Errorf("no available UTXO")
 	}
 
 	// 选择并锁定UTXO（防止并发双花）
@@ -664,8 +664,10 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 	if receiverPaysFee {
 		selectionFeeRate = 0
 	}
-	selectedUTXOs, inputTotal, err := b.selectAndLockUTXOs(utxos, outputTotal, selectionFeeRate)
+	selectedUTXOs, inputTotal, err := b.selectAndLockUTXOs(utxos, outputTotal, selectionFeeRate, stickyUTXO)
 	if err != nil {
+		log.Error("buildTransaction selectAndLockUTXOs failed", "hash", hashStr, "targetAmount", outputTotal,
+			"err", err)
 		return nil, nil, nil, err
 	}
 
@@ -684,7 +686,7 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 	buf = append(buf, chain33Hash...)
 	opScript, err := txscript.NullDataScript(buf)
 	if err != nil {
-		log.Error("build tx op script failed", "err", err)
+		log.Error("build tx op script failed", "hash", hashStr, "err", err)
 		return nil, nil, nil, err
 	}
 	tx.AddTxOut(wire.NewTxOut(0, opScript))
@@ -701,7 +703,9 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 	if receiverPaysFee {
 		// 提现输出金额过小，则不构建交易
 		if fee+minChangeAmount >= outputTotal {
-			b.releaseUTXOs(selectedUTXOs)
+			b.releaseUTXOsExcept(selectedUTXOs, stickyUTXO)
+			log.Error("buildTransaction withdraw amount too small for fee", "hash", hashStr, "targetAmount", outputTotal,
+				"fee", fee, "change", change)
 			return nil, nil, nil, fmt.Errorf("withdraw amount too small for fee: amount %d, fee %d", outputTotal, fee)
 		}
 		outputs[0].Value = int64(outputTotal - fee)
@@ -716,7 +720,9 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 		tx.AddTxOut(wire.NewTxOut(int64(change), b.tssPkScript))
 	} else if change < 0 {
 		// 资金不足，释放已锁定的UTXO
-		b.releaseUTXOs(selectedUTXOs)
+		b.releaseUTXOsExcept(selectedUTXOs, stickyUTXO)
+		log.Error("buildTransaction insufficient funds", "hash", hashStr, "targetAmount", outputTotal,
+			"fee", fee, "change", change)
 		return nil, nil, nil, fmt.Errorf("insufficient funds: need %d, have %d", outputTotal+fee, inputTotal)
 	}
 
@@ -772,107 +778,13 @@ func (b *btcWallet) listUnspent() ([]*UTXO, error) {
 		utxos = append(utxos, utxo)
 	}
 
-	// 按金额从大到小排序，便于选择
-	sort.Slice(utxos, func(i, j int) bool {
-		return utxos[i].Amount > utxos[j].Amount
-	})
-
-	log.Debug("listUnspent", "count", len(utxos), "totalAmount", b.calculateTotalAmount(utxos))
+	log.Debug("listUnspent", "count", len(utxos))
 	return utxos, nil
 }
 
-// calculateTotalAmount 计算UTXO总金额
-func (b *btcWallet) calculateTotalAmount(utxos []*UTXO) btcutil.Amount {
-	var total btcutil.Amount
-	for _, utxo := range utxos {
-		total += utxo.Amount
-	}
-	return total
-}
-
-// selectUTXOs 选择UTXO（优化版本）
-// 策略：
-// - 如果最少数量 > 4，直接返回最少数量组合
-// - 如果最少数量 ≤ 4，尝试优化选择，减少交易大小
-func (b *btcWallet) selectUTXOs(utxos []*UTXO, targetAmount, feeRate btcutil.Amount) ([]*UTXO, btcutil.Amount, error) {
-	if len(utxos) == 0 {
-		return nil, 0, fmt.Errorf("no available UTXO")
-	}
-
-	// 第一步：找到最少数量的UTXO组合
-	minResult, err := b.findMinimumInputCount(utxos, targetAmount, feeRate)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	log.Debug("selectUTXOs minimum input count", "count", len(minResult.selected), "total", minResult.total, "target", targetAmount)
-
-	// 如果最少数量 > 4，直接返回
-	if len(minResult.selected) > 4 {
-		log.Info("selectUTXOs using minimum count strategy",
-			"selected", len(minResult.selected),
-			"total", minResult.total)
-		return minResult.selected, minResult.total, nil
-	}
-
-	// 第二步：尝试优化选择（数量 ≤ 4）
-	optimizedResult, err := b.optimizeSelection(utxos, targetAmount, feeRate, len(minResult.selected))
-	if err != nil {
-		// 优化失败，使用最少数量策略
-		log.Debug("selectUTXOs optimization failed, using minimum count",
-			"err", err)
-		return minResult.selected, minResult.total, nil
-	}
-
-	log.Info("selectUTXOs using optimized strategy", "selected", len(optimizedResult.selected),
-		"total", optimizedResult.total, "saved", minResult.total-optimizedResult.total)
-
-	return optimizedResult.selected, optimizedResult.total, nil
-}
-
-// selectionResult UTXO选择结果
-type selectionResult struct {
-	selected []*UTXO        // 选中的UTXO列表
-	total    btcutil.Amount // 总金额
-	waste    btcutil.Amount // 浪费金额（找零+手续费差异）
-}
-
-// findMinimumInputCount 找到最少数量的UTXO组合
+// selectUTXOs 找到最少数量的UTXO组合
 // 策略：按金额从大到小排序，依次选择直到满足需求
-func (b *btcWallet) findMinimumInputCount(utxos []*UTXO, targetAmount, feeRate btcutil.Amount) (*selectionResult, error) {
-	// 按金额从大到小排序
-	sorted := make([]*UTXO, len(utxos))
-	copy(sorted, utxos)
-	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].Amount > sorted[j].Amount
-	})
-
-	var selected []*UTXO
-	var total btcutil.Amount
-
-	for _, utxo := range sorted {
-		selected = append(selected, utxo)
-		total += utxo.Amount
-
-		// 估算手续费
-		txSize := b.estimateTxSize(len(selected), 2, withdrawOpReturnScriptLen) // 目标+找零+OP_RETURN
-		fee := btcutil.Amount(txSize) * feeRate
-
-		if total >= targetAmount+fee {
-			return &selectionResult{
-				selected: selected,
-				total:    total,
-				waste:    total - targetAmount - fee,
-			}, nil
-		}
-	}
-
-	return nil, fmt.Errorf("insufficient funds: need %d, have %d", targetAmount, total)
-}
-
-// optimizeSelection 优化UTXO选择（数量 ≤ 4）
-// 策略：在最少数量限制内，依次选择最小大于剩余所需的UTXO
-func (b *btcWallet) optimizeSelection(utxos []*UTXO, targetAmount, feeRate btcutil.Amount, maxCount int) (*selectionResult, error) {
+func (b *btcWallet) selectUTXOs(utxos []*UTXO, targetAmount, feeRate btcutil.Amount, stickyCount int) ([]*UTXO, btcutil.Amount, error) {
 	// 按金额从小到大排序
 	sorted := make([]*UTXO, len(utxos))
 	copy(sorted, utxos)
@@ -880,81 +792,38 @@ func (b *btcWallet) optimizeSelection(utxos []*UTXO, targetAmount, feeRate btcut
 		return sorted[i].Amount < sorted[j].Amount
 	})
 
-	var selected []*UTXO
-	var total btcutil.Amount
-	remaining := targetAmount
+	//从小到大，找第一个大于等于amount的UTXO索引，如果没有则返回最大的
+	findFirstGreaterOrEqual := func(sorted []*UTXO, amount btcutil.Amount) int {
 
-	for len(selected) < maxCount {
-		// 估算当前手续费
-		txSize := b.estimateTxSize(len(selected)+1, 2, withdrawOpReturnScriptLen)
-		fee := btcutil.Amount(txSize) * feeRate
-		needed := remaining + fee
-
-		// 找到最小大于所需金额的UTXO
-		utxo := b.findSmallestGreaterThan(sorted, selected, needed)
-		if utxo == nil {
-			// 没找到合适的，选择最大的
-			utxo = b.findLargestUnselected(sorted, selected)
-			if utxo == nil {
-				break
+		for i := 0; i < len(sorted); i++ {
+			if sorted[i].Amount >= amount {
+				return i
 			}
 		}
+		return len(sorted) - 1
+	}
 
-		selected = append(selected, utxo)
-		total += utxo.Amount
-		remaining = targetAmount + fee - total
-
+	var selected []*UTXO
+	var total btcutil.Amount
+	for len(sorted) > 0 {
+		// 估算当前手续费
+		txSize := b.estimateTxSize(len(selected)+stickyCount+1, 2, withdrawOpReturnScriptLen)
+		fee := btcutil.Amount(txSize) * feeRate
+		needed := targetAmount + fee - total
+		idx := findFirstGreaterOrEqual(sorted, needed)
+		selected = append(selected, sorted[idx])
+		total += sorted[idx].Amount
+		sorted = sorted[:idx]
 		// 检查是否满足需求
-		if remaining <= 0 {
-			return &selectionResult{
-				selected: selected,
-				total:    total,
-				waste:    -remaining,
-			}, nil
+		if targetAmount+fee <= total {
+			log.Debug("selectUTXOs success", "selected", len(selected), "total", total,
+				"target", targetAmount, "fee", fee, "waste", total-targetAmount-fee)
+			return selected, total, nil
 		}
 	}
 
-	// 未能在限制内满足需求
-	return nil, fmt.Errorf("cannot satisfy with %d inputs", maxCount)
-}
-
-// findSmallestGreaterThan 找到最小大于指定金额的UTXO
-func (b *btcWallet) findSmallestGreaterThan(utxos []*UTXO, selected []*UTXO, amount btcutil.Amount) *UTXO {
-	// 创建已选择UTXO的map，用于快速查找
-	selectedMap := make(map[wire.OutPoint]bool)
-	for _, utxo := range selected {
-		selectedMap[utxo.OutPoint] = true
-	}
-
-	// 查找最小大于amount的UTXO
-	for _, utxo := range utxos {
-		if selectedMap[utxo.OutPoint] {
-			continue
-		}
-		if utxo.Amount >= amount {
-			return utxo
-		}
-	}
-
-	return nil
-}
-
-// findLargestUnselected 找到最大的未选择UTXO
-func (b *btcWallet) findLargestUnselected(utxos []*UTXO, selected []*UTXO) *UTXO {
-	// 创建已选择UTXO的map
-	selectedMap := make(map[wire.OutPoint]bool)
-	for _, utxo := range selected {
-		selectedMap[utxo.OutPoint] = true
-	}
-
-	// 从后往前找（因为已按从小到大排序）
-	for i := len(utxos) - 1; i >= 0; i-- {
-		if !selectedMap[utxos[i].OutPoint] {
-			return utxos[i]
-		}
-	}
-
-	return nil
+	log.Debug("selectUTXOs insufficient funds", "target", targetAmount, "total", total)
+	return nil, 0, fmt.Errorf("insufficient funds: need %d, have %d", targetAmount, total)
 }
 
 // estimateTxSize 估算交易大小
@@ -986,47 +855,42 @@ func (b *btcWallet) estimateTxSize(inputCount, p2wpkhOutputCount, opReturnScript
 
 // selectAndLockUTXOs 选择并锁定UTXO（用于提现交易）
 // 使用wallet.LeaseOutput实现持久化锁定，防止UTXO被重复使用
-func (b *btcWallet) selectAndLockUTXOs(utxos []*UTXO, targetAmount, feeRate btcutil.Amount) ([]*UTXO, btcutil.Amount, error) {
-	// 过滤已锁定的UTXO
-	var availableUTXOs []*UTXO
-	for _, utxo := range utxos {
-		// 检查UTXO是否已被锁定
-		locked := b.Wallet.LockedOutpoint(utxo.OutPoint)
-		if !locked {
-			availableUTXOs = append(availableUTXOs, utxo)
-		} else {
-			log.Debug("selectAndLockUTXOs skip locked UTXO",
-				"outpoint", utxo.OutPoint.String(),
-				"amount", utxo.Amount)
+func (b *btcWallet) selectAndLockUTXOs(utxos []*UTXO, targetAmount, feeRate btcutil.Amount, stickyUTXO *UTXO) ([]*UTXO, btcutil.Amount, error) {
+
+	log.Debug("selectAndLockUTXOs", "total", len(utxos), "targetAmount", targetAmount,
+		"feeRate", feeRate, "stickyUTXO", stickyUTXO != nil)
+
+	stickyCount := 0
+	if stickyUTXO != nil {
+		targetAmount -= stickyUTXO.Amount
+		// 如果剩余所需金额为0，且没有其他UTXO，则直接返回指定输入
+		if len(utxos) == 0 && targetAmount <= 0 {
+			return []*UTXO{stickyUTXO}, stickyUTXO.Amount, nil
 		}
+		stickyCount = 1
 	}
 
-	if len(availableUTXOs) == 0 {
-		return nil, 0, fmt.Errorf("no available unlocked UTXO")
-	}
-
-	log.Debug("selectAndLockUTXOs available UTXOs",
-		"total", len(utxos),
-		"available", len(availableUTXOs),
-		"locked", len(utxos)-len(availableUTXOs))
-
-	// 使用现有的选择策略
-	selected, total, err := b.selectUTXOs(availableUTXOs, targetAmount, feeRate)
+	selected, total, err := b.selectUTXOs(utxos, targetAmount, feeRate, stickyCount)
 	if err != nil {
+		log.Error("selectAndLockUTXOs selectUTXOs failed", "utxos", len(utxos), "targetAmount", targetAmount,
+			"feeRate", feeRate, "err", err)
 		return nil, 0, err
+	}
+	// 如果存在指定输入，则将其添加到选中的UTXO列表中，并累加金额
+	if stickyUTXO != nil {
+		selected = append(selected, stickyUTXO)
+		total += stickyUTXO.Amount
 	}
 
 	// 锁定选中的UTXO
-	var lockedUTXOs []*UTXO
+	lockedUTXOs := make([]*UTXO, 0, len(selected))
 	for _, utxo := range selected {
 		// 使用wallet.LeaseOutput锁定UTXO
-		expiry, err := b.Wallet.LeaseOutput(utxoWithdrawLockID, utxo.OutPoint, utxoLeaseDuration)
+		expiry, err := b.Wallet.LeaseOutput(utxoLockID, utxo.OutPoint, utxoLeaseDuration)
 		if err != nil {
-			log.Error("selectAndLockUTXOs lease output failed",
-				"outpoint", utxo.OutPoint.String(),
-				"err", err)
+			log.Error("selectAndLockUTXOs lease output failed", "outpoint", utxo.OutPoint.String(), "err", err)
 			// 锁定失败，释放已锁定的UTXO
-			b.releaseUTXOs(lockedUTXOs)
+			b.releaseUTXOsExcept(lockedUTXOs, stickyUTXO)
 			return nil, 0, fmt.Errorf("lease output failed: %w", err)
 		}
 
@@ -1034,14 +898,37 @@ func (b *btcWallet) selectAndLockUTXOs(utxos []*UTXO, targetAmount, feeRate btcu
 		log.Debug("selectAndLockUTXOs locked UTXO", "outpoint", utxo.OutPoint.String(), "amount", utxo.Amount, "expiry", expiry)
 	}
 
-	log.Debug("selectAndLockUTXOs success", "selected", len(lockedUTXOs), "totalAmount", total, "targetAmount", targetAmount, "feeRate", feeRate)
+	log.Debug("selectAndLockUTXOs success", "utxos", len(utxos), "selected", len(lockedUTXOs),
+		"totalAmount", total, "targetAmount", targetAmount, "feeRate", feeRate)
 
 	return lockedUTXOs, total, nil
+}
+
+func (b *btcWallet) getLeasedUTXO(outpoint wire.OutPoint) (*UTXO, error) {
+	leased, err := b.Wallet.ListLeasedOutputs()
+	if err != nil {
+		return nil, err
+	}
+	for _, output := range leased {
+		if output.Outpoint == outpoint {
+			return &UTXO{
+				OutPoint: output.Outpoint,
+				Amount:   btcutil.Amount(output.Value),
+				PkScript: output.PkScript,
+			}, nil
+		}
+	}
+	return nil, types.ErrNotFound
 }
 
 // releaseUTXOs 释放UTXO锁定
 // 在交易构建失败或广播失败时调用，释放已锁定的UTXO
 func (b *btcWallet) releaseUTXOs(utxos []*UTXO) {
+	b.releaseUTXOsExcept(utxos, nil)
+}
+
+// releaseUTXOsExcept 释放UTXO锁定，可选保留指定输入不释放
+func (b *btcWallet) releaseUTXOsExcept(utxos []*UTXO, keep *UTXO) {
 	if len(utxos) == 0 {
 		return
 	}
@@ -1049,19 +936,17 @@ func (b *btcWallet) releaseUTXOs(utxos []*UTXO) {
 	log.Debug("releaseUTXOs start", "count", len(utxos))
 
 	for _, utxo := range utxos {
-		err := b.Wallet.ReleaseOutput(utxoWithdrawLockID, utxo.OutPoint)
+		if keep != nil && utxo.OutPoint == keep.OutPoint {
+			log.Debug("releaseUTXOsExcept keep sticky UTXO", "outpoint", utxo.OutPoint.String(), "amount", utxo.Amount)
+			continue
+		}
+		err := b.Wallet.ReleaseOutput(utxoLockID, utxo.OutPoint)
 		if err != nil {
 			log.Error("releaseUTXOs release output failed",
 				"outpoint", utxo.OutPoint.String(),
 				"err", err)
-		} else {
-			log.Debug("releaseUTXOs released UTXO",
-				"outpoint", utxo.OutPoint.String(),
-				"amount", utxo.Amount)
 		}
 	}
-
-	log.Info("releaseUTXOs completed", "count", len(utxos))
 }
 
 // UTXO 结构
@@ -1073,38 +958,15 @@ type UTXO struct {
 
 // broadcastTransaction 广播交易
 // lockedUTXOs: 已锁定的UTXO列表，广播失败时会自动释放
-func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, toAddress string, lockedUTXOs []*UTXO) error {
-	// 计算交易哈希
-	txHash := tx.TxHash()
-
-	log.Debug("BroadcastTransaction start", "txHash", txHash.String(), "toAddress", toAddress,
-		"inputs", len(tx.TxIn), "outputs", len(tx.TxOut), "lockedUTXOs", len(lockedUTXOs))
+func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, btcTxHash string) error {
 
 	// 广播交易
 	_, err := b.chainClient.SendRawTransaction(tx, false)
 	if err != nil {
-		log.Error("BroadcastTransaction failed", "txHash", txHash.String(), "toAddress", toAddress, "err", err)
-
-		// 广播失败，释放已锁定的UTXO
-		b.releaseUTXOs(lockedUTXOs)
-		return fmt.Errorf("broadcast transaction failed: %w", err)
+		log.Error("BroadcastTransaction failed", "txHash", btcTxHash, "err", err)
+		return err
 	}
-
-	// 记录待确认交易
-
-	// b.pendingTxs[txHash] = &pendingTx{
-	// 	tx:              tx,
-	// 	submitTime:      types.Now(),
-	// 	confirmations:   0,
-	// 	blockHeight:     -1,
-	// 	txType:          "withdraw",
-	// 	withdrawAddress: toAddress,
-	// 	txHash:          txHash,
-	// }
-
-	log.Debug("broadcastTransaction success", "txHash", txHash.String())
-
-	// 注意: 广播成功后，UTXO锁定会在交易确认后自动释放（由btcwallet管理）
+	log.Debug("broadcastTransaction success", "txHash", btcTxHash)
 	return nil
 }
 

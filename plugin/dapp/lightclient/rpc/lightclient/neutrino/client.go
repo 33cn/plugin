@@ -84,15 +84,15 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 		panic("init main chain grpc client err:" + err.Error())
 	}
 	n.tss = newTssService(n)
-	if !n.cfg.IsOfficialNode {
-		return nil
-	}
-	n.withdrawReqChan = make(chan *rtypes.PendingTx, 256)
 	err = n.initNeutrinoConfig(chainCfg)
 	if err != nil {
 		log.Error("Init", "initNeutrinoConfig error", err)
 		return err
 	}
+	if !n.cfg.IsOfficialNode {
+		return nil
+	}
+	n.withdrawReqChan = make(chan *rtypes.PendingTx, 256)
 	cs, err := neutrino.NewChainService(n.neutrinoCfg)
 	if err != nil {
 		log.Error("Init", "NewChainService error", err)
@@ -117,6 +117,7 @@ func (n *neutrinoClient) Start() {
 	n.initCommitKey()
 	n.tss.start()
 	go n.subMsg()
+	go n.cleanUp()
 	if !n.cfg.IsOfficialNode {
 		return
 	}
@@ -130,7 +131,7 @@ func (n *neutrinoClient) Start() {
 		n.bw.stop()
 		panic(err)
 	}
-	go n.cleanUp()
+
 	go n.handleBestBlock()
 	go n.submitBitcoinHeaders()
 	go n.depositWatcher()
@@ -165,10 +166,12 @@ func (n *neutrinoClient) subMsg() {
 func (n *neutrinoClient) cleanUp() {
 
 	<-n.ctx.Done()
-	if err := n.neutrinoCS.Stop(); err != nil {
-		log.Error("cleanUp Unable to stop neutrino server", "err", err)
+	if n.cfg.IsOfficialNode {
+		if err := n.neutrinoCS.Stop(); err != nil {
+			log.Error("cleanUp Unable to stop neutrino server", "err", err)
+		}
+		n.bw.stop()
 	}
-	n.bw.stop()
 	if err := n.neutrinoCfg.Database.Close(); err != nil {
 		log.Error("cleanUp Unable to close neutrino db", "err", err)
 	}

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/walletdb"
 )
 
@@ -188,28 +190,46 @@ func pending2WithdrawRequest(chain33Pending *rtypes.PendingTx) *withdrawRequest 
 	}
 }
 
-func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx) error {
+func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) error {
 
-	req := pending2WithdrawRequest(chain33Pending)
-	txHash := hex.EncodeToString(chain33Pending.GetTxHash())
+	txHash := hex.EncodeToString(req.chain33WithDrawHash)
 	tx, inputAmounts, lockedUTXOs, err := n.bw.buildWithdrawTx(req)
 	if err != nil {
 		log.Error("processWithdrawRequest buildWithdrawTx", "txHash", txHash, "err", err)
 		return err
 	}
+	stickyUTXO := lockedUTXOs[len(lockedUTXOs)-1]
+	expectedHash := n.getExpectedWithdrawHash(stickyUTXO.OutPoint.String())
+	if len(expectedHash) > 0 && !bytes.Equal(expectedHash, req.chain33WithDrawHash) {
+		log.Error("processWithdrawRequest sticky input mismatch", "expected", hex.EncodeToString(expectedHash),
+			"actual", txHash, "stickyOutPoint", stickyUTXO.OutPoint.String())
+		return fmt.Errorf("invalid sticky input")
+	}
+
+	// 提现交易构建后，则和最后一个utxo强绑定，后续不能更改
+	if req.stickyUTXO == nil {
+		req.stickyUTXO = lockedUTXOs[len(lockedUTXOs)-1]
+		if err = n.setWithdrawStickyUTXO(req.chain33WithDrawHash, req.stickyUTXO); err != nil {
+			log.Error("processWithdrawRequest setWithdrawStickyUTXO", "txHash", txHash, "stickyUTXO", req.stickyUTXO.OutPoint.String(), "err", err)
+		}
+	}
 	// 主节点也进行验证，保证各节点执行相同的逻辑
 	err = n.tss.validateWithdrawTx(tx, inputAmounts, req)
 	if err != nil {
-		log.Error("processSignBtcTx validateWithdrawTx", "err", err)
+		n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
+		log.Error("processSignBtcTx validateWithdrawTx", "txHash", txHash, "err", err)
 		return err
 	}
+	btcTxHash := tx.TxHash().String()
 	if err = n.tss.processSignBtcTx(tx, transactionTypeWithdraw, inputAmounts, req.chain33WithDrawHash); err != nil {
-		n.bw.releaseUTXOs(lockedUTXOs)
-		log.Error("processWithdrawRequest processSignBtcTx", "txHash", txHash, "err", err)
+		n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
+		log.Error("processWithdrawRequest processSignBtcTx", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
 		return err
 	}
-	if err = n.bw.broadcastTransaction(tx, req.toAddress, lockedUTXOs); err != nil {
-		log.Error("processWithdrawRequest broadcastTransaction", "txHash", txHash, "err", err)
+
+	if err = n.bw.broadcastTransaction(tx, btcTxHash); err != nil {
+		n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
+		log.Error("processWithdrawRequest broadcastTransaction", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
 		return err
 	}
 	n.bw.addPendingTx(&btcPendingTx{
@@ -222,8 +242,8 @@ func (n *neutrinoClient) processWithdrawRequest(chain33Pending *rtypes.PendingTx
 		withdrawAddress:       req.toAddress,
 		chain33WithdrawTxHash: req.chain33WithDrawHash,
 	})
-	btcTxHash := tx.TxHash().String()
-	if err = n.setWithdrawState(chain33Pending.GetTxHash(), withdrawStatusSent); err != nil {
+
+	if err = n.setWithdrawState(req.chain33WithDrawHash, withdrawStatusSent); err != nil {
 		log.Error("processWithdrawRequest setWithdrawState", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
 	}
 	log.Debug("processWithdrawRequest success", "txHash", txHash, "btcTxHash", btcTxHash)
@@ -237,9 +257,10 @@ type confirmWithdraw struct {
 }
 
 var (
-	withdrawStateBucket     = []byte("rgbx-withdraw-state")
-	withdrawStatusSent      = []byte("broadcasted")
-	withdrawStatusConfirmed = []byte("confirmed")
+	withdrawStateBucket      = []byte("rgbx-withdraw-state")
+	withdrawStatusSent       = []byte("broadcasted")
+	withdrawStatusConfirmed  = []byte("confirmed")
+	withdrawStickyUTXOBucket = []byte("rgbx-withdraw-sticky-utxo")
 
 	depositStateBucket     = []byte("rgbx-deposit-state")
 	depositStatusProcessed = []byte("processed")
@@ -269,6 +290,95 @@ func (n *neutrinoClient) setWithdrawState(txHash []byte, status []byte) error {
 			return err
 		}
 		return bucket.Put(txHash, status)
+	})
+}
+
+func encodeOutPoint(op *wire.OutPoint) []byte {
+	return []byte(op.String())
+}
+
+func decodeOutPoint(data []byte) (*wire.OutPoint, error) {
+	return wire.NewOutPointFromString(string(data))
+}
+
+func (n *neutrinoClient) getWithdrawStickyUTXO(chain33TxHash []byte) *UTXO {
+	var data []byte
+	err := walletdb.View(n.neutrinoCfg.Database, func(tx walletdb.ReadTx) error {
+		bucket := tx.ReadBucket(withdrawStickyUTXOBucket)
+		if bucket == nil {
+			return walletdb.ErrBucketNotFound
+		}
+		data = bucket.Get(chain33TxHash)
+		return nil
+	})
+	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) {
+		log.Error("getWithdrawStickyUTXO", "txHash", hex.EncodeToString(chain33TxHash), "err", err)
+		return nil
+	}
+	if len(data) == 0 {
+		return nil
+	}
+	u := &rtypes.Utxo{}
+	err = types.Decode(data, u)
+	if err != nil {
+		log.Error("getWithdrawStickyUTXO decode", "txHash", hex.EncodeToString(chain33TxHash), "err", err)
+		return nil
+	}
+	outPoint, err := wire.NewOutPointFromString(u.OutPoint)
+	if err != nil {
+		log.Error("getWithdrawStickyUTXO NewOutPointFromString", "txHash", hex.EncodeToString(chain33TxHash), "err", err)
+		return nil
+	}
+	return &UTXO{
+		OutPoint: *outPoint,
+		Amount:   btcutil.Amount(u.Amount),
+		PkScript: u.PkScript,
+	}
+}
+
+func (n *neutrinoClient) getExpectedWithdrawHash(outPoint string) []byte {
+	var data []byte
+	err := walletdb.View(n.neutrinoCfg.Database, func(tx walletdb.ReadTx) error {
+		bucket := tx.ReadBucket(withdrawStickyUTXOBucket)
+		if bucket == nil {
+			return walletdb.ErrBucketNotFound
+		}
+		data = bucket.Get([]byte(outPoint))
+		return nil
+	})
+	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) {
+		log.Error("getExpectedWithdrawHash", "outPoint", outPoint, "err", err)
+		return nil
+	}
+	return data
+}
+
+func (n *neutrinoClient) setWithdrawStickyUTXO(chain33TxHash []byte, utxo *UTXO) error {
+	u := &rtypes.Utxo{
+		OutPoint: utxo.OutPoint.String(),
+		Amount:   int64(utxo.Amount),
+		PkScript: utxo.PkScript,
+	}
+	return walletdb.Update(n.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
+		bucket, err := tx.CreateTopLevelBucket(withdrawStickyUTXOBucket)
+		if err != nil {
+			return err
+		}
+		err = bucket.Put([]byte(utxo.OutPoint.String()), chain33TxHash)
+		if err != nil {
+			return err
+		}
+		return bucket.Put(chain33TxHash, types.Encode(u))
+	})
+}
+
+func (n *neutrinoClient) clearWithdrawFirstInput(chain33TxHash []byte) error {
+	return walletdb.Update(n.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
+		bucket := tx.ReadWriteBucket(withdrawStickyUTXOBucket)
+		if bucket == nil {
+			return nil
+		}
+		return bucket.Delete(chain33TxHash)
 	})
 }
 
@@ -322,7 +432,7 @@ func (n *neutrinoClient) withdrawalProcessor() {
 	retryTicker := time.NewTicker(time.Second * 30)
 	defer retryTicker.Stop()
 	withdrawReqChan := n.withdrawReqChan
-	withdrawRetryList := make([]*rtypes.PendingTx, 0, 16)
+	withdrawReqList := make([]*withdrawRequest, 0, 16)
 	confirmRetryList := make([]*confirmWithdraw, 0, 16)
 
 	for {
@@ -330,11 +440,11 @@ func (n *neutrinoClient) withdrawalProcessor() {
 		case <-n.ctx.Done():
 			return
 		case <-retryTicker.C:
-			tempWithdraws := withdrawRetryList
-			withdrawRetryList = withdrawRetryList[:0]
+			tempWithdraws := withdrawReqList
+			withdrawReqList = withdrawReqList[:0]
 			for _, p := range tempWithdraws {
 				if err := n.processWithdrawRequest(p); err != nil {
-					withdrawRetryList = append(withdrawRetryList, p)
+					withdrawReqList = append(withdrawReqList, p)
 				}
 			}
 			tempConfirms := confirmRetryList
@@ -357,8 +467,10 @@ func (n *neutrinoClient) withdrawalProcessor() {
 				log.Debug("withdrawalProcessor hasWithdrawState", "txHash", hex.EncodeToString(pending.GetTxHash()))
 				continue
 			}
-			if err := n.processWithdrawRequest(pending); err != nil {
-				withdrawRetryList = append(withdrawRetryList, pending)
+			req := pending2WithdrawRequest(pending)
+			req.stickyUTXO = n.getWithdrawStickyUTXO(pending.GetTxHash())
+			if err := n.processWithdrawRequest(req); err != nil {
+				withdrawReqList = append(withdrawReqList, req)
 			}
 		}
 	}
@@ -427,6 +539,9 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 	if state := n.getWithdrawState(confirm.confirmTx.GetTxHash()); bytes.Equal(state, withdrawStatusConfirmed) {
 		n.rgbx.pendingCache.removeTx(confirmHash)
 		n.bw.removePendingTx(confirm.btcPending.txHash)
+		if err := n.clearWithdrawFirstInput(confirm.confirmTx.GetTxHash()); err != nil {
+			log.Error("processWithdrawConfirm clearWithdrawFirstInput", "confirmHash", confirmHash, "err", err)
+		}
 		log.Debug("processWithdrawConfirm already confirmed local state", "confirmHash", confirmHash)
 		return true
 	}
@@ -437,6 +552,9 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 		return false
 	}
 	n.bw.removePendingTx(confirm.btcPending.txHash)
+	if err := n.clearWithdrawFirstInput(confirm.confirmTx.GetTxHash()); err != nil {
+		log.Error("processWithdrawConfirm clearWithdrawFirstInput", "confirmHash", confirmHash, "err", err)
+	}
 	log.Debug("processWithdrawConfirm success", "txHash", txHash,
 		"btcTxHash", confirm.btcPending.txHash.String(), "confirmHash", confirmHash)
 	return true

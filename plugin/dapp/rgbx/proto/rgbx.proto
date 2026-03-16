@@ -129,6 +129,12 @@ message pendingTxs {
     repeated pendingTx pendingList = 1;
 }
 
+message utxo {
+    string outPoint = 1;
+    int64  amount   = 2;
+    bytes  pkScript = 3;
+}
+
 message ReqListPendingTx {
     int64 startHeight = 1;
     int64 startIndex  = 2;

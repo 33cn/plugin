@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"runtime"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -49,9 +48,10 @@ type signResult struct {
 }
 
 type withdrawSignState struct {
-	pendingTs int64
-	signedAt  int64
-	signed    bool
+	pendingTs  int64
+	signedAt   int64
+	signed     bool
+	firstInput string
 }
 
 type tssService struct {
@@ -70,17 +70,13 @@ type tssService struct {
 	subChan    chan *types.TopicData
 	selfPeerId string
 	signTaskCh chan *signTask
-	// non-official节点提现签名防重缓存
-	withdrawSeenLock sync.Mutex
-	withdrawSeenTx   map[string]*withdrawSignState
 }
 
 func newTssService(n *neutrinoClient) *tssService {
 	t := &tssService{
-		client:         n,
-		subChan:        make(chan *types.TopicData, 100),
-		signTaskCh:     make(chan *signTask, 1024),
-		withdrawSeenTx: make(map[string]*withdrawSignState, 256),
+		client:     n,
+		subChan:    make(chan *types.TopicData, 100),
+		signTaskCh: make(chan *signTask, 1024),
 	}
 	t.cfg = n.cfg.Tss
 	return t
@@ -487,6 +483,29 @@ func (t *tssService) checkNonOfficialWithdrawSign(chain33WithDrawHash []byte) (*
 	return pendingTx, nil
 }
 
+func (t *tssService) checkStickyInput(chain33WithDrawHash []byte, tx *wire.MsgTx) error {
+	if len(tx.TxIn) == 0 {
+		return fmt.Errorf("withdraw tx has no inputs")
+	}
+	stickyOutPoint := tx.TxIn[len(tx.TxIn)-1].PreviousOutPoint.String()
+	// 验证绑定的哈希是否一致
+	expectedHash := t.client.getExpectedWithdrawHash(stickyOutPoint)
+	if len(expectedHash) > 0 && !bytes.Equal(expectedHash, chain33WithDrawHash) {
+		log.Error("checkStickyInput sticky input mismatch", "expected", hex.EncodeToString(expectedHash),
+			"actual", hex.EncodeToString(chain33WithDrawHash), "stickyOutPoint", stickyOutPoint)
+		return fmt.Errorf("invalid sticky input")
+	}
+
+	// 如果本地已记录过成功签名的绑定utxo，后续请求必须一致
+	expectUTXO := t.client.getWithdrawStickyUTXO(chain33WithDrawHash)
+	if expectUTXO != nil && expectUTXO.OutPoint.String() != stickyOutPoint {
+		log.Error("checkStickyInput sticky input changed", "expected", expectUTXO.OutPoint.String(),
+			"actual", stickyOutPoint, "chain33WithDrawHash", hex.EncodeToString(chain33WithDrawHash))
+		return fmt.Errorf("invalid sticky input")
+	}
+	return nil
+}
+
 // handleSignNotify handles incoming TSS sign notifications
 // All nodes (including main node) receive this and participate in signing
 func (t *tssService) handleSignNotify(msg []byte) {
@@ -518,17 +537,25 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		log.Error("handleSignNotify parseTxFromNotify", "type", notify.TxType, "err", err)
 		return
 	}
+
 	if notify.TxType == transactionTypeWithdraw {
-		pendingTx, err := t.checkNonOfficialWithdrawSign(notify.Payload)
+		chain33WithDrawHash := notify.Payload
+		if err = t.checkStickyInput(chain33WithDrawHash, tx); err != nil {
+			log.Error("handleSignNotify checkStickyInput", "err", err,
+				"withDrawHash", hex.EncodeToString(chain33WithDrawHash), "btcHash", tx.TxHash().String())
+			return
+		}
+		pendingTx, err := t.checkNonOfficialWithdrawSign(chain33WithDrawHash)
 		if err != nil {
 			log.Error("handleSignNotify checkNonOfficialWithdrawSign", "type", notify.TxType,
-				"chain33WithDrawHash", hex.EncodeToString(notify.Payload), "err", err)
+				"withDrawHash", hex.EncodeToString(chain33WithDrawHash), "btcHash", tx.TxHash().String(), "err", err)
 			return
 		}
 		req := pending2WithdrawRequest(pendingTx)
 		err = t.validateWithdrawTx(tx, inputAmounts, req)
 		if err != nil {
-			log.Error("handleSignNotify validateWithdrawTx", "err", err, "withdrawTxHash", hex.EncodeToString(notify.Payload))
+			log.Error("handleSignNotify validateWithdrawTx", "err", err,
+				"withdrawHash", hex.EncodeToString(chain33WithDrawHash), "btcHash", tx.TxHash().String())
 			return
 		}
 	}
@@ -537,7 +564,17 @@ func (t *tssService) handleSignNotify(msg []byte) {
 		log.Error("handleSignNotify signBtcTx", "type", notify.TxType, "err", err)
 		return
 	}
-	log.Debug("handleSignNotify success", "txType", notify.TxType)
+	if notify.TxType == transactionTypeWithdraw {
+		stickyUTXO := &UTXO{
+			OutPoint: tx.TxIn[len(tx.TxIn)-1].PreviousOutPoint,
+		}
+		if err = t.client.setWithdrawStickyUTXO(notify.Payload, stickyUTXO); err != nil {
+			log.Error("handleSignNotify setWithdrawStickyUTXO", "err", err,
+				"withdrawHash", hex.EncodeToString(notify.Payload), "btcHash", tx.TxHash().String())
+		}
+	}
+	log.Debug("handleSignNotify success", "txType", notify.TxType,
+		"payload", hex.EncodeToString(notify.Payload), "btcHash", tx.TxHash().String())
 }
 
 // subTopic subscribes to a P2P topic
