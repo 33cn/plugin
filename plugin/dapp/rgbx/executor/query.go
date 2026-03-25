@@ -120,3 +120,32 @@ func (r *rgbx) Query_GetCrossChainInfo(req *types.ReqString) (types.Message, err
 
 	return reply, nil
 }
+
+func (r *rgbx) Query_ListPendingTxByFrom(req *types.ReqString) (types.Message, error) {
+	fromAddr := req.GetData()
+	if fromAddr == "" {
+		return nil, types.ErrInvalidParam
+	}
+	list := &rtypes.TxBlockIndexList{}
+	err := readDB(r.GetLocalDB(), formatPendingTxFromKey(fromAddr), list)
+	if errors.Is(err, types.ErrNotFound) {
+		return &rtypes.PendingTxs{}, nil
+	}
+	if err != nil {
+		elog.Error("Query_ListPendingTxByFrom", "from", fromAddr, "read list err", err)
+		return nil, err
+	}
+	reply := &rtypes.PendingTxs{}
+	for _, item := range list.GetBlockIndexList() {
+		tx := &rtypes.PendingTx{}
+		err = readDB(r.GetLocalDB(), formatPendingTxKey(item.GetBlockHeight(), item.GetTxIndex()), tx)
+		if err != nil {
+			continue
+		}
+		if tx.GetConfirmed() {
+			continue
+		}
+		reply.PendingList = append(reply.PendingList, tx)
+	}
+	return reply, nil
+}

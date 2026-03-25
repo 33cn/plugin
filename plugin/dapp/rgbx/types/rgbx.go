@@ -115,13 +115,20 @@ func (r *rgbxType) GetLogMap() map[int64]*types.LogInfo {
 
 // GetActionName get action name by action type
 func GetActionName(ty int32) string {
-	if ty == TyMintAction {
+	switch ty {
+	case TyMintAction:
 		return NameMintAction
-	} else if ty == TyTransferAction {
+	case TyTransferAction:
 		return NameTransferAction
-	} else if ty == TyConfirmAction {
+	case TyConfirmAction:
 		return NameConfirmAction
-	} else {
+	case TyCommitDKGAction:
+		return NameCommitDKGAction
+	case TyDepositAsset:
+		return NameDepositAssetAction
+	case TyWithDrawAsset:
+		return NameWithdrawAssetAction
+	default:
 		return "unknownAction"
 	}
 }

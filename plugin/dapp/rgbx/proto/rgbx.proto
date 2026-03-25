@@ -120,9 +120,10 @@ message pendingTx {
     int64    feeRate       = 6;
     bytes    txHash        = 7;
     outPoint utxo          = 8;
-    string   assetSymbol   = 9;
-    string   targetAddress = 10;
-    bool     confirmed     = 11;
+    string   fromAddress   = 9;
+    string   assetSymbol   = 10;
+    string   targetAddress = 11;
+    bool     confirmed     = 12;
 }
 
 message pendingTxs {
@@ -155,6 +156,10 @@ message btcCommitment {
 message txBlockIndex {
     int64 blockHeight = 1;
     int64 txIndex     = 2;
+}
+
+message txBlockIndexList {
+    repeated txBlockIndex blockIndexList = 1;
 }
 
 service rgbx {}

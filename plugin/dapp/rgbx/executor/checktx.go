@@ -50,6 +50,7 @@ var (
 	ErrCalcBtcMerkleRoot                = errors.New("calc btc merkle root error")
 	ErrInvalidCrossChainInfo            = errors.New("invalid cross chain info")
 	ErrGetCrossChainInfo                = errors.New("get cross chain info error")
+	ErrDuplicateDepositProof            = errors.New("duplicate deposit proof")
 )
 
 const (
@@ -78,7 +79,7 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 	case rtypes.TyDepositAsset:
 		err = r.checkDeposit(txHash, action.GetDeposit())
 	case rtypes.TyWithDrawAsset:
-		err = r.checkWithdraw(txHash, action.GetWithdraw())
+		err = r.checkWithdraw(tx.From(), txHash, action.GetWithdraw())
 	case rtypes.TyConfirmAction:
 		err = r.checkConfirm(tx.From(), txHash, action.GetConfirm())
 	default:
@@ -187,11 +188,15 @@ func (r *rgbx) checkCommitDKG(txHash string, commitDKG *rtypes.CommitDKG) error 
 	return nil
 }
 
-func (r *rgbx) checkWithdraw(txHash string, withdraw *rtypes.WithdrawAsset) error {
+func (r *rgbx) checkWithdraw(fromAddr, txHash string, withdraw *rtypes.WithdrawAsset) error {
 
 	if !strings.EqualFold(withdraw.GetAssetSymbol(), rtypes.BTCSymbol) {
 		elog.Error("checkWithdraw invalid asset symbol", "txHash", txHash, "symbol", withdraw.GetAssetSymbol())
 		return ErrInvalidAssetSymbol
+	}
+	if _, err := r.getCrossChainInfo(withdraw.GetAssetSymbol()); err != nil {
+		elog.Error("checkWithdraw cross chain info", "txHash", txHash, "symbol", withdraw.GetAssetSymbol(), "err", err)
+		return ErrInvalidCrossChainInfo
 	}
 	if withdraw.GetAmount() < minBtcWithdrawAmount {
 		elog.Error("checkWithdraw amount", "txHash", txHash, "amount", withdraw.GetAmount())
@@ -206,7 +211,17 @@ func (r *rgbx) checkWithdraw(txHash string, withdraw *rtypes.WithdrawAsset) erro
 		elog.Error("checkWithdraw feeRate", "txHash", txHash, "feeRate", withdraw.GetFeeRate())
 		return ErrInvalidWithdrawFeeRate
 	}
-	//TODO validate withdraw amount
+	accDB, err := r.newCrossChainAccount(withdraw.GetAssetSymbol())
+	if err != nil {
+		elog.Error("checkWithdraw newAccount", "txHash", txHash, "symbol", withdraw.GetAssetSymbol(), "err", err)
+		return err
+	}
+	balance := accDB.LoadAccount(fromAddr).GetBalance()
+	if balance < withdraw.GetAmount() {
+		elog.Error("checkWithdraw insufficient balance", "txHash", txHash, "from", fromAddr,
+			"symbol", withdraw.GetAssetSymbol(), "need", withdraw.GetAmount(), "balance", balance)
+		return types.ErrInsufficientBalance
+	}
 	return nil
 }
 
@@ -223,6 +238,11 @@ func (r *rgbx) checkDeposit(txHash string, deposit *rtypes.DepositAsset) error {
 	if addr == "" || (!rtypes.IsUtxoAddress(addr) && address.CheckAddress(addr, -1) != nil) {
 		elog.Error("checkDeposit address invalid", "txHash", txHash, "address", addr)
 		return ErrInvalidDepositAddress
+	}
+	_, err := r.GetStateDB().Get(formatDepositUsedKey(deposit.GetTxProof().GetTxData()))
+	if !errors.Is(err, types.ErrNotFound) {
+		elog.Error("checkDeposit duplicate proof", "txHash", txHash, "symbol", deposit.GetAssetSymbol(), "err", err)
+		return ErrDuplicateDepositProof
 	}
 	btcTx, err := r.validateBtcTxProof(txHash, deposit.GetTxProof())
 	if err != nil {
@@ -244,7 +264,7 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 	confirmTxHash := hex.EncodeToString(confirm.TxHash)
 	action := rtypes.GetActionName(confirm.GetActionType())
 
-	if fromAddr != rgbxCfg.CommitAddress {
+	if rgbxCfg.CommitAddress != "" && fromAddr != rgbxCfg.CommitAddress {
 		elog.Error("checkConfirm fromAddr", "action", action,
 			"txHash", txHash, "confirmTxHash", confirmTxHash,
 			"fromAddr", fromAddr, "commitAddr", rgbxCfg.CommitAddress)
@@ -279,13 +299,14 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		return ErrConfirmedHashNotEqual
 	}
 
+	if confirm.GetActionType() == rtypes.TyWithDrawAsset {
+		return r.checkWithdrawConfirm(txHash, confirmTxHash, confirm, pendingTx)
+	}
+
 	if confirm.Timeout {
 		elog.Debug("checkConfirm timeout", "action", action,
 			"txHash", txHash, "confirmTxHash", confirmTxHash)
 		return nil
-	}
-	if confirm.GetActionType() == rtypes.TyWithDrawAsset {
-		return r.checkWithdrawConfirm(txHash, confirmTxHash, confirm, pendingTx)
 	}
 
 	btcSpendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()

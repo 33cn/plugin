@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"strings"
 	"sync"
 
 	log "github.com/33cn/chain33/common/log/log15"
@@ -23,7 +24,8 @@ var (
 var driverName = rgbxtypes.RgbxX
 
 type config struct {
-	CommitAddress string `json:"commitAddress"`
+	CommitAddress         string `json:"commitAddress"`
+	CrossChainAssetPrefix string `json:"crossChainAssetPrefix"`
 }
 
 var rgbxCfg = config{}
@@ -32,6 +34,11 @@ func initCfg(sub []byte) {
 
 	cfgInitOnce.Do(func() {
 		types.MustDecode(sub, &rgbxCfg)
+		prefix := strings.TrimSpace(rgbxCfg.CrossChainAssetPrefix)
+		if prefix == "" {
+			prefix = "X"
+		}
+		rgbxCfg.CrossChainAssetPrefix = formatSymbol(prefix)
 	})
 }
 

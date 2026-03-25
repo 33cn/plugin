@@ -1,8 +1,10 @@
 package executor
 
 import (
+	"crypto/sha256"
 	"strings"
 
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -20,8 +22,9 @@ const (
 	//KeyPrefixLocalDB local db的key必须前缀
 	KeyPrefixLocalDB = "LODB-rgbx-"
 
-	dkgConfirmationsKeyPrefix         = KeyPrefixStateDB + "dkg-confirmations-"
-	crossChainInfoKeyPrefix           = KeyPrefixStateDB + "crosschain-info-"
+	dkgConfirmationsKeyPrefix = KeyPrefixStateDB + "dkg-confirmations-"
+	crossChainInfoKeyPrefix   = KeyPrefixStateDB + "crosschain-info-"
+	depositUsedKeyPrefix      = KeyPrefixStateDB + "deposited-"
 )
 
 func formatDkgConfirmationsKey(dkgResult string) []byte {
@@ -29,11 +32,20 @@ func formatDkgConfirmationsKey(dkgResult string) []byte {
 }
 
 func formatCrossChainInfoKey(symbol string) []byte {
-	return []byte(crossChainInfoKeyPrefix + symbol)
+	return []byte(crossChainInfoKeyPrefix + formatSymbol(symbol))
+}
+
+func formatDepositUsedKey(txData []byte) []byte {
+	hash := sha256.Sum256(txData)
+	return append([]byte(depositUsedKeyPrefix), hash[:]...)
 }
 
 func formatSymbol(symbol string) string {
 	return strings.ToUpper(symbol)
+}
+
+func formatCrossChainSymbol(symbol string) string {
+	return rgbxCfg.CrossChainAssetPrefix + formatSymbol(symbol)
 }
 
 func formatPayloadKey(hash []byte) []byte {
@@ -45,10 +57,15 @@ func formatAssetKey(symbol string) []byte {
 }
 
 const pendingTxKeyPrefix = KeyPrefixLocalDB + "pendtx-"
+const pendingTxByFromPrefix = KeyPrefixLocalDB + "pendbyfrom-"
 
 func formatPendingTxKey(height, txIndex int64) []byte {
 
 	return []byte(pendingTxKeyPrefix + dapp.HeightIndexStr(height, txIndex))
+}
+
+func formatPendingTxFromKey(fromAddr string) []byte {
+	return append([]byte(pendingTxByFromPrefix), address.FormatAddrKey(fromAddr)...)
 }
 
 const confirmedHeightKey = KeyPrefixLocalDB + "confirmed-height"

@@ -125,6 +125,9 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 	if confirm.GetTimeout() {
 		return &types.Receipt{Ty: types.ExecOk}, nil
 	}
+	if confirm.ActionType == rtypes.TyWithDrawAsset {
+		return r.confirmWithdrawSettlement(confirm, txHash, confirmHash)
+	}
 
 	spendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()
 	// 绑定资产的utxo已经在btc链上花费，但op return不存在或承诺数据不正确，
@@ -144,6 +147,26 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 		return r.mintAsset(confirm, txHash, confirmHash, spendHash)
 	}
 	return r.transferAsset(confirm, txHash, confirmHash, spendHash)
+}
+
+func (r *rgbx) confirmWithdrawSettlement(confirm *rtypes.ConfirmTx, txHash, confirmHash string) (*types.Receipt, error) {
+	withdraw := &rtypes.WithdrawAsset{}
+	if err := readDB(r.GetStateDB(), formatPayloadKey(confirm.GetTxHash()), withdraw); err != nil {
+		elog.Error("confirmWithdrawSettlement read payload", "txHash", txHash, "confirmTx", confirmHash, "err", err)
+		return nil, err
+	}
+	accDB, err := r.newCrossChainAccount(withdraw.GetAssetSymbol())
+	if err != nil {
+		return nil, err
+	}
+	lockAddr := r.crossChainLockAddress(accDB)
+	receipt, err := accDB.Burn(lockAddr, withdraw.GetAmount())
+	if err != nil {
+		elog.Error("confirmWithdrawSettlement burn lock", "txHash", txHash, "confirmTx", confirmHash,
+			"lockAddr", lockAddr, "symbol", withdraw.GetAssetSymbol(), "amount", withdraw.GetAmount(), "err", err)
+		return nil, err
+	}
+	return receipt, nil
 }
 
 func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHash string) (*types.Receipt, error) {
