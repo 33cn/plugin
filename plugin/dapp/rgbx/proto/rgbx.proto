@@ -52,13 +52,13 @@ message utxoSpendingProof {
 
 message transferAsset {
 
-    string symbol        = 1;
-    int64  amount        = 2;
-    string from          = 3;
-    string to            = 4;
-    string changeAddr    = 5;
-    bytes  fromPkScript  = 6;
-    bool   externalAsset = 7;
+    string symbol           = 1;
+    int64  amount           = 2;
+    string fromUtxo         = 3;
+    string to               = 4;
+    string changeAddr       = 5;
+    bytes  fromUtxoPkScript = 6;
+    bool   isCrossChain     = 7;
 }
 
 message confirmTx {

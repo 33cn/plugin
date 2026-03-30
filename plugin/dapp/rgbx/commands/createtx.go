@@ -3,13 +3,14 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/types"
-	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
-	"github.com/spf13/cobra"
 	"math"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/chain33/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/spf13/cobra"
 )
 
 func mintAssetCMD() *cobra.Command {
@@ -172,12 +173,12 @@ func transferAsset(cmd *cobra.Command, args []string) {
 	}
 
 	transfer := &rtypes.TransferAsset{
-		Symbol:       symbol,
-		Amount:       amount,
-		From:         from,
-		To:           to,
-		ChangeAddr:   change,
-		FromPkScript: pkScript,
+		Symbol:           symbol,
+		Amount:           amount,
+		FromUtxo:         from,
+		To:               to,
+		ChangeAddr:       change,
+		FromUtxoPkScript: pkScript,
 	}
 	sendCreateTxRPC(cmd, rtypes.NameTransferAction, transfer)
 }

@@ -31,6 +31,7 @@ var (
 	ErrFromUtxoPkScriptNotSet           = errors.New("ErrFromUtxoPkScriptNotSet")
 	ErrInvalidAssetPrecision            = errors.New("ErrInvalidAssetPrecision")
 	ErrInvalidAssetSender               = errors.New("ErrInvalidAssetSender")
+	ErrInvalidFromUtxo                  = errors.New("invalid from utxo")
 	ErrInvalidSpendingTxIn              = errors.New("ErrInvalidSpendingTxIn")
 	ErrInvalidWithdrawAmount            = errors.New("invalid withdraw amount")
 	ErrInvalidWithdrawDestination       = errors.New("invalid withdraw destination")
@@ -49,6 +50,7 @@ var (
 	ErrInvalidBtcProofMerkle            = errors.New("invalid btc merkle proof")
 	ErrCalcBtcMerkleRoot                = errors.New("calc btc merkle root error")
 	ErrInvalidCrossChainInfo            = errors.New("invalid cross chain info")
+	ErrNewAccountDB                     = errors.New("new account db error")
 	ErrGetCrossChainInfo                = errors.New("get cross chain info error")
 	ErrDuplicateDepositProof            = errors.New("duplicate deposit proof")
 )
@@ -136,22 +138,27 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 
 func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rtypes.TransferAsset) error {
 
-	fromAddr := transfer.GetFrom()
-	if fromAddr == "" {
-		fromAddr = tx.From()
+	if transfer.GetAmount() <= 0 {
+		elog.Error("checkTransfer amount", "txHash", txHash, "symbol", transfer.GetSymbol(), "amount", transfer.GetAmount())
+		return ErrInvalidAssetAmount
 	}
-	if address.CheckAddress(fromAddr, -1) != nil ||
-		address.CheckAddress(transfer.GetTo(), -1) != nil ||
+	fromAddr := tx.From()
+	if transfer.GetIsCrossChain() {
+		return r.checkCrossChainTransfer(txHash, fromAddr, transfer)
+	}
+	fromUtxo := transfer.GetFromUtxo()
+	if fromUtxo != "" {
+		if !rtypes.IsUtxoAddress(fromUtxo) || len(transfer.GetFromUtxoPkScript()) == 0 {
+			elog.Error("checkTransfer invalid fromUtxo", "txHash", txHash, "symbol", transfer.GetSymbol(), "fromUtxo", fromUtxo)
+			return ErrInvalidFromUtxo
+		}
+		fromAddr = fromUtxo
+	}
+	if address.CheckAddress(transfer.GetTo(), -1) != nil ||
 		(transfer.GetChangeAddr() != "" && address.CheckAddress(transfer.GetChangeAddr(), -1) != nil) {
 		elog.Error("checkTransfer address", "txHash", txHash, "symbol", transfer.GetSymbol(),
 			"from", fromAddr, "to", transfer.GetTo(), "changeAddr", transfer.GetChangeAddr())
 		return types.ErrInvalidAddress
-	}
-
-	if rtypes.IsUtxoAddress(fromAddr) && len(transfer.GetFromPkScript()) == 0 {
-		elog.Error("checkTransfer pkScript is nil", "txHash", txHash,
-			"symbol", transfer.GetSymbol(), "from", transfer.GetFrom())
-		return ErrFromUtxoPkScriptNotSet
 	}
 
 	asset := &rtypes.RgbxAsset{}
@@ -163,19 +170,42 @@ func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rty
 	}
 
 	assetTy := rtypes.AssetType(asset.GetType())
-	if assetTy == rtypes.Normal &&
-		(transfer.GetAmount() > asset.GetTotalAmount() || transfer.GetAmount() <= 0) {
-		elog.Error("checkTransfer", "txHash", txHash,
-			"symbol", transfer.GetSymbol(), "amount", transfer.GetAmount(), "total", asset.GetTotalAmount())
-		return ErrInvalidAssetAmount
-	}
-
-	if assetTy == rtypes.Collectible && fromAddr != asset.Owner {
+	if assetTy == rtypes.Normal {
+		accDb, err := r.newAccount(transfer.GetSymbol())
+		if err != nil {
+			elog.Error("checkTransfer newAccount", "txHash", txHash, "symbol", transfer.GetSymbol(), "err", err)
+			return ErrNewAccountDB
+		}
+		balance := accDb.LoadAccount(fromAddr).GetBalance()
+		if balance < transfer.GetAmount() {
+			elog.Error("checkTransfer insufficient balance", "txHash", txHash, "from", fromAddr,
+				"symbol", transfer.GetSymbol(), "need", transfer.GetAmount(), "balance", balance)
+			return types.ErrInsufficientBalance
+		}
+	} else if fromAddr != asset.Owner {
 		elog.Error("checkTransfer invalid owner", "txHash", txHash, "symbol", transfer.GetSymbol(),
 			"from", fromAddr, "assetOwner", asset.Owner)
 		return ErrInvalidAssetSender
 	}
+	return nil
+}
 
+func (r *rgbx) checkCrossChainTransfer(txHash, fromAddr string, transfer *rtypes.TransferAsset) error {
+
+	if _, err := r.getCrossChainInfo(transfer.GetSymbol()); err != nil {
+		elog.Error("checkCrossChainTransfer cross chain info", "txHash", txHash, "symbol", transfer.GetSymbol(), "err", err)
+		return ErrInvalidCrossChainInfo
+	}
+	accDB, err := r.newCrossChainAccount(transfer.GetSymbol())
+	if err != nil {
+		elog.Error("checkCrossChainTransfer newCrossChainAccount", "txHash", txHash, "symbol", transfer.GetSymbol(), "err", err)
+		return ErrNewAccountDB
+	}
+	if accDB.LoadAccount(fromAddr).GetBalance() < transfer.GetAmount() {
+		elog.Error("checkCrossChainTransfer insufficient balance", "txHash", txHash, "from", fromAddr,
+			"symbol", transfer.GetSymbol(), "need", transfer.GetAmount())
+		return types.ErrInsufficientBalance
+	}
 	return nil
 }
 

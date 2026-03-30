@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
@@ -44,22 +45,37 @@ func (r *rgbx) Exec_Mint(mint *rtypes.MintAsset, tx *types.Transaction, index in
 func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 
 	txHash := hex.EncodeToString(tx.Hash())
-	fromAddr := transfer.GetFrom()
-	if fromAddr == "" {
-		fromAddr = tx.From()
-	}
+
+	fromAddr := tx.From()
 	elog.Debug("Exec_Transfer", "txHash", txHash, "symbol", transfer.Symbol, "amount", transfer.Amount,
-		"from", fromAddr, "to", transfer.GetTo(), "changeAddr", transfer.GetChangeAddr())
+		"from", fromAddr, "to", transfer.GetTo(), "isCrossChain", transfer.GetIsCrossChain(),
+		"changeAddr", transfer.GetChangeAddr(), "fromUtxo", transfer.GetFromUtxo())
+
+	if transfer.GetIsCrossChain() {
+		accDB, err := r.newCrossChainAccount(transfer.GetSymbol())
+		if err != nil {
+			elog.Error("Exec_Transfer newCrossChainAccount", "txHash", txHash, "from", tx.From(),
+				"to", transfer.To, "symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
+			return nil, err
+		}
+		receipt, err := accDB.Transfer(fromAddr, transfer.GetTo(), transfer.GetAmount())
+		if err != nil {
+			elog.Error("Exec_Transfer cross transfer", "txHash", txHash, "from", tx.From(),
+				"to", transfer.To, "symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
+			return nil, err
+		}
+		return receipt, nil
+	}
 
 	// from是btc utxo, 记录并等待confirm交易
-	if rtypes.IsUtxoAddress(fromAddr) {
+	if transfer.GetFromUtxo() != "" {
 		receipt := &types.Receipt{
 			Ty: types.ExecOk,
 			KV: []*types.KeyValue{{Key: formatPayloadKey(tx.Hash()), Value: types.Encode(transfer)}},
 		}
 		// check tx 阶段已经校验过地址
-		utxo, _ := rtypes.NewOutPointFromString(fromAddr)
-		utxo.PkScript = transfer.GetFromPkScript()
+		utxo, _ := rtypes.NewOutPointFromString(transfer.GetFromUtxo())
+		utxo.PkScript = transfer.GetFromUtxoPkScript()
 		receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
 			Ty: rtypes.TyPendingTxLog,
 			Log: types.Encode(&rtypes.PendingTx{
@@ -73,6 +89,7 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 		})
 		return receipt, nil
 	}
+
 	asset := &rtypes.RgbxAsset{}
 	err := readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
 	if err != nil {
@@ -229,15 +246,8 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 		return nil, err
 	}
 
-	asset := &rtypes.RgbxAsset{}
-	err = readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
-	if err != nil {
-		elog.Error("transferAsset get asset", "txHash", txHash, "confirmTx", confirmHash,
-			"symbol", transfer.GetSymbol(), "err", err)
-		return nil, ErrAssetNotExist
-	}
-	if asset.Type == uint32(rtypes.Collectible) {
-		return r.assetReceipt(asset, transfer.GetTo()), nil
+	if transfer.GetIsCrossChain() {
+		return nil, types.ErrNotSupport
 	}
 
 	changeAddress := transfer.GetChangeAddr()
@@ -248,21 +258,31 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 
 	log.Debug("transferAsset", "symbol", transfer.Symbol, "amount", transfer.Amount,
 		"txHash", txHash, "confirmTx", confirmHash, "spendHash", spendHash,
-		"from", transfer.From, "to", transfer.To, "change", changeAddress)
+		"from", transfer.FromUtxo, "to", transfer.To, "change", changeAddress)
 
+	asset := &rtypes.RgbxAsset{}
+	err = readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
+	if err != nil {
+		elog.Error("transferAsset get asset", "txHash", txHash, "confirmTx", confirmHash,
+			"symbol", transfer.GetSymbol(), "err", err)
+		return nil, ErrAssetNotExist
+	}
+	if asset.Type == uint32(rtypes.Collectible) {
+		return r.assetReceipt(asset, transfer.GetTo()), nil
+	}
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
 		elog.Error("transferAsset newAccount", "txHash", txHash,
-			"confirmTx", confirmHash, "from", transfer.From, "to", transfer.To,
+			"confirmTx", confirmHash, "from", transfer.FromUtxo, "to", transfer.To,
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
 
-	changeAmount := accDB.LoadAccount(transfer.GetFrom()).GetBalance() - transfer.GetAmount()
-	receipt, err := accDB.Transfer(transfer.GetFrom(), transfer.GetTo(), transfer.GetAmount())
+	changeAmount := accDB.LoadAccount(transfer.GetFromUtxo()).GetBalance() - transfer.GetAmount()
+	receipt, err := accDB.Transfer(transfer.GetFromUtxo(), transfer.GetTo(), transfer.GetAmount())
 	if err != nil {
 		elog.Error("transferAsset transfer", "txHash", txHash, "confirmTx", confirmHash,
-			"from", transfer.From, "to", transfer.To,
+			"from", transfer.FromUtxo, "to", transfer.To,
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
@@ -273,10 +293,10 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 		return receipt, nil
 	}
 
-	changeReceipt, err := accDB.Transfer(transfer.GetFrom(), changeAddress, changeAmount)
+	changeReceipt, err := accDB.Transfer(transfer.GetFromUtxo(), changeAddress, changeAmount)
 	if err != nil {
 		elog.Error("transferAsset change", "txHash", txHash, "confirmTx", confirmHash,
-			"from", transfer.From, "changeAddr", changeAddress,
+			"from", transfer.FromUtxo, "changeAddr", changeAddress,
 			"symbol", transfer.Symbol, "amount", changeAmount, "err", err)
 		return nil, err
 	}

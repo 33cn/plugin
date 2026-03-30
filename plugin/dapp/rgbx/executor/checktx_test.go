@@ -129,7 +129,7 @@ func Test_checkTransfer(t *testing.T) {
 	tcArr := []*testCase{
 		{
 			expectErr: types.ErrInvalidAddress,
-			action:    &rtypes.TransferAsset{From: "f4dfbea13c:0"},
+			action:    &rtypes.TransferAsset{FromUtxo: "f4dfbea13c:0"},
 		},
 		{
 			expectErr: types.ErrInvalidAddress,
@@ -137,7 +137,7 @@ func Test_checkTransfer(t *testing.T) {
 		},
 		{
 			expectErr: ErrFromUtxoPkScriptNotSet,
-			action:    &rtypes.TransferAsset{From: utxoAddr, To: addr},
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr},
 		},
 		{
 			expectErr: ErrAssetNotExist,
@@ -157,7 +157,19 @@ func Test_checkTransfer(t *testing.T) {
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{From: utxoAddr, To: tx.From(), Symbol: "collect", FromPkScript: []byte("pubkey")},
+			action:    &rtypes.TransferAsset{To: addr, Symbol: "btc", IsCrossChain: true, Amount: 1},
+		},
+		{
+			expectErr: ErrInvalidAssetSender,
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr, Symbol: "btc", IsCrossChain: true, Amount: 1},
+		},
+		{
+			expectErr: types.ErrNoBalance,
+			action:    &rtypes.TransferAsset{To: addr, Symbol: "btc", IsCrossChain: true, Amount: 2},
+		},
+		{
+			expectErr: nil,
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: tx.From(), Symbol: "collect", FromUtxoPkScript: []byte("pubkey")},
 		},
 	}
 
@@ -173,6 +185,12 @@ func Test_checkTransfer(t *testing.T) {
 		Type:  1,
 		Owner: utxoAddr,
 	}))
+	require.Nil(t, err)
+	err = state.Set(formatCrossChainInfoKey("btc"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"}))
+	require.Nil(t, err)
+	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	require.Nil(t, err)
+	_, err = crossAcc.Mint(tx.From(), 1)
 	require.Nil(t, err)
 
 	for idx, tc := range tcArr {

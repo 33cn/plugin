@@ -32,12 +32,12 @@ func TestRgbx_Exec_Mint(t *testing.T) {
 func TestRgbx_Exec_Transfer(t *testing.T) {
 
 	r := newRgbx()
-	addr, _ := util.Genaddress()
+	addr2, _ := util.Genaddress()
 	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
 	tcArr := []*testCase{
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{From: utxoAddr},
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr},
 		},
 		{
 			expectErr: ErrAssetNotExist,
@@ -48,12 +48,16 @@ func TestRgbx_Exec_Transfer(t *testing.T) {
 			action:    &rtypes.TransferAsset{Symbol: "collect"},
 		},
 		{
+			expectErr: nil,
+			action:    &rtypes.TransferAsset{Symbol: "normal", Amount: 1},
+		},
+		{
 			expectErr: types.ErrNoBalance,
 			action:    &rtypes.TransferAsset{Symbol: "normal", Amount: 1},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{Symbol: "normal", From: addr, Amount: 1},
+			action:    &rtypes.TransferAsset{Symbol: "btc", To: addr2, Amount: 1, IsCrossChain: true},
 		},
 	}
 
@@ -69,7 +73,11 @@ func TestRgbx_Exec_Transfer(t *testing.T) {
 
 	acc, err := r.(*rgbx).newAccount("normal")
 	require.Nil(t, err)
-	_, err = acc.Mint(addr, 1)
+	_, err = acc.Mint(testCommitAddr, 1)
+	require.Nil(t, err)
+	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	require.Nil(t, err)
+	_, err = crossAcc.Mint(testCommitAddr, 1)
 	require.Nil(t, err)
 
 	for idx, tc := range tcArr {
@@ -130,7 +138,7 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	require.Nil(t, state.Set(formatAssetKey(collect1), types.Encode(&rtypes.RgbxAsset{Type: 1, Symbol: collect1})))
 
 	require.Nil(t, state.Set(formatPayloadKey([]byte(normal1)),
-		types.Encode(&rtypes.TransferAsset{Symbol: normal1, Amount: 1, From: utxoAddr, To: addr})))
+		types.Encode(&rtypes.TransferAsset{Symbol: normal1, Amount: 1, FromUtxo: utxoAddr, To: addr})))
 	require.Nil(t, state.Set(formatPayloadKey([]byte(collect1)),
 		types.Encode(&rtypes.TransferAsset{Symbol: collect1, To: addr})))
 
