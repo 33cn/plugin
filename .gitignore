@@ -57,3 +57,5 @@ plugin/dapp/bridgevmxgo/cmd/build/dapptest/
 go.work*
 *.test
 *.cursor
+*.kiro
+build/temp/*
