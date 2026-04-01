@@ -28,12 +28,12 @@ function exit_cp_file() {
 
     for name in a b c d; do
         # shellcheck disable=SC2154
-        docker cp "${dockerNamePrefix}_ebrelayer${name}_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
-        docker exec "${dockerNamePrefix}_ebrelayer${name}_1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
+        docker cp "${dockerNamePrefix}-ebrelayer${name}-1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
+        docker exec "${dockerNamePrefix}-ebrelayer${name}-1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
     done
 
-    docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33.log"
-    docker logs "${dockerNamePrefix}_chain33_1" | tail -n 1000
+    docker cp "${dockerNamePrefix}-chain33-1":/root/logs/chain33.log "${dirName}/chain33.log"
+    docker logs "${dockerNamePrefix}-chain33-1" | tail -n 1000
 
     exit 1
 }

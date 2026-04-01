@@ -22,8 +22,8 @@ function StartDockerRelayerDeploy_onlyETH() {
     # 启动 ebrelayer
     start_docker_ebrelayerA
 
-    docker cp "./deploy_chain33.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_chain33.toml
-    docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_ethereum.toml
+    docker cp "./deploy_chain33.toml" "${dockerNamePrefix}-ebrelayera-1":/root/deploy_chain33.toml
+    docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}-ebrelayera-1":/root/deploy_ethereum.toml
 
     # 部署合约 设置 bridgeRegistry 地址
     OfflineDeploy_chain33
@@ -49,7 +49,7 @@ function StartDockerRelayerDeploy_onlyETH() {
     transferChain33MultisignFee
     Chain33Cli=${Para8901Cli}
 
-    docker cp "./relayer.toml" "${dockerNamePrefix}_ebrelayera_1":/root/relayer.toml
+    docker cp "./relayer.toml" "${dockerNamePrefix}-ebrelayera-1":/root/relayer.toml
     InitRelayerA
 
     # 设置 token 地址
@@ -72,12 +72,12 @@ function StartDockerRelayerDeploy_onlyETH() {
 
     # shellcheck disable=SC2086
     {
-        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
-        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
-        docker cp "${chain33USDTBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddrOnETH}.abi
-        docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrETH}.abi
-        docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnETH}.abi
-        docker cp "${ethereumBridgeRegistryOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnETH}.abi
+        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33BridgeBank}.abi
+        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33BridgeRegistry}.abi
+        docker cp "${chain33USDTBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33USDTBridgeTokenAddrOnETH}.abi
+        docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33MainBridgeTokenAddrETH}.abi
+        docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${ethereumBridgeBankOnETH}.abi
+        docker cp "${ethereumBridgeRegistryOnETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${ethereumBridgeRegistryOnETH}.abi
     }
 
     # start ebrelayer B C D

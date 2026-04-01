@@ -18,13 +18,13 @@ set -o pipefail
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-MAIN_NODE="${1}_main_1"
+MAIN_NODE="${1}-main-1"
 MAIN_CLI="docker exec ${MAIN_NODE} /root/chain33-cli --conf=chain33.test.toml"
 
-PARA_NODE="${1}_para1_1"
+PARA_NODE="${1}-para1-1"
 CLI="docker exec ${PARA_NODE} /root/chain33-cli --conf=chain33.para1.toml --paraName=user.p.para."
 
-PARA_NODE2="${1}_para2_1"
+PARA_NODE2="${1}-para2-1"
 CLI2="docker exec ${PARA_NODE2} /root/chain33-cli --conf=chain33.para2.toml --paraName=user.p.para."
 
 # shellcheck disable=SC2034
@@ -333,19 +333,19 @@ function test_rollup() {
 
 function start_docker() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
 
     # create and run docker-compose container
-    docker-compose up --build -d
+    docker compose up --build -d
 
     local SLEEP=5
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 
     # query node run status
     #    check_docker_status

@@ -22,7 +22,7 @@ set -o pipefail
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-SOLO_NODE="${1}_main_1"
+SOLO_NODE="${1}-main-1"
 SOLO_CLI="docker exec ${SOLO_NODE} /root/chain33-cli --rpc_laddr http://localhost:8545"
 Chain33_CLI="docker exec ${SOLO_NODE} /root/chain33-cli"
 DAPP="evm"
@@ -54,19 +54,19 @@ testAddr="0xDe79A84DD3A16BB91044167075dE17a1CA4b1d6b"
 
 function start_docker() {
     echo "=========== # docker-compose ps ============="
-    cd ../evm2 && docker-compose ps && docker-compose down
+    cd ../evm2 && docker compose ps && docker compose down
     cd ../evm-ci
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
     # create and run docker-compose container
-    docker-compose up --build -d
+    docker compose up --build -d
     local SLEEP=5
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 }
 function check_docker_container() {
     echo "===== check_docker_container ======"
@@ -477,7 +477,7 @@ function main() {
     run_testcase
     check_docker_container
     #finish
-    docker-compose down
+    docker compose down
     echo "===============DAPP=$DAPP main end==============="
     echo "++++++++++++++++DAPP=$DAPP ci2  start++++++++++++++++"
     mkdir -p ../evm2-ci && cp ../evm2/* ../evm2-ci

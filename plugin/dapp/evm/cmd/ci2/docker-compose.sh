@@ -25,10 +25,10 @@ source ../dapp-test-common.sh
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-M1_NODE="${1}_chain33_1"
-M2_NODE="${1}_chain32_1"
-M3_NODE="${1}_chain31_1"
-M4_NODE="${1}_chain30_1"
+M1_NODE="${1}-chain33-1"
+M2_NODE="${1}-chain32-1"
+M3_NODE="${1}-chain31-1"
+M4_NODE="${1}-chain30-1"
 #测试节点
 M1_NODE_CLI="docker exec ${M1_NODE} /root/chain33-cli"
 ETH_CLI="docker exec ${M1_NODE} /root/chain33-cli --rpc_laddr http://localhost:8545"
@@ -76,17 +76,17 @@ genesiskey="18f5bf55d3500d216ed3cba3bc1e417507c6c3daf951a3386a5477716d33a160"
 minerkeys=("${m4minerkey}" "${m1minerkey}" "${m2minerkey}" "${m3minerkey}")
 function start_docker() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
     # create and run docker-compose container
-    docker-compose up --build -d
+    docker compose up --build -d
     local SLEEP=5
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 }
 
 
@@ -439,7 +439,7 @@ function main() {
     run_testcase
     check_docker_container
     #finish
-    docker-compose down
+    docker compose down
     echo "===============DAPP=$DAPP main end==============="
 }
 
