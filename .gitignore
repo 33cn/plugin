@@ -51,3 +51,6 @@ build/CHANGELOG.md
 plugin/dapp/dex/boss/build/
 plugin/dapp/bridgevmxgo/cmd/build/bridgevmxgo/
 plugin/dapp/bridgevmxgo/cmd/build/dapptest/
+*.kiro
+build/temp/*
+go.work*
