@@ -685,10 +685,13 @@ func (mdb *MemoryStateDB) mergeResult(one, two *types.Receipt) (ret *types.Recei
 // 生成对应的日志信息，目前这些生成的日志信息会在合约执行后打印到日志文件中
 func (mdb *MemoryStateDB) AddLog(log *model.ContractLog) {
 	newEvmLog := &types.EVMLog{
-		Topic: [][]byte{log.Topics[0].Bytes()},
-		Data:  log.Data,
+		Data:    log.Data,
+		Address: log.Address.String(),
 	}
+	logTopic := ""
 	if len(log.Topics) > 0 {
+		logTopic = log.Topics[0].Hex()
+		newEvmLog.Topic = append(newEvmLog.Topic, log.Topics[0].Bytes())
 		for i := 1; i < len(log.Topics); i++ {
 			newEvmLog.Topic = append(newEvmLog.Topic, log.Topics[i].Bytes())
 		}
@@ -707,7 +710,7 @@ func (mdb *MemoryStateDB) AddLog(log *model.ContractLog) {
 	mdb.logs[mdb.txHash] = append(mdb.logs[mdb.txHash], log)
 	mdb.logSize++
 	log15.Info("MemoryStateDB::AddLog", "txhash", mdb.txHash.Hex(), "blockHeight", mdb.blockHeight, "txIndex", mdb.txIndex,
-		"mdb.logSize", mdb.logSize, "topic", log.Topics[0].Hex())
+		"mdb.logSize", mdb.logSize, "topic", logTopic)
 }
 
 // AddPreimage 存储sha3指令对应的数据

@@ -3,8 +3,8 @@ module github.com/33cn/plugin
 go 1.19
 
 replace (
+	github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20260401090049-2a05aa3e0b57
 	github.com/ava-labs/avalanchego => github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153
-	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.3
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.5.3
 )
 
@@ -13,8 +13,9 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/btcsuite/btcd v0.23.4
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
+	github.com/btcsuite/btcd v0.24.2
+	github.com/btcsuite/btcd/btcec/v2 v2.3.2
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/consensys/gnark v0.5.2
 	github.com/consensys/gnark-crypto v0.10.0
 	github.com/coreos/etcd v3.3.15+incompatible
@@ -68,10 +69,8 @@ require (
 	github.com/benbjohnson/immutable v0.2.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
-	github.com/btcsuite/btcd/btcutil v1.1.3 // indirect
+	github.com/btcsuite/btcd/btcutil v1.1.5 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
-	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd // indirect
 	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
@@ -90,8 +89,8 @@ require (
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/decred/base58 v1.0.3 // indirect
-	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/decred/dcrd/crypto/blake256 v1.1.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/dgraph-io/badger v1.6.2 // indirect
 	github.com/dgraph-io/ristretto v0.0.2 // indirect
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect

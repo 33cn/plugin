@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	chain33Common "github.com/33cn/chain33/common"
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
@@ -53,7 +53,7 @@ func generareChain33KeyCmd() *cobra.Command {
 
 func generareChain33Key(cmd *cobra.Command, _ []string) {
 
-	privateKey, err := btcec.NewPrivateKey(btcec.S256())
+	privateKey, err := btcec.NewPrivateKey()
 	if nil != err {
 		fmt.Println("Failed to generate private key for chain33" + err.Error())
 		return
@@ -84,7 +84,7 @@ func showChain33Key(cmd *cobra.Command, _ []string) {
 		fmt.Println("invalid priv key length", len(privateKeySlice))
 		return
 	}
-	_, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privateKeySlice)
+	_, pubKey := btcec.PrivKeyFromBytes(privateKeySlice)
 
 	uncompressedKey := pubKey.SerializeUncompressed()
 	uncompressedKey = uncompressedKey[1:]
@@ -143,7 +143,7 @@ func showEtheremKey(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	_, pubKey := btcec.PrivKeyFromBytes(crypto.S256(), privateKeySlice)
+	_, pubKey := btcec.PrivKeyFromBytes(privateKeySlice)
 	uncompressedKey := pubKey.SerializeUncompressed()
 	uncompressedKey = uncompressedKey[1:]
 	compressedKey := pubKey.SerializeCompressed()

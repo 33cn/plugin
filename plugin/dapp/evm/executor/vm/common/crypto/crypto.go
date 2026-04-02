@@ -6,12 +6,13 @@ package crypto
 
 import (
 	"crypto/ecdsa"
+
 	"math/big"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/btcsuite/btcd/btcec"
+	ecdsa2 "github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -43,8 +44,8 @@ func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
 	btcsig[0] = sig[64] + 27
 	copy(btcsig[1:], sig)
 
-	pub, _, err := btcec.RecoverCompact(btcec.S256(), btcsig, hash)
-	return (*ecdsa.PublicKey)(pub), err
+	pub, _, err := ecdsa2.RecoverCompact(btcsig, hash)
+	return pub.ToECDSA(), err
 }
 
 // Keccak256 计算并返回 Keccak256 哈希

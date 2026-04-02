@@ -5,8 +5,8 @@
 package ticket
 
 import (
-	"crypto/ecdsa"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"testing"
 	"time"
 
@@ -18,7 +18,6 @@ import (
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/assert"
 
 	apimocks "github.com/33cn/chain33/client/mocks"
@@ -204,8 +203,8 @@ func Test_vrfVerify(t *testing.T) {
 	assert.NoError(t, err)
 	pub := priv.PubKey().Bytes()
 
-	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
-	vpriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+	privKey, _ := btcec.PrivKeyFromBytes(priv.Bytes())
+	vpriv := &vrf.PrivateKey{PrivateKey: privKey.ToECDSA()}
 
 	m1 := []byte("data1")
 	m2 := []byte("data2")

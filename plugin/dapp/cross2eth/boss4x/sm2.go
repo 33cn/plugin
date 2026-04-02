@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/btcsuite/btcd/btcec/v2"
 
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/sm2"
@@ -213,7 +212,7 @@ func encryptWithSm2(cmd *cobra.Command, args []string) {
 	sm4Key = sm4Key[1:]
 
 	//第三步，计算secp256k1对应的公钥，非压缩
-	_, pubKey := btcec.PrivKeyFromBytes(crypto.S256(), privateKeySlice)
+	_, pubKey := btcec.PrivKeyFromBytes(privateKeySlice)
 	uncompressedKey := pubKey.SerializeUncompressed()
 	uncompressedKey = uncompressedKey[1:]
 

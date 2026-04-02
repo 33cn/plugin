@@ -14,7 +14,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
-	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	btcec_secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 
@@ -520,7 +520,7 @@ func safeTransfer(ownerPrivateKeyStr, mulSign, chainName, rpcURL, receiver, toke
 		if nil != err {
 			return "", err
 		}
-		temp, _ := btcec_secp256k1.PrivKeyFromBytes(btcec_secp256k1.S256(), ownerPrivateKey.Bytes())
+		temp, _ := btcec_secp256k1.PrivKeyFromBytes(ownerPrivateKey.Bytes())
 		privateKey4Chain33_ecdsa := temp.ToECDSA()
 
 		sig, err := ethSecp256k1.Sign(contentHash, math.PaddedBigBytes(privateKey4Chain33_ecdsa.D, 32))

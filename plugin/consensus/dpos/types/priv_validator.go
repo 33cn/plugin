@@ -6,7 +6,6 @@ package types
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -19,7 +18,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 )
 
 // KeyText ...
@@ -334,8 +333,8 @@ func (pv *PrivValidatorImp) VrfEvaluate(input []byte) (hash [32]byte, proof []by
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 
-	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pv.PrivKey.Bytes())
-	vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+	privKey, _ := secp256k1.PrivKeyFromBytes(pv.PrivKey.Bytes())
+	vrfPriv := &vrf.PrivateKey{PrivateKey: privKey.ToECDSA()}
 	hash, proof = vrfPriv.Evaluate(input)
 	return hash, proof
 }
@@ -345,11 +344,11 @@ func (pv *PrivValidatorImp) VrfProof(pubkey []byte, input []byte, hash [32]byte,
 	pv.mtx.Lock()
 	defer pv.mtx.Unlock()
 
-	pubKey, err := secp256k1.ParsePubKey(pubkey, secp256k1.S256())
+	pubKey, err := secp256k1.ParsePubKey(pubkey)
 	if err != nil {
 		return false
 	}
-	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
+	vrfPub := &vrf.PublicKey{PublicKey: pubKey.ToECDSA()}
 	vrfHash, err := vrfPub.ProofToHash(input, proof)
 	if err != nil {
 		return false
