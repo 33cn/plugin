@@ -101,23 +101,22 @@ func (evm *EVMExecutor) quick_estimateGas(req *evmtypes.EstimateEVMGasReq) (type
 	}
 
 	result := &evmtypes.EstimateEVMGasResp{}
-
 	conf := types.ConfSub(evm.GetAPI().GetConfig(), evmtypes.ExecutorName)
-	gasmultiple, err := conf.G("gasmultiple")
-	if err == nil {
-		multiple, ok := gasmultiple.(float64)
-		if ok {
-			if multiple < 1.3 { //quick gas 默认增加30%
-				multiple = 1.3
-			}
-			result.Gas = uint64(float64(result.Gas) * multiple)
-		}
-
-	} else {
-		result.Gas = callData.UsedGas + uint64(float64(callData.UsedGas)*0.3)
-	}
+	gasmultiple, _ := conf.G("gasmultiple")
+	result.Gas = quickEstimateGasValue(callData.UsedGas, gasmultiple)
 	log.Info("quick_estimateGas", "from:", from, "gasused:", callData.UsedGas, "return Gas:", result.Gas, "gasmultiple:", gasmultiple)
 	return result, nil
+}
+
+func quickEstimateGasValue(usedGas uint64, gasmultiple interface{}) uint64 {
+	multiple := 1.3 // quick gas 默认增加30%
+	switch v := gasmultiple.(type) {
+	case float64:
+		multiple = v
+	case int64:
+		multiple = float64(v)
+	}
+	return uint64(float64(usedGas) * multiple)
 }
 
 // Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据

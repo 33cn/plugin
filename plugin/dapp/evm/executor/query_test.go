@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
@@ -237,4 +238,52 @@ func TestEVMExecutor_Check(t *testing.T) {
 	err = exec.CheckTx(tx4, 0)
 	assert.Equal(t, nil, err)
 
+}
+
+func TestQuickEstimateGasValue(t *testing.T) {
+	usedGas := uint64(1000)
+	testCases := []struct {
+		name   string
+		toml   string
+		expect uint64
+	}{
+		{
+			name: "nil default",
+			toml: ``,
+			expect: 1300,
+		},
+		{
+			name: "float from toml",
+			toml: `gasmultiple = 2.0`,
+			expect: 2000,
+		},
+		{
+			name: "int from toml",
+			toml: `gasmultiple = 2`,
+			expect: 2000,
+		},
+		{
+			name: "invalid string fallback",
+			toml: `gasmultiple = "invalid"`,
+			expect: 1300,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := quickEstimateGasValue(usedGas, gasMultipleFromTOML(t, tc.toml))
+			assert.Equal(t, got, tc.expect)
+		})
+	}
+}
+
+func gasMultipleFromTOML(t *testing.T, cfg string) interface{} {
+	t.Helper()
+	var parsed struct {
+		Gasmultiple interface{} `toml:"gasmultiple"`
+	}
+	if _, err := toml.Decode(cfg, &parsed); err != nil {
+		t.Fatalf("decode toml failed: %v", err)
+	}
+	return parsed.Gasmultiple
 }
