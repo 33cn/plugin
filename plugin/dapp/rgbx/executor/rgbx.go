@@ -24,8 +24,9 @@ var (
 var driverName = rgbxtypes.RgbxX
 
 type config struct {
-	CommitAddress         string `json:"commitAddress"`
-	CrossChainAssetPrefix string `json:"crossChainAssetPrefix"`
+	CommitAddress          string `json:"commitAddress"`
+	CrossChainAssetPrefix  string `json:"crossChainAssetPrefix"`
+	GuardianParachainTitle string `json:"guardianParachainTitle"`
 }
 
 var rgbxCfg = config{}
@@ -39,6 +40,10 @@ func initCfg(sub []byte) {
 			prefix = "X"
 		}
 		rgbxCfg.CrossChainAssetPrefix = formatSymbol(prefix)
+		rgbxCfg.GuardianParachainTitle = strings.TrimSpace(rgbxCfg.GuardianParachainTitle)
+		if rgbxCfg.GuardianParachainTitle == "" {
+			rgbxCfg.GuardianParachainTitle = defaultGuardianParachainTitle
+		}
 	})
 }
 

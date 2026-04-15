@@ -56,3 +56,4 @@ plugin/dapp/bridgevmxgo/cmd/build/bridgevmxgo/
 plugin/dapp/bridgevmxgo/cmd/build/dapptest/
 go.work*
 *.test
+*.cursor

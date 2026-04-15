@@ -10,7 +10,7 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 )
 
-const guardianParachainTitle = "user.p.rgbxguardians."
+const defaultGuardianParachainTitle = "user.p.rgbxguardians."
 
 func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, index int) (*types.Receipt, error) {
 
@@ -25,11 +25,11 @@ func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, i
 	}
 	for _, addr := range addrs.Addrs {
 		if commitAddr == addr {
-			break
+			return receipt, nil
 		}
 	}
 	addrs.Addrs = append(addrs.Addrs, commitAddr)
-	guardianAddrs, err := r.getGuardianNodeAddress(guardianParachainTitle)
+	guardianAddrs, err := r.getGuardianNodeAddress(rgbxCfg.GuardianParachainTitle)
 	if err != nil {
 		elog.Error("Exec_CommitDKG", "txHash", txHash, "getGuardianNodeAddress err", err)
 		return nil, err

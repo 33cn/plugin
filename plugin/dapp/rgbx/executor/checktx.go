@@ -53,6 +53,10 @@ var (
 	ErrNewAccountDB                     = errors.New("new account db error")
 	ErrGetCrossChainInfo                = errors.New("get cross chain info error")
 	ErrDuplicateDepositProof            = errors.New("duplicate deposit proof")
+	ErrInvalidGuardianCommitter         = errors.New("invalid guardian committer")
+	ErrDuplicateDKGCommit               = errors.New("duplicate dkg commit")
+	ErrGetGuardianNodeAddress           = errors.New("get guardian node address error")
+	ErrInvalidDkgAddress                = errors.New("invalid dkg address")
 )
 
 const (
@@ -77,7 +81,7 @@ func (r *rgbx) CheckTx(tx *types.Transaction, index int) error {
 	case rtypes.TyTransferAction:
 		err = r.checkTransfer(tx, txHash, action.GetTransfer())
 	case rtypes.TyCommitDKGAction:
-		err = r.checkCommitDKG(txHash, action.GetCommitDKG())
+		err = r.checkCommitDKG(txHash, tx.From(), action.GetCommitDKG())
 	case rtypes.TyDepositAsset:
 		err = r.checkDeposit(txHash, action.GetDeposit())
 	case rtypes.TyWithDrawAsset:
@@ -209,11 +213,30 @@ func (r *rgbx) checkCrossChainTransfer(txHash, fromAddr string, transfer *rtypes
 	return nil
 }
 
-func (r *rgbx) checkCommitDKG(txHash string, commitDKG *rtypes.CommitDKG) error {
-	if commitDKG.GetAssetSymbol() == "" || commitDKG.GetDkgAddress() == "" {
-		elog.Error("checkCommitDKG invalid asset symbol or dkg address", "txHash", txHash,
-			"assetSymbol", commitDKG.GetAssetSymbol(), "dkgAddress", commitDKG.GetDkgAddress())
-		return types.ErrInvalidParam
+func (r *rgbx) checkCommitDKG(txHash, fromAddr string, commitDKG *rtypes.CommitDKG) error {
+
+	symbol := commitDKG.GetAssetSymbol()
+	pkScript, err := r.decodeBtcAddressScript(commitDKG.GetDkgAddress())
+	if err != nil || !bytes.Equal(pkScript, commitDKG.GetPkScript()) {
+		elog.Error("checkCommitDKG decode btc address script", "txHash", txHash,
+			"symbol", symbol, "dkgAddress", commitDKG.GetDkgAddress(),
+			"pkScript", hex.EncodeToString(commitDKG.GetPkScript()), "expectPkScript", hex.EncodeToString(pkScript), "err", err)
+		return ErrInvalidDkgAddress
+	}
+	guardianAddrs, err := r.getGuardianNodeAddress(rgbxCfg.GuardianParachainTitle)
+	if err != nil {
+		elog.Error("checkCommitDKG getGuardianNodeAddress", "txHash", txHash, "symbol", symbol, "err", err)
+		return ErrGetGuardianNodeAddress
+	}
+	if !strings.Contains(guardianAddrs, fromAddr) {
+		elog.Error("checkCommitDKG invalid committer", "txHash", txHash, "symbol", symbol, "fromAddr", fromAddr)
+		return ErrInvalidGuardianCommitter
+	}
+
+	_, err = r.GetStateDB().Get(formatCrossChainInfoKey(symbol))
+	if err == nil {
+		elog.Error("checkCommitDKG duplicate cross chain info", "txHash", txHash, "symbol", symbol)
+		return ErrDuplicateDKGCommit
 	}
 	return nil
 }
