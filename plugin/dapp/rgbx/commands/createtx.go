@@ -132,6 +132,7 @@ func transferAssetFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("to", "t", "", "to address, hash:index format for utxo")
 	cmd.Flags().StringP("pkScript", "p", "", "from pkScript( set only when from is an utxo)")
 	cmd.Flags().StringP("change", "c", "", "to address, hash:index format for utxo")
+	cmd.Flags().BoolP("isCrossChain", "x", false, "transfer cross-chain wrapped asset")
 	markRequired(cmd, "amount", "symbol", "to")
 }
 
@@ -143,6 +144,7 @@ func transferAsset(cmd *cobra.Command, args []string) {
 	change, _ := cmd.Flags().GetString("change")
 	amount, _ := cmd.Flags().GetInt64("amount")
 	pkScriptStr, _ := cmd.Flags().GetString("pkScript")
+	isCrossChain, _ := cmd.Flags().GetBool("isCrossChain")
 
 	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, "+
@@ -179,6 +181,7 @@ func transferAsset(cmd *cobra.Command, args []string) {
 		To:               to,
 		ChangeAddr:       change,
 		FromUtxoPkScript: pkScript,
+		IsCrossChain:     isCrossChain,
 	}
 	sendCreateTxRPC(cmd, rtypes.NameTransferAction, transfer)
 }

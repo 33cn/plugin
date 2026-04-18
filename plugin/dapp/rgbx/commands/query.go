@@ -123,3 +123,57 @@ func getConfirmedHeight(cmd *cobra.Command, _ []string) {
 	reply := &types.Int64{}
 	sendQueryRPC(cmd, "GetConfirmedHeight", &types.ReqNil{}, reply, false)
 }
+
+func getCrossChainInfoCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "getCross",
+		Aliases: []string{"gc"},
+		Short:   "get cross-chain info",
+		Run:     getCrossChainInfo,
+		Example: "getCross -s BTC",
+	}
+	getCrossChainInfoFlags(cmd)
+	return cmd
+}
+
+func getCrossChainInfoFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "cross-chain asset symbol")
+	markRequired(cmd, "symbol")
+}
+
+func getCrossChainInfo(cmd *cobra.Command, _ []string) {
+	symbol, _ := cmd.Flags().GetString("symbol")
+	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, length must less than %d\n", symbol, rtypes.MaxAssetSymbolLength)
+		return
+	}
+	reply := &rtypes.CrossChainInfo{}
+	sendQueryRPC(cmd, "GetCrossChainInfo", &types.ReqString{Data: symbol}, reply, false)
+}
+
+func listPendingTxByFromCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "listPendByFrom",
+		Aliases: []string{"lpf"},
+		Short:   "list pending tx by from address",
+		Run:     listPendingByFrom,
+		Example: "listPendByFrom -f 1xxxxxxxxxxxxxxxx",
+	}
+	listPendingTxByFromFlags(cmd)
+	return cmd
+}
+
+func listPendingTxByFromFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("from", "f", "", "from address")
+	markRequired(cmd, "from")
+}
+
+func listPendingByFrom(cmd *cobra.Command, _ []string) {
+	from, _ := cmd.Flags().GetString("from")
+	if from == "" {
+		_, _ = fmt.Fprintln(os.Stderr, "from address is required")
+		return
+	}
+	reply := &rtypes.PendingTxs{}
+	sendQueryRPC(cmd, "ListPendingTxByFrom", &types.ReqString{Data: from}, reply, false)
+}

@@ -24,9 +24,15 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(
 		mintAssetCMD(),
 		transferAssetCMD(),
+		commitDKGCMD(),
+		depositAssetCMD(),
+		withdrawAssetCMD(),
+		confirmTxCMD(),
 		getAssetCMD(),
+		getCrossChainInfoCMD(),
 		getPendingTxCMD(),
 		listPendingTxCMD(),
+		listPendingTxByFromCMD(),
 		getConfirmedHeightCMD(),
 	)
 	return cmd
