@@ -4,11 +4,303 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/spf13/cobra"
 )
+
+func btcAddrScriptCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "addrScript",
+		Short: "convert btc address to pkScript hex",
+		Run:   btcAddrScript,
+	}
+	cmd.Flags().StringP("address", "a", "", "bitcoin address")
+	cmd.Flags().String("net", "mainnet", "bitcoin network: mainnet|testnet|regtest|simnet")
+	markRequired(cmd, "address")
+	return cmd
+}
+
+func btcAddrScript(cmd *cobra.Command, _ []string) {
+	address, _ := cmd.Flags().GetString("address")
+	netName, _ := cmd.Flags().GetString("net")
+
+	params, err := parseNetParams(netName)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid net: %s, err: %v\n", netName, err)
+		return
+	}
+	addr, err := btcutil.DecodeAddress(address, params)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid address: %s, decode err: %v\n", address, err)
+		return
+	}
+	script, err := txscript.PayToAddrScript(addr)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "convert address to script failed: %v\n", err)
+		return
+	}
+	fmt.Println(hex.EncodeToString(script))
+}
+
+func btcDepositTxCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "btcDepositTx",
+		Short: "build, sign and broadcast btc deposit tx",
+		Run:   btcDepositTx,
+		Example: "btcDepositTx --net regtest --rpcHost 127.0.0.1:18443 " +
+			"--wif <wif> --utxo <txid:vout:amountSats:pkScriptHex> --tssAddress <btcAddr> --chain33Address <addr> " +
+			"--amount 100000 --fee 300",
+	}
+	cmd.Flags().String("net", "regtest", "bitcoin network: mainnet|testnet|regtest|simnet")
+	cmd.Flags().String("rpcHost", "127.0.0.1:18443", "bitcoin rpc host")
+	cmd.Flags().String("rpcUser", "", "bitcoin rpc user (optional)")
+	cmd.Flags().String("rpcPass", "", "bitcoin rpc password (optional)")
+	cmd.Flags().Bool("disableTLS", true, "disable rpc tls")
+	cmd.Flags().String("wif", "", "sender private key in WIF format")
+	cmd.Flags().String("utxo", "", "single input utxo, format: txid:vout:amountSats:pkScriptHex")
+	cmd.Flags().String("tssAddress", "", "tss deposit address")
+	cmd.Flags().String("chain33Address", "", "chain33 deposit address for OP_RETURN rgbx:deposit:<addr>")
+	cmd.Flags().Int64("amount", 0, "deposit amount in satoshis")
+	cmd.Flags().Int64("fee", 0, "tx fee in satoshis")
+	cmd.Flags().String("changeAddress", "", "optional change address, default from private key")
+	markRequired(cmd, "wif", "utxo", "tssAddress", "chain33Address", "amount", "fee")
+	return cmd
+}
+
+type depositUTXO struct {
+	hash     *chainhash.Hash
+	vout     uint32
+	amount   int64
+	pkScript []byte
+}
+
+func parseDepositUTXO(raw string) (*depositUTXO, error) {
+	parts := strings.Split(raw, ":")
+	if len(parts) != 4 {
+		return nil, fmt.Errorf("invalid utxo format: %s", raw)
+	}
+	hash, err := chainhash.NewHashFromStr(strings.TrimSpace(parts[0]))
+	if err != nil {
+		return nil, fmt.Errorf("invalid utxo txid: %w", err)
+	}
+	vout64, err := strconv.ParseUint(strings.TrimSpace(parts[1]), 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid utxo vout: %w", err)
+	}
+	amount, err := strconv.ParseInt(strings.TrimSpace(parts[2]), 10, 64)
+	if err != nil || amount <= 0 {
+		return nil, fmt.Errorf("invalid utxo amount: %s", parts[2])
+	}
+	pkScript, err := hex.DecodeString(strings.TrimSpace(parts[3]))
+	if err != nil {
+		return nil, fmt.Errorf("invalid utxo pkScript: %w", err)
+	}
+	return &depositUTXO{
+		hash:     hash,
+		vout:     uint32(vout64),
+		amount:   amount,
+		pkScript: pkScript,
+	}, nil
+}
+
+func btcDepositTx(cmd *cobra.Command, _ []string) {
+	netName, _ := cmd.Flags().GetString("net")
+	rpcHost, _ := cmd.Flags().GetString("rpcHost")
+	rpcUser, _ := cmd.Flags().GetString("rpcUser")
+	rpcPass, _ := cmd.Flags().GetString("rpcPass")
+	disableTLS, _ := cmd.Flags().GetBool("disableTLS")
+	wifStr, _ := cmd.Flags().GetString("wif")
+	utxoRaw, _ := cmd.Flags().GetString("utxo")
+	tssAddrStr, _ := cmd.Flags().GetString("tssAddress")
+	chain33Addr, _ := cmd.Flags().GetString("chain33Address")
+	amount, _ := cmd.Flags().GetInt64("amount")
+	fee, _ := cmd.Flags().GetInt64("fee")
+	changeAddrStr, _ := cmd.Flags().GetString("changeAddress")
+
+	params, err := parseNetParams(netName)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid net: %s, err: %v\n", netName, err)
+		return
+	}
+	if amount <= 0 || fee < 0 {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid amount(%d) or fee(%d)\n", amount, fee)
+		return
+	}
+	utxo, err := parseDepositUTXO(utxoRaw)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid utxo: %v\n", err)
+		return
+	}
+	if utxo.amount < amount+fee {
+		_, _ = fmt.Fprintf(os.Stderr, "insufficient utxo amount, have=%d need=%d\n", utxo.amount, amount+fee)
+		return
+	}
+
+	wif, err := btcutil.DecodeWIF(strings.TrimSpace(wifStr))
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid wif: %v\n", err)
+		return
+	}
+	tssAddr, err := btcutil.DecodeAddress(strings.TrimSpace(tssAddrStr), params)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid tssAddress: %v\n", err)
+		return
+	}
+	var changeAddr btcutil.Address
+	if strings.TrimSpace(changeAddrStr) == "" {
+		changeAddr, err = btcutil.NewAddressPubKeyHash(
+			btcutil.Hash160(wif.PrivKey.PubKey().SerializeCompressed()), params,
+		)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "create default change address failed: %v\n", err)
+			return
+		}
+	} else {
+		changeAddr, err = btcutil.DecodeAddress(strings.TrimSpace(changeAddrStr), params)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "invalid changeAddress: %v\n", err)
+			return
+		}
+	}
+
+	tx := wire.NewMsgTx(wire.TxVersion)
+	tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(utxo.hash, utxo.vout), nil, nil))
+
+	tssScript, err := txscript.PayToAddrScript(tssAddr)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "build tss script failed: %v\n", err)
+		return
+	}
+	tx.AddTxOut(wire.NewTxOut(amount, tssScript))
+
+	opData := []byte("rgbx:deposit:" + strings.TrimSpace(chain33Addr))
+	opScript, err := txscript.NullDataScript(opData)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "build op_return failed: %v\n", err)
+		return
+	}
+	tx.AddTxOut(wire.NewTxOut(0, opScript))
+
+	change := utxo.amount - amount - fee
+	if change > 546 {
+		changeScript, err := txscript.PayToAddrScript(changeAddr)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "build change script failed: %v\n", err)
+			return
+		}
+		tx.AddTxOut(wire.NewTxOut(change, changeScript))
+	}
+
+	class := txscript.GetScriptClass(utxo.pkScript)
+	switch class {
+	case txscript.PubKeyHashTy:
+		sigScript, err := txscript.SignatureScript(tx, 0, utxo.pkScript, txscript.SigHashAll, wif.PrivKey, true)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "sign p2pkh failed: %v\n", err)
+			return
+		}
+		tx.TxIn[0].SignatureScript = sigScript
+	default:
+		_, _ = fmt.Fprintf(os.Stderr, "unsupported utxo script class: %s, only p2pkh supported now\n", class.String())
+		return
+	}
+
+	connCfg := &rpcclient.ConnConfig{
+		Host:         rpcHost,
+		User:         rpcUser,
+		Pass:         rpcPass,
+		HTTPPostMode: true,
+		DisableTLS:   disableTLS,
+	}
+	rpcCli, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "create rpc client failed: %v\n", err)
+		return
+	}
+	defer rpcCli.Shutdown()
+
+	txHash, err := rpcCli.SendRawTransaction(tx, false)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "broadcast tx failed: %v\n", err)
+		return
+	}
+	fmt.Println(txHash.String())
+}
+
+func btcKeyInfoCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "btcKeyInfo",
+		Short:   "derive btc key info from private key hex",
+		Run:     btcKeyInfo,
+		Example: "btcKeyInfo --net regtest --privHex 0000000000000000000000000000000000000000000000000000000000000001",
+	}
+	cmd.Flags().String("net", "regtest", "bitcoin network: mainnet|testnet|regtest|simnet")
+	cmd.Flags().String("privHex", "", "private key hex (32 bytes)")
+	markRequired(cmd, "privHex")
+	return cmd
+}
+
+func btcKeyInfo(cmd *cobra.Command, _ []string) {
+	netName, _ := cmd.Flags().GetString("net")
+	privHex, _ := cmd.Flags().GetString("privHex")
+
+	params, err := parseNetParams(netName)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid net: %s, err: %v\n", netName, err)
+		return
+	}
+	keyBytes, err := hex.DecodeString(strings.TrimSpace(privHex))
+	if err != nil || len(keyBytes) != 32 {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid privHex, require 32-byte hex\n")
+		return
+	}
+	privKey, _ := btcec.PrivKeyFromBytes(keyBytes)
+	wif, err := btcutil.NewWIF(privKey, params, true)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "create wif failed: %v\n", err)
+		return
+	}
+	addr, err := btcutil.NewAddressPubKeyHash(
+		btcutil.Hash160(privKey.PubKey().SerializeCompressed()), params,
+	)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "derive address failed: %v\n", err)
+		return
+	}
+	script, err := txscript.PayToAddrScript(addr)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "derive pkScript failed: %v\n", err)
+		return
+	}
+
+	fmt.Printf("{\"wif\":\"%s\",\"address\":\"%s\",\"pkScript\":\"%s\"}\n",
+		wif.String(), addr.String(), hex.EncodeToString(script))
+}
+
+func parseNetParams(net string) (*chaincfg.Params, error) {
+	switch strings.ToLower(strings.TrimSpace(net)) {
+	case "mainnet", "main":
+		return &chaincfg.MainNetParams, nil
+	case "testnet", "testnet3", "test":
+		return &chaincfg.TestNet3Params, nil
+	case "regtest":
+		return &chaincfg.RegressionNetParams, nil
+	case "simnet":
+		return &chaincfg.SimNetParams, nil
+	default:
+		return nil, fmt.Errorf("unsupported net %q", net)
+	}
+}
 
 func commitDKGCMD() *cobra.Command {
 	cmd := &cobra.Command{
