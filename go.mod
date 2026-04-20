@@ -1,8 +1,10 @@
 module github.com/33cn/plugin
 
-go 1.19
+go 1.22
 
-replace github.com/33cn/chain33 => ../chain33
+toolchain go1.22.12
+
+replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20260420073436-35a420b42377
 
 replace (
 	github.com/ava-labs/avalanchego => github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153
@@ -20,6 +22,7 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/btcsuite/btcwallet v0.16.17
 	github.com/btcsuite/btcwallet/walletdb v1.5.1
+	github.com/btcsuite/btcwallet/wtxmgr v1.5.6
 	github.com/consensys/gnark v0.5.2
 	github.com/consensys/gnark-crypto v0.10.0
 	github.com/coreos/etcd v3.3.15+incompatible
@@ -80,7 +83,6 @@ require (
 	github.com/btcsuite/btcwallet/wallet/txauthor v1.3.5 // indirect
 	github.com/btcsuite/btcwallet/wallet/txrules v1.2.2 // indirect
 	github.com/btcsuite/btcwallet/wallet/txsizes v1.2.5 // indirect
-	github.com/btcsuite/btcwallet/wtxmgr v1.5.6 // indirect
 	github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd // indirect
 	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
