@@ -1,0 +1,67 @@
+version: "3"
+
+services:
+  main:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.test.toml"
+    ports:
+      - "8801:8801"
+      - "8802:8802"
+
+  para1:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.para1.toml"
+    depends_on:
+      - main
+
+  para2:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.para2.toml"
+    depends_on:
+      - main
+
+  para3:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.para3.toml"
+    depends_on:
+      - main
+
+  para4:
+    build:
+      context: .
+    environment:
+      ChainConfig: "chain33.para4.toml"
+    depends_on:
+      - main
+
+  btcd:
+    build:
+      context: .
+      dockerfile: Dockerfile.btcd
+      args:
+        BTCD_VERSION: "${BTCD_VERSION:-v0.24.2}"
+    command:
+      - btcd
+      - --regtest
+      - --txindex
+      - --rpclisten=0.0.0.0:18443
+      - --listen=0.0.0.0:18444
+      - --miningaddr=${BTCD_MINING_ADDR:-n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi}
+      - --notls
+      - --debuglevel=info
+    ports:
+      - "18443:18443"
+      - "18444:18444"
+    healthcheck:
+      test: ["CMD", "btcctl", "--regtest", "--notls", "getblockcount"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
