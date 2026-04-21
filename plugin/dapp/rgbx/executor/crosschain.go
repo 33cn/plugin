@@ -63,19 +63,19 @@ func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, i
 
 }
 
-func (r *rgbx) Exec_DepositAsset(deposit *rtypes.DepositAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (r *rgbx) Exec_Deposit(deposit *rtypes.DepositAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	txHash := tx.Hash()
 	accDB, err := r.newCrossChainAccount(deposit.GetAssetSymbol())
 	if err != nil {
-		elog.Error("Exec_DepositAsset newCrossChainAccount", "txHash", hex.EncodeToString(txHash), "symbol", deposit.GetAssetSymbol(),
+		elog.Error("Exec_Deposit newCrossChainAccount", "txHash", hex.EncodeToString(txHash), "symbol", deposit.GetAssetSymbol(),
 			"err", err)
 		return nil, err
 	}
 	depositReceipt, err := accDB.Mint(deposit.GetDepositAddress(), deposit.GetAmount())
 	if err != nil {
-		elog.Error("Exec_DepositAsset Mint", "txHash", hex.EncodeToString(txHash), "symbol", deposit.GetAssetSymbol(),
+		elog.Error("Exec_Deposit Mint", "txHash", hex.EncodeToString(txHash), "symbol", deposit.GetAssetSymbol(),
 			"depositAddr", deposit.GetDepositAddress(), "amount", deposit.GetAmount(), "err", err)
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (r *rgbx) Exec_DepositAsset(deposit *rtypes.DepositAsset, tx *types.Transac
 
 }
 
-func (r *rgbx) Exec_WithdrawAsset(withdraw *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (r *rgbx) Exec_Withdraw(withdraw *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	txHash := tx.Hash()
 	accDB, err := r.newCrossChainAccount(withdraw.GetAssetSymbol())
@@ -118,7 +118,7 @@ func (r *rgbx) Exec_WithdrawAsset(withdraw *rtypes.WithdrawAsset, tx *types.Tran
 	lockAddr := r.crossChainLockAddress(accDB)
 	lockReceipt, err := accDB.Transfer(tx.From(), lockAddr, withdraw.GetAmount())
 	if err != nil {
-		elog.Error("Exec_WithdrawAsset lock transfer", "txHash", hex.EncodeToString(txHash), "from", tx.From(),
+		elog.Error("Exec_Withdraw lock transfer", "txHash", hex.EncodeToString(txHash), "from", tx.From(),
 			"symbol", withdraw.GetAssetSymbol(), "amount", withdraw.GetAmount(), "err", err)
 		return nil, err
 	}

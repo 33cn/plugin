@@ -47,7 +47,7 @@ func (r *rgbx) ExecLocal_Transfer(_ *rtypes.TransferAsset, tx *types.Transaction
 	return r.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (r *rgbx) ExecLocal_WithdrawAsset(_ *rtypes.WithdrawAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rgbx) ExecLocal_Withdraw(_ *rtypes.WithdrawAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	from := tx.From()
 	for _, log := range receiptData.Logs {
@@ -72,7 +72,7 @@ func (r *rgbx) ExecLocal_WithdrawAsset(_ *rtypes.WithdrawAsset, tx *types.Transa
 	return r.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (r *rgbx) ExecLocal_DepositAsset(_ *rtypes.DepositAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (r *rgbx) ExecLocal_Deposit(_ *rtypes.DepositAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	for _, log := range receiptData.Logs {
 		if log.Ty == rtypes.TyPendingTxLog {

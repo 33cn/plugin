@@ -28,8 +28,10 @@ const (
 	NameTransferAction      = "Transfer"
 	NameConfirmAction       = "Confirm"
 	NameCommitDKGAction     = "CommitDKG"
-	NameDepositAssetAction  = "DepositAsset"
-	NameWithdrawAssetAction = "WithdrawAsset"
+	// 须与 RgbxAction protobuf oneof 字段名一致（chain33 ExecTypeBase.SetChild 用 strings.ToLower 映射），
+	// 例如 oneof deposit -> 此处为 "Deposit"，不能为 "DepositAsset"。
+	NameDepositAssetAction  = "Deposit"
+	NameWithdrawAssetAction = "Withdraw"
 )
 
 // log类型id值

@@ -141,8 +141,8 @@ func TestFormatCrossChainAccountSymbolByConfig(t *testing.T) {
 	defer func() { rgbxCfg.CrossChainAssetPrefix = origin }()
 
 	rgbxCfg.CrossChainAssetPrefix = "rb"
-	require.Equal(t, "RBBTC", formatCrossChainSymbol("btc"))
+	require.Equal(t, "rbBTC", formatCrossChainSymbol("btc"))
 
-	rgbxCfg.CrossChainAssetPrefix = ""
+	rgbxCfg.CrossChainAssetPrefix = "X"
 	require.Equal(t, "XBTC", formatCrossChainSymbol("btc"))
 }
