@@ -2,6 +2,7 @@ package executor
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
@@ -10,8 +11,15 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
+	paratypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -128,48 +136,48 @@ func Test_checkTransfer(t *testing.T) {
 	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
 	tcArr := []*testCase{
 		{
-			expectErr: types.ErrInvalidAddress,
-			action:    &rtypes.TransferAsset{FromUtxo: "f4dfbea13c:0"},
+			expectErr: ErrInvalidFromUtxo,
+			action:    &rtypes.TransferAsset{FromUtxo: "f4dfbea13c:0", To: addr, Amount: 1, Symbol: "normal"},
 		},
 		{
 			expectErr: types.ErrInvalidAddress,
-			action:    &rtypes.TransferAsset{To: utxoAddr, ChangeAddr: "invalidaddr"},
+			action:    &rtypes.TransferAsset{To: utxoAddr, ChangeAddr: "invalidaddr", Amount: 1, Symbol: "normal"},
 		},
 		{
-			expectErr: ErrFromUtxoPkScriptNotSet,
-			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr},
+			expectErr: ErrInvalidFromUtxo,
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr, Amount: 1, Symbol: "normal"},
 		},
 		{
 			expectErr: ErrAssetNotExist,
-			action:    &rtypes.TransferAsset{To: addr},
+			action:    &rtypes.TransferAsset{To: addr, Amount: 1},
 		},
 		{
 			expectErr: ErrInvalidAssetAmount,
 			action:    &rtypes.TransferAsset{To: addr, Symbol: "normal"},
 		},
 		{
-			expectErr: ErrInvalidAssetAmount,
+			expectErr: types.ErrInsufficientBalance,
 			action:    &rtypes.TransferAsset{To: addr, Symbol: "normal", Amount: 1},
 		},
 		{
 			expectErr: ErrInvalidAssetSender,
-			action:    &rtypes.TransferAsset{To: addr, Symbol: "collect"},
+			action:    &rtypes.TransferAsset{To: addr, Symbol: "collect", Amount: 1},
 		},
 		{
 			expectErr: nil,
 			action:    &rtypes.TransferAsset{To: addr, Symbol: "btc", IsCrossChain: true, Amount: 1},
 		},
 		{
-			expectErr: ErrInvalidAssetSender,
+			expectErr: nil,
 			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr, Symbol: "btc", IsCrossChain: true, Amount: 1},
 		},
 		{
-			expectErr: types.ErrNoBalance,
+			expectErr: types.ErrInsufficientBalance,
 			action:    &rtypes.TransferAsset{To: addr, Symbol: "btc", IsCrossChain: true, Amount: 2},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: tx.From(), Symbol: "collect", FromUtxoPkScript: []byte("pubkey")},
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: tx.From(), Symbol: "collect", Amount: 1, FromUtxoPkScript: []byte("pubkey")},
 		},
 	}
 
@@ -234,7 +242,7 @@ func Test_checkConfirm(t *testing.T) {
 		},
 		{
 			expectErr: ErrConfirmedHashNotEqual,
-			action:    &rtypes.ConfirmTx{TxHash: []byte("hash")},
+			action:    &rtypes.ConfirmTx{TxBlockHeight: 2, TxIndex: 0, TxHash: []byte("hash")},
 		},
 		{
 			expectErr: nil,
@@ -274,11 +282,227 @@ func Test_checkConfirm(t *testing.T) {
 	r.SetStateDB(state)
 	r.SetLocalDB(local)
 	require.Nil(t, state.Set(formatPayloadKey(nil), types.Encode(&rtypes.PendingTx{})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte("hash")), types.Encode(&rtypes.MintAsset{Symbol: "x", TotalAmount: 1})))
 	require.Nil(t, local.Set(formatPendingTxKey(0, 0), types.Encode(&rtypes.PendingTx{Utxo: &rtypes.OutPoint{Hash: out.Hash.String()}})))
+	require.Nil(t, local.Set(formatPendingTxKey(2, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: []byte("other"),
+	})))
 	require.Nil(t, local.Set(formatPendingTxKey(1, 0), types.Encode(&rtypes.PendingTx{Confirmed: true})))
 
 	for idx, tc := range tcArr {
 		value.Confirm = tc.action.(*rtypes.ConfirmTx)
+		testCheck(t, r, tx, action, tc.expectErr, idx)
+	}
+}
+
+func newTestnetWitnessAddr(t *testing.T) (addr string, pkScript []byte) {
+	t.Helper()
+	priv, err := btcec.NewPrivateKey()
+	require.NoError(t, err)
+	pub := priv.PubKey().SerializeCompressed()
+	waddr, err := btcutil.NewAddressWitnessPubKeyHash(btcutil.Hash160(pub), &chaincfg.TestNet3Params)
+	require.NoError(t, err)
+	pk, err := txscript.PayToAddrScript(waddr)
+	require.NoError(t, err)
+	return waddr.String(), pk
+}
+
+func Test_checkWithdraw(t *testing.T) {
+	r := newRgbx()
+	action := &rtypes.RgbxAction{}
+	action.Ty = rtypes.TyWithDrawAsset
+	userAddr, userPriv := util.Genaddress()
+	validDest, _ := newTestnetWitnessAddr(t)
+	tx := &types.Transaction{}
+	tx.Sign(types.SECP256K1, userPriv)
+	value := &rtypes.RgbxAction_Withdraw{}
+	action.Value = value
+
+	tcArr := []*testCase{
+		{expectErr: ErrInvalidAssetSymbol, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "eth", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: 1,
+		}},
+		{expectErr: ErrInvalidCrossChainInfo, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: 1,
+		}},
+		{expectErr: ErrInvalidWithdrawAmount, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: minBtcWithdrawAmount - 1, DestinationAddr: validDest, FeeRate: 1,
+		}},
+		{expectErr: ErrInvalidWithdrawFeeRate, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: 0,
+		}},
+		{expectErr: ErrInvalidWithdrawFeeRate, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: maxBtcFeeRate + 1,
+		}},
+		{expectErr: ErrInvalidWithdrawDestination, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: minBtcWithdrawAmount, DestinationAddr: "not-a-btc-address", FeeRate: 1,
+		}},
+		{expectErr: types.ErrInsufficientBalance, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: 10001, DestinationAddr: validDest, FeeRate: 1,
+		}},
+		{expectErr: nil, action: &rtypes.WithdrawAsset{
+			AssetSymbol: "btc", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: 10,
+		}},
+	}
+
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	api.On("GetConfig").Return(testCfg)
+	api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
+	r.SetStateDB(state)
+	require.Nil(t, state.Set(formatCrossChainInfoKey("btc"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"})))
+	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	require.Nil(t, err)
+	_, err = crossAcc.Mint(userAddr, 10000)
+	require.Nil(t, err)
+
+	for idx, tc := range tcArr {
+		if idx == 1 {
+			require.Nil(t, state.Delete(formatCrossChainInfoKey("btc")))
+		}
+		if idx == 2 {
+			require.Nil(t, state.Set(formatCrossChainInfoKey("btc"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"})))
+		}
+		value.Withdraw = tc.action.(*rtypes.WithdrawAsset)
+		testCheck(t, r, tx, action, tc.expectErr, idx)
+	}
+}
+
+func Test_checkDeposit(t *testing.T) {
+	r := newRgbx()
+	action := &rtypes.RgbxAction{}
+	action.Ty = rtypes.TyDepositAsset
+	tx := &types.Transaction{}
+	value := &rtypes.RgbxAction_Deposit{}
+	action.Value = value
+
+	depAddr, _ := util.Genaddress()
+	dupProofData := []byte("dup-tx-bytes")
+	var minimalBtcTx wire.MsgTx
+	minimalBtcTx.Version = 2
+	buf := bytes.NewBuffer(make([]byte, 0, minimalBtcTx.SerializeSizeStripped()))
+	require.NoError(t, minimalBtcTx.SerializeNoWitness(buf))
+
+	tcArr := []*testCase{
+		{expectErr: ErrInvalidAssetSymbol, action: &rtypes.DepositAsset{
+			AssetSymbol: "eth", Amount: 1, DepositAddress: depAddr, TxProof: &rtypes.BtcTxProof{TxData: []byte{1}},
+		}},
+		{expectErr: ErrInvalidDepositAmount, action: &rtypes.DepositAsset{
+			AssetSymbol: "btc", Amount: 0, DepositAddress: depAddr, TxProof: &rtypes.BtcTxProof{TxData: []byte{1}},
+		}},
+		{expectErr: ErrInvalidDepositAddress, action: &rtypes.DepositAsset{
+			AssetSymbol: "btc", Amount: 1, DepositAddress: "", TxProof: &rtypes.BtcTxProof{TxData: []byte{1}},
+		}},
+		{expectErr: ErrInvalidBtcTxProof, action: &rtypes.DepositAsset{
+			AssetSymbol: "btc", Amount: 1, DepositAddress: depAddr, TxProof: nil,
+		}},
+		{expectErr: ErrInvalidBtcTxProof, action: &rtypes.DepositAsset{
+			AssetSymbol: "btc", Amount: 1, DepositAddress: depAddr, TxProof: &rtypes.BtcTxProof{TxData: []byte{0xff}},
+		}},
+		{expectErr: ErrDuplicateDepositProof, action: &rtypes.DepositAsset{
+			AssetSymbol: "btc", Amount: 1, DepositAddress: depAddr, TxProof: &rtypes.BtcTxProof{TxData: dupProofData},
+		}},
+	}
+
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	api.On("GetConfig").Return(testCfg)
+	r.SetStateDB(state)
+	require.Nil(t, state.Set(formatDepositUsedKey(dupProofData), []byte("1")))
+
+	for idx, tc := range tcArr {
+		value.Deposit = tc.action.(*rtypes.DepositAsset)
+		testCheck(t, r, tx, action, tc.expectErr, idx)
+	}
+
+	// decode ok, header query fails
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.Anything).Return(nil, errors.New("no header"))
+	value.Deposit = &rtypes.DepositAsset{
+		AssetSymbol:    "btc",
+		Amount:         1,
+		DepositAddress: depAddr,
+		TxProof: &rtypes.BtcTxProof{
+			TxData:       buf.Bytes(),
+			BlockHeight:  1,
+			BlockHash:    "00",
+			TxIndex:      0,
+			MerkleProof:  nil,
+		},
+	}
+	testCheck(t, r, tx, action, ErrGetBtcHeader, len(tcArr))
+}
+
+func Test_checkCommitDKG(t *testing.T) {
+	r := newRgbx()
+	action := &rtypes.RgbxAction{}
+	action.Ty = rtypes.TyCommitDKGAction
+	tx := &types.Transaction{}
+	tx.Sign(types.SECP256K1, testPriv)
+	value := &rtypes.RgbxAction_CommitDKG{}
+	action.Value = value
+
+	dkgAddr, validPk := newTestnetWitnessAddr(t)
+
+	tcArr := []*testCase{
+		{expectErr: ErrInvalidDkgAddress, action: &rtypes.CommitDKG{
+			AssetSymbol: "btc", DkgAddress: dkgAddr, PkScript: []byte{0x01},
+		}},
+		{expectErr: ErrGetGuardianNodeAddress, action: &rtypes.CommitDKG{
+			AssetSymbol: "btc", DkgAddress: dkgAddr, PkScript: validPk,
+		}},
+		{expectErr: ErrInvalidGuardianCommitter, action: &rtypes.CommitDKG{
+			AssetSymbol: "btc", DkgAddress: dkgAddr, PkScript: validPk,
+		}},
+		{expectErr: ErrDuplicateDKGCommit, action: &rtypes.CommitDKG{
+			AssetSymbol: "btc", DkgAddress: dkgAddr, PkScript: validPk,
+		}},
+		{expectErr: nil, action: &rtypes.CommitDKG{
+			AssetSymbol: "btc", DkgAddress: dkgAddr, PkScript: validPk,
+		}},
+	}
+
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	api.On("GetConfig").Return(testCfg)
+	api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
+	r.SetStateDB(state)
+
+	for idx, tc := range tcArr {
+		switch idx {
+		case 1:
+			api.ExpectedCalls = nil
+			api.On("GetConfig").Return(testCfg)
+			api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
+			api.On("Query", paratypes.ParaX, "GetNodeGroupStatus", mock.Anything).Return(nil, errors.New("query fail"))
+		case 2:
+			api.ExpectedCalls = nil
+			api.On("GetConfig").Return(testCfg)
+			api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
+			api.On("Query", paratypes.ParaX, "GetNodeGroupStatus", mock.Anything).Return(
+				&paratypes.ParaNodeGroupStatus{TargetAddrs: "other1,other2"}, nil)
+		case 3:
+			api.ExpectedCalls = nil
+			api.On("GetConfig").Return(testCfg)
+			api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
+			api.On("Query", paratypes.ParaX, "GetNodeGroupStatus", mock.Anything).Return(
+				&paratypes.ParaNodeGroupStatus{TargetAddrs: testCommitAddr}, nil)
+			require.Nil(t, state.Set(formatCrossChainInfoKey("btc"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"})))
+		case 4:
+			api.ExpectedCalls = nil
+			api.On("GetConfig").Return(testCfg)
+			api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
+			api.On("Query", paratypes.ParaX, "GetNodeGroupStatus", mock.Anything).Return(
+				&paratypes.ParaNodeGroupStatus{TargetAddrs: testCommitAddr}, nil)
+			require.Nil(t, state.Delete(formatCrossChainInfoKey("btc")))
+		}
+		value.CommitDKG = tc.action.(*rtypes.CommitDKG)
 		testCheck(t, r, tx, action, tc.expectErr, idx)
 	}
 }

@@ -1,15 +1,18 @@
 package executor
 
 import (
+	"testing"
+
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	paratypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func testExec(t *testing.T, driver dapp.Driver, actionName string, action types.Message, expectErr error, index int) *types.Receipt {
@@ -170,4 +173,64 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	require.Equal(t, int64(1), accDB.LoadAccount(addr).Balance)
 	changeAddr := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
 	require.Equal(t, int64(1), accDB.LoadAccount(changeAddr).Balance)
+}
+
+func TestRgbx_Exec_Deposit(t *testing.T) {
+	r := newRgbx()
+	deposit := &rtypes.DepositAsset{
+		Amount:         100,
+		DepositAddress: testCommitAddr,
+		AssetSymbol:    "btc",
+		TxProof:        &rtypes.BtcTxProof{},
+	}
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api.On("GetConfig").Return(cfg)
+	r.SetStateDB(state)
+	testExec(t, r, rtypes.NameDepositAssetAction, deposit, nil, 0)
+}
+
+func TestRgbx_Exec_Withdraw(t *testing.T) {
+	r := newRgbx()
+	withdraw := &rtypes.WithdrawAsset{
+		Amount:          600,
+		FeeRate:         10,
+		DestinationAddr: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080",
+		AssetSymbol:     "BTC",
+	}
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api.On("GetConfig").Return(cfg)
+	r.SetStateDB(state)
+	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	require.Nil(t, err)
+	_, err = crossAcc.Mint(testCommitAddr, 1000)
+	require.Nil(t, err)
+	testExec(t, r, rtypes.NameWithdrawAssetAction, withdraw, nil, 0)
+}
+
+func TestRgbx_Exec_CommitDKG(t *testing.T) {
+	r := newRgbx()
+	dkgAddr, pkScript := newTestnetWitnessAddr(t)
+	commit := &rtypes.CommitDKG{AssetSymbol: "btc", DkgAddress: dkgAddr, PkScript: pkScript}
+
+	dir, state, _ := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api.On("GetConfig").Return(cfg)
+	api.On("Query", paratypes.ParaX, "GetNodeGroupStatus", mock.Anything).Return(
+		&paratypes.ParaNodeGroupStatus{TargetAddrs: testCommitAddr}, nil)
+	r.SetStateDB(state)
+
+	recp := testExec(t, r, rtypes.NameCommitDKGAction, commit, nil, 0)
+	require.NotNil(t, recp)
+	require.NotEmpty(t, recp.KV)
 }

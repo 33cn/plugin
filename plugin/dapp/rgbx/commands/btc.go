@@ -66,6 +66,7 @@ func btcDepositTxCMD() *cobra.Command {
 	cmd.Flags().String("rpcUser", "", "bitcoin rpc user (optional)")
 	cmd.Flags().String("rpcPass", "", "bitcoin rpc password (optional)")
 	cmd.Flags().Bool("disableTLS", true, "disable rpc tls")
+	cmd.Flags().String("rpcCertFile", "", "bitcoin rpc cert file path (optional, required when TLS enabled)")
 	cmd.Flags().String("wif", "", "sender private key in WIF format")
 	cmd.Flags().String("utxo", "", "single input utxo, format: txid:vout:amountSats:pkScriptHex")
 	cmd.Flags().String("tssAddress", "", "tss deposit address")
@@ -119,6 +120,7 @@ func btcDepositTx(cmd *cobra.Command, _ []string) {
 	rpcUser, _ := cmd.Flags().GetString("rpcUser")
 	rpcPass, _ := cmd.Flags().GetString("rpcPass")
 	disableTLS, _ := cmd.Flags().GetBool("disableTLS")
+	rpcCertFile, _ := cmd.Flags().GetString("rpcCertFile")
 	wifStr, _ := cmd.Flags().GetString("wif")
 	utxoRaw, _ := cmd.Flags().GetString("utxo")
 	tssAddrStr, _ := cmd.Flags().GetString("tssAddress")
@@ -221,6 +223,14 @@ func btcDepositTx(cmd *cobra.Command, _ []string) {
 		Pass:         rpcPass,
 		HTTPPostMode: true,
 		DisableTLS:   disableTLS,
+	}
+	if !disableTLS && strings.TrimSpace(rpcCertFile) != "" {
+		certs, err := os.ReadFile(strings.TrimSpace(rpcCertFile))
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "read rpc cert file failed: %v\n", err)
+			return
+		}
+		connCfg.Certificates = certs
 	}
 	rpcCli, err := rpcclient.New(connCfg, nil)
 	if err != nil {

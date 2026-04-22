@@ -131,3 +131,28 @@ func TestRgbx_ExecLocal_DepositAsset(t *testing.T) {
 	_, err = db.Get(key)
 	require.Equal(t, types.ErrNotFound, err)
 }
+
+func TestRgbx_ExecLocal_WithdrawAsset(t *testing.T) {
+	r := newRgbx()
+	tx, err := r.GetExecutorType().CreateTransaction(rtypes.NameWithdrawAssetAction, &rtypes.WithdrawAsset{})
+	require.Nil(t, err)
+
+	dir, db, local := util.CreateTestDB()
+	defer util.CloseTestDB(dir, db)
+	r.SetLocalDB(local)
+	kvSet, err := r.ExecLocal(tx, &types.ReceiptData{Logs: []*types.ReceiptLog{{
+		Ty: rtypes.TyPendingTxLog, Log: types.Encode(&rtypes.PendingTx{ActionType: rtypes.TyWithDrawAsset})}}}, 0)
+	require.Nil(t, err)
+	testSetKV(t, db, kvSet, false)
+
+	pendTx := &rtypes.PendingTx{}
+	key := formatPendingTxKey(0, 0)
+	require.Nil(t, readDB(local, key, pendTx))
+	require.Equal(t, int32(rtypes.TyWithDrawAsset), pendTx.ActionType)
+
+	kvSet, err = r.ExecDelLocal(tx, nil, 0)
+	require.Nil(t, err)
+	testSetKV(t, db, kvSet, true)
+	_, err = db.Get(key)
+	require.Equal(t, types.ErrNotFound, err)
+}
