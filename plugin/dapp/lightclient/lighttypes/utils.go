@@ -9,7 +9,7 @@ func GetBtcChainParams(netName string) *chaincfg.Params {
 	switch netName {
 	case "mainnet", "":
 		return &chaincfg.MainNetParams
-	case "testnet3":
+	case "testnet3", "testnet":
 		return &chaincfg.TestNet3Params
 	case "testnet4":
 		return &chaincfg.TestNet4Params

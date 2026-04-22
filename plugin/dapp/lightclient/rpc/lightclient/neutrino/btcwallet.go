@@ -28,9 +28,9 @@ import (
 )
 
 const (
-	transactionTypeDeposit      string = "deposit"
-	transactionTypeWithdraw     string = "withdraw"
-	transactionTypeMergeBalance string = "mergeBalance"
+	transactionTypeDeposit  string = "deposit"
+	transactionTypeWithdraw string = "withdraw"
+	_                       string = "mergeBalance"
 )
 
 const (
@@ -890,29 +890,6 @@ func (b *btcWallet) selectAndLockUTXOs(utxos []*UTXO, targetAmount, feeRate btcu
 		"totalAmount", total, "targetAmount", targetAmount, "feeRate", feeRate)
 
 	return lockedUTXOs, total, nil
-}
-
-func (b *btcWallet) getLeasedUTXO(outpoint wire.OutPoint) (*UTXO, error) {
-	leased, err := b.Wallet.ListLeasedOutputs()
-	if err != nil {
-		return nil, err
-	}
-	for _, output := range leased {
-		if output.Outpoint == outpoint {
-			return &UTXO{
-				OutPoint: output.Outpoint,
-				Amount:   btcutil.Amount(output.Value),
-				PkScript: output.PkScript,
-			}, nil
-		}
-	}
-	return nil, types.ErrNotFound
-}
-
-// releaseUTXOs 释放UTXO锁定
-// 在交易构建失败或广播失败时调用，释放已锁定的UTXO
-func (b *btcWallet) releaseUTXOs(utxos []*UTXO) {
-	b.releaseUTXOsExcept(utxos, nil)
 }
 
 // releaseUTXOsExcept 释放UTXO锁定，可选保留指定输入不释放

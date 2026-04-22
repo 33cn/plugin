@@ -22,6 +22,11 @@ func TestPendingTxCache(t *testing.T) {
 
 	tx.TxBlockHeight = 1
 	c.addTx("test", tx)
-	require.Equal(t, int64(0), c.getMinPendingHeight())
 	require.Equal(t, int64(1), c.getMinPendingHeight())
+
+	c.addTx("other", &rtypes.PendingTx{TxBlockHeight: 10})
+	require.Equal(t, int64(1), c.getMinPendingHeight())
+
+	c.addTx("low", &rtypes.PendingTx{TxBlockHeight: 0})
+	require.Equal(t, int64(0), c.getMinPendingHeight())
 }

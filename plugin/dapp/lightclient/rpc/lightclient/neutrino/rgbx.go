@@ -32,7 +32,7 @@ type rgbx struct {
 
 type utxoRescanInfo struct {
 	pendingTxHash   string
-	outPrint        string
+	outPointStr     string
 	out             wire.OutPoint
 	pkScript        []byte
 	startHeight     int32
@@ -143,7 +143,7 @@ func (r *rgbx) pullPendingTx() {
 						Hash:  *hash,
 						Index: tx.Utxo.Index,
 					},
-					outPrint:    tx.Utxo.ToString(),
+					outPointStr: tx.Utxo.ToString(),
 					pkScript:    tx.Utxo.PkScript,
 					startTime:   tx.Timestamp,
 					startHeight: 0,
@@ -179,7 +179,7 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 	}
 
 	log.Debug("rescanUtxo", "startHeight", info.startHeight,
-		"pendHash", info.pendingTxHash, "utxo", info.outPrint)
+		"pendHash", info.pendingTxHash, "utxo", info.outPointStr)
 
 	spendReport, err := r.client.neutrinoCS.GetUtxo(
 		neutrino.WatchInputs(neutrino.InputWithScript{
@@ -189,7 +189,7 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 		neutrino.StartBlock(&headerfs.BlockStamp{Height: info.startHeight}))
 	if err != nil {
 		log.Error("rescanUtxo", "pendingTxHash", info.pendingTxHash,
-			"utxo", info.outPrint, "err", err)
+			"utxo", info.outPointStr, "err", err)
 		return false
 	}
 
@@ -202,7 +202,7 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 	if spendReport.SpendingTxHeight+r.client.cfg.BlockConfirmations > uint32(bestBlk.Height) {
 		info.confirmedHeight = int32(spendReport.SpendingTxHeight + r.client.cfg.BlockConfirmations)
 		log.Debug("rescanUtxo confirmations", "bestHeight", bestBlk.Height,
-			"confirmedHeight", info.confirmedHeight, "utxo", info.outPrint)
+			"confirmedHeight", info.confirmedHeight, "utxo", info.outPointStr)
 		return false
 	}
 
@@ -216,7 +216,7 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 
 	r.commitChan <- spendInfo
 	log.Debug("rescanUtxo", "pendingHash", spendInfo.pendingTxHash,
-		"spendingHash", spendInfo.spendingTxHash, "utxo", info.outPrint)
+		"spendingHash", spendInfo.spendingTxHash, "utxo", info.outPointStr)
 	return true
 }
 
@@ -259,7 +259,7 @@ func (r *rgbx) mayTimeout(info *utxoRescanInfo) bool {
 		timeout:       true,
 	}
 	log.Debug("mayTimeout", "startTime", info.startTime, "pendingHash", info.pendingTxHash,
-		"utxo", info.outPrint)
+		"utxo", info.outPointStr)
 	r.commitChan <- spendInfo
 	return true
 }

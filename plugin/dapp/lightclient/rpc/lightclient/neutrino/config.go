@@ -160,9 +160,9 @@ func openWalletDB(path, dbName string) (exist bool, db walletdb.DB, err error) {
 		return false, nil, err
 	}
 	if exist {
-		db, err = walletdb.Open("bdb", dbPath, true, time.Second*10)
+		db, err = walletdb.Open("bdb", dbPath, true, time.Second*10, false)
 	} else {
-		db, err = walletdb.Create("bdb", dbPath, false, time.Second*10)
+		db, err = walletdb.Create("bdb", dbPath, false, time.Second*10, false)
 	}
 	return exist, db, err
 }

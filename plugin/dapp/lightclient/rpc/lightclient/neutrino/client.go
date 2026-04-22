@@ -74,7 +74,10 @@ func (n *neutrinoClient) Init(ctx context.Context, q queue.Queue, cfg *lightclie
 	}
 	n.commitAddressType = commitAddressType
 	if cfg.CommitKey != "" {
-		_, n.commitKey = getPrivKey(secp256k1.Name, cfg.CommitKey)
+		_, n.commitKey, err = getPrivKey(secp256k1.Name, cfg.CommitKey)
+		if err != nil {
+			return err
+		}
 	}
 	subCfg, _ := json.Marshal(cfg.Neutrino)
 	types.MustDecode(subCfg, &n.cfg)

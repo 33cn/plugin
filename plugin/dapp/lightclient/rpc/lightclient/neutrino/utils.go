@@ -1,6 +1,7 @@
 package neutrino
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -53,7 +54,11 @@ func (n *neutrinoClient) initCommitKey() {
 					log.Error("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
 					continue
 				}
-				_, key := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
+				_, key, err := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
+				if err != nil {
+					log.Error("getKeyFromWallet", "addr", n.commitAddr, "getPrivKey err", err)
+					continue
+				}
 				n.commitKey = key
 				return
 			}
@@ -61,24 +66,24 @@ func (n *neutrinoClient) initCommitKey() {
 	}()
 }
 
-func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey) {
+func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey, error) {
 	if privKey == "" {
-		panic("getPrivKey: empty  privKey")
+		return nil, nil, fmt.Errorf("getPrivKey: empty privKey")
 	}
 	driver, err := crypto.Load(cryptoName, -1)
 	if err != nil {
-		panic("getPrivKey load crypto driver err:" + err.Error())
+		return nil, nil, fmt.Errorf("getPrivKey load crypto driver err: %w", err)
 	}
 	privByte, err := common.FromHex(privKey)
 	if err != nil {
-		panic("getPrivKey decode hex key err:" + err.Error())
+		return nil, nil, fmt.Errorf("getPrivKey decode hex key err: %w", err)
 	}
 	key, err := driver.PrivKeyFromBytes(privByte)
 	if err != nil {
-		panic("getPrivKey priv key from bytes err:" + err.Error())
+		return nil, nil, fmt.Errorf("getPrivKey priv key from bytes err: %w", err)
 	}
 
-	return driver, key
+	return driver, key, nil
 }
 
 func (n *neutrinoClient) waitUntilDone(_ string, done func() bool, interval time.Duration) {

@@ -47,13 +47,6 @@ type signResult struct {
 	err error
 }
 
-type withdrawSignState struct {
-	pendingTs  int64
-	signedAt   int64
-	signed     bool
-	firstInput string
-}
-
 type tssService struct {
 	client      *neutrinoClient
 	cfg         tssConfig
