@@ -76,3 +76,30 @@ func TestRgbx_Query_GetAsset(t *testing.T) {
 	msg, err := r.Query(funcName, types.Encode(&types.ReqString{Data: "test"}))
 	require.Equal(t, "test", msg.(*rtypes.RgbxAsset).Symbol)
 }
+
+func TestRgbx_Query_GetCrossChainInfo(t *testing.T) {
+	r := newRgbx()
+	dir, db, local := util.CreateTestDB()
+	defer util.CloseTestDB(dir, db)
+	api := &mocks.QueueProtocolAPI{}
+	r.SetAPI(api)
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	api.On("GetConfig").Return(cfg)
+	r.SetStateDB(local)
+	funcName := "GetCrossChainInfo"
+
+	msg, err := r.Query(funcName, types.Encode(&types.ReqString{Data: "btc"}))
+	require.NoError(t, err)
+	require.Equal(t, "", msg.(*rtypes.CrossChainInfo).GetAssetSymbol())
+
+	info := &rtypes.CrossChainInfo{AssetSymbol: "BTC", TssAddress: "tb1qxx"}
+	require.NoError(t, db.Set(formatCrossChainInfoKey("btc"), types.Encode(info)))
+	msg, err = r.Query(funcName, types.Encode(&types.ReqString{Data: "btc"}))
+	require.NoError(t, err)
+	require.Equal(t, "BTC", msg.(*rtypes.CrossChainInfo).GetAssetSymbol())
+	require.Equal(t, "tb1qxx", msg.(*rtypes.CrossChainInfo).GetTssAddress())
+
+	require.NoError(t, db.Set(formatCrossChainInfoKey("bad"), []byte("not-protobuf")))
+	_, err = r.Query(funcName, types.Encode(&types.ReqString{Data: "bad"}))
+	require.Error(t, err)
+}
