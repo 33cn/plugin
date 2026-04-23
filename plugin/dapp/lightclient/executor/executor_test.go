@@ -2,6 +2,7 @@ package executor
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 	"time"
 
@@ -30,6 +31,46 @@ func TestLightclientCheckTxBasic(t *testing.T) {
 	tx.Payload = types.Encode(action)
 	tx.Sign(types.SECP256K1, priv)
 	require.Equal(t, types.ErrActionNotSupport, cli.CheckTx(tx, 0))
+}
+
+func TestMapBtcHeaderVerifyErr(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+		want error
+	}{
+		{
+			name: "difficulty",
+			err:  blockchain.RuleError{ErrorCode: blockchain.ErrUnexpectedDifficulty, Description: "bad bits"},
+			want: ErrBtcTargetBits,
+		},
+		{
+			name: "time too old",
+			err:  blockchain.RuleError{ErrorCode: blockchain.ErrTimeTooOld, Description: "too old"},
+			want: ErrBtcHeaderTimeTooOld,
+		},
+		{
+			name: "time too new",
+			err:  blockchain.RuleError{ErrorCode: blockchain.ErrTimeTooNew, Description: "too new"},
+			want: ErrBtcHeaderTimeTooNew,
+		},
+		{
+			name: "invalid time precision",
+			err:  blockchain.RuleError{ErrorCode: blockchain.ErrInvalidTime, Description: "invalid time"},
+			want: ErrBtcHeaderInvalidTime,
+		},
+		{
+			name: "fallback",
+			err:  errors.New("other"),
+			want: ErrBtcHeaderVerify,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, mapBtcHeaderVerifyErr(tc.err))
+		})
+	}
 }
 
 func TestLightclientCheckBtcHeaders(t *testing.T) {

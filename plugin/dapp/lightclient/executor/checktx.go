@@ -34,7 +34,7 @@ func (l *lightclient) CheckTx(tx *types.Transaction, index int) error {
 
 func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.BtcHeaders) error {
 
-	if tx.From() != lightCfg.CommitAddress {
+	if lightCfg.CommitAddress != "" && tx.From() != lightCfg.CommitAddress {
 
 		elog.Error("checkBtcHeaders", "from", tx.From(), "configAddress", lightCfg.CommitAddress)
 		return ErrIllegalCommitAddress
@@ -54,19 +54,20 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 	params := ltypes.GetBtcChainParams(lightCfg.BtcNetName)
 	chainCtx := newBtcChainContext(params)
 	timeSource := blockchain.NewMedianTime()
-	isBootstrap := prevHeader == nil
+	isBootstrap := prevHeader == nil || prevHeader.GetHash() == ""
 	var prevCtx blockchain.HeaderCtx
-	if prevHeader != nil {
+	if !isBootstrap {
 		prevCtx = newBtcHeaderContext(prevHeader, nil, l.GetLocalDB())
 	}
 
 	for _, h := range headers.GetHeaders() {
 
-		if h == nil {
+		if h.GetHash() == "" {
 			elog.Error("checkBtcHeaders nil header")
 			return types.ErrInvalidParam
 		}
-		if prevHeader != nil && (prevHeader.Height+1 != h.GetHeight() || prevHeader.Hash != h.PreviousHash) {
+		// 首次提交也要保证本批 headers 内部严格连续；仅首个header允许无前置锚点。
+		if prevHeader.GetHash() != "" && (prevHeader.Height+1 != h.GetHeight() || prevHeader.Hash != h.PreviousHash) {
 			elog.Error("checkBtcHeaders", "prevHeight", prevHeader.Height, "prevHash", prevHeader.Hash,
 				"commitHeight", h.GetHeight(), "commitPrevHash", h.GetPreviousHash())
 			return ErrBtcHeaderDisorder
@@ -87,7 +88,7 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 			elog.Error("checkBtcHeaders CheckBlockHeaderSanity", "height", h.GetHeight(), "hash", h.GetHash(), "err", err)
 			return mapBtcHeaderVerifyErr(err)
 		}
-		// 首次提交时(prevCtx=nil)无法获取前置上下文，首个header只做sanity校验。
+		// 首次提交时(prevCtx=nil)无法获取前置上下文，仅首个header跳过context校验。
 		if prevCtx != nil {
 			// 首次导入且刚好在难度调整点，如果缺少历史祖先，则仅校验sanity与顺序。
 			if isBootstrap && !canValidateHeaderContext(prevCtx, chainCtx) {
@@ -96,8 +97,12 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 				continue
 			}
 			if err = blockchain.CheckBlockHeaderContext(btcHeader, prevCtx, blockchain.BFNone, chainCtx, true); err != nil {
-				elog.Error("checkBtcHeaders CheckBlockHeaderContext", "height", h.GetHeight(), "hash", h.GetHash(), "err", err)
-				return mapBtcHeaderVerifyErr(err)
+				// regtest 批量导入场景下，连续快速挖块可能出现同秒时间戳。
+				err = mapBtcHeaderVerifyErr(err)
+				if !(lightCfg.AllowRegtestTimeWarp && lightCfg.BtcNetName == "regtest" && err == ErrBtcHeaderTimeTooOld) {
+					elog.Error("checkBtcHeaders CheckBlockHeaderContext", "height", h.GetHeight(), "hash", h.GetHash(), "err", err)
+					return err
+				}
 			}
 		}
 		prevHeader = h
@@ -111,10 +116,19 @@ func (l *lightclient) checkBtcHeaders(tx *types.Transaction, headers *ltypes.Btc
 
 func mapBtcHeaderVerifyErr(err error) error {
 	var ruleErr blockchain.RuleError
-	if errors.As(err, &ruleErr) && ruleErr.ErrorCode == blockchain.ErrUnexpectedDifficulty {
-		return ErrBtcTargetBits
+	if errors.As(err, &ruleErr) {
+		switch ruleErr.ErrorCode {
+		case blockchain.ErrUnexpectedDifficulty:
+			return ErrBtcTargetBits
+		case blockchain.ErrTimeTooOld:
+			return ErrBtcHeaderTimeTooOld
+		case blockchain.ErrTimeTooNew:
+			return ErrBtcHeaderTimeTooNew
+		case blockchain.ErrInvalidTime:
+			return ErrBtcHeaderInvalidTime
+		}
 	}
-	return ErrInvalidBtcBlockHash
+	return ErrBtcHeaderVerify
 }
 
 func canValidateHeaderContext(prevCtx blockchain.HeaderCtx, chainCtx *btcChainContext) bool {

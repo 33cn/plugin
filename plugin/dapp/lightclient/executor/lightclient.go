@@ -16,8 +16,9 @@ import (
  */
 
 type config struct {
-	CommitAddress string `json:"commitAddress"`
-	BtcNetName    string `json:"btcNetName"`
+	CommitAddress        string `json:"commitAddress"`
+	BtcNetName           string `json:"btcNetName"`
+	AllowRegtestTimeWarp bool   `json:"allowRegtestTimeWarp"`
 }
 
 var (
@@ -90,14 +91,10 @@ func getBtcLastHeader(sdb db.KV) (*ltypes.BtcHeader, error) {
 
 	header := &ltypes.BtcHeader{}
 	err := readDB(sdb, btcLastHeaderKey(), header)
-	if err != nil && err != types.ErrNotFound {
-		elog.Error("getBtcLastHeader", "readDB err", err)
-		return nil, err
-	}
 	if err == types.ErrNotFound {
-		return nil, nil
+		return &ltypes.BtcHeader{}, nil
 	}
-	return header, nil
+	return header, err
 }
 
 func getBtcHeader(ldb db.KV, height uint64) (*ltypes.BtcHeader, error) {
