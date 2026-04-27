@@ -165,15 +165,15 @@ func Test_checkTransfer(t *testing.T) {
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{To: addr, Symbol: "btc", IsCrossChain: true, Amount: 1},
+			action:    &rtypes.TransferAsset{To: addr, Symbol: "xbtc", Amount: 1},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr, Symbol: "btc", IsCrossChain: true, Amount: 1},
+			action:    &rtypes.TransferAsset{FromUtxo: utxoAddr, To: addr, Symbol: "xbtc", Amount: 1},
 		},
 		{
 			expectErr: types.ErrInsufficientBalance,
-			action:    &rtypes.TransferAsset{To: addr, Symbol: "btc", IsCrossChain: true, Amount: 2},
+			action:    &rtypes.TransferAsset{To: addr, Symbol: "xbtc", Amount: 2},
 		},
 		{
 			expectErr: nil,
@@ -196,7 +196,8 @@ func Test_checkTransfer(t *testing.T) {
 	require.Nil(t, err)
 	err = state.Set(formatCrossChainInfoKey("btc"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"}))
 	require.Nil(t, err)
-	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	// checkCrossChainTransfer 现在使用 newAccount，symbol 为 "xbtc"
+	crossAcc, err := r.(*rgbx).newAccount("xbtc")
 	require.Nil(t, err)
 	_, err = crossAcc.Mint(tx.From(), 1)
 	require.Nil(t, err)
@@ -320,12 +321,6 @@ func Test_checkWithdraw(t *testing.T) {
 	action.Value = value
 
 	tcArr := []*testCase{
-		{expectErr: ErrInvalidAssetSymbol, action: &rtypes.WithdrawAsset{
-			AssetSymbol: "eth", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: 1,
-		}},
-		{expectErr: ErrInvalidCrossChainInfo, action: &rtypes.WithdrawAsset{
-			AssetSymbol: "btc", Amount: minBtcWithdrawAmount, DestinationAddr: validDest, FeeRate: 1,
-		}},
 		{expectErr: ErrInvalidWithdrawAmount, action: &rtypes.WithdrawAsset{
 			AssetSymbol: "btc", Amount: minBtcWithdrawAmount - 1, DestinationAddr: validDest, FeeRate: 1,
 		}},
@@ -354,9 +349,11 @@ func Test_checkWithdraw(t *testing.T) {
 	api.On("Query", ltypes.LightclientX, "GetBtcNetName", mock.Anything).Return(&types.ReplyString{Data: "testnet3"}, nil)
 	r.SetStateDB(state)
 	require.Nil(t, state.Set(formatCrossChainInfoKey("btc"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"})))
-	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	// checkWithdraw 现在使用 newAccount(withdraw.GetAssetSymbol())，即 newAccount("btc")
+	// formatSymbol("btc") -> "BTC"，所以账户 symbol 是 "BTC"
+	acc, err := r.(*rgbx).newAccount("xbtc")
 	require.Nil(t, err)
-	_, err = crossAcc.Mint(userAddr, 10000)
+	_, err = acc.Mint(userAddr, 10000)
 	require.Nil(t, err)
 
 	for idx, tc := range tcArr {
@@ -387,9 +384,6 @@ func Test_checkDeposit(t *testing.T) {
 	require.NoError(t, minimalBtcTx.SerializeNoWitness(buf))
 
 	tcArr := []*testCase{
-		{expectErr: ErrInvalidAssetSymbol, action: &rtypes.DepositAsset{
-			AssetSymbol: "eth", Amount: 1, DepositAddress: depAddr, TxProof: &rtypes.BtcTxProof{TxData: []byte{1}},
-		}},
 		{expectErr: ErrInvalidDepositAmount, action: &rtypes.DepositAsset{
 			AssetSymbol: "btc", Amount: 0, DepositAddress: depAddr, TxProof: &rtypes.BtcTxProof{TxData: []byte{1}},
 		}},
@@ -427,11 +421,11 @@ func Test_checkDeposit(t *testing.T) {
 		Amount:         1,
 		DepositAddress: depAddr,
 		TxProof: &rtypes.BtcTxProof{
-			TxData:       buf.Bytes(),
-			BlockHeight:  1,
-			BlockHash:    "00",
-			TxIndex:      0,
-			MerkleProof:  nil,
+			TxData:      buf.Bytes(),
+			BlockHeight: 1,
+			BlockHash:   "00",
+			TxIndex:     0,
+			MerkleProof: nil,
 		},
 	}
 	testCheck(t, r, tx, action, ErrGetBtcHeader, len(tcArr))

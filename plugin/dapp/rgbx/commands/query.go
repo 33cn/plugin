@@ -2,10 +2,11 @@ package commands
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func listPendingTxCMD() *cobra.Command {
@@ -137,7 +138,7 @@ func getCrossChainInfoCMD() *cobra.Command {
 }
 
 func getCrossChainInfoFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("symbol", "s", "", "cross-chain asset symbol")
+	cmd.Flags().StringP("symbol", "s", "BTC", "cross-chain asset symbol")
 	markRequired(cmd, "symbol")
 }
 

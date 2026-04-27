@@ -48,11 +48,11 @@ func (r *rgbx) Exec_Transfer(transfer *rtypes.TransferAsset, tx *types.Transacti
 
 	fromAddr := tx.From()
 	elog.Debug("Exec_Transfer", "txHash", txHash, "symbol", transfer.Symbol, "amount", transfer.Amount,
-		"from", fromAddr, "to", transfer.GetTo(), "isCrossChain", transfer.GetIsCrossChain(),
+		"from", fromAddr, "to", transfer.GetTo(),
 		"changeAddr", transfer.GetChangeAddr(), "fromUtxo", transfer.GetFromUtxo())
 
-	if transfer.GetIsCrossChain() {
-		accDB, err := r.newCrossChainAccount(transfer.GetSymbol())
+	if isCrossChainSymbol(transfer.GetSymbol()) {
+		accDB, err := r.newAccount(transfer.GetSymbol())
 		if err != nil {
 			elog.Error("Exec_Transfer newCrossChainAccount", "txHash", txHash, "from", tx.From(),
 				"to", transfer.To, "symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
@@ -172,7 +172,8 @@ func (r *rgbx) confirmWithdrawSettlement(confirm *rtypes.ConfirmTx, txHash, conf
 		elog.Error("confirmWithdrawSettlement read payload", "txHash", txHash, "confirmTx", confirmHash, "err", err)
 		return nil, err
 	}
-	accDB, err := r.newCrossChainAccount(withdraw.GetAssetSymbol())
+	symbol := ensureCrossChainSymbol(withdraw.GetAssetSymbol())
+	accDB, err := r.newAccount(symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +247,7 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 		return nil, err
 	}
 
-	if transfer.GetIsCrossChain() {
+	if isCrossChainSymbol(transfer.GetSymbol()) {
 		return nil, types.ErrNotSupport
 	}
 

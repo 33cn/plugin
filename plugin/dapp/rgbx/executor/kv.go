@@ -44,6 +44,17 @@ func formatSymbol(symbol string) string {
 	return strings.ToUpper(symbol)
 }
 
+func isCrossChainSymbol(symbol string) bool {
+	return strings.HasPrefix(formatSymbol(symbol), rgbxCfg.CrossChainAssetPrefix)
+}
+
+func ensureCrossChainSymbol(symbol string) string {
+	if isCrossChainSymbol(symbol) {
+		return symbol
+	}
+	return formatCrossChainSymbol(symbol)
+}
+
 func formatCrossChainSymbol(symbol string) string {
 	return rgbxCfg.CrossChainAssetPrefix + formatSymbol(symbol)
 }

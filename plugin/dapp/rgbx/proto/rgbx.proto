@@ -58,7 +58,6 @@ message transferAsset {
     string to               = 4;
     string changeAddr       = 5;
     bytes  fromUtxoPkScript = 6;
-    bool   isCrossChain     = 7;
 }
 
 message confirmTx {
@@ -106,9 +105,10 @@ message withdrawAsset {
 
 message crossChainInfo {
 
-    string assetSymbol = 1;
-    string tssAddress  = 2;
-    bytes  pkScript    = 3;
+    string assetSymbol   = 1;
+    string wrappedSymbol = 2;
+    string tssAddress    = 3;
+    bytes  pkScript      = 4;
 }
 
 message pendingTx {

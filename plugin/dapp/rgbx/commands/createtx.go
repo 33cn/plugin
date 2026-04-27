@@ -37,19 +37,6 @@ func transferAssetCMD() *cobra.Command {
 	return cmd
 }
 
-//func confirmTxCMD() *cobra.Command {
-//
-//	cmd := &cobra.Command{
-//		Use: "confirm",
-//		//Aliases: []string{"cg"},
-//		Short:   "confirm tx",
-//		Run:     confirmTx,
-//		Example: "confirm",
-//	}
-//	confirmTxFlags(cmd)
-//	return cmd
-//}
-
 func mintAssetFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("type", "t", 0, "asset type")
 	cmd.Flags().Int64P("totalAmount", "a", 10000, "asset total amount")
@@ -126,13 +113,12 @@ func mintAsset(cmd *cobra.Command, args []string) {
 
 func transferAssetFlags(cmd *cobra.Command) {
 
-	cmd.Flags().Int64P("amount", "a", 1, "asset amount")
+	cmd.Flags().Float64P("amount", "a", 1, "asset amount")
 	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
 	cmd.Flags().StringP("from", "f", "", "from address, hash:index format for utxo, use sign address if not set")
 	cmd.Flags().StringP("to", "t", "", "to address, hash:index format for utxo")
 	cmd.Flags().StringP("pkScript", "p", "", "from pkScript( set only when from is an utxo)")
 	cmd.Flags().StringP("change", "c", "", "to address, hash:index format for utxo")
-	cmd.Flags().BoolP("isCrossChain", "x", false, "transfer cross-chain wrapped asset")
 	markRequired(cmd, "amount", "symbol", "to")
 }
 
@@ -142,9 +128,8 @@ func transferAsset(cmd *cobra.Command, args []string) {
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
 	change, _ := cmd.Flags().GetString("change")
-	amount, _ := cmd.Flags().GetInt64("amount")
+	amount, _ := cmd.Flags().GetFloat64("amount")
 	pkScriptStr, _ := cmd.Flags().GetString("pkScript")
-	isCrossChain, _ := cmd.Flags().GetBool("isCrossChain")
 
 	if symbol == "" || len(symbol) > rtypes.MaxAssetSymbolLength {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, "+
@@ -152,20 +137,20 @@ func transferAsset(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	precision := 8
 	req := &types.ReqString{
 		Data: symbol,
 	}
 	reply := &rtypes.RgbxAsset{}
 	sendQueryRPC(cmd, "GetAsset", req, reply, true)
-	if reply.GetSymbol() == "" {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid asset symbol: %s, asset not exist", symbol)
-		return
+	if reply.GetSymbol() != "" {
+		precision = int(reply.Precision)
 	}
 
-	amount = amount * int64(math.Pow(10, float64(reply.Precision)))
+	amount = amount * math.Pow(10, float64(precision))
 	if amount < 1 ||
 		amount > rtypes.MaxAssetAmount {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid amount: %d, overflow", amount)
+		_, _ = fmt.Fprintf(os.Stderr, "invalid amount: %f, overflow", amount)
 		return
 	}
 	pkScript, err := hex.DecodeString(pkScriptStr)
@@ -176,12 +161,11 @@ func transferAsset(cmd *cobra.Command, args []string) {
 
 	transfer := &rtypes.TransferAsset{
 		Symbol:           symbol,
-		Amount:           amount,
+		Amount:           int64(amount),
 		FromUtxo:         from,
 		To:               to,
 		ChangeAddr:       change,
 		FromUtxoPkScript: pkScript,
-		IsCrossChain:     isCrossChain,
 	}
 	sendCreateTxRPC(cmd, rtypes.NameTransferAction, transfer)
 }

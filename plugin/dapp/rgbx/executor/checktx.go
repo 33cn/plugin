@@ -56,6 +56,7 @@ var (
 	ErrInvalidGuardianCommitter         = errors.New("invalid guardian committer")
 	ErrDuplicateDKGCommit               = errors.New("duplicate dkg commit")
 	ErrGetGuardianNodeAddress           = errors.New("get guardian node address error")
+	ErrGetDkgConfirmations              = errors.New("get dkg confirmations error")
 	ErrInvalidDkgAddress                = errors.New("invalid dkg address")
 )
 
@@ -107,6 +108,10 @@ func (r *rgbx) checkMint(txHash string, mint *rtypes.MintAsset) error {
 		return ErrInvalidSymbolLength
 	}
 
+	if isCrossChainSymbol(mint.GetSymbol()) {
+		return ErrInvalidAssetSymbol
+	}
+
 	ty := rtypes.AssetType(mint.GetType())
 	if mint.GetTotalAmount() <= 0 || mint.GetTotalAmount() > rtypes.MaxAssetAmount ||
 		(ty == rtypes.Collectible && mint.GetTotalAmount() != 1) {
@@ -147,7 +152,7 @@ func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rty
 		return ErrInvalidAssetAmount
 	}
 	fromAddr := tx.From()
-	if transfer.GetIsCrossChain() {
+	if isCrossChainSymbol(transfer.GetSymbol()) {
 		return r.checkCrossChainTransfer(txHash, fromAddr, transfer)
 	}
 	fromUtxo := transfer.GetFromUtxo()
@@ -196,11 +201,7 @@ func (r *rgbx) checkTransfer(tx *types.Transaction, txHash string, transfer *rty
 
 func (r *rgbx) checkCrossChainTransfer(txHash, fromAddr string, transfer *rtypes.TransferAsset) error {
 
-	if _, err := r.getCrossChainInfo(transfer.GetSymbol()); err != nil {
-		elog.Error("checkCrossChainTransfer cross chain info", "txHash", txHash, "symbol", transfer.GetSymbol(), "err", err)
-		return ErrInvalidCrossChainInfo
-	}
-	accDB, err := r.newCrossChainAccount(transfer.GetSymbol())
+	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
 		elog.Error("checkCrossChainTransfer newCrossChainAccount", "txHash", txHash, "symbol", transfer.GetSymbol(), "err", err)
 		return ErrNewAccountDB
@@ -243,14 +244,7 @@ func (r *rgbx) checkCommitDKG(txHash, fromAddr string, commitDKG *rtypes.CommitD
 
 func (r *rgbx) checkWithdraw(fromAddr, txHash string, withdraw *rtypes.WithdrawAsset) error {
 
-	if !strings.EqualFold(withdraw.GetAssetSymbol(), rtypes.BTCSymbol) {
-		elog.Error("checkWithdraw invalid asset symbol", "txHash", txHash, "symbol", withdraw.GetAssetSymbol())
-		return ErrInvalidAssetSymbol
-	}
-	if _, err := r.getCrossChainInfo(withdraw.GetAssetSymbol()); err != nil {
-		elog.Error("checkWithdraw cross chain info", "txHash", txHash, "symbol", withdraw.GetAssetSymbol(), "err", err)
-		return ErrInvalidCrossChainInfo
-	}
+	symbol := ensureCrossChainSymbol(withdraw.GetAssetSymbol())
 	if withdraw.GetAmount() < minBtcWithdrawAmount {
 		elog.Error("checkWithdraw amount", "txHash", txHash, "amount", withdraw.GetAmount())
 		return ErrInvalidWithdrawAmount
@@ -264,7 +258,7 @@ func (r *rgbx) checkWithdraw(fromAddr, txHash string, withdraw *rtypes.WithdrawA
 		elog.Error("checkWithdraw feeRate", "txHash", txHash, "feeRate", withdraw.GetFeeRate())
 		return ErrInvalidWithdrawFeeRate
 	}
-	accDB, err := r.newCrossChainAccount(withdraw.GetAssetSymbol())
+	accDB, err := r.newAccount(symbol)
 	if err != nil {
 		elog.Error("checkWithdraw newAccount", "txHash", txHash, "symbol", withdraw.GetAssetSymbol(), "err", err)
 		return err
@@ -272,17 +266,13 @@ func (r *rgbx) checkWithdraw(fromAddr, txHash string, withdraw *rtypes.WithdrawA
 	balance := accDB.LoadAccount(fromAddr).GetBalance()
 	if balance < withdraw.GetAmount() {
 		elog.Error("checkWithdraw insufficient balance", "txHash", txHash, "from", fromAddr,
-			"symbol", withdraw.GetAssetSymbol(), "need", withdraw.GetAmount(), "balance", balance)
+			"symbol", symbol, "need", withdraw.GetAmount(), "balance", balance)
 		return types.ErrInsufficientBalance
 	}
 	return nil
 }
 
 func (r *rgbx) checkDeposit(txHash string, deposit *rtypes.DepositAsset) error {
-	if !strings.EqualFold(deposit.GetAssetSymbol(), rtypes.BTCSymbol) {
-		elog.Error("checkDeposit invalid asset symbol", "txHash", txHash, "symbol", deposit.GetAssetSymbol())
-		return ErrInvalidAssetSymbol
-	}
 	if deposit.GetAmount() <= 0 {
 		elog.Error("checkDeposit amount", "txHash", txHash, "amount", deposit.GetAmount())
 		return ErrInvalidDepositAmount

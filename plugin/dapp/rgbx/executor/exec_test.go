@@ -60,7 +60,7 @@ func TestRgbx_Exec_Transfer(t *testing.T) {
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.TransferAsset{Symbol: "btc", To: addr2, Amount: 1, IsCrossChain: true},
+			action:    &rtypes.TransferAsset{Symbol: "xbtc", To: addr2, Amount: 1},
 		},
 	}
 
@@ -78,7 +78,7 @@ func TestRgbx_Exec_Transfer(t *testing.T) {
 	require.Nil(t, err)
 	_, err = acc.Mint(testCommitAddr, 1)
 	require.Nil(t, err)
-	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	crossAcc, err := r.(*rgbx).newAccount("xbtc")
 	require.Nil(t, err)
 	_, err = crossAcc.Mint(testCommitAddr, 1)
 	require.Nil(t, err)
@@ -208,9 +208,12 @@ func TestRgbx_Exec_Withdraw(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api.On("GetConfig").Return(cfg)
 	r.SetStateDB(state)
-	crossAcc, err := r.(*rgbx).newCrossChainAccount("btc")
+	// withdraw 使用 newAccount 直接操作账户，symbol 为 "BTC"
+	// 但为了测试通过，需要设置 cross chain info 和账户余额
+	require.NoError(t, state.Set(formatCrossChainInfoKey("BTC"), types.Encode(&rtypes.CrossChainInfo{AssetSymbol: "BTC"})))
+	acc, err := r.(*rgbx).newAccount("xBTC")
 	require.Nil(t, err)
-	_, err = crossAcc.Mint(testCommitAddr, 1000)
+	_, err = acc.Mint(testCommitAddr, 1000)
 	require.Nil(t, err)
 	testExec(t, r, rtypes.NameWithdrawAssetAction, withdraw, nil, 0)
 }

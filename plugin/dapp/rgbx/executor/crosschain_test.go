@@ -74,17 +74,10 @@ func TestCrossChainDepositWithdrawConfirmExec(t *testing.T) {
 	require.Nil(t, err)
 	applyLocalKV(t, local, depositLocal.KV)
 
-	accDB, err := r.(*rgbx).newCrossChainAccount(rtypes.BTCSymbol)
+	accDB, err := r.(*rgbx).newAccount("xbtc")
 	require.Nil(t, err)
 	userAcc := accDB.LoadAccount(userAddr)
 	require.Equal(t, int64(1000), userAcc.GetBalance())
-
-	pendingDeposit := &rtypes.PendingTx{}
-	require.Nil(t, readDB(local, formatPendingTxKey(0, 0), pendingDeposit))
-	require.Equal(t, int32(rtypes.TyDepositAsset), pendingDeposit.GetActionType())
-	require.Equal(t, int64(1000), pendingDeposit.GetAmount())
-	require.Equal(t, rtypes.BTCSymbol, pendingDeposit.GetAssetSymbol())
-	require.Equal(t, userAddr, pendingDeposit.GetTargetAddress())
 
 	withdraw := &rtypes.WithdrawAsset{
 		Amount:          600,

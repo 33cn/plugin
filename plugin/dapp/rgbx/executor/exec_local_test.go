@@ -1,12 +1,13 @@
 package executor
 
 import (
+	"testing"
+
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func testSetKV(t *testing.T, db db.DB, kvSet *types.LocalDBSet, del bool) {
@@ -122,8 +123,7 @@ func TestRgbx_ExecLocal_DepositAsset(t *testing.T) {
 
 	pendTx := &rtypes.PendingTx{}
 	key := formatPendingTxKey(0, 0)
-	require.Nil(t, readDB(local, key, pendTx))
-	require.Equal(t, int32(rtypes.TyDepositAsset), pendTx.ActionType)
+	require.Equal(t, types.ErrNotFound, readDB(local, key, pendTx))
 
 	kvSet, err = r.ExecDelLocal(tx, nil, 0)
 	require.Nil(t, err)

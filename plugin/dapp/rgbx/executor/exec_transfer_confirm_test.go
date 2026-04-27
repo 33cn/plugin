@@ -27,12 +27,12 @@ func Test_rgbx_transferAsset(t *testing.T) {
 
 	var err error
 	require.NoError(t, state.Set(formatPayloadKey([]byte("xc")), types.Encode(&rtypes.TransferAsset{
-		Symbol: "n", IsCrossChain: true,
+		Symbol: "xn",
 	})))
 	_, err = r.(*rgbx).transferAsset(
 		&rtypes.ConfirmTx{
-			TxHash:     []byte("xc"),
-			UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+			TxHash:    []byte("xc"),
+			UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
 		},
 		"txH", "cH", spendHash,
 	)
@@ -40,8 +40,8 @@ func Test_rgbx_transferAsset(t *testing.T) {
 
 	_, err = r.(*rgbx).transferAsset(
 		&rtypes.ConfirmTx{
-			TxHash:     []byte("missing"),
-			UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+			TxHash:    []byte("missing"),
+			UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
 		},
 		"txH", "cH", spendHash,
 	)
@@ -155,9 +155,10 @@ func Test_rgbx_confirmWithdrawSettlement(t *testing.T) {
 	)
 	require.Error(t, err)
 
-	withdraw := &rtypes.WithdrawAsset{AssetSymbol: "btc", Amount: 100}
+	// confirmWithdrawSettlement 使用 newAccount，symbol 直接为 "BTC"
+	withdraw := &rtypes.WithdrawAsset{AssetSymbol: "BTC", Amount: 100}
 	require.NoError(t, state.Set(formatPayloadKey(wHash), types.Encode(withdraw)))
-	acc, err := r.(*rgbx).newCrossChainAccount("btc")
+	acc, err := r.(*rgbx).newAccount("xBTC")
 	require.NoError(t, err)
 	lockAddr := r.(*rgbx).crossChainLockAddress(acc)
 	_, err = acc.Mint(lockAddr, 100)
@@ -171,7 +172,7 @@ func Test_rgbx_confirmWithdrawSettlement(t *testing.T) {
 	require.NotNil(t, recp)
 
 	wHash2 := []byte("withdraw2")
-	require.NoError(t, state.Set(formatPayloadKey(wHash2), types.Encode(&rtypes.WithdrawAsset{AssetSymbol: "btc", Amount: 500})))
+	require.NoError(t, state.Set(formatPayloadKey(wHash2), types.Encode(&rtypes.WithdrawAsset{AssetSymbol: "BTC", Amount: 500})))
 	_, err = r.(*rgbx).confirmWithdrawSettlement(
 		&rtypes.ConfirmTx{TxHash: wHash2},
 		"txH", "cH",

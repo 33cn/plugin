@@ -74,12 +74,7 @@ func (r *rgbx) ExecLocal_Withdraw(_ *rtypes.WithdrawAsset, tx *types.Transaction
 
 func (r *rgbx) ExecLocal_Deposit(_ *rtypes.DepositAsset, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	for _, log := range receiptData.Logs {
-		if log.Ty == rtypes.TyPendingTxLog {
-			r.addPendingTxKV(dbSet, log.Log, index)
-		}
-	}
-	return r.addAutoRollBack(tx, dbSet.KV), nil
+	return dbSet, nil
 }
 
 func (r *rgbx) ExecLocal_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {

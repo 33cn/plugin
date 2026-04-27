@@ -14,14 +14,15 @@ const defaultGuardianParachainTitle = "user.p.rgbxguardians."
 
 func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, index int) (*types.Receipt, error) {
 
+	symbol := formatSymbol(commit.GetAssetSymbol())
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	txHash := hex.EncodeToString(tx.Hash())
 	commitAddr := tx.From()
 	addrs := &types.ReqAddrs{}
 	err := readDB(r.GetStateDB(), formatDkgConfirmationsKey(commit.DkgAddress), addrs)
 	if err != nil && !errors.Is(err, types.ErrNotFound) {
-		elog.Error("Exec_CommitDKG", "txHash", txHash, "symbol", commit.AssetSymbol, "dkgAddr", commit.DkgAddress, "readDB err", err)
-		return nil, err
+		elog.Error("Exec_CommitDKG", "txHash", txHash, "symbol", symbol, "dkgAddr", commit.DkgAddress, "readDB err", err)
+		return nil, ErrGetDkgConfirmations
 	}
 	for _, addr := range addrs.Addrs {
 		if commitAddr == addr {
@@ -31,8 +32,8 @@ func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, i
 	addrs.Addrs = append(addrs.Addrs, commitAddr)
 	guardianAddrs, err := r.getGuardianNodeAddress(rgbxCfg.GuardianParachainTitle)
 	if err != nil {
-		elog.Error("Exec_CommitDKG", "txHash", txHash, "getGuardianNodeAddress err", err)
-		return nil, err
+		elog.Error("Exec_CommitDKG", "txHash", txHash, "symbol", symbol, "getGuardianNodeAddress err", err)
+		return nil, ErrGetGuardianNodeAddress
 	}
 
 	encodeAddrs := types.Encode(addrs)
@@ -49,12 +50,13 @@ func (r *rgbx) Exec_CommitDKG(commit *rtypes.CommitDKG, tx *types.Transaction, i
 	if len(strings.Split(guardianAddrs, ",")) == len(addrs.Addrs) {
 
 		info := &rtypes.CrossChainInfo{
-			AssetSymbol: formatSymbol(commit.AssetSymbol),
-			TssAddress:  commit.DkgAddress,
-			PkScript:    commit.PkScript,
+			AssetSymbol:   symbol,
+			WrappedSymbol: formatCrossChainSymbol(symbol),
+			TssAddress:    commit.DkgAddress,
+			PkScript:      commit.PkScript,
 		}
 		receipt.KV = append(receipt.KV, &types.KeyValue{
-			Key:   formatCrossChainInfoKey(commit.GetAssetSymbol()),
+			Key:   formatCrossChainInfoKey(symbol),
 			Value: types.Encode(info),
 		})
 	}
@@ -67,15 +69,16 @@ func (r *rgbx) Exec_Deposit(deposit *rtypes.DepositAsset, tx *types.Transaction,
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	txHash := tx.Hash()
-	accDB, err := r.newCrossChainAccount(deposit.GetAssetSymbol())
+	symbol := ensureCrossChainSymbol(deposit.GetAssetSymbol())
+	accDB, err := r.newAccount(symbol)
 	if err != nil {
-		elog.Error("Exec_Deposit newCrossChainAccount", "txHash", hex.EncodeToString(txHash), "symbol", deposit.GetAssetSymbol(),
+		elog.Error("Exec_Deposit newCrossChainAccount", "txHash", hex.EncodeToString(txHash), "symbol", symbol,
 			"err", err)
 		return nil, err
 	}
 	depositReceipt, err := accDB.Mint(deposit.GetDepositAddress(), deposit.GetAmount())
 	if err != nil {
-		elog.Error("Exec_Deposit Mint", "txHash", hex.EncodeToString(txHash), "symbol", deposit.GetAssetSymbol(),
+		elog.Error("Exec_Deposit Mint", "txHash", hex.EncodeToString(txHash), "symbol", symbol,
 			"depositAddr", deposit.GetDepositAddress(), "amount", deposit.GetAmount(), "err", err)
 		return nil, err
 	}
@@ -83,25 +86,8 @@ func (r *rgbx) Exec_Deposit(deposit *rtypes.DepositAsset, tx *types.Transaction,
 	receipt.Logs = append(receipt.Logs, depositReceipt.Logs...)
 
 	receipt.KV = append(receipt.KV, &types.KeyValue{
-		Key:   formatPayloadKey(txHash),
-		Value: types.Encode(deposit),
-	}, &types.KeyValue{
 		Key:   formatDepositUsedKey(deposit.GetTxProof().GetTxData()),
 		Value: []byte("used"),
-	})
-
-	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{
-		Ty: rtypes.TyPendingTxLog,
-		Log: types.Encode(&rtypes.PendingTx{
-			ActionType:    rtypes.TyDepositAsset,
-			Timestamp:     r.GetBlockTime(),
-			TxBlockHeight: r.GetHeight(),
-			TxIndex:       int64(index),
-			TxHash:        tx.Hash(),
-			Amount:        deposit.GetAmount(),
-			AssetSymbol:   formatSymbol(deposit.GetAssetSymbol()),
-			TargetAddress: deposit.GetDepositAddress(),
-		}),
 	})
 
 	return receipt, nil
@@ -111,7 +97,8 @@ func (r *rgbx) Exec_Deposit(deposit *rtypes.DepositAsset, tx *types.Transaction,
 func (r *rgbx) Exec_Withdraw(withdraw *rtypes.WithdrawAsset, tx *types.Transaction, index int) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	txHash := tx.Hash()
-	accDB, err := r.newCrossChainAccount(withdraw.GetAssetSymbol())
+	symbol := ensureCrossChainSymbol(withdraw.GetAssetSymbol())
+	accDB, err := r.newAccount(symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +106,7 @@ func (r *rgbx) Exec_Withdraw(withdraw *rtypes.WithdrawAsset, tx *types.Transacti
 	lockReceipt, err := accDB.Transfer(tx.From(), lockAddr, withdraw.GetAmount())
 	if err != nil {
 		elog.Error("Exec_Withdraw lock transfer", "txHash", hex.EncodeToString(txHash), "from", tx.From(),
-			"symbol", withdraw.GetAssetSymbol(), "amount", withdraw.GetAmount(), "err", err)
+			"symbol", symbol, "amount", withdraw.GetAmount(), "err", err)
 		return nil, err
 	}
 	receipt.KV = append(receipt.KV, lockReceipt.KV...)
