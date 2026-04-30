@@ -94,7 +94,8 @@ type btcWallet struct {
 	rpcClient   *rpcclient.Client
 	db          walletdb.DB
 
-	monitorStartHeight int32
+	minPendingHeight int32
+	processedHeight  int32
 
 	// TSS相关
 	tssAddress  btcutil.Address
@@ -112,6 +113,7 @@ type btcWallet struct {
 
 	// 交易监控
 	pendingTxs map[chainhash.Hash]*btcPendingTx
+	rescanDone bool
 	// txLock     sync.RWMutex
 }
 
@@ -141,7 +143,7 @@ func newBtcWallet(n *neutrinoClient) (*btcWallet, error) {
 		withdrawChan:      make(chan *btcPendingTx, 100),
 		addPendingChan:    make(chan *btcPendingTx, 100),
 		removePendingChan: make(chan chainhash.Hash, 100),
-		requiredConfs:     defaultRequiredConfs,
+		requiredConfs:     int32(n.cfg.BlockConfirmations),
 		pendingTxs:        make(map[chainhash.Hash]*btcPendingTx),
 	}
 
@@ -175,13 +177,13 @@ func newBtcWallet(n *neutrinoClient) (*btcWallet, error) {
 		}
 	}
 
-	w, err := wallet.Open(db, pubPass, nil, &bw.chainParams, 250)
+	w, err := wallet.Open(db, pubPass, nil, &bw.chainParams, 0)
 	if err != nil {
 		log.Error("newBtcWallet open wallet error", "err", err)
 		_ = db.Close()
 		return nil, err
 	}
-
+	log.Info("newBtcWallet open wallet success", "wallet birthtime", w.Manager.Birthday().Unix())
 	bw.db = db
 	bw.Wallet = w
 	bw.chainClient = chain.NewNeutrinoClient(&bw.chainParams, n.neutrinoCS)
@@ -195,7 +197,6 @@ func (b *btcWallet) start() error {
 	}
 
 	b.Wallet.Start()
-	b.Wallet.SynchronizeRPC(b.chainClient)
 
 	// 启动交易监听
 	go b.monitorTransactions()
@@ -215,25 +216,18 @@ func (b *btcWallet) stop() {
 // waitAndImportTSSAddress 等待TSS地址生成并导入
 func (b *btcWallet) waitAndImportTSSAddress() {
 
-	b.client.waitUntilDone("waitDKGCompleted", func() bool {
-		return b.client.tss.isDKGCompleted()
-	}, time.Second*3)
-
-	addr := b.client.tss.getTssAddress()
-	// 保存TSS地址、公钥和脚本
-	b.tssAddress = addr
 	b.tssPubKey = b.client.tss.tssPublicKey
 	b.tssPkScript = b.client.tss.pkScript
-
-	log.Debug("waitAndImportTSSAddress", "address", addr.String())
+	b.tssAddress = b.client.tss.tssAddress
+	log.Debug("waitAndImportTSSAddress", "address", b.tssAddress.String())
 	b.client.waitUntilDone("waitImportTSSAddress", func() bool {
 		// 显式导入TSS公钥到钱包
-		if _, err := b.Wallet.AddressInfo(addr); err != nil {
+		if _, err := b.Wallet.AddressInfo(b.tssAddress); err != nil {
 			if !waddrmgr.IsError(err, waddrmgr.ErrAddressNotFound) {
 				log.Error("waitAndImportTSSAddress AddressInfo failed", "err", err)
 				return false
 			}
-			err = b.Wallet.ImportPublicKey(b.tssPubKey, waddrmgr.WitnessPubKey)
+			err = b.importTSSPublicKey()
 			if err != nil {
 				log.Error("waitAndImportTSSAddress ImportPublicKey failed", "err", err)
 				return false
@@ -241,12 +235,35 @@ func (b *btcWallet) waitAndImportTSSAddress() {
 		}
 		return true
 	}, time.Second*3)
-	log.Info("waitAndImportTSSAddress success", "address", addr.String())
+	log.Info("waitAndImportTSSAddress success", "address", b.tssAddress.String())
+}
+
+func (b *btcWallet) importTSSPublicKey() error {
+	err := b.Wallet.ImportPublicKey(b.tssPubKey, waddrmgr.WitnessPubKey)
+	if err == nil {
+		return nil
+	}
+	// Old/external wallet DBs might miss BIP84 scope (m/84'/coin'). Create it
+	// on-demand and retry importing the TSS key.
+	if !waddrmgr.IsError(err, waddrmgr.ErrScopeNotFound) {
+		return err
+	}
+
+	scope := waddrmgr.KeyScopeBIP0084
+	schema, ok := waddrmgr.ScopeAddrMap[scope]
+	if !ok {
+		return err
+	}
+	if _, addErr := b.Wallet.AddScopeManager(scope, schema); addErr != nil {
+		log.Warn("importTSSPublicKey AddScopeManager failed, retry import anyway",
+			"scope", scope, "err", addErr)
+	}
+	return b.Wallet.ImportPublicKey(b.tssPubKey, waddrmgr.WitnessPubKey)
 }
 
 func (b *btcWallet) loadMinPendingHeight() int32 {
 	var height int32
-	err := walletdb.View(b.db, func(tx walletdb.ReadTx) error {
+	err := walletdb.View(b.client.neutrinoCfg.Database, func(tx walletdb.ReadTx) error {
 		bucket := tx.ReadBucket([]byte(btcwalletMonitorBucket))
 		if bucket == nil {
 			return walletdb.ErrBucketNotFound
@@ -262,6 +279,7 @@ func (b *btcWallet) loadMinPendingHeight() int32 {
 		height = int32(reply.GetData())
 		return nil
 	})
+	log.Debug("loadMinPendingHeight", "height", height, "err", err)
 	if err != nil && !errors.Is(err, walletdb.ErrBucketNotFound) {
 		log.Error("loadMinPendingHeight", "err", err)
 	}
@@ -269,7 +287,7 @@ func (b *btcWallet) loadMinPendingHeight() int32 {
 }
 
 func (b *btcWallet) saveMinPendingHeight(height int32) {
-	err := walletdb.Update(b.db, func(tx walletdb.ReadWriteTx) error {
+	err := walletdb.Update(b.client.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
 		bucket, err := tx.CreateTopLevelBucket([]byte(btcwalletMonitorBucket))
 		if err != nil {
 			return err
@@ -280,6 +298,7 @@ func (b *btcWallet) saveMinPendingHeight(height int32) {
 		data := types.Encode(&types.Int64{Data: int64(height)})
 		return bucket.Put([]byte(minPendingHeightKey), data)
 	})
+	log.Debug("saveMinPendingHeight", "height", height, "err", err)
 	if err != nil {
 		log.Error("saveMinPendingHeight", "err", err, "height", height)
 	}
@@ -295,20 +314,19 @@ func (b *btcWallet) updateMinPendingHeight() {
 			minHeight = pending.blockHeight
 		}
 	}
-	if b.monitorStartHeight < minHeight {
-		b.monitorStartHeight = minHeight
+	log.Debug("updateMinPendingHeight", "minHeight", minHeight,
+		"processedHeight", b.processedHeight, "bestHeight", b.client.getBestBlockHeight(),
+		"b.minPendingHeight", b.minPendingHeight, "pendingTxs", len(b.pendingTxs))
+	if minHeight > 0 && minHeight != b.minPendingHeight {
+		b.minPendingHeight = minHeight
 		b.saveMinPendingHeight(minHeight)
 	}
 }
 
-// rescanFromHeight 从指定高度开始重新扫描
+// rescanFromHeight 从指定高度开始重新扫描, 需要注意和wallet.SynchronizeRPC的同步关系，可能造成死锁
 func (b *btcWallet) rescanFromHeight(height int32) error {
-	if height <= 0 {
-		return nil
-	}
-	if b.tssAddress == nil {
-		return fmt.Errorf("TSS address not ready")
-	}
+
+	log.Debug("rescanFromHeight", "height", height)
 	hash, err := b.chainClient.GetBlockHash(int64(height))
 	if err != nil {
 		return err
@@ -327,65 +345,110 @@ func (b *btcWallet) rescanFromHeight(height int32) error {
 	}
 	select {
 	case err := <-b.Wallet.SubmitRescan(job):
+		log.Debug("rescanFromHeight submitRescan done")
 		return err
 	case <-b.client.ctx.Done():
 		return types.ErrChannelClosed
+	}
+
+}
+
+func (b *btcWallet) rescanWalletTxs(start, end int32, rescanChan chan *wallet.GetTransactionsResult) error {
+	b.client.waitUntilDone("walletTxsRescan", func() bool {
+		return b.Wallet.ChainSynced()
+	}, time.Second*2)
+	log.Debug("rescanWalletTxs", "start", start, "end", end, "bestHeight", b.client.getBestBlockHeight())
+	startBlock := wallet.NewBlockIdentifierFromHeight(start)
+	endBlock := wallet.NewBlockIdentifierFromHeight(end)
+	res, err := b.Wallet.GetTransactions(startBlock, endBlock, "", b.client.ctx.Done())
+	if err != nil {
+		log.Error("rescanWalletTxs GetTransactions error", "err", err)
+		return err
+	}
+	rescanChan <- res
+	return nil
+
+}
+
+func (b *btcWallet) handleNotify(attachedBlocks []wallet.Block, unminedTxs []wallet.TransactionSummary) {
+
+	log.Debug("handleNotify", "attachedBlocks", len(attachedBlocks), "unminedTxs", len(unminedTxs))
+	// 处理已确认交易， attachedBlocks是btc链上新添加的区块
+	for _, block := range attachedBlocks {
+		log.Debug("handleNotify block", "height", block.Height, "hash", block.Hash.String(), "transactions", len(block.Transactions))
+		for _, tx := range block.Transactions {
+			b.handleTransaction(&tx, block.Height, *block.Hash)
+		}
+		b.processedHeight = block.Height
+	}
+
+	// 处理未确认交易（重置确认数）
+	for _, tx := range unminedTxs {
+		b.handleUnminedTransaction(*tx.Hash)
 	}
 }
 
 // monitorTransactions 监听交易通知
 func (b *btcWallet) monitorTransactions() {
 
-	b.waitAndImportTSSAddress()
-	b.monitorStartHeight = b.loadMinPendingHeight()
-
-	// 注册通知客户端
 	client := b.Wallet.NtfnServer.TransactionNotifications()
-	if b.monitorStartHeight > 0 {
-		log.Debug("monitorTransactions resume from height", "height", b.monitorStartHeight)
-		if err := b.rescanFromHeight(b.monitorStartHeight); err != nil {
-			log.Error("monitorTransactions rescan", "height", b.monitorStartHeight, "err", err)
-		}
+	b.Wallet.SynchronizeRPC(b.chainClient)
+	b.waitAndImportTSSAddress()
+	rescanHeight := b.loadMinPendingHeight()
+	bestHeight := b.client.getBestBlockHeight()
+	if rescanHeight < int32(b.client.cfg.BtcHeaderStartHeight) {
+		rescanHeight = int32(b.client.cfg.BtcHeaderStartHeight)
+		log.Info("monitorTransactions initial rescan", "height", rescanHeight, "bestHeight", bestHeight)
+	} else {
+		log.Debug("monitorTransactions resume from height", "height", rescanHeight, "bestHeight", bestHeight)
 	}
+	b.minPendingHeight = rescanHeight
 	interval := b.client.cfg.BtcBlockInterval/2 + 1
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
-
+	rescanChan := make(chan *wallet.GetTransactionsResult, 1)
+	firstProcessFlag := true
 	for {
 		select {
 		case <-b.client.ctx.Done():
 			client.Done()
 			return
+		case res := <-rescanChan:
+			b.handleNotify(res.MinedTransactions, res.UnminedTransactions)
+			b.rescanDone = true
 
 		case ntfn := <-client.C:
 			if ntfn == nil {
 				continue
 			}
-			// 处理已确认交易， attachedBlocks是btc链上新添加的区块
-			for _, block := range ntfn.AttachedBlocks {
-				// 不存在待确认交易时，同步更新扫描起点高度
-				if len(b.pendingTxs) == 0 {
-					b.saveMinPendingHeight(block.Height)
-				}
-				for _, tx := range block.Transactions {
-					b.handleTransaction(&tx, block.Height, *block.Hash)
+			// 首次处理检测是否需要重新扫描
+			if firstProcessFlag && len(ntfn.AttachedBlocks) > 0 {
+				log.Debug("monitorTransactions first process", "height", ntfn.AttachedBlocks[0].Height, "rescanHeight", rescanHeight)
+				firstProcessFlag = false
+				if ntfn.AttachedBlocks[0].Height > rescanHeight {
+					go b.rescanWalletTxs(rescanHeight, ntfn.AttachedBlocks[0].Height-1, rescanChan)
+				} else {
+					b.rescanDone = true
 				}
 			}
-
-			// 处理未确认交易（重置确认数）
-			for _, tx := range ntfn.UnminedTransactions {
-				b.handleUnminedTransaction(*tx.Hash)
-			}
+			b.handleNotify(ntfn.AttachedBlocks, ntfn.UnminedTransactions)
 
 		case pending := <-b.addPendingChan:
 			b.pendingTxs[pending.txHash] = pending
-			log.Debug("addPendingTx", "txHash", pending.txHash.String(), "blockHeight", pending.blockHeight,
-				"blockHash", pending.blockHash.String(), "txType", pending.txType)
+			log.Debug("addPendingTx", "txHash", pending.txHash.String(), "txType", pending.txType)
 		case txHash := <-b.removePendingChan:
 			delete(b.pendingTxs, txHash)
-			b.updateMinPendingHeight()
-			log.Debug("removePendingTx", "txHash", txHash.String())
-
+			log.Debug("removePendingTx", "txHash", txHash.String(), "txLen", len(b.pendingTxs),
+				"processedHeight", b.processedHeight, "minPendingHeight", b.minPendingHeight)
+			if len(b.pendingTxs) > 0 {
+				b.updateMinPendingHeight()
+			}
 		case <-ticker.C:
+			if b.rescanDone && len(b.pendingTxs) == 0 && b.processedHeight > b.minPendingHeight {
+				b.minPendingHeight = b.processedHeight
+				b.saveMinPendingHeight(b.minPendingHeight)
+				log.Debug("monitorTransactions update minPendingHeight",
+					"minPendingHeight", b.minPendingHeight, "bestHeight", b.client.getBestBlockHeight())
+			}
 			b.updateTransactionConfirmations()
 		}
 	}
@@ -442,18 +505,11 @@ func (b *btcWallet) handleUnminedTransaction(txHash chainhash.Hash) {
 
 // updateTransactionConfirmations 更新已存在交易的确认数
 func (b *btcWallet) updateTransactionConfirmations() {
-	bestBlock := b.client.getBestBlock()
-
+	bestHeight := b.client.getBestBlockHeight()
+	log.Debug("updateTransactionConfirmations", "bestBlock", bestHeight, "pendingTxs", len(b.pendingTxs))
 	for txHash, pending := range b.pendingTxs {
-
-		txRes, err := b.Wallet.GetTransaction(txHash)
-		if err != nil {
-			log.Error("updateTransactionConfirmation getTransaction error", "txHash", txHash.String())
-			if pending.blockHeight > 0 {
-				pending.confirmations = bestBlock.Height - pending.blockHeight
-			}
-		} else {
-			pending.confirmations = txRes.Confirmations
+		if pending.blockHeight > 0 && bestHeight > 0 {
+			pending.confirmations = bestHeight - pending.blockHeight + 1
 		}
 		// 如果达到要求的确认数，发送通知
 		if !pending.notified && pending.confirmations >= b.requiredConfs {
@@ -464,6 +520,7 @@ func (b *btcWallet) updateTransactionConfirmations() {
 		}
 
 	}
+
 }
 
 func (b *btcWallet) addPendingTx(pending *btcPendingTx) {
@@ -593,9 +650,6 @@ func (b *btcWallet) sendTransactionNotification(_ chainhash.Hash, pending *btcPe
 // 返回: (交易, 输入金额列表, 已锁定的UTXO列表, 错误)
 // 注意: 如果返回错误，UTXO锁定会自动释放；如果成功，调用方需要在广播失败时调用releaseUTXOs
 func (b *btcWallet) buildWithdrawTx(req *withdrawRequest) (*wire.MsgTx, []int64, []*UTXO, error) {
-	if b.tssAddress == nil {
-		return nil, nil, nil, fmt.Errorf("TSS address not ready")
-	}
 
 	// 解析目标地址
 	toAddr, err := btcutil.DecodeAddress(req.toAddress, &b.chainParams)
@@ -722,17 +776,15 @@ func (b *btcWallet) buildTransaction(outputs []*wire.TxOut, feeRate btcutil.Amou
 
 // listUnspent 获取可用UTXO
 func (b *btcWallet) listUnspent() ([]*UTXO, error) {
-	if b.tssAddress == nil {
-		return nil, fmt.Errorf("TSS address not ready")
-	}
 
 	// 获取钱包中的未花费输出
-	unspentOutputs, err := b.Wallet.ListUnspent(b.requiredConfs, math.MaxInt32, b.tssAddress.String())
+	unspentOutputs, err := b.Wallet.ListUnspent(b.requiredConfs, math.MaxInt32, "")
 	if err != nil {
 		return nil, fmt.Errorf("list unspent from wallet failed: %w", err)
 	}
 
 	var utxos []*UTXO
+	totalAmount := btcutil.Amount(0)
 	for _, output := range unspentOutputs {
 		// 解析OutPoint
 		txHash, err := chainhash.NewHashFromStr(output.TxID)
@@ -754,6 +806,10 @@ func (b *btcWallet) listUnspent() ([]*UTXO, error) {
 			log.Error("listUnspent invalid script", "script", output.ScriptPubKey, "err", err)
 			continue
 		}
+		if !bytes.Equal(pkScript, b.tssPkScript) {
+			log.Debug("listUnspent skip non-tss utxo", "txid", output.TxID, "vout", output.Vout, "amount", amount)
+			continue
+		}
 
 		utxo := &UTXO{
 			OutPoint: wire.OutPoint{
@@ -764,9 +820,10 @@ func (b *btcWallet) listUnspent() ([]*UTXO, error) {
 			PkScript: pkScript,
 		}
 		utxos = append(utxos, utxo)
+		totalAmount += amount
 	}
 
-	log.Debug("listUnspent", "count", len(utxos))
+	log.Debug("listUnspent", "count", len(utxos), "totalAmount", totalAmount.ToBTC())
 	return utxos, nil
 }
 
@@ -925,11 +982,18 @@ type UTXO struct {
 // lockedUTXOs: 已锁定的UTXO列表，广播失败时会自动释放
 func (b *btcWallet) broadcastTransaction(tx *wire.MsgTx, btcTxHash string) error {
 
-	// 广播交易
-	_, err := b.chainClient.SendRawTransaction(tx, false)
-	if err != nil {
-		log.Error("BroadcastTransaction failed", "txHash", btcTxHash, "err", err)
-		return err
+	if b.rpcClient != nil {
+		_, err := b.rpcClient.SendRawTransaction(tx, false)
+		if err != nil {
+			log.Error("BroadcastTransaction failed", "txHash", btcTxHash, "err", err)
+			return err
+		}
+	} else {
+		_, err := b.chainClient.SendRawTransaction(tx, false)
+		if err != nil {
+			log.Error("BroadcastTransaction failed", "txHash", btcTxHash, "err", err)
+			return err
+		}
 	}
 	log.Debug("broadcastTransaction success", "txHash", btcTxHash)
 	return nil
@@ -1033,10 +1097,7 @@ func (b *btcWallet) buildTxExistenceProof(pending *btcPendingTx) (*lighttypes.Bt
 }
 
 // GetBalance 获取余额
-func (b *btcWallet) GetBalance() (btcutil.Amount, error) {
-	if b.tssAddress == nil {
-		return 0, fmt.Errorf("TSS address not ready")
-	}
+func (b *btcWallet) getBalance() (btcutil.Amount, error) {
 
 	// 获取已确认余额
 	balance, err := b.Wallet.CalculateBalance(b.requiredConfs)

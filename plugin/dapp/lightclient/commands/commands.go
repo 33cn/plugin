@@ -63,7 +63,7 @@ func btcHeaderCMD() *cobra.Command {
 		Short: "show btc header info",
 		Run:   getBtcHeader,
 	}
-	cmd.Flags().Int64P("height", "h", 0, "btc height")
+	cmd.Flags().Int64P("height", "t", 0, "btc height")
 	markRequired(cmd, "height")
 
 	return cmd

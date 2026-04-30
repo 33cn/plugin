@@ -99,16 +99,7 @@ func (t *tssService) handleSignTask() {
 		case <-t.client.ctx.Done():
 			return
 		case task := <-t.signTaskCh:
-
-			select {
-			case task.result <- t.signMsg(task.sigHash, task.sessionName, task.signers):
-			case <-time.After(singleInputSignTimeout):
-				log.Error("handleSignTask signMsg timeout", "sessionName", task.sessionName)
-				task.result <- &signResult{err: fmt.Errorf("signMsg timeout")}
-			case <-t.client.ctx.Done():
-				task.result <- &signResult{err: types.ErrChannelClosed}
-				return
-			}
+			task.result <- t.signMsg(task.sigHash, task.sessionName, task.signers)
 		}
 	}
 }
@@ -265,15 +256,16 @@ func (t *tssService) generateTssAddress() error {
 	pubKeyHash := btcutil.Hash160(t.tssPublicKey.SerializeCompressed())
 	addr, err := btcutil.NewAddressWitnessPubKeyHash(pubKeyHash, chainParams)
 	if err != nil {
+		log.Error("generateTssAddress NewAddressWitnessPubKeyHash", "pubkey", hex.EncodeToString(t.tssPublicKey.SerializeCompressed()), "err", err)
 		return err
 	}
 
 	t.tssAddress = addr
 	t.pkScript, err = txscript.PayToAddrScript(addr)
 	if err != nil {
-		panic("generateTssAddress payToAddrScript error " + err.Error())
+		panic("generateTssAddress payToAddrScript error , address: " + addr.String() + " err: " + err.Error())
 	}
-	log.Info("generateTssAddress", "address", t.tssAddress.String())
+	log.Info("generateTssAddress", "address", addr.String())
 
 	return nil
 }
@@ -290,10 +282,7 @@ func (t *tssService) waitForSufficientSigners() []string {
 // processSignBtcTx processes a Bitcoin transaction using TSS protocol
 // This is called by the main node to initiate TSS signing
 func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmounts []int64, payload []byte) error {
-	if !t.dkgCompleted.Load() {
-		log.Error("signMsg dkg not completed")
-		return types.ErrNotSupport
-	}
+
 	signers := t.waitForSufficientSigners()
 	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSizeStripped()))
 	err := tx.SerializeNoWitness(buf)
@@ -310,7 +299,7 @@ func (t *tssService) processSignBtcTx(tx *wire.MsgTx, txType string, inputAmount
 	}
 	// Publish notification to all TSS nodes
 	t.pubMsg(tssSignNotifyTopic, types.Encode(notify))
-	log.Debug("signMsg published notification", "txType", txType, "payload", hex.EncodeToString(payload))
+	log.Debug("signMsg published notification", "txType", txType, "payload", hex.EncodeToString(payload), "signers", signers)
 	return t.signBtcTx(tx, inputAmounts, signers)
 }
 
@@ -339,7 +328,15 @@ func (t *tssService) signBtcTx(tx *wire.MsgTx, inputAmounts []int64, signers []s
 	if len(tx.TxIn) != len(inputAmounts) {
 		return fmt.Errorf("input count mismatch: tx=%d inputAmounts=%d", len(tx.TxIn), len(inputAmounts))
 	}
-	txSigHashes := txscript.NewTxSigHashes(tx, nil)
+	prevOutFetcher := txscript.NewMultiPrevOutFetcher(make(map[wire.OutPoint]*wire.TxOut, len(tx.TxIn)))
+	for idx, txIn := range tx.TxIn {
+		prevOutFetcher.AddPrevOut(txIn.PreviousOutPoint, &wire.TxOut{
+			Value:    inputAmounts[idx],
+			PkScript: t.pkScript,
+		})
+	}
+
+	txSigHashes := txscript.NewTxSigHashes(tx, prevOutFetcher)
 	txHash := tx.TxID()
 	pubKeyBytes := t.tssPublicKey.SerializeCompressed()
 	sigTasks := make([]*signTask, 0, len(tx.TxIn))
@@ -396,10 +393,6 @@ func (t *tssService) parseTxFromNotify(notify *lighttypes.TssSignNotify) (*wire.
 
 func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, req *withdrawRequest) error {
 
-	if !t.dkgCompleted.Load() {
-		log.Error("validateWithdrawTx DKG not completed", "withdrawTxHash", hex.EncodeToString(req.chain33WithDrawHash))
-		return fmt.Errorf("DKG not completed")
-	}
 	btcAddr, err := btcutil.DecodeAddress(req.toAddress, &t.client.neutrinoCfg.ChainParams)
 	if err != nil {
 		log.Error("validateWithdrawTx decode address", "err", err, "address", req.toAddress,
@@ -502,6 +495,12 @@ func (t *tssService) checkStickyInput(chain33WithDrawHash []byte, tx *wire.MsgTx
 // handleSignNotify handles incoming TSS sign notifications
 // All nodes (including main node) receive this and participate in signing
 func (t *tssService) handleSignNotify(msg []byte) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("handleSignNotify panic", "err", r)
+		}
+	}()
 	if !t.dkgCompleted.Load() {
 		log.Error("handleSignNotify", "err", "DKG not completed")
 		return
@@ -638,11 +637,6 @@ func (t *tssService) handleSubMsg() {
 			}
 		}
 	}
-}
-
-// getTssAddress returns the TSS address generated from TSS public key
-func (t *tssService) getTssAddress() btcutil.Address {
-	return t.tssAddress
 }
 
 // isDKGCompleted checks if DKG is completed using atomic operation

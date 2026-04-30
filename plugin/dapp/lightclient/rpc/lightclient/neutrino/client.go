@@ -129,14 +129,18 @@ func (n *neutrinoClient) Start() {
 		_ = n.neutrinoCfg.Database.Close()
 		panic(err)
 	}
+
+	go n.handleBlockSync()
+	go n.submitBitcoinHeaders()
+	// 依赖tss地址的任务需要等待tss完成
+	n.waitUntilDone("waitDKGCompleted", func() bool {
+		return n.tss.isDKGCompleted()
+	}, time.Second*3)
 	if err := n.bw.start(); err != nil {
 		log.Error("Start", "btcwallet start error", err)
 		n.bw.stop()
 		panic(err)
 	}
-
-	go n.handleBestBlock()
-	go n.submitBitcoinHeaders()
 	go n.depositWatcher()
 	go n.withdrawalProcessor()
 	n.rgbx.start(n)
@@ -180,11 +184,14 @@ func (n *neutrinoClient) cleanUp() {
 	}
 }
 
-func (n *neutrinoClient) handleBestBlock() {
+func (n *neutrinoClient) handleBlockSync() {
 
 	n.syncBestBlock()
 	interval := time.Duration(n.cfg.BtcBlockInterval)/3 + 1
 	ticker := time.NewTicker(time.Second * interval)
+	checkTipTicker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	defer checkTipTicker.Stop()
 	for {
 
 		select {
@@ -194,6 +201,19 @@ func (n *neutrinoClient) handleBestBlock() {
 		case <-ticker.C:
 
 			n.syncBestBlock()
+		case <-checkTipTicker.C:
+			_, blkTip, err1 := n.neutrinoCS.BlockHeaders.ChainTip()
+			_, filTip, err2 := n.neutrinoCS.RegFilterHeaders.ChainTip()
+			if err1 != nil || err2 != nil {
+				log.Warn("read header tip failed", "blkErr", err1, "filErr", err2)
+				return
+			}
+			log.Info("checkTip", "blockTip", blkTip, "filterTip", filTip, "isCurrent", n.neutrinoCS.IsCurrent())
+			if blkTip > filTip+1 {
+				// 已经有 block header 但 cfheader 跟不上，且不是仅差 1 的同步窗口
+				log.Error("cfheaders lagging block headers; check btcd --peerblockfilters",
+					"blockTip", blkTip, "filterTip", filTip)
+			}
 		}
 	}
 }
@@ -204,7 +224,7 @@ func (n *neutrinoClient) syncBestBlock() {
 		log.Error("syncBestBlock", "err", err)
 		return
 	}
-	log.Debug("syncBestBlock", "height", blk.Height, "hash", blk.Hash.String())
+	// log.Debug("syncBestBlock", "height", blk.Height, "hash", blk.Hash.String())
 	n.setBestBlock(blk)
 }
 
@@ -220,4 +240,13 @@ func (n *neutrinoClient) setBestBlock(blk *headerfs.BlockStamp) {
 	if blk != nil {
 		n.bestBlock = blk
 	}
+}
+
+func (n *neutrinoClient) getBestBlockHeight() int32 {
+	n.lock.RLock()
+	defer n.lock.RUnlock()
+	if n.bestBlock != nil {
+		return n.bestBlock.Height
+	}
+	return 0
 }

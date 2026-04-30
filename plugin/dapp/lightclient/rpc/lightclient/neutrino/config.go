@@ -9,7 +9,12 @@ import (
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btclog"
+	"github.com/btcsuite/btcwallet/chain"
+	"github.com/btcsuite/btcwallet/waddrmgr"
+	"github.com/btcsuite/btcwallet/wallet"
 	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/btcsuite/btcwallet/wtxmgr"
 	"github.com/lightninglabs/neutrino"
 )
 
@@ -123,6 +128,9 @@ func (n *neutrinoClient) initNeutrinoConfig(chainCfg *types.Chain33Config) error
 	if n.cfg.BtcHeaderStartHeight == 0 {
 		n.cfg.BtcHeaderStartHeight = 1
 	}
+	if n.cfg.BlockConfirmations == 0 {
+		n.cfg.BlockConfirmations = defaultRequiredConfs
+	}
 	// convert to second
 	if n.cfg.MaxUtxoRescanTime > 0 {
 		n.cfg.MaxUtxoRescanTime *= int64(time.Hour / time.Second)
@@ -148,6 +156,28 @@ func (n *neutrinoClient) initNeutrinoConfig(chainCfg *types.Chain33Config) error
 		BlockCacheSize: n.cfg.BlockCacheSize,
 	}
 
+	logCfg := chainCfg.GetModuleConfig().Log
+	dir := filepath.Dir(logCfg.LogFile)
+	logfile, err := os.OpenFile(filepath.Join(dir, "rgbx.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Error("initNeutrinoConfig open log file error", "err", err)
+		return err
+	}
+	logLevel := btclog.LevelInfo
+	if logCfg.Loglevel == "debug" || logCfg.Loglevel == "dbug" {
+		logLevel = btclog.LevelDebug
+	}
+	backend := btclog.NewBackend(logfile)
+	logger := func(subsystemTag string) btclog.Logger {
+		l := backend.Logger(subsystemTag)
+		l.SetLevel(logLevel)
+		return l
+	}
+	neutrino.UseLogger(logger("NEUT"))
+	waddrmgr.UseLogger(logger("WADM"))
+	wtxmgr.UseLogger(logger("WTXM"))
+	chain.UseLogger(logger("CHNS"))
+	wallet.UseLogger(logger("WLLT"))
 	return nil
 
 }

@@ -190,7 +190,7 @@ func pending2WithdrawRequest(chain33Pending *rtypes.PendingTx) *withdrawRequest 
 	}
 }
 
-func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) error {
+func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) (err error) {
 
 	txHash := hex.EncodeToString(req.chain33WithDrawHash)
 	tx, inputAmounts, lockedUTXOs, err := n.bw.buildWithdrawTx(req)
@@ -198,6 +198,16 @@ func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) error {
 		log.Error("processWithdrawRequest buildWithdrawTx", "txHash", txHash, "err", err)
 		return err
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("processWithdrawRequest panic", "err", r)
+			err = fmt.Errorf("processWithdrawRequest panic: %v", r)
+		}
+		if err != nil {
+			n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
+		}
+	}()
+
 	stickyUTXO := lockedUTXOs[len(lockedUTXOs)-1]
 	expectedHash := n.getExpectedWithdrawHash(stickyUTXO.OutPoint.String())
 	if len(expectedHash) > 0 && !bytes.Equal(expectedHash, req.chain33WithDrawHash) {
@@ -208,27 +218,27 @@ func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) error {
 
 	// 提现交易构建后，则和最后一个utxo强绑定，后续不能更改
 	if req.stickyUTXO == nil {
-		req.stickyUTXO = lockedUTXOs[len(lockedUTXOs)-1]
-		if err = n.setWithdrawStickyUTXO(req.chain33WithDrawHash, req.stickyUTXO); err != nil {
+
+		stickyUTXO := lockedUTXOs[len(lockedUTXOs)-1]
+		if err = n.setWithdrawStickyUTXO(req.chain33WithDrawHash, stickyUTXO); err != nil {
 			log.Error("processWithdrawRequest setWithdrawStickyUTXO", "txHash", txHash, "stickyUTXO", req.stickyUTXO.OutPoint.String(), "err", err)
+			return err
 		}
+		req.stickyUTXO = stickyUTXO
 	}
 	// 主节点也进行验证，保证各节点执行相同的逻辑
 	err = n.tss.validateWithdrawTx(tx, inputAmounts, req)
 	if err != nil {
-		n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
 		log.Error("processSignBtcTx validateWithdrawTx", "txHash", txHash, "err", err)
 		return err
 	}
 	btcTxHash := tx.TxHash().String()
 	if err = n.tss.processSignBtcTx(tx, transactionTypeWithdraw, inputAmounts, req.chain33WithDrawHash); err != nil {
-		n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
 		log.Error("processWithdrawRequest processSignBtcTx", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
 		return err
 	}
 
 	if err = n.bw.broadcastTransaction(tx, btcTxHash); err != nil {
-		n.bw.releaseUTXOsExcept(lockedUTXOs, req.stickyUTXO)
 		log.Error("processWithdrawRequest broadcastTransaction", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
 		return err
 	}
@@ -243,10 +253,11 @@ func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) error {
 		chain33WithdrawTxHash: req.chain33WithDrawHash,
 	})
 
-	if err = n.setWithdrawState(req.chain33WithDrawHash, withdrawStatusSent); err != nil {
-		log.Error("processWithdrawRequest setWithdrawState", "txHash", txHash, "btcTxHash", btcTxHash, "err", err)
+	if setStateErr := n.setWithdrawState(req.chain33WithDrawHash, withdrawStatusSent); setStateErr != nil {
+		log.Error("processWithdrawRequest setWithdrawState", "txHash", txHash, "btcTxHash", btcTxHash, "err", setStateErr)
+		return setStateErr
 	}
-	log.Debug("processWithdrawRequest success", "txHash", txHash, "btcTxHash", btcTxHash)
+	log.Debug("processWithdrawRequest success", "withdrawTxHash", txHash, "btcTxHash", btcTxHash)
 	return nil
 }
 
@@ -372,7 +383,7 @@ func (n *neutrinoClient) setWithdrawStickyUTXO(chain33TxHash []byte, utxo *UTXO)
 	})
 }
 
-func (n *neutrinoClient) clearWithdrawFirstInput(chain33TxHash []byte) error {
+func (n *neutrinoClient) clearWithdrawStickyUTXO(chain33TxHash []byte) error {
 	return walletdb.Update(n.neutrinoCfg.Database, func(tx walletdb.ReadWriteTx) error {
 		bucket := tx.ReadWriteBucket(withdrawStickyUTXOBucket)
 		if bucket == nil {
@@ -429,7 +440,8 @@ func (n *neutrinoClient) getPendingTxBlockIndex(txHash []byte) *rtypes.TxBlockIn
 // withdrawalProcessor 监听chain33主链上比特币提现请求, 构造提现交易到比特币网络，并向chain33主链提交rgbx confirm交易
 func (n *neutrinoClient) withdrawalProcessor() {
 	withdrawalChan := n.bw.GetWithdrawChannel()
-	retryTicker := time.NewTicker(time.Second * 30)
+	// 根据配置，同时兼容测试和正式环境
+	retryTicker := time.NewTicker(time.Second * time.Duration(n.cfg.BtcBlockInterval/15+1))
 	defer retryTicker.Stop()
 	withdrawReqChan := n.withdrawReqChan
 	withdrawReqList := make([]*withdrawRequest, 0, 16)
@@ -463,12 +475,18 @@ func (n *neutrinoClient) withdrawalProcessor() {
 			}
 
 		case pending := <-withdrawReqChan: // 向btc链提交提现交易
-			if len(n.getWithdrawState(pending.GetTxHash())) > 0 {
-				log.Debug("withdrawalProcessor hasWithdrawState", "txHash", hex.EncodeToString(pending.GetTxHash()))
+			state := n.getWithdrawState(pending.GetTxHash())
+			if len(state) > 0 && bytes.Equal(state, withdrawStatusConfirmed) {
+				log.Debug("withdrawalProcessor hasWithdrawState", "txHash", hex.EncodeToString(pending.GetTxHash()), "state", string(state))
 				continue
 			}
 			req := pending2WithdrawRequest(pending)
 			req.stickyUTXO = n.getWithdrawStickyUTXO(pending.GetTxHash())
+			// 状态非空时，存在stickyUTXO才允许重试
+			if len(state) > 0 && req.stickyUTXO == nil {
+				log.Debug("withdrawalProcessor hasWithdrawState but no stickyUTXO", "txHash", hex.EncodeToString(pending.GetTxHash()), "state", string(state))
+				continue
+			}
 			if err := n.processWithdrawRequest(req); err != nil {
 				withdrawReqList = append(withdrawReqList, req)
 			}
@@ -539,7 +557,7 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 	if state := n.getWithdrawState(confirm.confirmTx.GetTxHash()); bytes.Equal(state, withdrawStatusConfirmed) {
 		n.rgbx.pendingCache.removeTx(confirmHash)
 		n.bw.removePendingTx(confirm.btcPending.txHash)
-		if err := n.clearWithdrawFirstInput(confirm.confirmTx.GetTxHash()); err != nil {
+		if err := n.clearWithdrawStickyUTXO(confirm.confirmTx.GetTxHash()); err != nil {
 			log.Error("processWithdrawConfirm clearWithdrawFirstInput", "confirmHash", confirmHash, "err", err)
 		}
 		log.Debug("processWithdrawConfirm already confirmed local state", "confirmHash", confirmHash)
@@ -552,7 +570,7 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 		return false
 	}
 	n.bw.removePendingTx(confirm.btcPending.txHash)
-	if err := n.clearWithdrawFirstInput(confirm.confirmTx.GetTxHash()); err != nil {
+	if err := n.clearWithdrawStickyUTXO(confirm.confirmTx.GetTxHash()); err != nil {
 		log.Error("processWithdrawConfirm clearWithdrawFirstInput", "confirmHash", confirmHash, "err", err)
 	}
 	log.Debug("processWithdrawConfirm success", "txHash", txHash,
