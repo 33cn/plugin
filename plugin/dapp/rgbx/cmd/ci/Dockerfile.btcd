@@ -4,11 +4,9 @@ ARG BTCD_VERSION=v0.24.2
 WORKDIR /src
 
 RUN git clone --depth 1 --branch ${BTCD_VERSION} https://github.com/btcsuite/btcd.git .
-RUN go install -v ./cmd/btcd ./cmd/btcctl
+RUN go install -v . ./cmd/btcctl
 
 FROM ubuntu:22.04
-
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root
 COPY --from=builder /go/bin/btcd /usr/local/bin/btcd

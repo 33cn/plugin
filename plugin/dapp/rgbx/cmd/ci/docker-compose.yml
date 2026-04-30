@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   main:
     build:
@@ -9,6 +7,8 @@ services:
     ports:
       - "8801:8801"
       - "8802:8802"
+    volumes:
+      - ./btcd-data:/btcd:ro
 
   para1:
     build:
@@ -17,6 +17,8 @@ services:
       ChainConfig: "chain33.para1.toml"
     depends_on:
       - main
+    volumes:
+      - ./btcd-data:/btcd:ro
 
   para2:
     build:
@@ -25,6 +27,8 @@ services:
       ChainConfig: "chain33.para2.toml"
     depends_on:
       - main
+    volumes:
+      - ./btcd-data:/btcd:ro
 
   para3:
     build:
@@ -33,6 +37,8 @@ services:
       ChainConfig: "chain33.para3.toml"
     depends_on:
       - main
+    volumes:
+      - ./btcd-data:/btcd:ro
 
   para4:
     build:
@@ -41,8 +47,13 @@ services:
       ChainConfig: "chain33.para4.toml"
     depends_on:
       - main
+    volumes:
+      - ./btcd-data:/btcd:ro
 
   btcd:
+    # RPC TLS cert auto-gen uses os.Hostname(); must match Docker DNS name "btcd"
+    # so para/lightclient can dial btcd:18443 without SAN mismatch.
+    hostname: btcd
     build:
       context: .
       dockerfile: Dockerfile.btcd
@@ -52,16 +63,20 @@ services:
       - btcd
       - --regtest
       - --txindex
+      - --addrindex
       - --rpclisten=0.0.0.0:18443
+      - --rpcuser=${BTCD_RPC_USER:-root}
+      - --rpcpass=${BTCD_RPC_PASS:-1314}
       - --listen=0.0.0.0:18444
-      - --miningaddr=${BTCD_MINING_ADDR:-n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi}
-      - --notls
+      - --miningaddr=mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r
       - --debuglevel=info
     ports:
       - "18443:18443"
       - "18444:18444"
+    volumes:
+      - ./btcd-data:/root/.btcd
     healthcheck:
-      test: ["CMD", "btcctl", "--regtest", "--notls", "getblockcount"]
+      test: ["CMD", "btcctl", "--configfile=/tmp/btcctl.conf", "--regtest", "--rpcserver=127.0.0.1:18443", "--rpcuser=${BTCD_RPC_USER:-root}", "--rpcpass=${BTCD_RPC_PASS:-1314}", "getblockcount"]
       interval: 5s
       timeout: 5s
       retries: 30

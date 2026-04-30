@@ -31,9 +31,14 @@ build: depends
 	@cp chain33.para.toml build/ci/paracross/
 
 
-build_ci: depends ## Build the binary file for CI
-	@go build -v -o $(CLI) $(SRC_CLI)
-	@go build $(BUILD_FLAGS) -v -o $(APP)
+build_ci: depends ## Build the binary file for CI (Linux/amd64|arm64 when not on Linux, for Docker)
+	@if [ "$$(uname)" = "Linux" ]; then \
+		go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		go build $(BUILD_FLAGS) -v -o $(APP); \
+	else \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(APP); \
+	fi
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
@@ -161,6 +166,10 @@ docker: ## build docker image for chain33 run
 docker-compose: ## build docker-compose for chain33 run
 	@cd build && if ! [ -d ci ]; then \
 	 make -C ../ ; \
+	 fi; \
+	 if [ "$$(uname)" != "Linux" ]; then \
+	  CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o chain33 ../ && \
+	  CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o chain33-cli $(SRC_CLI); \
 	 fi; \
 	 cp chain33* Dockerfile  docker-compose.yml *.sh ci/ && cd ci/ && ./docker-compose-pre.sh run $(proj) $(dapp) $(extra) && cd ../..
 

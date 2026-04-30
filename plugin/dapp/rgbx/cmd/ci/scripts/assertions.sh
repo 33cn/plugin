@@ -29,6 +29,24 @@ function assert_non_empty() {
     fi
 }
 
+function assert_balance {
+    local actual="${1}"
+    local expect="${2}"
+    local message="${3:-assert_balance failed}"
+    if [ "${actual}" != "${expect}" ]; then
+        fail "${message}, expect=${expect}, actual=${actual}"
+    fi
+}
+
+function assert_length() {
+    local value="${1}"
+    local length="${2}"
+    local message="${3:-assert_length failed}"
+    if [ "${#value}" -ne "${length}" ]; then
+        fail "${message}, expect=${length}, actual=${#value}, value=${value}"
+    fi
+}
+
 function assert_true() {
     local expr="${1}"
     local message="${2:-assert_true failed}"

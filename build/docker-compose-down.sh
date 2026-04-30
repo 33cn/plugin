@@ -39,7 +39,7 @@ function down() {
     if [ "$num" -gt 0 ]; then
         # remove exsit container
         echo "=========== # docker-compose down ============="
-        docker-compose down --rmi local
+        docker-compose down --remove-orphans --rmi local
     fi
 }
 
