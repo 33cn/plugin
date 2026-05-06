@@ -532,7 +532,6 @@ function setup_para_nodegroup_on_main() {
     ${MAIN_CLI} send coins send_exec -e paracross -a 20 -k "${AUTH_KEY3}" >/dev/null
     ${MAIN_CLI} send coins send_exec -e paracross -a 20 -k "${AUTH_KEY4}" >/dev/null
 
-
     local addrs="${AUTH_ADDR1},${AUTH_ADDR2},${AUTH_ADDR3},${AUTH_ADDR4}"
     local apply_hash
     apply_hash=$(${MAIN_CLI} send para nodegroup apply --paraName="${PARA_TITLE}" -a "${addrs}" -c 5 -k "${AUTH_KEY1}")
@@ -664,11 +663,13 @@ function scenario_user_withdraw_auto_confirm() {
     received_sats=$(query_latest_received_sats "${WITHDRAW_DEST_ADDR}")
     local expected_received=$((BTC_WITHDRAW_AMOUNT_SATS - 5000))
     # 允许 ±1000 sats 的误差
-    if ! awk "BEGIN{exit !(abs(${received_sats} - ${expected_received}) < 1000)}"; then
+    diff=$((received_sats - expected_received))
+    if ((diff < 0)); then diff=$((-diff)); fi
+    if ((diff >= 1000)); then
         fail "btc withdraw amount mismatch, expect≈${expected_received}, actual=${received_sats}"
     fi
 
-    local after_balance 
+    local after_balance
     after_balance=$(query_xbtc_balance "${USER_MAIN_ADDR}")
     expected_balance=$(awk "BEGIN{printf \"%.4f\", ${before_balance} - ${btc_withdraw_amount}}")
     assert_balance "${after_balance}" "${expected_balance}" "xbtc balance not decreased after withdraw settle"
