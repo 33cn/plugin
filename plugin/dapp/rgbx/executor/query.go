@@ -29,6 +29,10 @@ func (r *rgbx) Query_ListPendingTx(req *rtypes.ReqListPendingTx) (types.Message,
 			elog.Error("Query_GetPendingTxs", "decode err", err)
 			continue
 		}
+		// 0 means no end height limit
+		if req.GetEndHeight() > 0 && tx.GetTxBlockHeight() > req.GetEndHeight() {
+			break
+		}
 
 		pendingTxs.PendingList = append(pendingTxs.PendingList, tx)
 	}

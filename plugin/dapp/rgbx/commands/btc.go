@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -421,7 +422,7 @@ func withdrawAssetCMD() *cobra.Command {
 }
 
 func withdrawAssetFlags(cmd *cobra.Command) {
-	cmd.Flags().Int64P("amount", "a", 0, "withdraw amount")
+	cmd.Flags().Float64P("amount", "a", 0, "withdraw amount")
 	cmd.Flags().Int64P("feeRate", "f", 1, "btc fee rate (sat/vbyte)")
 	cmd.Flags().StringP("destinationAddr", "d", "", "btc destination address")
 	cmd.Flags().StringP("assetSymbol", "s", rtypes.BTCSymbol, "cross-chain asset symbol")
@@ -429,13 +430,14 @@ func withdrawAssetFlags(cmd *cobra.Command) {
 }
 
 func withdrawAsset(cmd *cobra.Command, _ []string) {
-	amount, _ := cmd.Flags().GetInt64("amount")
+	amount, _ := cmd.Flags().GetFloat64("amount")
 	feeRate, _ := cmd.Flags().GetInt64("feeRate")
 	destAddr, _ := cmd.Flags().GetString("destinationAddr")
 	symbol, _ := cmd.Flags().GetString("assetSymbol")
 
+	amount = amount * math.Pow(10, 8)
 	sendCreateTxRPC(cmd, rtypes.NameWithdrawAssetAction, &rtypes.WithdrawAsset{
-		Amount:          amount,
+		Amount:          int64(amount),
 		FeeRate:         feeRate,
 		DestinationAddr: destAddr,
 		AssetSymbol:     symbol,

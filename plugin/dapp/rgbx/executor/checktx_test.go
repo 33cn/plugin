@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	"github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	paratypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
@@ -499,4 +501,18 @@ func Test_checkCommitDKG(t *testing.T) {
 		value.CommitDKG = tc.action.(*rtypes.CommitDKG)
 		testCheck(t, r, tx, action, tc.expectErr, idx)
 	}
+}
+
+func Test_decodeBtcAddressScript(t *testing.T) {
+
+	params := lighttypes.GetBtcChainParams("regtest")
+
+	priv, err := btcec.NewPrivateKey()
+	require.Nil(t, err)
+	pub := priv.PubKey().SerializeCompressed()
+	waddr, err := btcutil.NewAddressWitnessPubKeyHash(btcutil.Hash160(pub), params)
+	require.Nil(t, err)
+	fmt.Println(waddr.String())
+	_, err = btcutil.DecodeAddress(waddr.String(), params)
+	require.Nil(t, err)
 }

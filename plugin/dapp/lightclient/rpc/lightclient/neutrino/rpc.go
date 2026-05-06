@@ -201,3 +201,12 @@ func (n *neutrinoClient) submitMainchainTxUntilSuccess(exec string, action strin
 		return err == nil
 	}, 0)
 }
+
+func (n *neutrinoClient) getMainchainHeight() int64 {
+	reply, err := n.mainChainGrpc.GetLastHeader(n.ctx, &types.ReqNil{})
+	if err != nil {
+		log.Error("getMainchainHeight", "query err", err)
+		return 0
+	}
+	return reply.GetHeight()
+}

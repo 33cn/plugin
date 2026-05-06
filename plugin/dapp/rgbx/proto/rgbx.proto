@@ -140,6 +140,7 @@ message ReqListPendingTx {
     int64 startHeight = 1;
     int64 startIndex  = 2;
     int32 count       = 3;
+    int64 endHeight   = 4;
 }
 
 message ReqGetPendingTx {

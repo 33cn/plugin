@@ -33,6 +33,40 @@ func TestRgbx_Query_ListPendingTx(t *testing.T) {
 	require.Equal(t, 0, len(msg.(*rtypes.PendingTxs).GetPendingList()))
 }
 
+func TestRgbx_Query_ListPendingTx_EndHeight(t *testing.T) {
+	r := newRgbx()
+	dir, db, local := util.CreateTestDB()
+	defer util.CloseTestDB(dir, db)
+	r.SetLocalDB(local)
+	funcName := "ListPendingTx"
+
+	require.NoError(t, db.Set(formatPendingTxKey(1, 1), types.Encode(&rtypes.PendingTx{
+		TxBlockHeight: 1,
+		TxIndex:       1,
+	})))
+	require.NoError(t, db.Set(formatPendingTxKey(2, 1), types.Encode(&rtypes.PendingTx{
+		TxBlockHeight: 2,
+		TxIndex:       1,
+	})))
+	require.NoError(t, db.Set(formatPendingTxKey(3, 1), types.Encode(&rtypes.PendingTx{
+		TxBlockHeight: 3,
+		TxIndex:       1,
+	})))
+
+	msg, err := r.Query(funcName, types.Encode(&rtypes.ReqListPendingTx{Count: 10, EndHeight: 2}))
+	require.NoError(t, err)
+	list := msg.(*rtypes.PendingTxs).GetPendingList()
+	require.Len(t, list, 2)
+	require.Equal(t, int64(1), list[0].GetTxBlockHeight())
+	require.Equal(t, int64(2), list[1].GetTxBlockHeight())
+
+	msg, err = r.Query(funcName, types.Encode(&rtypes.ReqListPendingTx{Count: 10, EndHeight: 1}))
+	require.NoError(t, err)
+	list = msg.(*rtypes.PendingTxs).GetPendingList()
+	require.Len(t, list, 1)
+	require.Equal(t, int64(1), list[0].GetTxBlockHeight())
+}
+
 func TestRgbx_Query_GetPendingTx(t *testing.T) {
 	r := newRgbx()
 	dir, db, local := util.CreateTestDB()

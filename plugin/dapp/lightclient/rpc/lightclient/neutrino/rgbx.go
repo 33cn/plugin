@@ -24,10 +24,11 @@ type rgbx struct {
 	pendingTxConfirmedHeight int64
 	pendingTxPullHeight      int64
 
-	lock         sync.RWMutex
-	pendingCache *pendingTxCache
-	rescanChan   chan *utxoRescanInfo
-	commitChan   chan *utxoSpendInfo
+	lock          sync.RWMutex
+	pendingCache  *pendingTxCache
+	rescanChan    chan *utxoRescanInfo
+	commitChan    chan *utxoSpendInfo
+	requiredConfs int64
 }
 
 type utxoRescanInfo struct {
@@ -61,6 +62,7 @@ func (r *rgbx) start(cli *neutrinoClient) {
 	log.Debug("init rgbx service start")
 	r.client = cli
 	r.commitTxKey = cli.getCommitKey()
+	r.requiredConfs = int64(cli.cfg.BlockConfirmations)
 
 	log.Debug("wait getRgbxConfirmedHeight")
 	cli.waitUntilDone("wait getRgbxConfirmedHeight", func() bool {
@@ -106,14 +108,14 @@ func (r *rgbx) pullPendingTx() {
 		case <-r.client.ctx.Done():
 			return
 		case <-ticker.C:
-
-			txs, err := r.client.getRgbxPendingTxs(req)
-			if err != nil {
-				log.Debug("pullPendingTx", "err", err, "req", req)
+			req.EndHeight = r.client.getMainchainHeight() - r.requiredConfs + 1
+			if req.EndHeight < req.StartHeight {
 				continue
 			}
+			txs, err := r.client.getRgbxPendingTxs(req)
 			txNum := len(txs.GetPendingList())
 			if txNum == 0 {
+				log.Debug("pullPendingTx", "err", err, "req", req, "txNum", txNum)
 				continue
 			}
 
@@ -149,10 +151,9 @@ func (r *rgbx) pullPendingTx() {
 					startHeight: 0,
 				}
 			}
-
-			lastTx := txs.GetPendingList()[txNum-1]
-			req.StartHeight = lastTx.TxBlockHeight
-			req.StartIndex = lastTx.TxIndex
+			lastConfirmedTx := txs.GetPendingList()[txNum-1]
+			req.StartHeight = lastConfirmedTx.TxBlockHeight
+			req.StartIndex = lastConfirmedTx.TxIndex
 		}
 	}
 }
