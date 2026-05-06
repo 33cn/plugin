@@ -107,7 +107,7 @@ func TestLightclientCheckBtcHeaders(t *testing.T) {
 
 	t.Run("nil header", func(t *testing.T) {
 		tx := buildCheckTx(t, &ltypes.BtcHeaders{Headers: []*ltypes.BtcHeader{nil}}, commitPriv)
-		require.Equal(t, ErrBtcHeaderDisorder, cli.CheckTx(tx, 0))
+		require.Equal(t, types.ErrInvalidParam, cli.CheckTx(tx, 0))
 	})
 
 	t.Run("header disorder", func(t *testing.T) {
