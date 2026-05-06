@@ -5,22 +5,22 @@ set +e
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
-NODE3="${1}_chain33_1"
+NODE3="${1}-chain33-1"
 CLI="docker exec ${NODE3} /root/chain33-cli"
 
-NODE2="${1}_chain32_1"
+NODE2="${1}-chain32-1"
 CLI2="docker exec ${NODE2} /root/chain33-cli"
 
-NODE1="${1}_chain31_1"
+NODE1="${1}-chain31-1"
 CLI3="docker exec ${NODE1} /root/chain33-cli"
 
-NODE4="${1}_chain30_1"
+NODE4="${1}-chain30-1"
 CLI4="docker exec ${NODE4} /root/chain33-cli"
 
-NODE5="${1}_chain29_1"
+NODE5="${1}-chain29-1"
 CLI5="docker exec ${NODE5} /root/chain33-cli"
 
-NODE6="${1}_chain28_1"
+NODE6="${1}-chain28-1"
 CLI6="docker exec ${NODE6} /root/chain33-cli"
 
 containers=("${NODE1}" "${NODE2}" "${NODE3}" "${NODE4}" "${NODE5}" "${NODE6}")
@@ -91,20 +91,20 @@ function base_init() {
 
 function start() {
     # docker-compose ps
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
 
     # create and run docker-compose container
     #    docker-compose -f docker-compose.yml -f docker-compose-para.yml up --build -d
-    docker-compose up --build -d
+    docker compose up --build -d
 
     local SLEEP=30
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 
     # query node run status
 

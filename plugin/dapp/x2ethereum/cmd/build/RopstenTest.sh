@@ -525,8 +525,8 @@ function TestETH2Chain33Erc20Kill() {
 
 function AllRelayerMainTest() {
     set +e
-    #    docker cp ${GOPATH}/src/github.com/33cn/plugin/build/ci/x2ethereum build_chain33_1:/root/x2ethereum
-    #    docker cp ${GOPATH}/src/github.com/33cn/plugin/plugin/dapp/x2ethereum/cmd/build/RopstenTest.sh build_chain33_1:/root/x2ethereum/RopstenTest.sh
+    #    docker cp ${GOPATH}/src/github.com/33cn/plugin/build/ci/x2ethereum build_chain33-1:/root/x2ethereum
+    #    docker cp ${GOPATH}/src/github.com/33cn/plugin/plugin/dapp/x2ethereum/cmd/build/RopstenTest.sh build_chain33-1:/root/x2ethereum/RopstenTest.sh
 
     Chain33Cli="./../chain33-cli"
 

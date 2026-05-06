@@ -34,20 +34,20 @@ Chain33Cli=""
 
 function kill_ebrelayerC() {
     #shellcheck disable=SC2154
-    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayerc_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayerc-1"
 }
 function kill_ebrelayerD() {
-    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayerd_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayerd-1"
 }
 
 function start_ebrelayerA() {
-    docker cp "./relayer.toml" "${dockerNamePrefix}_ebrelayera_1":/root/relayer.toml
-    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1" "/root/ebrelayer" "./ebrelayera.log"
+    docker cp "./relayer.toml" "${dockerNamePrefix}-ebrelayera-1":/root/relayer.toml
+    start_docker_ebrelayer "${dockerNamePrefix}-ebrelayera-1" "/root/ebrelayer" "./ebrelayera.log"
     sleep 5
 }
 
 function start_ebrelayerC() {
-    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerc_1" "/root/ebrelayer" "./ebrelayerc.log"
+    start_docker_ebrelayer "${dockerNamePrefix}-ebrelayerc-1" "/root/ebrelayer" "./ebrelayerc.log"
     sleep 5
     ${CLIC} relayer unlock -p 123456hzj
     sleep 5
@@ -55,7 +55,7 @@ function start_ebrelayerC() {
     sleep 10
 }
 function start_ebrelayerD() {
-    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerd_1" "/root/ebrelayer" "./ebrelayerd.log"
+    start_docker_ebrelayer "${dockerNamePrefix}-ebrelayerd-1" "/root/ebrelayer" "./ebrelayerd.log"
     sleep 5
     ${CLID} relayer unlock -p 123456hzj
     sleep 5
@@ -81,11 +81,11 @@ function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     # change EthProvider url
-    dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+    dockerAddr=$(get_docker_addr "${dockerNamePrefix}-ganachetest-1")
     ethUrl="http://${dockerAddr}:8545"
 
     # 修改 relayer.toml 配置文件
-    updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
+    updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}-ebrelayera-1" "./relayer.toml"
     # start ebrelayer A
     start_ebrelayerA
     # 部署合约
@@ -96,7 +96,7 @@ function StartRelayerAndDeploy() {
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
 
     # kill ebrelayer A
-    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayera-1"
     sleep 1
 
     # 修改 relayer.toml 配置文件
@@ -116,15 +116,15 @@ function StartRelayerAndDeploy() {
 
         sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
 
-        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
+        pushHost=$(get_docker_addr "${dockerNamePrefix}-ebrelayer${name}-1")
         line=$(delete_line_show "${file}" "pushHost")
         sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
 
         line=$(delete_line_show "${file}" "pushBind")
         sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 
-        docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
-        start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
+        docker cp "${file}" "${dockerNamePrefix}-ebrelayer${name}-1":/root/relayer.toml
+        start_docker_ebrelayer "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebrelayer" "./ebrelayer${name}.log"
     done
     sleep 5
 
@@ -137,7 +137,7 @@ function EthImportKey() {
     for name in a b c d; do
         # 导入测试地址私钥
         # shellcheck disable=SC2154
-        CLI="docker exec ${dockerNamePrefix}_ebrelayer${name}_1 /root/ebcli_A"
+        CLI="docker exec ${dockerNamePrefix}-ebrelayer${name}-1 /root/ebcli_A"
 
         result=$(${CLI} relayer set_pwd -p 123456hzj)
 
@@ -555,13 +555,13 @@ function TestETH2Chain33Erc20Kill() {
 
 function AllRelayerMainTest() {
     set +e
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}-chain33-1")
     Chain33Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
 
-    CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
-    CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
-    CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
-    CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
+    CLIA="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/ebcli_A"
+    CLIB="docker exec ${dockerNamePrefix}-ebrelayerb-1 /root/ebcli_A"
+    CLIC="docker exec ${dockerNamePrefix}-ebrelayerc-1 /root/ebcli_A"
+    CLID="docker exec ${dockerNamePrefix}-ebrelayerd-1 /root/ebcli_A"
     echo "${CLIA}"
 
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"

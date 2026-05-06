@@ -26,12 +26,12 @@ function exit_cp_file() {
 
     for name in a b c d; do
         # shellcheck disable=SC2154
-        docker cp "${dockerNamePrefix}_ebrelayer${name}_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
-        docker exec "${dockerNamePrefix}_ebrelayer${name}_1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
+        docker cp "${dockerNamePrefix}-ebrelayer${name}-1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
+        docker exec "${dockerNamePrefix}-ebrelayer${name}-1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
     done
 
-    docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33.log"
-    docker logs "${dockerNamePrefix}_chain33_1" | tail -n 1000
+    docker cp "${dockerNamePrefix}-chain33-1":/root/logs/chain33.log "${dirName}/chain33.log"
+    docker logs "${dockerNamePrefix}-chain33-1" | tail -n 1000
 
     exit 1
 }
@@ -51,11 +51,11 @@ function copyErrLogs() {
 
         for name in a b c d; do
             # shellcheck disable=SC2154
-            docker cp "${dockerNamePrefix}_ebrelayer${name}_rpc_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}_rpc.log"
-            docker exec "${dockerNamePrefix}_ebrelayer${name}_rpc_1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
+            docker cp "${dockerNamePrefix}-ebrelayer${name}-rpc-1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}-rpc.log"
+            docker exec "${dockerNamePrefix}-ebrelayer${name}-rpc-1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
         done
-        docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33_rpc.log"
-        docker logs "${dockerNamePrefix}_chain33_1" | tail -n 1000
+        docker cp "${dockerNamePrefix}-chain33-1":/root/logs/chain33.log "${dirName}/chain33_rpc.log"
+        docker logs "${dockerNamePrefix}-chain33-1" | tail -n 1000
     fi
 }
 
@@ -412,7 +412,7 @@ function updata_relayer_a_toml() {
     line=$(delete_line_show "${file}" "pushBind")
     sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 
-    local chain33Host=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+    local chain33Host=$(get_docker_addr "${dockerNamePrefix}-chain33-1")
     if [[ ${chain33Host} == "" ]]; then
         echo -e "${RED}chain33Host is empty${NOC}"
         exit_cp_file

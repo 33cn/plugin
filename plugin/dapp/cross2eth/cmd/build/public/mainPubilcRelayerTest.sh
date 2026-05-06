@@ -121,8 +121,8 @@ source "./offlinePublic.sh"
 }
 
 function start_docker_ebrelayerA() {
-    docker cp "./relayer.toml" "${dockerNamePrefix}_ebrelayera_1":/root/relayer.toml
-    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1" "/root/ebrelayer" "./ebrelayera.log"
+    docker cp "./relayer.toml" "${dockerNamePrefix}-ebrelayera-1":/root/relayer.toml
+    start_docker_ebrelayer "${dockerNamePrefix}-ebrelayera-1" "/root/ebrelayer" "./ebrelayera.log"
     sleep 5
 }
 
@@ -134,17 +134,17 @@ function updata_toml_start_bcd() {
 
         # 修改 relayer.toml 配置文件 pushName 字段
         sed -i 's/^pushName=.*/pushName="x2eth'"${name}"'"/g' "${file}"
-        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
+        pushHost=$(get_docker_addr "${dockerNamePrefix}-ebrelayer${name}-1")
         sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "${file}"
         sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "${file}"
         if [[ ${name} == "d" ]]; then
             sed -i 's/^DelayedSendTime=.*/DelayedSendTime=180000/' "${file}"
         fi
 
-        docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
-        start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
+        docker cp "${file}" "${dockerNamePrefix}-ebrelayer${name}-1":/root/relayer.toml
+        start_docker_ebrelayer "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebrelayer" "./ebrelayer${name}.log"
 
-        CLI="docker exec ${dockerNamePrefix}_ebrelayer${name}_1 /root/ebcli_A"
+        CLI="docker exec ${dockerNamePrefix}-ebrelayer${name}-1 /root/ebcli_A"
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
         eval ethValidatorAddrKey=\$ethValidatorAddrKey${name}
 
@@ -154,7 +154,7 @@ function updata_toml_start_bcd() {
 
 function restart_ebrelayerA() {
     # 重启
-    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayera-1"
     sleep 1
     start_docker_ebrelayerA
 
@@ -166,12 +166,12 @@ function restart_ebrelayerA() {
 function restart_ebrelayer_bcd() {
     # 重启
     local name=$1
-    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayer${name}-1"
     sleep 1
-    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
+    start_docker_ebrelayer "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebrelayer" "./ebrelayer${name}.log"
     sleep 5
 
-    result=$(docker exec "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebcli_A" unlock -p "${validatorPwd}")
+    result=$(docker exec "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebcli_A" unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
     sleep 20
 }
@@ -565,8 +565,8 @@ function StartDockerRelayerDeploy() {
     # 启动 ebrelayer
     start_docker_ebrelayerA
 
-    docker cp "./deploy_chain33.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_chain33.toml
-    docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_ethereum.toml
+    docker cp "./deploy_chain33.toml" "${dockerNamePrefix}-ebrelayera-1":/root/deploy_chain33.toml
+    docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}-ebrelayera-1":/root/deploy_ethereum.toml
 
     # 部署合约 设置 bridgeRegistry 地址
     OfflineDeploy
@@ -578,7 +578,7 @@ function StartDockerRelayerDeploy() {
     Chain33Cli=${Para8901Cli}
 
     # 重启
-    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayera-1"
     sleep 1
     start_docker_ebrelayerA
     InitRelayerA
@@ -609,16 +609,16 @@ function StartDockerRelayerDeploy() {
         offline_deploy_erc20_create_tether_usdt_USDT "BUSDT"
         ethereumUSDTERC20TokenAddrOnBSC="${ethereumUSDTERC20TokenAddr}"
 
-        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
-        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
-        docker cp "${chain33USDTBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddrOnETH}.abi
-        docker cp "${chain33USDTBridgeTokenAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddrOnBSC}.abi
-        docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrETH}.abi
-        docker cp "${chain33MainBridgeTokenAddrBNB}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrBNB}.abi
-        docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnETH}.abi
-        docker cp "${ethereumBridgeRegistryOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnETH}.abi
-        docker cp "${ethereumBridgeBankOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnBSC}.abi
-        docker cp "${ethereumBridgeRegistryOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnBSC}.abi
+        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33BridgeBank}.abi
+        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33BridgeRegistry}.abi
+        docker cp "${chain33USDTBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33USDTBridgeTokenAddrOnETH}.abi
+        docker cp "${chain33USDTBridgeTokenAddrOnBSC}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33USDTBridgeTokenAddrOnBSC}.abi
+        docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33MainBridgeTokenAddrETH}.abi
+        docker cp "${chain33MainBridgeTokenAddrBNB}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${chain33MainBridgeTokenAddrBNB}.abi
+        docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${ethereumBridgeBankOnETH}.abi
+        docker cp "${ethereumBridgeRegistryOnETH}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${ethereumBridgeRegistryOnETH}.abi
+        docker cp "${ethereumBridgeBankOnBSC}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${ethereumBridgeBankOnBSC}.abi
+        docker cp "${ethereumBridgeRegistryOnBSC}.abi" "${dockerNamePrefix}-ebrelayera-1":/root/${ethereumBridgeRegistryOnBSC}.abi
     }
 
     # start ebrelayer B C D
@@ -672,33 +672,33 @@ function echo_addrs() {
 
 function get_cli() {
     paraName="user.p.para."
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}-chain33-1")
     MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
     Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
     Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
-    docker_chain31_ip=$(get_docker_addr "${dockerNamePrefix}_chain31_1")
-    docker_chain32_ip=$(get_docker_addr "${dockerNamePrefix}_chain32_1")
-    docker_chain30_ip=$(get_docker_addr "${dockerNamePrefix}_chain30_1")
+    docker_chain31_ip=$(get_docker_addr "${dockerNamePrefix}-chain31-1")
+    docker_chain32_ip=$(get_docker_addr "${dockerNamePrefix}-chain32-1")
+    docker_chain30_ip=$(get_docker_addr "${dockerNamePrefix}-chain30-1")
 
-    docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_1")
-    CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
-    CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
-    CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
-    CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
-    CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
+    docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}-ebrelayera-1")
+    CLIP="docker exec ${dockerNamePrefix}-ebrelayerproxy-1 /root/ebcli_A"
+    CLIA="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/ebcli_A"
+    CLIB="docker exec ${dockerNamePrefix}-ebrelayerb-1 /root/ebcli_A"
+    CLIC="docker exec ${dockerNamePrefix}-ebrelayerc-1 /root/ebcli_A"
+    CLID="docker exec ${dockerNamePrefix}-ebrelayerd-1 /root/ebcli_A"
 
-    docker_ganachetesteth_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetesteth_1")
-    docker_ganachetestbsc_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetestbsc_1")
-    Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+    docker_ganachetesteth_ip=$(get_docker_addr "${dockerNamePrefix}-ganachetesteth-1")
+    docker_ganachetestbsc_ip=$(get_docker_addr "${dockerNamePrefix}-ganachetestbsc-1")
+    Boss4xCLI="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
 
-    Boss4xCLIeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
-    Boss4xCLIbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetestbsc_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+    Boss4xCLIeth="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+    Boss4xCLIbsc="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetestbsc_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
 
-    CLIAeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
-    CLIAbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
+    CLIAeth="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
+    CLIAbsc="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
 
-    CLIPeth="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
-    CLIPbsc="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
+    CLIPeth="docker exec ${dockerNamePrefix}-ebrelayerproxy-1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
+    CLIPbsc="docker exec ${dockerNamePrefix}-ebrelayerproxy-1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
 }
 
 function test_lock_and_burn() {

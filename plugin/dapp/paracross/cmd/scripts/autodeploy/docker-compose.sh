@@ -98,17 +98,17 @@ function para_unlock_wallet() {
 }
 function start() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
-    docker-compose down
+    docker compose ps
+    docker compose down
 
     # create and run docker-compose container
-    docker-compose up --build -d
+    docker compose up --build -d
 
     local SLEEP=10
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 
     # query node run status
     echo "status"
@@ -124,7 +124,7 @@ function check_docker_status() {
     statusPara=$(docker-compose ps | grep parachain1_1 | awk '{print $3}')
     if [ "${status}" == "Exit" ] || [ "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
-        docker-compose logs parachain1
+        docker compose logs parachain1
         echo "=========== chain33 service Exit logs End========== "
     fi
 

@@ -256,7 +256,7 @@ function OfflineDeploy() {
         CLIA=${CLIAbsc}
         cp "./deploy_ethereum.toml" "./deploy_bsc.toml"
         sed -i 's/^symbol=.*/symbol="BNB"/g' "./deploy_bsc.toml"
-        docker cp "./deploy_bsc.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_bsc.toml
+        docker cp "./deploy_bsc.toml" "${dockerNamePrefix}-ebrelayera-1":/root/deploy_bsc.toml
         OfflineDeploy_ethereum "./deploy_bsc.toml"
         ethereumBridgeBankOnBSC="${ethereumBridgeBank}"
         ethereumBridgeRegistryOnBSC="${ethereumBridgeRegistry}"

@@ -22,7 +22,7 @@ const (
 	defaultMaxSyncErrCount = int32(100)
 )
 
-//blockSyncClient 区块同步控制和状态变量
+// blockSyncClient 区块同步控制和状态变量
 type blockSyncClient struct {
 	paraClient *client
 	//notifyChan 下载通知通道
@@ -43,7 +43,7 @@ type blockSyncClient struct {
 	isSyncFirstCaughtUp bool
 }
 
-//nextActionType 定义每一轮可执行操作
+// nextActionType 定义每一轮可执行操作
 type nextActionType int8
 
 const (
@@ -55,7 +55,7 @@ const (
 	nextActionAdd
 )
 
-//blockSyncState 定义当前区块同步状态
+// blockSyncState 定义当前区块同步状态
 type blockSyncState int32
 
 const (
@@ -84,12 +84,12 @@ func newBlockSyncCli(para *client, cfg *subConfig) *blockSyncClient {
 	return cli
 }
 
-//syncHasCaughtUp 判断同步是否已追赶上，供发送层调用
+// syncHasCaughtUp 判断同步是否已追赶上，供发送层调用
 func (client *blockSyncClient) syncHasCaughtUp() bool {
 	return atomic.LoadInt32(&client.isSyncCaughtUpAtom) == 1
 }
 
-//handleLocalChangedMsg 处理下载通知消息，供下载层调用
+// handleLocalChangedMsg 处理下载通知消息，供下载层调用
 func (client *blockSyncClient) handleLocalChangedMsg() {
 	client.printDebugInfo("Para sync - notify change")
 	if client.getBlockSyncState() == blockSyncStateSyncing || client.paraClient.isCancel() {
@@ -99,7 +99,7 @@ func (client *blockSyncClient) handleLocalChangedMsg() {
 	client.notifyChan <- true
 }
 
-//handleLocalCaughtUpMsg 处理下载已追赶上消息，供下载层调用
+// handleLocalCaughtUpMsg 处理下载已追赶上消息，供下载层调用
 func (client *blockSyncClient) handleLocalCaughtUpMsg() {
 	client.printDebugInfo("Para sync -notify download has caughtUp")
 	if !client.downloadHasCaughtUp() {
@@ -107,13 +107,13 @@ func (client *blockSyncClient) handleLocalCaughtUpMsg() {
 	}
 }
 
-//createGenesisBlock 创建创世区块
+// createGenesisBlock 创建创世区块
 func (client *blockSyncClient) createGenesisBlock(newblock *types.Block) error {
 	return client.writeBlock(zeroHash[:], newblock)
 }
 
-//syncBlocks 区块执行线程
-//循环执行
+// syncBlocks 区块执行线程
+// 循环执行
 func (client *blockSyncClient) syncBlocks() {
 
 	client.syncInit()
@@ -136,7 +136,7 @@ out:
 	client.paraClient.wg.Done()
 }
 
-//批量执行同步区块
+// 批量执行同步区块
 func (client *blockSyncClient) batchSyncBlocks() {
 	client.setBlockSyncState(blockSyncStateSyncing)
 	client.printDebugInfo("Para sync - syncing")
@@ -178,7 +178,7 @@ func (client *blockSyncClient) batchSyncBlocks() {
 
 }
 
-//获取每一轮可执行状态
+// 获取每一轮可执行状态
 func (client *blockSyncClient) getNextAction() (nextActionType, *types.Block, *pt.ParaLocalDbBlock, int64, error) {
 	lastBlock, err := client.paraClient.getLastBlockInfo()
 	if err != nil {
@@ -229,9 +229,9 @@ func (client *blockSyncClient) getNextAction() (nextActionType, *types.Block, *p
 	}
 }
 
-//根据当前可执行状态执行区块操作
-//返回参数
-//bool 是否已完成同步
+// 根据当前可执行状态执行区块操作
+// 返回参数
+// bool 是否已完成同步
 func (client *blockSyncClient) syncBlocksIfNeed() (bool, error) {
 	nextAction, lastBlock, localBlock, lastLocalHeight, err := client.getNextAction()
 	if err != nil {
@@ -283,7 +283,7 @@ func (client *blockSyncClient) syncBlocksIfNeed() (bool, error) {
 
 }
 
-//批量删除下载层缓冲数据
+// 批量删除下载层缓冲数据
 func (client *blockSyncClient) delLocalBlocks(startHeight int64, endHeight int64) error {
 	if startHeight > endHeight {
 		return errors.New("para sync - startHeight > endHeight,can't clear local blocks")
@@ -313,7 +313,7 @@ func (client *blockSyncClient) delLocalBlocks(startHeight int64, endHeight int64
 	return client.paraClient.setLocalDb(set)
 }
 
-//最低高度没有设置的时候设置一下最低高度
+// 最低高度没有设置的时候设置一下最低高度
 func (client *blockSyncClient) initFirstLocalHeightIfNeed() error {
 	height, err := client.getFirstLocalHeight()
 	cfg := client.paraClient.GetAPI().GetConfig()
@@ -329,7 +329,7 @@ func (client *blockSyncClient) initFirstLocalHeightIfNeed() error {
 	return err
 }
 
-//获取下载层缓冲数据的区块最低高度
+// 获取下载层缓冲数据的区块最低高度
 func (client *blockSyncClient) getFirstLocalHeight() (int64, error) {
 	cfg := client.paraClient.GetAPI().GetConfig()
 	key := calcTitleFirstHeightKey(cfg.GetTitle())
@@ -355,7 +355,7 @@ func (client *blockSyncClient) getFirstLocalHeight() (int64, error) {
 	return height.Data, nil
 }
 
-//清除指定数量(localCacheCount)以前的区块
+// 清除指定数量(localCacheCount)以前的区块
 func (client *blockSyncClient) clearLocalOldBlocks() error {
 	lastLocalHeight, err := client.paraClient.getLastLocalHeight()
 	if err != nil {
@@ -414,17 +414,14 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 	return nil
 }
 
-//添加一个区块
+// 添加一个区块
 func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.ParaLocalDbBlock) error {
 	cfg := client.paraClient.GetAPI().GetConfig()
 	var newBlock types.Block
 	newBlock.ParentHash = lastBlock.Hash(cfg)
 	newBlock.Height = lastBlock.Height + 1
 	newBlock.Txs = localBlock.Txs
-	err := client.addMinerTx(lastBlock.StateHash, &newBlock, localBlock)
-	if err != nil {
-		return err
-	}
+
 	//挖矿固定难度
 	newBlock.Difficulty = cfg.GetP(0).PowLimitBits
 	newBlock.BlockTime = localBlock.BlockTime
@@ -436,6 +433,10 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 	//需要首先对交易进行排序然后再计算TxHash
 	if cfg.IsFork(newBlock.GetMainHeight(), "ForkRootHash") {
 		newBlock.Txs = types.TransactionSort(newBlock.Txs)
+	}
+	err := client.addMinerTx(lastBlock.StateHash, &newBlock, localBlock)
+	if err != nil {
+		return err
 	}
 	//在之前版本中CalcMerkleRoot的height是未初始化的MainHeight，等于0，在这个平行链的分叉ForkParaRootHash高度后统一采用新高度
 	if cfg.IsDappFork(newBlock.Height, pt.ParaX, pt.ForkParaRootHash) {
@@ -530,17 +531,17 @@ func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) e
 	return nil
 }
 
-//获取同步状态
+// 获取同步状态
 func (client *blockSyncClient) getBlockSyncState() blockSyncState {
 	return blockSyncState(atomic.LoadInt32(&client.syncState))
 }
 
-//设置同步状态
+// 设置同步状态
 func (client *blockSyncClient) setBlockSyncState(state blockSyncState) {
 	atomic.StoreInt32(&client.syncState, int32(state))
 }
 
-//设置是否追赶上
+// 设置是否追赶上
 func (client *blockSyncClient) setSyncCaughtUp(isCaughtUp bool) {
 	if isCaughtUp {
 		atomic.StoreInt32(&client.isSyncCaughtUpAtom, 1)
@@ -549,12 +550,12 @@ func (client *blockSyncClient) setSyncCaughtUp(isCaughtUp bool) {
 	}
 }
 
-//下载是否已经追赶上
+// 下载是否已经追赶上
 func (client *blockSyncClient) downloadHasCaughtUp() bool {
 	return atomic.LoadInt32(&client.isDownloadCaughtUpAtom) == 1
 }
 
-//设置下载同步追赶状态
+// 设置下载同步追赶状态
 func (client *blockSyncClient) setDownloadHasCaughtUp(isCaughtUp bool) {
 	if isCaughtUp {
 		atomic.CompareAndSwapInt32(&client.isDownloadCaughtUpAtom, 0, 1)
@@ -563,17 +564,17 @@ func (client *blockSyncClient) setDownloadHasCaughtUp(isCaughtUp bool) {
 	}
 }
 
-//打印错误日志
+// 打印错误日志
 func (client *blockSyncClient) printError(err error) {
 	plog.Error(fmt.Sprintf("Para sync - sync block error:%v", err.Error()))
 }
 
-//打印调试信息
+// 打印调试信息
 func (client *blockSyncClient) printDebugInfo(msg string, ctx ...interface{}) {
 	plog.Debug(msg, ctx...)
 }
 
-//初始化
+// 初始化
 func (client *blockSyncClient) syncInit() {
 	client.printDebugInfo("Para sync - init")
 	client.setBlockSyncState(blockSyncStateNone)

@@ -19,15 +19,15 @@ function start_docker_ebrelayerProxy() {
 
     sed -i 's/^pushName=.*/pushName="x2ethproxy"/g' "./relayerproxy.toml"
 
-    pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayerproxy_1")
+    pushHost=$(get_docker_addr "${dockerNamePrefix}-ebrelayerproxy-1")
     sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "./relayerproxy.toml"
     sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "./relayerproxy.toml"
 
     # 代理转账中继器中的标志位ProcessWithDraw设置为true
     sed -i 's/^ProcessWithDraw=.*/ProcessWithDraw=true/' "./relayerproxy.toml"
 
-    docker cp "./relayerproxy.toml" "${dockerNamePrefix}_ebrelayerproxy_1":/root/relayer.toml
-    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerproxy_1" "/root/ebrelayer" "./ebrelayerproxy.log"
+    docker cp "./relayerproxy.toml" "${dockerNamePrefix}-ebrelayerproxy-1":/root/relayer.toml
+    start_docker_ebrelayer "${dockerNamePrefix}-ebrelayerproxy-1" "/root/ebrelayer" "./ebrelayerproxy.log"
     sleep 1
 
     init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"

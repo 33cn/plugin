@@ -18,21 +18,21 @@ export PATH="$PWD:$PATH"
 dockerNamePrefix="${1}"
 echo "dockerNamePrefix : ${dockerNamePrefix}"
 
-NODE3="${1}_chain33_1"
+NODE3="${1}-chain33-1"
 CLI="docker exec ${NODE3} /root/chain33-cli"
 
-NODE2="${1}_chain32_1"
+NODE2="${1}-chain32-1"
 
-NODE1="${1}_chain31_1"
+NODE1="${1}-chain31-1"
 
-NODE4="${1}_chain30_1"
+NODE4="${1}-chain30-1"
 #CLI4="docker exec ${NODE4} /root/chain33-cli"
 
-NODE5="${1}_chain29_1"
+NODE5="${1}-chain29-1"
 CLI5="docker exec ${NODE5} /root/chain33-cli"
 
 # shellcheck disable=SC2034
-NODE6="${1}_chain28_1"
+NODE6="${1}-chain28-1"
 
 containers=("${NODE1}" "${NODE2}" "${NODE3}" "${NODE4}")
 export COMPOSE_PROJECT_NAME="$1"
@@ -139,26 +139,26 @@ function base_init() {
 
 function start() {
     echo "=========== # docker-compose ps ============="
-    docker-compose ps
+    docker compose ps
 
     # remove exsit container
-    docker-compose down
+    docker compose down
 
     # create and run docker-compose container
     #docker-compose -f docker-compose.yml -f docker-compose-paracross.yml -f docker-compose-relay.yml up --build -d
-    docker-compose up --build -d
+    docker compose up --build -d
 
     local SLEEP=10
     echo "=========== sleep ${SLEEP}s ============="
     sleep ${SLEEP}
 
-    docker-compose ps
+    docker compose ps
 
     set +e
-    influxdbcontainer=$(docker ps -a | grep build_influxdb_1)
+    influxdbcontainer=$(docker ps -a | grep build-influxdb-1)
     if [ -n "$influxdbcontainer" ]; then
         echo "create database chain33metrics in docker container build_influxdb_1"
-        docker exec build_influxdb_1 influx -execute 'create database chain33metrics'
+        docker exec build-influxdb-1 influx -execute 'create database chain33metrics'
     fi
     set -e
 
@@ -313,11 +313,11 @@ function block_wait2height() {
 }
 
 function check_docker_status() {
-    status=$(docker-compose ps | grep chain33_1 | awk '{print $6}')
-    statusPara=$(docker-compose ps | grep chain33_1 | awk '{print $3}')
+    status=$(docker compose ps | grep chain33-1 | awk '{print $6}')
+    statusPara=$(docker compose ps | grep chain33-1 | awk '{print $3}')
     if [ "${status}" == "Exit" ] || [ "${statusPara}" == "Exit" ]; then
         echo "=========== chain33 service Exit logs ========== "
-        docker-compose logs chain33
+        docker compose logs chain33
         echo "=========== chain33 service Exit logs End========== "
     fi
 
