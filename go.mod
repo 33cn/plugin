@@ -5,14 +5,13 @@ go 1.22
 toolchain go1.22.12
 
 replace (
-	github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20260506072440-9e2053c4be8a
 	github.com/ava-labs/avalanchego => github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153
 	github.com/btcsuite/btcd/btcec/v2 => github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.5.3
 )
 
 require (
-	github.com/33cn/chain33 v1.69.1-0.20260421040108-624dcf864611
+	github.com/33cn/chain33 v1.69.1-0.20260508025622-0fa35083839d
 	github.com/BurntSushi/toml v1.2.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
