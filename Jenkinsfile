@@ -33,7 +33,7 @@ pipeline {
                             ./docker-compose-pre.sh modify
                             cp chain33* Dockerfile* docker-compose* *.sh "${BUILD_NUMBER}/"
                             cd "${BUILD_NUMBER}"
-                            rm -rf cross2eth mix || true
+                            rm -rf cross2eth mix rgbx rollup|| true
                             ./docker-compose-pre.sh run "${BUILD_NUMBER}" all
                         '''
                     }

@@ -16,7 +16,10 @@ services:
     environment:
       ChainConfig: "chain33.para1.toml"
     depends_on:
-      - main
+      main:
+        condition: service_started
+      btcd:
+        condition: service_healthy
     volumes:
       - ./btcd-data:/btcd:ro
 
