@@ -39,7 +39,7 @@ function down_dapp() {
         ./docker-compose-down.sh "${PROJ}" "${app}"
         echo "============ down dapp=$app end ================="
 
-        cd .. && rm -rf ./"${app}"-ci
+        cd .. && rm -rf ./"${app}"-ci || true
     fi
 }
 
