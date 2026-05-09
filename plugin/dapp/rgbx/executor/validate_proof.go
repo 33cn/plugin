@@ -7,7 +7,6 @@ import (
 
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcutil"
@@ -125,7 +124,7 @@ func (r *rgbx) decodeBtcAddressScript(addr string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	params := lighttypes.GetBtcChainParams(netName)
+	params := ltypes.GetBtcChainParams(netName)
 	decoded, err := btcutil.DecodeAddress(addr, params)
 	if err != nil {
 		return nil, err
@@ -206,8 +205,11 @@ func hasWithdrawCommitment(tx *wire.MsgTx, chain33TxHash []byte) bool {
 
 func hasDepositCommitment(tx *wire.MsgTx, depositAddress string) bool {
 	if rtypes.IsUtxoAddress(depositAddress) {
-		firstInputUtxo := tx.TxIn[0].PreviousOutPoint
-		return depositAddress == rtypes.FormatUtxo(firstInputUtxo.Hash.String(), firstInputUtxo.Index)
+		if len(tx.TxIn) > 0 {
+			firstInputUtxo := tx.TxIn[0].PreviousOutPoint
+			return depositAddress == rtypes.FormatUtxo(firstInputUtxo.Hash.String(), firstInputUtxo.Index)
+		}
+		return false
 	}
 	expectData := append([]byte(depositCommitmentPrefix), []byte(depositAddress)...)
 	return hasExpectedOpReturnData(tx, expectData)

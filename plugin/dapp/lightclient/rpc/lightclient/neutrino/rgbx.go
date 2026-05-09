@@ -286,7 +286,7 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo, pendTx *rtypes.PendingT
 		OpRetOutputIdx:   -1,
 	}
 	for idx, out := range info.spendingTx.TxOut {
-		if out.PkScript[0] == txscript.OP_RETURN {
+		if len(out.PkScript) > 0 && out.PkScript[0] == txscript.OP_RETURN {
 			proof.OpRetOutputIdx = int32(idx)
 			proof.OpRetOutputPkScript = out.PkScript
 		}

@@ -42,6 +42,7 @@ var (
 	ErrInvalidWithdrawFeeRate           = errors.New("invalid withdraw fee rate")
 	ErrInvalidAssetSymbol               = errors.New("invalid asset symbol")
 	ErrInvalidBtcTxProof                = errors.New("invalid btc tx proof")
+	ErrWithdrawConfirmTimeoutNotAllowed = errors.New("withdraw confirm timeout not allowed")
 	ErrInvalidBtcProofIndex             = errors.New("invalid btc proof tx index")
 	ErrInvalidBtcBlockHash              = errors.New("invalid btc block hash")
 	ErrGetBtcHeader                     = errors.New("get btc header error")
@@ -343,6 +344,11 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 	}
 
 	if confirm.GetActionType() == rtypes.TyWithDrawAsset {
+		if confirm.Timeout {
+			elog.Error("checkConfirm timeout not supported for withdraw", "action", action,
+				"txHash", txHash, "confirmTxHash", confirmTxHash)
+			return ErrWithdrawConfirmTimeoutNotAllowed
+		}
 		return r.checkWithdrawConfirm(txHash, confirmTxHash, confirm, pendingTx)
 	}
 

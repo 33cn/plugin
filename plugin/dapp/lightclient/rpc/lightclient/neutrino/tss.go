@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/tss"
 	"github.com/33cn/chain33/system/crypto/tss/gg18"
 	"github.com/33cn/chain33/types"
@@ -25,8 +24,6 @@ const (
 	moduleName = "dapp-lightclient-neutrino"
 	// TSS pubsub topic - notification only
 	tssSignNotifyTopic = "rgbx/tssSignNotify/1.0"
-	// 单个 txIn 的 TSS 签名超时时间
-	singleInputSignTimeout = time.Minute
 
 	// Database bucket and keys
 	tssBucketName  = "rgbx-tss"
@@ -48,9 +45,8 @@ type signResult struct {
 }
 
 type tssService struct {
-	client      *neutrinoClient
-	cfg         tssConfig
-	commitTxKey crypto.PrivKey
+	client *neutrinoClient
+	cfg    tssConfig
 
 	// TSS related
 	dkgResult    *tss.DKGResult
@@ -122,8 +118,6 @@ func (t *tssService) init() {
 		t.dkgCompleted.Store(true)
 		return
 	}
-
-	t.commitTxKey = t.client.getCommitKey()
 	log.Info("init tssService starting new DKG process")
 
 	// Perform DKG process with retry

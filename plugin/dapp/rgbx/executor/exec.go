@@ -137,7 +137,7 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 	confirmHash := hex.EncodeToString(confirm.GetTxHash())
 	action := rtypes.GetActionName(confirm.GetActionType())
 	elog.Debug("Exec_Confirm", "opRetOutIdx", confirm.GetUtxoProof().GetOpRetOutputIdx(),
-		"timeout", confirm.GetTimeout(), "txHash", txHash, "confirmTx", confirmHash,
+		"timeout", confirm.GetTimeout(), "txHash", txHash, "confirmHash", confirmHash,
 		"action", action)
 	if confirm.GetTimeout() {
 		return &types.Receipt{Ty: types.ExecOk}, nil
@@ -169,7 +169,7 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 func (r *rgbx) confirmWithdrawSettlement(confirm *rtypes.ConfirmTx, txHash, confirmHash string) (*types.Receipt, error) {
 	withdraw := &rtypes.WithdrawAsset{}
 	if err := readDB(r.GetStateDB(), formatPayloadKey(confirm.GetTxHash()), withdraw); err != nil {
-		elog.Error("confirmWithdrawSettlement read payload", "txHash", txHash, "confirmTx", confirmHash, "err", err)
+		elog.Error("confirmWithdrawSettlement read payload", "txHash", txHash, "confirmHash", confirmHash, "err", err)
 		return nil, err
 	}
 	symbol := ensureCrossChainSymbol(withdraw.GetAssetSymbol())
@@ -180,7 +180,7 @@ func (r *rgbx) confirmWithdrawSettlement(confirm *rtypes.ConfirmTx, txHash, conf
 	lockAddr := r.crossChainLockAddress(accDB)
 	receipt, err := accDB.Burn(lockAddr, withdraw.GetAmount())
 	if err != nil {
-		elog.Error("confirmWithdrawSettlement burn lock", "txHash", txHash, "confirmTx", confirmHash,
+		elog.Error("confirmWithdrawSettlement burn lock", "txHash", txHash, "confirmHash", confirmHash,
 			"lockAddr", lockAddr, "symbol", withdraw.GetAssetSymbol(), "amount", withdraw.GetAmount(), "err", err)
 		return nil, err
 	}
@@ -194,12 +194,12 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 
 	if err != nil {
 		elog.Error("mintAsset readDB", "txHash", txHash,
-			"confirmTX", confirmHash, "err", err)
+			"confirmHash", confirmHash, "err", err)
 		return nil, err
 	}
 	assetTy := rtypes.AssetType(mint.GetType())
 	log.Debug("mintAsset", "symbol", mint.Symbol, "amount", mint.TotalAmount,
-		"txHash", txHash, "confirmTx", confirmHash, "assetTy", assetTy.String(),
+		"txHash", txHash, "confirmHash", confirmHash, "assetTy", assetTy.String(),
 		"spendingTxHash", spendHash, "metaHash", mint.MetaHash)
 	asset := &rtypes.RgbxAsset{
 		Symbol:           formatSymbol(mint.Symbol),
@@ -226,7 +226,7 @@ func (r *rgbx) mintAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spendHa
 	mintReceipt, err := accDB.Mint(owner, mint.GetTotalAmount())
 	if err != nil {
 		elog.Error("mintAsset mint", "txHash", txHash,
-			"confirmTx", confirmHash, "symbol", mint.Symbol, "owner", owner,
+			"confirmHash", confirmHash, "symbol", mint.Symbol, "owner", owner,
 			"amount", mint.TotalAmount, "err", err)
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 	err := readDB(r.GetStateDB(), formatPayloadKey(confirm.GetTxHash()), transfer)
 	if err != nil {
 		elog.Error("transferAsset readDB", "txHash", txHash,
-			"confirmTX", confirmHash, "err", err)
+			"confirmHash", confirmHash, "err", err)
 		return nil, err
 	}
 
@@ -258,13 +258,13 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 	}
 
 	log.Debug("transferAsset", "symbol", transfer.Symbol, "amount", transfer.Amount,
-		"txHash", txHash, "confirmTx", confirmHash, "spendHash", spendHash,
+		"txHash", txHash, "confirmHash", confirmHash, "spendHash", spendHash,
 		"from", transfer.FromUtxo, "to", transfer.To, "change", changeAddress)
 
 	asset := &rtypes.RgbxAsset{}
 	err = readDB(r.GetStateDB(), formatAssetKey(transfer.GetSymbol()), asset)
 	if err != nil {
-		elog.Error("transferAsset get asset", "txHash", txHash, "confirmTx", confirmHash,
+		elog.Error("transferAsset get asset", "txHash", txHash, "confirmHash", confirmHash,
 			"symbol", transfer.GetSymbol(), "err", err)
 		return nil, ErrAssetNotExist
 	}
@@ -274,7 +274,7 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 	accDB, err := r.newAccount(transfer.GetSymbol())
 	if err != nil {
 		elog.Error("transferAsset newAccount", "txHash", txHash,
-			"confirmTx", confirmHash, "from", transfer.FromUtxo, "to", transfer.To,
+			"confirmHash", confirmHash, "from", transfer.FromUtxo, "to", transfer.To,
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 	changeAmount := accDB.LoadAccount(transfer.GetFromUtxo()).GetBalance() - transfer.GetAmount()
 	receipt, err := accDB.Transfer(transfer.GetFromUtxo(), transfer.GetTo(), transfer.GetAmount())
 	if err != nil {
-		elog.Error("transferAsset transfer", "txHash", txHash, "confirmTx", confirmHash,
+		elog.Error("transferAsset transfer", "txHash", txHash, "confirmHash", confirmHash,
 			"from", transfer.FromUtxo, "to", transfer.To,
 			"symbol", transfer.Symbol, "amount", transfer.Amount, "err", err)
 		return nil, err
@@ -290,13 +290,13 @@ func (r *rgbx) transferAsset(confirm *rtypes.ConfirmTx, txHash, confirmHash, spe
 
 	// handle change
 	if changeAmount <= 0 {
-		elog.Debug("transferAsset transfer zero change", "txHash", txHash, "confirmTx", confirmHash)
+		elog.Debug("transferAsset transfer zero change", "txHash", txHash, "confirmHash", confirmHash)
 		return receipt, nil
 	}
 
 	changeReceipt, err := accDB.Transfer(transfer.GetFromUtxo(), changeAddress, changeAmount)
 	if err != nil {
-		elog.Error("transferAsset change", "txHash", txHash, "confirmTx", confirmHash,
+		elog.Error("transferAsset change", "txHash", txHash, "confirmHash", confirmHash,
 			"from", transfer.FromUtxo, "changeAddr", changeAddress,
 			"symbol", transfer.Symbol, "amount", changeAmount, "err", err)
 		return nil, err

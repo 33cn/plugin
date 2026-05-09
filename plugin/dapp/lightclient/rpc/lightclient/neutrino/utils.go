@@ -14,56 +14,58 @@ import (
 )
 
 func (n *neutrinoClient) getCommitKey() crypto.PrivKey {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.commitKeyMu.RLock()
+	defer n.commitKeyMu.RUnlock()
 	return n.commitKey
 }
 
+// initCommitKey 在后台 goroutine 中等待钱包解锁后导出 commit 私钥。
+// 先加写锁再启动 goroutine，确保 getCommitKey() 的调用者在 key 就绪之前阻塞，
+// 从而保证 Start() 中后续依赖 commitKey 的流程（tss/rgbx）不会在 key 为空时执行。
 func (n *neutrinoClient) initCommitKey() {
-	if n.commitKey != nil {
-		return
-	}
-	n.lock.Lock()
-	go func() {
-		defer n.lock.Unlock()
-		ticker := time.NewTicker(time.Second * 3)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-n.ctx.Done():
-				return
-			case <-ticker.C:
+	n.initCommitKeyOnce.Do(func() {
+		n.commitKeyMu.Lock()
+		go func() {
+			defer n.commitKeyMu.Unlock()
+			ticker := time.NewTicker(time.Second * 3)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-n.ctx.Done():
+					return
+				case <-ticker.C:
 
-				resp, err := n.chain33Api.ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
-				if err != nil {
-					log.Error("getKeyFromWallet", "GetWalletStatus err", err)
-					continue
-				}
-				if !resp.(*types.WalletStatus).GetIsHasSeed() {
-					log.Info("getKeyFromWallet, wait wallet save seed...")
-					continue
-				}
+					resp, err := n.chain33Api.ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
+					if err != nil {
+						log.Error("getKeyFromWallet", "GetWalletStatus err", err)
+						continue
+					}
+					if !resp.(*types.WalletStatus).GetIsHasSeed() {
+						log.Info("getKeyFromWallet, wait wallet save seed...")
+						continue
+					}
 
-				if resp.(*types.WalletStatus).GetIsWalletLock() {
-					log.Info("getKeyFromWallet, wait wallet unlock...")
-					continue
-				}
+					if resp.(*types.WalletStatus).GetIsWalletLock() {
+						log.Info("getKeyFromWallet, wait wallet unlock...")
+						continue
+					}
 
-				resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: n.commitAddr})
-				if err != nil {
-					log.Error("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
-					continue
+					resp, err = n.chain33Api.ExecWalletFunc("wallet", "DumpPrivkey", &types.ReqString{Data: n.commitAddr})
+					if err != nil {
+						log.Error("getKeyFromWallet", "addr", n.commitAddr, "dump priv key err", err)
+						continue
+					}
+					_, key, err := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
+					if err != nil {
+						log.Error("getKeyFromWallet", "addr", n.commitAddr, "getPrivKey err", err)
+						continue
+					}
+					n.commitKey = key
+					return
 				}
-				_, key, err := getPrivKey(secp256k1.Name, resp.(*types.ReplyString).Data)
-				if err != nil {
-					log.Error("getKeyFromWallet", "addr", n.commitAddr, "getPrivKey err", err)
-					continue
-				}
-				n.commitKey = key
-				return
 			}
-		}
-	}()
+		}()
+	})
 }
 
 func getPrivKey(cryptoName, privKey string) (crypto.Crypto, crypto.PrivKey, error) {

@@ -606,10 +606,12 @@ func (b *btcWallet) analyzeTransaction(hash *chainhash.Hash, tx *wire.MsgTx) *bt
 	}
 
 	hasTssInput := false
-	// 检查输入：直接从witness解析公钥验证是否来自TSS地址
-	if witness := tx.TxIn[0].Witness; len(witness) == 2 &&
-		bytes.Equal(witness[1], b.tssPubKey.SerializeCompressed()) {
-		hasTssInput = true
+	// 检查输入：直接从witness解析公钥验证是否来自TSS地址（仅支持 P2WPKH，不支持 Taproot/嵌套 SegWit）
+	if len(tx.TxIn) > 0 {
+		if witness := tx.TxIn[0].Witness; len(witness) == 2 &&
+			bytes.Equal(witness[1], b.tssPubKey.SerializeCompressed()) {
+			hasTssInput = true
+		}
 	}
 
 	log.Debug("analyzeTransaction analysis result", "txHash", hash.String(),

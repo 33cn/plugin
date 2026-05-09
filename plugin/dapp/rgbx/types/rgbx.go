@@ -3,7 +3,6 @@ package types
 import (
 	"reflect"
 
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	//"reflect"
 )
@@ -16,7 +15,7 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyUnknowAction = iota + 100
+	TyUnknownAction = iota + 100
 	TyMintAction
 	TyTransferAction
 	TyConfirmAction
@@ -24,10 +23,10 @@ const (
 	TyDepositAsset
 	TyWithDrawAsset
 
-	NameMintAction          = "Mint"
-	NameTransferAction      = "Transfer"
-	NameConfirmAction       = "Confirm"
-	NameCommitDKGAction     = "CommitDKG"
+	NameMintAction      = "Mint"
+	NameTransferAction  = "Transfer"
+	NameConfirmAction   = "Confirm"
+	NameCommitDKGAction = "CommitDKG"
 	// 须与 RgbxAction protobuf oneof 字段名一致（chain33 ExecTypeBase.SetChild 用 strings.ToLower 映射），
 	// 例如 oneof deposit -> 此处为 "Deposit"，不能为 "DepositAsset"。
 	NameDepositAssetAction  = "Deposit"
@@ -68,7 +67,6 @@ var (
 		TyPendingTxLog: {Ty: reflect.TypeOf(PendingTx{}), Name: NamePendingTxLog},
 		TyCommitDKGLog: {Ty: reflect.TypeOf(types.ReqAddrs{}), Name: NameCommitDKGLog},
 	}
-	tlog = log.New("module", "rgbx.types")
 )
 
 // init defines a register function

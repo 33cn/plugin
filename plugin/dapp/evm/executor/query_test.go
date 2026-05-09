@@ -263,6 +263,16 @@ func TestQuickEstimateGasValue(t *testing.T) {
 			expect: 2000,
 		},
 		{
+			name: "below 1.0 clamped",
+			toml: `gasmultiple = 0.5`,
+			expect: 1000,
+		},
+		{
+			name: "exactly 1.0",
+			toml: `gasmultiple = 1.0`,
+			expect: 1000,
+		},
+		{
 			name: "invalid string fallback",
 			toml: `gasmultiple = "invalid"`,
 			expect: 1300,

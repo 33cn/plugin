@@ -49,6 +49,8 @@ type neutrinoClient struct {
 	commitAddressType int32
 	commitAddr        string
 	commitKey         crypto.PrivKey
+	commitKeyMu       sync.RWMutex
+	initCommitKeyOnce sync.Once
 	neutrinoCfg       neutrino.Config
 	tss               *tssService
 	neutrinoCS        *neutrino.ChainService
@@ -164,8 +166,9 @@ func (n *neutrinoClient) subMsg() {
 			data, ok := msg.Data.(*types.TopicData)
 			if msg.Ty == types.EventReceiveSubData && ok && data.Topic == tssSignNotifyTopic {
 				n.tss.subChan <- data
+			} else {
+				log.Error("SubMsg receive invalid msg", "ty", msg.Ty, "ok", ok)
 			}
-			log.Error("SubMsg receive invalid msg", "ty", msg.Ty, "ok", ok)
 		}
 	}
 }

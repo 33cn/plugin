@@ -252,6 +252,10 @@ func Test_checkConfirm(t *testing.T) {
 			action:    &rtypes.ConfirmTx{Timeout: true},
 		},
 		{
+			expectErr: ErrWithdrawConfirmTimeoutNotAllowed,
+			action:    &rtypes.ConfirmTx{Timeout: true, ActionType: rtypes.TyWithDrawAsset},
+		},
+		{
 			expectErr: ErrDecodeBtcTx,
 			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: []byte("invalidBtcTxData")}},
 		},

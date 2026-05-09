@@ -200,7 +200,7 @@ func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) (err error
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("processWithdrawRequest panic", "err", r)
+			log.Error("processWithdrawRequest panic", "err", err, "panic err", r)
 			err = fmt.Errorf("processWithdrawRequest panic: %v", r)
 		}
 		if err != nil {
@@ -208,23 +208,24 @@ func (n *neutrinoClient) processWithdrawRequest(req *withdrawRequest) (err error
 		}
 	}()
 
-	stickyUTXO := lockedUTXOs[len(lockedUTXOs)-1]
-	expectedHash := n.getExpectedWithdrawHash(stickyUTXO.OutPoint.String())
+	if len(lockedUTXOs) == 0 {
+		return fmt.Errorf("no locked UTXOs")
+	}
+	lastUTXO := lockedUTXOs[len(lockedUTXOs)-1]
+	expectedHash := n.getExpectedWithdrawHash(lastUTXO.OutPoint.String())
 	if len(expectedHash) > 0 && !bytes.Equal(expectedHash, req.chain33WithDrawHash) {
 		log.Error("processWithdrawRequest sticky input mismatch", "expected", hex.EncodeToString(expectedHash),
-			"actual", txHash, "stickyOutPoint", stickyUTXO.OutPoint.String())
+			"actual", txHash, "stickyOutPoint", lastUTXO.OutPoint.String())
 		return fmt.Errorf("invalid sticky input")
 	}
 
 	// 提现交易构建后，则和最后一个utxo强绑定，后续不能更改
 	if req.stickyUTXO == nil {
-
-		stickyUTXO := lockedUTXOs[len(lockedUTXOs)-1]
-		if err = n.setWithdrawStickyUTXO(req.chain33WithDrawHash, stickyUTXO); err != nil {
-			log.Error("processWithdrawRequest setWithdrawStickyUTXO", "txHash", txHash, "stickyUTXO", req.stickyUTXO.OutPoint.String(), "err", err)
+		if err = n.setWithdrawStickyUTXO(req.chain33WithDrawHash, lastUTXO); err != nil {
+			log.Error("processWithdrawRequest setWithdrawStickyUTXO", "txHash", txHash, "stickyUTXO", lastUTXO.OutPoint.String(), "err", err)
 			return err
 		}
-		req.stickyUTXO = stickyUTXO
+		req.stickyUTXO = lastUTXO
 	}
 	// 主节点也进行验证，保证各节点执行相同的逻辑
 	err = n.tss.validateWithdrawTx(tx, inputAmounts, req)

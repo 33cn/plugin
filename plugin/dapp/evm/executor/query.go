@@ -109,12 +109,15 @@ func (evm *EVMExecutor) quick_estimateGas(req *evmtypes.EstimateEVMGasReq) (type
 }
 
 func quickEstimateGasValue(usedGas uint64, gasmultiple interface{}) uint64 {
-	multiple := 1.3 // quick gas 默认增加30%
+	multiple := 1.3 // quick gas 默认增加30%，最低不低于1.0倍
 	switch v := gasmultiple.(type) {
 	case float64:
 		multiple = v
 	case int64:
 		multiple = float64(v)
+	}
+	if multiple < 1.0 {
+		multiple = 1.0
 	}
 	return uint64(float64(usedGas) * multiple)
 }
