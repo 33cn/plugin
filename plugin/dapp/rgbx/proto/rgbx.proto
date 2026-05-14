@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package types;
+option  go_package = "../types";
+
+message RgbxAction {
+    int32 ty = 1;
+    oneof value {
+        mintAsset     mint      = 2;
+        transferAsset transfer  = 3;
+        confirmTx     confirm   = 4;
+        commitDKG     commitDKG = 5;
+        depositAsset  deposit   = 6;
+        withdrawAsset withdraw  = 7;
+    }
+}
+
+message rgbxAsset {
+
+    uint32 type             = 1;
+    uint32 precision        = 2;
+    int64  totalAmount      = 3;
+    string symbol           = 4;
+    bytes  metaHash         = 5;
+    string genesisBtcTxHash = 6;
+    string owner            = 7;
+}
+
+message mintAsset {
+    uint32 type        = 1;
+    uint32 precision   = 2;
+    int64  totalAmount = 3;
+    string symbol      = 4;
+    bytes  metaHash    = 5;
+    // represents the outpoint of the transaction's
+    // input that resulted in the creation of the asset.
+    outPoint genesisOut = 6;
+}
+
+message outPoint {
+    string hash     = 1;
+    uint32 index    = 2;
+    bytes  pkScript = 3;
+}
+
+message utxoSpendingProof {
+    uint32 spendingInputIdx    = 1;
+    int32  opRetOutputIdx      = 2;
+    bytes  spendingTx          = 3;
+    bytes  opRetOutputPkScript = 4;
+}
+
+message transferAsset {
+
+    string symbol           = 1;
+    int64  amount           = 2;
+    string fromUtxo         = 3;
+    string to               = 4;
+    string changeAddr       = 5;
+    bytes  fromUtxoPkScript = 6;
+}
+
+message confirmTx {
+
+    int32             actionType           = 1;
+    int64             confirmedBlockHeight = 2;
+    int64             txBlockHeight        = 3;
+    int64             txIndex              = 4;
+    bytes             txHash               = 5;
+    bool              timeout              = 6;
+    utxoSpendingProof utxoProof            = 7;
+    btcTxProof        btcTxProof           = 8;
+}
+
+message btcTxProof {
+    uint64         blockHeight = 1;
+    uint32         txIndex     = 2;
+    string         blockHash   = 3;
+    bytes          txData      = 4;
+    repeated bytes merkleProof = 5;
+}
+
+message commitDKG {
+
+    string assetSymbol = 1;
+    string dkgAddress  = 2;
+    bytes  pkScript    = 3;
+}
+
+message depositAsset {
+
+    int64      amount         = 1;
+    string     depositAddress = 2;
+    string     assetSymbol    = 3;
+    btcTxProof txProof        = 4;
+}
+
+message withdrawAsset {
+
+    int64  amount          = 1;
+    int64  feeRate         = 2;
+    string destinationAddr = 3;
+    string assetSymbol     = 4;
+}
+
+message crossChainInfo {
+
+    string assetSymbol   = 1;
+    string wrappedSymbol = 2;
+    string tssAddress    = 3;
+    bytes  pkScript      = 4;
+}
+
+message pendingTx {
+    int32    actionType    = 1;
+    int64    timestamp     = 2;
+    int64    txBlockHeight = 3;
+    int64    txIndex       = 4;
+    int64    amount        = 5;
+    int64    feeRate       = 6;
+    bytes    txHash        = 7;
+    outPoint utxo          = 8;
+    string   fromAddress   = 9;
+    string   assetSymbol   = 10;
+    string   targetAddress = 11;
+    bool     confirmed     = 12;
+}
+
+message pendingTxs {
+    repeated pendingTx pendingList = 1;
+}
+
+message utxo {
+    string outPoint = 1;
+    int64  amount   = 2;
+    bytes  pkScript = 3;
+}
+
+message ReqListPendingTx {
+    int64 startHeight = 1;
+    int64 startIndex  = 2;
+    int32 count       = 3;
+    int64 endHeight   = 4;
+}
+
+message ReqGetPendingTx {
+    int64 height = 1;
+    int64 index  = 2;
+}
+
+message btcCommitment {
+    bytes  protocol = 1;
+    uint32 action   = 2;
+    bytes  payload  = 3;
+}
+
+message txBlockIndex {
+    int64 blockHeight = 1;
+    int64 txIndex     = 2;
+}
+
+message txBlockIndexList {
+    repeated txBlockIndex blockIndexList = 1;
+}
+
+service rgbx {}

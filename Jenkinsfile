@@ -16,15 +16,26 @@ pipeline {
         gitlabBuilds(builds: ['check'])
         checkoutToSubdirectory "src/github.com/33cn/plugin"
     }
-    tools {go 'go1.19'}
+    tools {go 'go'}
     stages {
         stage('deploy') {
             steps {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'deploy'){
-                    	sh 'go version'
-                        sh 'make build_ci'
-                        sh "cd build && mkdir ${env.BUILD_NUMBER} && cp ci/* ${env.BUILD_NUMBER} -r && ./docker-compose-pre.sh modify && cp chain33* Dockerfile* docker* *.sh ${env.BUILD_NUMBER}/ && cd ${env.BUILD_NUMBER}/ && rm -rf cross2eth mix && ./docker-compose-pre.sh run ${env.BUILD_NUMBER} all "
+                        sh '''
+                            set -e
+                            go version
+                            make build_ci
+                            cd build
+                            rm -rf "${BUILD_NUMBER}"
+                            mkdir -p "${BUILD_NUMBER}"
+                            cp -r ci/* "${BUILD_NUMBER}/"
+                            ./docker-compose-pre.sh modify
+                            cp chain33* Dockerfile* docker-compose* *.sh "${BUILD_NUMBER}/"
+                            cd "${BUILD_NUMBER}"
+                            rm -rf cross2eth mix rgbx rollup|| true
+                            ./docker-compose-pre.sh run "${BUILD_NUMBER}" all
+                        '''
                     }
                 }
             }
@@ -32,7 +43,18 @@ pipeline {
             post {
                 always {
                     dir("${PROJ_DIR}"){
-                        sh "cd build/${env.BUILD_NUMBER} && ./docker-compose-pre.sh down ${env.BUILD_NUMBER} all && cd .. && rm -rf ${env.BUILD_NUMBER} && cd .. && make clean "
+                        sh '''
+                            set +e
+                            cd build
+                            if [ -d "${BUILD_NUMBER}" ]; then
+                                cd "${BUILD_NUMBER}"
+                                ./docker-compose-pre.sh down "${BUILD_NUMBER}" all || true
+                                cd ..
+                                rm -rf "${BUILD_NUMBER}"
+                            fi
+                            cd ..
+                            make clean || true
+                        '''
                     }
                 }
             }

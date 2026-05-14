@@ -19,6 +19,16 @@ TESTCASEFILE="testcase.sh"
 FORKTESTFILE="fork-test.sh"
 DOCKER_COMPOSE_SH="docker-compose.sh"
 
+function copy_root_files_no_overwrite() {
+    local target_dir="$1"
+    local entry
+    for entry in ./*; do
+        if [ -f "${entry}" ]; then
+            cp -n "${entry}" "${target_dir}/"
+        fi
+    done
+}
+
 function down_dapp() {
     app=$1
 
@@ -29,7 +39,7 @@ function down_dapp() {
         ./docker-compose-down.sh "${PROJ}" "${app}"
         echo "============ down dapp=$app end ================="
 
-        cd .. && rm -rf ./"${app}"-ci
+        cd .. && rm -rf ./"${app}"-ci || true
     fi
 }
 
@@ -40,7 +50,7 @@ function run_dapp() {
     echo "============ run dapp=$app start ================="
     if [ "$app" == "metrics" ]; then
         cp ./ci/paracross/* ./metrics && echo $?
-        cp -n ./* ./metrics/ && echo $?
+        copy_root_files_no_overwrite "./metrics" && echo $?
         cp -r ci/dapptest/ metrics/ && echo $?
         cd metrics && pwd
         rm docker-compose-paracross.yml
@@ -48,7 +58,7 @@ function run_dapp() {
         app="paracross"
     else
         rm -rf "${app}"-ci && mkdir -p "${app}"-ci && cp -r ./"${app}"/* ./"${app}"-ci && echo $?
-        cp -n ./* ./"${app}"-ci/ && echo $?
+        copy_root_files_no_overwrite "./${app}-ci" && echo $?
         if [ "$app" == "paracross" ]; then
             cp -r dapptest/ "${app}"-ci/ && echo $?
         fi

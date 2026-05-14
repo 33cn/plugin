@@ -1,0 +1,23 @@
+name: ci_rgbx
+on: [push, pull_request]
+
+jobs:
+  ci_rgbx:
+    name: ci_rgbx
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Set up Golang
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+        id: go
+      - name: deploy
+        run: |
+          make docker-compose dapp=rgbx
+      - name: cleanup
+        if: always()
+        run: |
+          make docker-compose-down dapp=rgbx

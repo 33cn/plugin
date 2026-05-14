@@ -6,7 +6,6 @@ package ticket
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -30,7 +29,7 @@ import (
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -423,12 +422,12 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
-	pubKey, err := secp256k1.ParsePubKey(pub, secp256k1.S256())
+	pubKey, err := secp256k1.ParsePubKey(pub)
 	if err != nil {
 		tlog.Error("vrfVerify", "err", err)
 		return ty.ErrVrfVerify
 	}
-	vrfPub := &vrf.PublicKey{PublicKey: (*ecdsa.PublicKey)(pubKey)}
+	vrfPub := &vrf.PublicKey{PublicKey: pubKey.ToECDSA()}
 	vrfHash, err := vrfPub.ProofToHash(input, proof)
 	if err != nil {
 		tlog.Error("vrfVerify", "err", err)
@@ -701,8 +700,8 @@ func (client *Client) addMinerTx(parent, block *types.Block, diff *big.Int, priv
 		if input == nil {
 			input = miner.PrivHash
 		}
-		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
-		vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+		privKey, _ := secp256k1.PrivKeyFromBytes(priv.Bytes())
+		vrfPriv := &vrf.PrivateKey{PrivateKey: privKey.ToECDSA()}
 		vrfHash, vrfProof := vrfPriv.Evaluate(input)
 		miner.VrfHash = vrfHash[:]
 		miner.VrfProof = vrfProof

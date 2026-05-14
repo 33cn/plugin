@@ -732,6 +732,10 @@ Enable=0
 [fork.sub.wasm]
 Enable=0
 
+[fork.sub.lightclient]
+Enable=-1
+[fork.sub.rgbx]
+Enable=-1
 
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=1870000

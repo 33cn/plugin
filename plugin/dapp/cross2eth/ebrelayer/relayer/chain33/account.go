@@ -10,7 +10,7 @@ import (
 	chain33Types "github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	x2ethTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	btcec_secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -64,7 +64,7 @@ func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeySt
 
 	chain33Relayer.rwLock.Lock()
 	chain33Relayer.privateKey4Chain33 = priKey
-	temp, _ := btcec_secp256k1.PrivKeyFromBytes(btcec_secp256k1.S256(), priKey.Bytes())
+	temp, _ := btcec_secp256k1.PrivKeyFromBytes(priKey.Bytes())
 	chain33Relayer.privateKey4Chain33_ecdsa = temp.ToECDSA()
 	chain33Relayer.rwLock.Unlock()
 	chain33Relayer.unlockChan <- start

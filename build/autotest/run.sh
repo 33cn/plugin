@@ -7,11 +7,6 @@ set -o pipefail
 
 # os: ubuntu18.04 x64
 
-sedfix=""
-if [ "$(uname)" == "Darwin" ]; then
-    sedfix=".bak"
-fi
-
 ## get chain33 path
 CHAIN33_PATH=$(go list -f "{{.Dir}}" github.com/33cn/chain33)
 
@@ -20,8 +15,16 @@ function build_auto_test() {
     trap "rm -f ../autotest/main.go" INT TERM EXIT
     local AutoTestMain="${CHAIN33_PATH}/cmd/autotest/main.go"
     cp "${AutoTestMain}" ./
-    sed -i $sedfix '/^package/a import _ \"github.com\/33cn\/plugin\/plugin\"' main.go
-    go build -v -i -o autotest
+    # BSD sed (macOS) does not support GNU sed's `/^package/a text` one-liner; use awk for portability.
+    awk '/^package/ && !done {
+        print
+        print "import _ \"github.com/33cn/plugin/plugin\""
+        done = 1
+        next
+    }
+    { print }
+    ' main.go > main.go.tmp && mv main.go.tmp main.go
+    go build -v -o autotest
 }
 
 function copyAutoTestConfig() {

@@ -7,6 +7,9 @@ datadir*
 *.log.last
 .idea
 .vscode
+.kiro
+.opencode
+build/temp
 build/chain33*
 chain33_raft-1
 build/datadir
@@ -51,3 +54,10 @@ build/CHANGELOG.md
 plugin/dapp/dex/boss/build/
 plugin/dapp/bridgevmxgo/cmd/build/bridgevmxgo/
 plugin/dapp/bridgevmxgo/cmd/build/dapptest/
+go.work*
+*.test
+*.cursor
+*.kiro
+build/temp/*
+.gitignore_local
+.claude*

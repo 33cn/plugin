@@ -1,0 +1,19 @@
+FROM golang:1.22 AS builder
+
+ARG BTCD_VERSION=v0.24.2
+WORKDIR /src
+
+RUN git clone --depth 1 --branch ${BTCD_VERSION} https://github.com/btcsuite/btcd.git .
+RUN go install -v . ./cmd/btcctl
+
+FROM ubuntu:22.04
+
+WORKDIR /root
+COPY --from=builder /go/bin/btcd /usr/local/bin/btcd
+COPY --from=builder /go/bin/btcctl /usr/local/bin/btcctl
+
+RUN mkdir -p /root/.btcd
+
+EXPOSE 18444 18443
+
+CMD ["btcd"]
