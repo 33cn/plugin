@@ -189,7 +189,8 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	require.Nil(t, readDB(state, formatAssetKey(collect), asset))
 	require.Equal(t, formatSymbol(collect), asset.Symbol)
 	require.Equal(t, rtypes.Collectible, rtypes.AssetType(asset.Type))
-	owner := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
+	collectSpendHash := chainhash.DoubleHashH(buildTxWithOpReturn([]byte(collect))).String()
+	owner := rtypes.FormatUtxo(collectSpendHash, 1)
 	require.Equal(t, owner, asset.Owner)
 
 	// check transfer
@@ -197,7 +198,8 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	require.Equal(t, addr, asset.Owner)
 	require.Equal(t, int64(0), accDB.LoadAccount(utxoAddr).Balance)
 	require.Equal(t, int64(1), accDB.LoadAccount(addr).Balance)
-	changeAddr := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
+	normal1SpendHash := chainhash.DoubleHashH(buildTxWithOpReturn([]byte(normal1))).String()
+	changeAddr := rtypes.FormatUtxo(normal1SpendHash, 1)
 	require.Equal(t, int64(1), accDB.LoadAccount(changeAddr).Balance)
 }
 
