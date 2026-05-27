@@ -248,6 +248,138 @@ func btcDepositTx(cmd *cobra.Command, _ []string) {
 	fmt.Println(txHash.String())
 }
 
+func btcMintSpendCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "btcMintSpend",
+		Short: "build, sign and broadcast btc mint spending tx with OP_RETURN",
+		Run:   btcMintSpend,
+		Example: "btcMintSpend --net regtest --rpcHost 127.0.0.1:18443 " +
+			"--wif <wif> --utxo <txid:vout:amountSats:pkScriptHex> " +
+			"--destAddress <btcAddr> --opReturnData <mintTxHashHex> --fee 1000",
+	}
+	cmd.Flags().String("net", "regtest", "bitcoin network: mainnet|testnet|regtest|simnet")
+	cmd.Flags().String("rpcHost", "127.0.0.1:18443", "bitcoin rpc host")
+	cmd.Flags().String("rpcUser", "", "bitcoin rpc user (optional)")
+	cmd.Flags().String("rpcPass", "", "bitcoin rpc password (optional)")
+	cmd.Flags().Bool("disableTLS", true, "disable rpc tls")
+	cmd.Flags().String("rpcCertFile", "", "bitcoin rpc cert file path (optional, required when TLS enabled)")
+	cmd.Flags().String("wif", "", "sender private key in WIF format")
+	cmd.Flags().String("utxo", "", "single input utxo, format: txid:vout:amountSats:pkScriptHex")
+	cmd.Flags().String("destAddress", "", "btc destination address for change output")
+	cmd.Flags().String("opReturnData", "", "hex data for OP_RETURN output (chain33 mint tx hash)")
+	cmd.Flags().Int64("fee", 0, "tx fee in satoshis")
+	markRequired(cmd, "wif", "utxo", "destAddress", "opReturnData", "fee")
+	return cmd
+}
+
+func btcMintSpend(cmd *cobra.Command, _ []string) {
+	netName, _ := cmd.Flags().GetString("net")
+	rpcHost, _ := cmd.Flags().GetString("rpcHost")
+	rpcUser, _ := cmd.Flags().GetString("rpcUser")
+	rpcPass, _ := cmd.Flags().GetString("rpcPass")
+	disableTLS, _ := cmd.Flags().GetBool("disableTLS")
+	rpcCertFile, _ := cmd.Flags().GetString("rpcCertFile")
+	wifStr, _ := cmd.Flags().GetString("wif")
+	utxoRaw, _ := cmd.Flags().GetString("utxo")
+	destAddrStr, _ := cmd.Flags().GetString("destAddress")
+	opReturnDataHex, _ := cmd.Flags().GetString("opReturnData")
+	fee, _ := cmd.Flags().GetInt64("fee")
+
+	params, err := parseNetParams(netName)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid net: %s, err: %v\n", netName, err)
+		return
+	}
+	if fee < 0 {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid fee(%d)\n", fee)
+		return
+	}
+	utxo, err := parseDepositUTXO(utxoRaw)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid utxo: %v\n", err)
+		return
+	}
+	if utxo.amount <= fee {
+		_, _ = fmt.Fprintf(os.Stderr, "insufficient utxo amount, have=%d need>%d\n", utxo.amount, fee)
+		return
+	}
+
+	wif, err := btcutil.DecodeWIF(strings.TrimSpace(wifStr))
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid wif: %v\n", err)
+		return
+	}
+	destAddr, err := btcutil.DecodeAddress(strings.TrimSpace(destAddrStr), params)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid destAddress: %v\n", err)
+		return
+	}
+
+	opReturnData, err := hex.DecodeString(strings.TrimSpace(opReturnDataHex))
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "invalid opReturnData hex: %v\n", err)
+		return
+	}
+
+	tx := wire.NewMsgTx(wire.TxVersion)
+	tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(utxo.hash, utxo.vout), nil, nil))
+
+	// Add OP_RETURN output (must be first output, index 0 for neutrino to detect)
+	opScript, err := txscript.NullDataScript(opReturnData)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "build op_return failed: %v\n", err)
+		return
+	}
+	tx.AddTxOut(wire.NewTxOut(0, opScript))
+
+	// Add destination output (change to mining address)
+	destScript, err := txscript.PayToAddrScript(destAddr)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "build dest script failed: %v\n", err)
+		return
+	}
+	change := utxo.amount - fee
+	tx.AddTxOut(wire.NewTxOut(change, destScript))
+
+	// Sign the P2PKH input
+	sigScript, err := txscript.SignatureScript(tx, 0, utxo.pkScript, txscript.SigHashAll, wif.PrivKey, true)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "sign p2pkh failed: %v\n", err)
+		return
+	}
+	tx.TxIn[0].SignatureScript = sigScript
+
+	// Connect to btcd RPC and broadcast
+	connCfg := &rpcclient.ConnConfig{
+		Host:         rpcHost,
+		User:         rpcUser,
+		Pass:         rpcPass,
+		HTTPPostMode: true,
+		DisableTLS:   disableTLS,
+	}
+	if !disableTLS && strings.TrimSpace(rpcCertFile) != "" {
+		certs, err := os.ReadFile(strings.TrimSpace(rpcCertFile))
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "read rpc cert file failed: %v\n", err)
+			return
+		}
+		connCfg.Certificates = certs
+	}
+	rpcCli, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "create rpc client failed: %v\n", err)
+		return
+	}
+	defer rpcCli.Shutdown()
+
+	txHash, err := rpcCli.SendRawTransaction(tx, false)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "broadcast tx failed: %v\n", err)
+		return
+	}
+	fmt.Println(txHash.String())
+}
+
 func btcKeyInfoCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "btcKeyInfo",
