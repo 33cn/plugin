@@ -1,7 +1,6 @@
 package neutrino
 
 import (
-	"bytes"
 	"encoding/hex"
 	"runtime"
 	"strings"
@@ -47,6 +46,7 @@ type utxoSpendInfo struct {
 	pendingTxHash      string
 	spendingTxHash     string
 	spendingTx         *wire.MsgTx
+	blockHash          chainhash.Hash
 	timeout            bool
 }
 
@@ -207,12 +207,23 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 		return false
 	}
 
+	// 获取 spending tx 所在区块的 block hash
+	var blockHash chainhash.Hash
+	header, err := r.client.neutrinoCS.BlockHeaders.FetchHeaderByHeight(spendReport.SpendingTxHeight)
+	if err != nil {
+		log.Error("rescanUtxo FetchHeaderByHeight", "pendingTxHash", info.pendingTxHash,
+			"height", spendReport.SpendingTxHeight, "err", err)
+		return false
+	}
+	blockHash = header.BlockHash()
+
 	spendInfo := &utxoSpendInfo{
 		spendingTxHash:     spendReport.SpendingTx.TxHash().String(),
 		pendingTxHash:      info.pendingTxHash,
 		spendingTx:         spendReport.SpendingTx,
 		spendingHeight:     spendReport.SpendingTxHeight,
 		spendingInputIndex: spendReport.SpendingInputIndex,
+		blockHash:          blockHash,
 	}
 
 	r.commitChan <- spendInfo
@@ -288,17 +299,18 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo, pendTx *rtypes.PendingT
 	for idx, out := range info.spendingTx.TxOut {
 		if len(out.PkScript) > 0 && out.PkScript[0] == txscript.OP_RETURN {
 			proof.OpRetOutputIdx = int32(idx)
-			proof.OpRetOutputPkScript = out.PkScript
 		}
 	}
-	buf := bytes.NewBuffer(make([]byte, 0, info.spendingTx.SerializeSizeStripped()))
-	err := info.spendingTx.SerializeNoWitness(buf)
-	if err != nil {
-		log.Error("createConfirmPayload", "pendingTxHash", info.pendingTxHash, "serialize spending tx err", err)
-		return nil, err
-	}
-	proof.SpendingTx = buf.Bytes()
 	confirm.UtxoProof = proof
+
+	if r.client != nil {
+		btcProof, err := r.client.buildNativeConfirmBtcTxProof(info.spendingTx, info.blockHash, info.spendingHeight)
+		if err != nil {
+			log.Error("createConfirmPayload buildNativeConfirmBtcTxProof", "pendingTxHash", info.pendingTxHash, "err", err)
+			return nil, err
+		}
+		confirm.BtcTxProof = btcProof
+	}
 
 	return confirm, nil
 }

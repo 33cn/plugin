@@ -256,28 +256,12 @@ func Test_checkConfirm(t *testing.T) {
 			action:    &rtypes.ConfirmTx{Timeout: true, ActionType: rtypes.TyWithDrawAsset},
 		},
 		{
-			expectErr: ErrDecodeBtcTx,
-			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: []byte("invalidBtcTxData")}},
+			expectErr: ErrInvalidBtcTxProof,
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{}},
 		},
 		{
-			expectErr: ErrInvalidSpendingTxIn,
-			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), SpendingInputIdx: 2}},
-		},
-		{
-			expectErr: ErrSpendingInputNotEqual,
-			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), SpendingInputIdx: 1}},
-		},
-		{
-			expectErr: nil,
-			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), OpRetOutputIdx: -1}},
-		},
-		{
-			expectErr: ErrOpRetOutputPkScriptNotEqual,
-			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes()}},
-		},
-		{
-			expectErr: nil,
-			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{SpendingTx: buf.Bytes(), OpRetOutputPkScript: []byte("testScript")}},
+			expectErr: ErrInvalidBtcTxProof,
+			action:    &rtypes.ConfirmTx{UtxoProof: &rtypes.UtxoSpendingProof{}, BtcTxProof: &rtypes.BtcTxProof{TxData: []byte("invalid")}},
 		},
 	}
 

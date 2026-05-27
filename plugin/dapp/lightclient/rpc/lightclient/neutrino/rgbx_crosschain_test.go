@@ -74,6 +74,7 @@ func Test_rgbx_createConfirmPayload_withSpendingTxAndOpReturn(t *testing.T) {
 		pendingTxHash:      "abc",
 		spendingInputIndex: 0,
 		spendingTx:         spendTx,
+		blockHash:          chainhash.Hash{0x01},
 	}
 	pendTx := &rtypes.PendingTx{
 		ActionType:    rtypes.TyMintAction,
@@ -87,11 +88,7 @@ func Test_rgbx_createConfirmPayload_withSpendingTxAndOpReturn(t *testing.T) {
 	require.NotNil(t, confirm.UtxoProof)
 	require.Equal(t, uint32(0), confirm.UtxoProof.SpendingInputIdx)
 	require.GreaterOrEqual(t, confirm.UtxoProof.OpRetOutputIdx, int32(0))
-	require.Equal(t, byte(txscript.OP_RETURN), confirm.UtxoProof.OpRetOutputPkScript[0])
-
-	var back wire.MsgTx
-	require.NoError(t, back.DeserializeNoWitness(bytes.NewReader(confirm.UtxoProof.SpendingTx)))
-	require.Equal(t, spendTx.TxHash().String(), back.TxHash().String())
+	require.Nil(t, confirm.BtcTxProof)
 }
 
 func Test_estimateBtcFee(t *testing.T) {

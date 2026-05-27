@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/33cn/chain33/client/mocks"
@@ -11,6 +12,7 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -95,10 +97,16 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
 	normal, normal1, collect, collect1 := "normal", "normal1", "collect", "collect1"
 
-	mintScript, _ := txscript.NullDataScript([]byte(normal))
-	mintScript1, _ := txscript.NullDataScript([]byte(collect))
-	transferScript, _ := txscript.NullDataScript([]byte(normal1))
-	transferScript1, _ := txscript.NullDataScript([]byte(collect1))
+	buildTxWithOpReturn := func(data []byte) []byte {
+		tx := wire.NewMsgTx(wire.TxVersion)
+		tx.AddTxIn(wire.NewTxIn(&wire.OutPoint{}, nil, nil))
+		script, _ := txscript.NullDataScript(data)
+		tx.AddTxOut(wire.NewTxOut(0, script))
+		buf := new(bytes.Buffer)
+		_ = tx.SerializeNoWitness(buf)
+		return buf.Bytes()
+	}
+
 	tcArr := []*testCase{
 		{
 			expectErr: nil,
@@ -110,19 +118,37 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(normal), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript}},
+			action: &rtypes.ConfirmTx{
+				ActionType: rtypes.TyMintAction,
+				TxHash:     []byte(normal),
+				UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(normal))},
+			},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(collect), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript1}},
+			action: &rtypes.ConfirmTx{
+				ActionType: rtypes.TyMintAction,
+				TxHash:     []byte(collect),
+				UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(collect))},
+			},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{TxHash: []byte(normal1), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript}},
+			action: &rtypes.ConfirmTx{
+				TxHash:    []byte(normal1),
+				UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(normal1))},
+			},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{TxHash: []byte(collect1), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript1}},
+			action: &rtypes.ConfirmTx{
+				TxHash:    []byte(collect1),
+				UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(collect1))},
+			},
 		},
 	}
 
