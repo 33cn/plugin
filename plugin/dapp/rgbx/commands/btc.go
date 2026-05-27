@@ -466,8 +466,6 @@ func confirmTxFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Uint32("spendingInputIdx", 0, "btc spending tx input index")
 	cmd.Flags().Int32("opRetOutputIdx", -1, "btc op_return output index")
-	cmd.Flags().String("spendingTx", "", "btc spending tx raw hex")
-	cmd.Flags().String("opRetOutputPkScript", "", "op_return pkScript hex")
 
 	cmd.Flags().Uint64("btcBlockHeight", 0, "btc proof block height")
 	cmd.Flags().Uint32("btcTxIndex", 0, "btc proof tx index")
@@ -487,8 +485,6 @@ func confirmTx(cmd *cobra.Command, _ []string) {
 
 	spendingInputIdx, _ := cmd.Flags().GetUint32("spendingInputIdx")
 	opRetOutputIdx, _ := cmd.Flags().GetInt32("opRetOutputIdx")
-	spendingTxHex, _ := cmd.Flags().GetString("spendingTx")
-	opRetPkScriptHex, _ := cmd.Flags().GetString("opRetOutputPkScript")
 
 	btcBlockHeight, _ := cmd.Flags().GetUint64("btcBlockHeight")
 	btcTxIndex, _ := cmd.Flags().GetUint32("btcTxIndex")
@@ -502,16 +498,6 @@ func confirmTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	spendingTx, err := decodeHexOptional(spendingTxHex)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid spendingTx: %s, decode err: %v\n", spendingTxHex, err)
-		return
-	}
-	opRetPkScript, err := decodeHexOptional(opRetPkScriptHex)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid opRetOutputPkScript: %s, decode err: %v\n", opRetPkScriptHex, err)
-		return
-	}
 	btcTxData, err := decodeHexOptional(btcTxDataHex)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "invalid btcTxData: %s, decode err: %v\n", btcTxDataHex, err)
@@ -531,10 +517,8 @@ func confirmTx(cmd *cobra.Command, _ []string) {
 		TxHash:               txHash,
 		Timeout:              timeout,
 		UtxoProof: &rtypes.UtxoSpendingProof{
-			SpendingInputIdx:    spendingInputIdx,
-			OpRetOutputIdx:      opRetOutputIdx,
-			SpendingTx:          spendingTx,
-			OpRetOutputPkScript: opRetPkScript,
+			SpendingInputIdx: spendingInputIdx,
+			OpRetOutputIdx:   opRetOutputIdx,
 		},
 		BtcTxProof: &rtypes.BtcTxProof{
 			BlockHeight: btcBlockHeight,

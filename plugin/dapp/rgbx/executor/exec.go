@@ -9,6 +9,7 @@ import (
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 )
 
 /*
@@ -146,16 +147,27 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 		return r.confirmWithdrawSettlement(confirm, txHash, confirmHash)
 	}
 
-	spendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()
+	btcTxData := confirm.GetBtcTxProof().GetTxData()
+	spendHash := chainhash.DoubleHashH(btcTxData).String()
 	// 绑定资产的utxo已经在btc链上花费，但op return不存在或承诺数据不正确，
 	// 交易仅做标记并返回，相关资产永久冻结，无法转移
-	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
-	if confirm.GetUtxoProof().GetOpRetOutputIdx() < 0 ||
-		!bytes.Equal(commitment, confirm.GetUtxoProof().OpRetOutputPkScript) {
+	var btcTx wire.MsgTx
+	opRetIdx := confirm.GetUtxoProof().GetOpRetOutputIdx()
+	if opRetIdx >= 0 && len(btcTxData) > 0 {
+		if err := btcTx.DeserializeNoWitness(bytes.NewReader(btcTxData)); err != nil {
+			elog.Error("Exec_Confirm deserialize btc tx", "action", action,
+				"txHash", txHash, "confirmHash", confirmHash, "err", err)
+			return nil, err
+		}
+	}
 
-		elog.Warn("checkConfirm op return commitment", "action", action,
-			"txHash", txHash, "confirmHash", confirmHash, "opRetIdx", confirm.GetUtxoProof().GetOpRetOutputIdx(),
-			"spendHash", spendHash, "commit", hex.EncodeToString(confirm.GetUtxoProof().OpRetOutputPkScript),
+	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
+	if opRetIdx < 0 || int(opRetIdx) >= len(btcTx.TxOut) ||
+		!bytes.Equal(commitment, btcTx.TxOut[opRetIdx].PkScript) {
+
+		elog.Warn("Exec_Confirm op return commitment", "action", action,
+			"txHash", txHash, "confirmHash", confirmHash, "opRetIdx", opRetIdx,
+			"spendHash", spendHash, "txOutLen", len(btcTx.TxOut),
 			"expectCommit", hex.EncodeToString(commitment))
 		return &types.Receipt{Ty: types.ExecOk}, nil
 	}
