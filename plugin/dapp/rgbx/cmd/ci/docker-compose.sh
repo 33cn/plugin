@@ -15,7 +15,7 @@ ACTION="run"
 PROJECT=""
 if [ "$#" -gt 0 ]; then
     case "${1}" in
-    run | up | down | init | config | test)
+    run | up | down | init | config | test | native)
         ACTION="${1}"
         PROJECT="${2:-build}"
         ;;
@@ -731,7 +731,7 @@ function scenario_native_asset_mint() {
 
     # 2. Mint a native asset on chain33 with the genesis UTXO
     local mint_hash
-    mint_hash=$(${MAIN_CLI} send rgbx mint -s NATIVE1 -a 10000 -o "${genesis_out}" -m "6e6174697665316d657461" 2>/dev/null)
+    mint_hash=$(${MAIN_CLI} send rgbx mint -s NATIVE1 -a 10000 -o "${genesis_out}" -m "6e6174697665316d657461" -k "${GENESIS_KEY}" 2>/dev/null)
     if [ -z "${mint_hash}" ] || [ ${#mint_hash} -lt 64 ]; then
         fail "native mint send failed, hash=${mint_hash}"
     fi
@@ -744,42 +744,27 @@ function scenario_native_asset_mint() {
     local mint_tx_hash_hex="${mint_hash}"
     mint_tx_hash_hex="${mint_tx_hash_hex#0x}"
 
-    # 4. Construct and broadcast BTC spending transaction
-    # Spend the genesis UTXO with OP_RETURN containing the chain33 mint tx hash
+    # 4. Construct, sign, and broadcast BTC spending transaction using btcMintSpend
     local fee=1000
     local spend_amount=$((utxo_amount - fee))
     if [ "${spend_amount}" -le 0 ]; then
         fail "native mint insufficient utxo amount=${utxo_amount}, fee=${fee}"
     fi
 
-    # Convert amount to BTC for signrawtransactionwithkey prevtxs.amount
-    local amount_btc
-    amount_btc=$(awk "BEGIN{printf \"%.8f\", ${utxo_amount}/100000000}")
-
-    # Import the mining key into btcd wallet (required for createrawtransaction signing)
-    # Use create/raw tx method with signrawtransactionwithkey (btcd v0.24.x)
-    local raw_tx_hex=""
-    raw_tx_hex=$(${BTC_CTL} --"${BTC_NETWORK}" createrawtransaction \
-      '[{"txid":"'${utxo_txid}'","vout":'${utxo_vout}'}]' \
-      '{"data":"'${mint_tx_hash_hex}'","'${BTCD_MINING_ADDR}'":'${spend_amount}'}')
-    assert_non_empty "${raw_tx_hex}" "native mint createrawtransaction failed"
-
-    local signed_tx_json
-    signed_tx_json=$(${BTC_CTL} --"${BTC_NETWORK}" signrawtransactionwithkey \
-      "${raw_tx_hex}" \
-      '["'${BTC_FUNDING_WIF}'"]' \
-      '[{"txid":"'${utxo_txid}'","vout":'${utxo_vout}',"scriptPubKey":"'${utxo_pkscript}'","amount":'${amount_btc}'}]')
-    local signed_hex
-    signed_hex=$(echo "${signed_tx_json}" | jq -r '.hex // empty')
-    local complete
-    complete=$(echo "${signed_tx_json}" | jq -r '.complete // false')
-    if [ -z "${signed_hex}" ] || [ "${complete}" != "true" ]; then
-        fail "native mint signrawtransactionwithkey failed: ${signed_tx_json}"
-    fi
-
     local spend_txid
-    spend_txid=$(${BTC_CTL} --"${BTC_NETWORK}" sendrawtransaction "${signed_hex}")
-    assert_non_empty "${spend_txid}" "native mint sendrawtransaction failed"
+    spend_txid=$(compose_cmd exec -T main /root/chain33-cli rgbx btcMintSpend \
+        --net "${BTC_NETWORK}" \
+        --rpcHost "${BTC_RPC_ADDR}" \
+        --rpcUser "${BTCD_RPC_USER}" \
+        --rpcPass "${BTCD_RPC_PASS}" \
+        --disableTLS=false \
+        --rpcCertFile "${BTCD_RPC_CERT_IN_CONTAINER}" \
+        --wif "${BTC_FUNDING_WIF}" \
+        --utxo "${utxo}" \
+        --destAddress "${BTCD_MINING_ADDR}" \
+        --opReturnData "${mint_tx_hash_hex}" \
+        --fee "${fee}")
+    assert_non_empty "${spend_txid}" "native mint btcMintSpend failed"
 
     # Mine BTC blocks for confirmations (neutrino uses blockConfirmations=1)
     mine_btcd_blocks 2
@@ -839,6 +824,9 @@ function run_native_tests() {
     scenario_para_health
     setup_para_nodegroup_on_main
     wait_auto_dkg_commit
+
+    # Mine BTC blocks so build_mature_coinbase_utxo can find a mature coinbase
+    mine_btcd_blocks 101
     scenario_native_asset_mint
 }
 
