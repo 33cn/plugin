@@ -9,16 +9,17 @@ import (
 
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
-	"github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	paratypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/mock"
@@ -285,6 +286,142 @@ func Test_checkConfirm(t *testing.T) {
 		value.Confirm = tc.action.(*rtypes.ConfirmTx)
 		testCheck(t, r, tx, action, tc.expectErr, idx)
 	}
+
+	// ===== BtcTxProof validation test cases =====
+	// Set up additional pending txs and construct proper BtcTxProof fixtures.
+	var spendTx wire.MsgTx
+	spendTx.TxIn = append(spendTx.TxIn, &wire.TxIn{PreviousOutPoint: *out})
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(1000, []byte{0x51}))
+
+	spendBuf := new(bytes.Buffer)
+	require.NoError(t, spendTx.SerializeNoWitness(spendBuf))
+	spendTxData := spendBuf.Bytes()
+	spendTxID := spendTx.TxHash()
+
+	// Compute a valid Merkle proof for spendTx
+	leaves := [][]byte{spendTxID.CloneBytes()}
+	_, branch := merkle.GetMerkleRootAndBranch(leaves, 0)
+	root := merkle.GetMerkleRoot(leaves)
+	rootHash, err := chainhash.NewHash(root)
+	require.Nil(t, err)
+
+	// Pending / payload at (10, 0) for the valid proof case
+	require.Nil(t, local.Set(formatPendingTxKey(10, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: []byte("hash10"),
+	})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte("hash10")), types.Encode(&rtypes.MintAsset{Symbol: "y", TotalAmount: 1})))
+
+	// Pending / payload at (11, 0) for block height mismatch case
+	require.Nil(t, local.Set(formatPendingTxKey(11, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: []byte("hash11"),
+	})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte("hash11")), types.Encode(&rtypes.MintAsset{Symbol: "z", TotalAmount: 1})))
+
+	// Pending / payload at (12, 0) for merkle proof mismatch case
+	require.Nil(t, local.Set(formatPendingTxKey(12, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: []byte("hash12"),
+	})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte("hash12")), types.Encode(&rtypes.MintAsset{Symbol: "w", TotalAmount: 1})))
+
+	// Proof 1: valid proof for height 10
+	validProof := &rtypes.BtcTxProof{
+		TxData:      spendTxData,
+		BlockHeight: 10,
+		BlockHash:   "dead10",
+		TxIndex:     0,
+		MerkleProof: branch,
+	}
+
+	// Proof 2: valid tx data + merkle proof but API returns wrong height (10 vs 11)
+	heightMismatchProof := &rtypes.BtcTxProof{
+		TxData:      spendTxData,
+		BlockHeight: 11,
+		BlockHash:   "dead11",
+		TxIndex:     0,
+		MerkleProof: branch,
+	}
+
+	// Proof 3: tx data is fine but Merkle branch is wrong
+	badBranch := [][]byte{bytes.Repeat([]byte{0xff}, 32)}
+	badMerkleProof := &rtypes.BtcTxProof{
+		TxData:      spendTxData,
+		BlockHeight: 12,
+		BlockHash:   "dead12",
+		TxIndex:     0,
+		MerkleProof: badBranch,
+	}
+
+	// Mock header queries for each proof height.
+	// Height 10: exact match -> validateBtcTxProof should succeed.
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.MatchedBy(func(req types.Message) bool {
+		h, ok := req.(*ltypes.ReqGetBtcHeader)
+		return ok && h != nil && h.Height == 10
+	})).Return(&ltypes.BtcHeader{
+		Hash:       "dead10",
+		Height:     10,
+		MerkleRoot: rootHash.String(),
+	}, nil)
+
+	// Height 11: header height is 10 (doesn't match proof.BlockHeight=11)
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.MatchedBy(func(req types.Message) bool {
+		h, ok := req.(*ltypes.ReqGetBtcHeader)
+		return ok && h != nil && h.Height == 11
+	})).Return(&ltypes.BtcHeader{
+		Hash:       "dead11",
+		Height:     10,
+		MerkleRoot: rootHash.String(),
+	}, nil)
+
+	// Height 12: header returns valid data but merkle branch in proof is wrong
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.MatchedBy(func(req types.Message) bool {
+		h, ok := req.(*ltypes.ReqGetBtcHeader)
+		return ok && h != nil && h.Height == 12
+	})).Return(&ltypes.BtcHeader{
+		Hash:       "dead12",
+		Height:     12,
+		MerkleRoot: rootHash.String(),
+	}, nil)
+
+	btcProofCases := []*testCase{
+		{
+			expectErr: nil, // valid BtcTxProof with matching merkle proof
+			action: &rtypes.ConfirmTx{
+				TxBlockHeight: 10,
+				TxIndex:       0,
+				TxHash:        []byte("hash10"),
+				UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: 0},
+				BtcTxProof:    validProof,
+			},
+		},
+		{
+			expectErr: ErrInvalidBtcProofBlock, // header height 10 != proof height 11
+			action: &rtypes.ConfirmTx{
+				TxBlockHeight: 11,
+				TxIndex:       0,
+				TxHash:        []byte("hash11"),
+				UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: -1},
+				BtcTxProof:    heightMismatchProof,
+			},
+		},
+		{
+			expectErr: ErrInvalidBtcProofMerkle, // merkle branch doesn't match tx data
+			action: &rtypes.ConfirmTx{
+				TxBlockHeight: 12,
+				TxIndex:       0,
+				TxHash:        []byte("hash12"),
+				UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: -1},
+				BtcTxProof:    badMerkleProof,
+			},
+		},
+	}
+
+	for idx, tc := range btcProofCases {
+		value.Confirm = tc.action.(*rtypes.ConfirmTx)
+		testCheck(t, r, tx, action, tc.expectErr, len(tcArr)+idx)
+	}
 }
 
 func newTestnetWitnessAddr(t *testing.T) (addr string, pkScript []byte) {
@@ -493,7 +630,7 @@ func Test_checkCommitDKG(t *testing.T) {
 
 func Test_decodeBtcAddressScript(t *testing.T) {
 
-	params := lighttypes.GetBtcChainParams("regtest")
+	params := ltypes.GetBtcChainParams("regtest")
 
 	priv, err := btcec.NewPrivateKey()
 	require.Nil(t, err)

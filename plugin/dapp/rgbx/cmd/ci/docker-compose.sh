@@ -707,6 +707,110 @@ function scenario_para_health() {
     ${PARA4_CLI} net is_sync >/dev/null
 }
 
+function scenario_native_asset_mint() {
+    log_step "scenario: native asset mint with btc spending confirm"
+
+    # 1. Get a mature coinbase UTXO
+    local utxo
+    utxo=$(build_mature_coinbase_utxo)
+    assert_non_empty "${utxo}" "native mint funding utxo empty"
+
+    local utxo_txid
+    local utxo_vout
+    local utxo_amount
+    local utxo_pkscript
+    utxo_txid=$(echo "${utxo}" | cut -d: -f1)
+    utxo_vout=$(echo "${utxo}" | cut -d: -f2)
+    utxo_amount=$(echo "${utxo}" | cut -d: -f3)
+    utxo_pkscript=$(echo "${utxo}" | cut -d: -f4)
+    assert_non_empty "${utxo_txid}" "native mint utxo txid empty"
+    assert_non_empty "${utxo_pkscript}" "native mint utxo pkscript empty"
+
+    # genesis_out format for mint: hash:index:pkScript
+    local genesis_out="${utxo_txid}:${utxo_vout}:${utxo_pkscript}"
+
+    # 2. Mint a native asset on chain33 with the genesis UTXO
+    local mint_hash
+    mint_hash=$(${MAIN_CLI} send rgbx mint -s NATIVE1 -a 10000 -o "${genesis_out}" -m "6e6174697665316d657461" 2>/dev/null)
+    if [ -z "${mint_hash}" ] || [ ${#mint_hash} -lt 64 ]; then
+        fail "native mint send failed, hash=${mint_hash}"
+    fi
+
+    # Wait for mint tx to be confirmed on chain33
+    block_wait "${MAIN_CLI}" 1
+
+    # 3. Get the full mint tx hash from chain33 for OP_RETURN commitment
+    # The send output gives us the chain33 tx hash hex (may contain 0x prefix)
+    local mint_tx_hash_hex="${mint_hash}"
+    mint_tx_hash_hex="${mint_tx_hash_hex#0x}"
+
+    # 4. Construct and broadcast BTC spending transaction
+    # Spend the genesis UTXO with OP_RETURN containing the chain33 mint tx hash
+    local fee=1000
+    local spend_amount=$((utxo_amount - fee))
+    if [ "${spend_amount}" -le 0 ]; then
+        fail "native mint insufficient utxo amount=${utxo_amount}, fee=${fee}"
+    fi
+
+    # Convert amount to BTC for signrawtransactionwithkey prevtxs.amount
+    local amount_btc
+    amount_btc=$(awk "BEGIN{printf \"%.8f\", ${utxo_amount}/100000000}")
+
+    # Import the mining key into btcd wallet (required for createrawtransaction signing)
+    # Use create/raw tx method with signrawtransactionwithkey (btcd v0.24.x)
+    local raw_tx_hex=""
+    raw_tx_hex=$(${BTC_CTL} --"${BTC_NETWORK}" createrawtransaction \
+      '[{"txid":"'${utxo_txid}'","vout":'${utxo_vout}'}]' \
+      '{"data":"'${mint_tx_hash_hex}'","'${BTCD_MINING_ADDR}'":'${spend_amount}'}')
+    assert_non_empty "${raw_tx_hex}" "native mint createrawtransaction failed"
+
+    local signed_tx_json
+    signed_tx_json=$(${BTC_CTL} --"${BTC_NETWORK}" signrawtransactionwithkey \
+      "${raw_tx_hex}" \
+      '["'${BTC_FUNDING_WIF}'"]' \
+      '[{"txid":"'${utxo_txid}'","vout":'${utxo_vout}',"scriptPubKey":"'${utxo_pkscript}'","amount":'${amount_btc}'}]')
+    local signed_hex
+    signed_hex=$(echo "${signed_tx_json}" | jq -r '.hex // empty')
+    local complete
+    complete=$(echo "${signed_tx_json}" | jq -r '.complete // false')
+    if [ -z "${signed_hex}" ] || [ "${complete}" != "true" ]; then
+        fail "native mint signrawtransactionwithkey failed: ${signed_tx_json}"
+    fi
+
+    local spend_txid
+    spend_txid=$(${BTC_CTL} --"${BTC_NETWORK}" sendrawtransaction "${signed_hex}")
+    assert_non_empty "${spend_txid}" "native mint sendrawtransaction failed"
+
+    # Mine BTC blocks for confirmations (neutrino uses blockConfirmations=1)
+    mine_btcd_blocks 2
+
+    # 5. Wait for the neutrino service to detect the UTXO spend and submit a confirm tx
+    log_step "wait for neutrino to confirm native asset mint (NATIVE1)"
+    local retries=60
+    local i
+    for ((i = 0; i < retries; i++)); do
+        set +e
+        local asset_info
+        asset_info=$(${MAIN_CLI} rgbx getAsset -s NATIVE1 2>/dev/null)
+        local rc=$?
+        set -e
+        if [ "${rc}" -eq 0 ]; then
+            local symbol
+            symbol=$(echo "${asset_info}" | jq -r '.symbol // empty')
+            if [ "${symbol}" = "NATIVE1" ]; then
+                local total_amount
+                total_amount=$(echo "${asset_info}" | jq -r '.totalAmount // 0')
+                log_step "native asset NATIVE1 created, totalAmount=${total_amount}"
+                return 0
+            fi
+        fi
+        mine_btcd_blocks 1
+        sleep 2
+    done
+
+    fail "native asset NATIVE1 not created after timeout"
+}
+
 function ensure_btcd_network_consistency() {
     if [ "${BTC_NETWORK}" != "regtest" ]; then
         fail "unsupported BTC_NETWORK=${BTC_NETWORK}; this CI uses btcd --regtest only"
@@ -725,6 +829,21 @@ function run_tests() {
     scenario_user_transfer_crosschain_asset
     scenario_user_withdraw_auto_confirm
     scenario_restart_recovery
+    scenario_native_asset_mint
+}
+
+function run_native_tests() {
+    ensure_btcd_network_consistency
+    prepare_btcd_mining_identity
+    wait_btcd_ready
+    scenario_para_health
+    setup_para_nodegroup_on_main
+    wait_auto_dkg_commit
+    scenario_native_asset_mint
+}
+
+function run_all_tests_wrapper() {
+    run_tests
 }
 
 function print_logs_hint() {
@@ -759,6 +878,16 @@ function do_down() {
 case "${ACTION}" in
 run)
     do_run_all
+    ;;
+native)
+    do_up_only
+    run_native_tests
+    print_logs_hint
+    ;;
+all)
+    do_up_only
+    run_all_tests_wrapper
+    print_logs_hint
     ;;
 up)
     do_up_only
