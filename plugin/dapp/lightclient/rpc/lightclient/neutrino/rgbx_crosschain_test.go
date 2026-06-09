@@ -91,6 +91,39 @@ func Test_rgbx_createConfirmPayload_withSpendingTxAndOpReturn(t *testing.T) {
 	require.Nil(t, confirm.BtcTxProof)
 }
 
+func Test_rgbx_createConfirmPayload_prefersMatchingCommitmentOpReturn(t *testing.T) {
+	r := newRGBX()
+	r.pendingCache.addTx("abc", &rtypes.PendingTx{TxBlockHeight: 10})
+
+	spendTx := wire.NewMsgTx(wire.TxVersion)
+	spendTx.AddTxIn(wire.NewTxIn(&wire.OutPoint{}, nil, nil))
+	wrongOpRet, err := txscript.NullDataScript([]byte("rgbx:wrong"))
+	require.NoError(t, err)
+	rightCommitment, err := txscript.NullDataScript([]byte{0x11, 0x22, 0x33})
+	require.NoError(t, err)
+	spendTx.AddTxOut(wire.NewTxOut(0, wrongOpRet))
+	spendTx.AddTxOut(wire.NewTxOut(0, rightCommitment))
+	spendTx.AddTxOut(wire.NewTxOut(1000, []byte{txscript.OP_0, 0x14}))
+
+	info := &utxoSpendInfo{
+		pendingTxHash:      "abc",
+		spendingInputIndex: 0,
+		spendingTx:         spendTx,
+		blockHash:          chainhash.Hash{0x01},
+	}
+	pendTx := &rtypes.PendingTx{
+		ActionType:    rtypes.TyMintAction,
+		TxBlockHeight: 5,
+		TxIndex:       1,
+		TxHash:        []byte{0x11, 0x22, 0x33},
+	}
+
+	confirm, err := r.createConfirmPayload(info, pendTx)
+	require.NoError(t, err)
+	require.NotNil(t, confirm.UtxoProof)
+	require.Equal(t, int32(1), confirm.UtxoProof.OpRetOutputIdx)
+}
+
 func Test_estimateBtcFee(t *testing.T) {
 	tx := wire.NewMsgTx(wire.TxVersion)
 	tx.AddTxIn(wire.NewTxIn(&wire.OutPoint{}, nil, nil))

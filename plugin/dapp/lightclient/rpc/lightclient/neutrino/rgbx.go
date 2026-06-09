@@ -1,6 +1,7 @@
 package neutrino
 
 import (
+	"bytes"
 	"encoding/hex"
 	"runtime"
 	"strings"
@@ -296,10 +297,25 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo, pendTx *rtypes.PendingT
 		SpendingInputIdx: info.spendingInputIndex,
 		OpRetOutputIdx:   -1,
 	}
+	expectedCommitment, err := txscript.NullDataScript(pendTx.GetTxHash())
+	if err != nil {
+		log.Error("createConfirmPayload NullDataScript", "pendingTxHash", info.pendingTxHash, "err", err)
+		return nil, err
+	}
+	firstOpRetIdx := int32(-1)
 	for idx, out := range info.spendingTx.TxOut {
 		if len(out.PkScript) > 0 && out.PkScript[0] == txscript.OP_RETURN {
-			proof.OpRetOutputIdx = int32(idx)
+			if firstOpRetIdx < 0 {
+				firstOpRetIdx = int32(idx)
+			}
+			if bytes.Equal(out.PkScript, expectedCommitment) {
+				proof.OpRetOutputIdx = int32(idx)
+				break
+			}
 		}
+	}
+	if proof.OpRetOutputIdx < 0 {
+		proof.OpRetOutputIdx = firstOpRetIdx
 	}
 	confirm.UtxoProof = proof
 
