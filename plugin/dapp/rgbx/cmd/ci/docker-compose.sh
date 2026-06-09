@@ -15,7 +15,7 @@ ACTION="run"
 PROJECT=""
 if [ "$#" -gt 0 ]; then
     case "${1}" in
-    run | up | down | init | config | test | native)
+    run | up | down | init | config | test | native | all)
         ACTION="${1}"
         PROJECT="${2:-build}"
         ;;
