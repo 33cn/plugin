@@ -720,15 +720,30 @@ function scenario_native_asset_mint() {
     # genesis_out format for mint: hash:index:pkScript
     local genesis_out="${utxo_txid}:${utxo_vout}:${utxo_pkscript}"
 
+    # Verify chain33 is producing blocks before mint
+    local pre_height
+    pre_height=$(${MAIN_CLI} block last_header | jq '.height')
+    log_step "chain33 height before mint: ${pre_height}"
+
     # 2. Mint a native asset on chain33 with the genesis UTXO
     local mint_hash
-    mint_hash=$(${MAIN_CLI} send rgbx mint -s NATIVE1 -a 10000 -o "${genesis_out}" -m "6e6174697665316d657461" -k "${GENESIS_KEY}" 2>/dev/null)
-    if [ -z "${mint_hash}" ] || [ ${#mint_hash} -lt 64 ]; then
-        fail "native mint send failed, hash=${mint_hash}"
+    local mint_rc
+    local mint_stdout
+    mint_stdout=$(${MAIN_CLI} send rgbx mint -s NATIVE1 -a 10000 -o "${genesis_out}" -m "6e6174697665316d657461" -k "${GENESIS_KEY}" 2>/tmp/mint_stderr.$$)
+    mint_rc=$?
+    mint_hash="${mint_stdout}"
+    if [ ${mint_rc} -ne 0 ] || [ -z "${mint_hash}" ] || [ ${#mint_hash} -lt 64 ]; then
+        log_step "mint send stderr: $(head -5 /tmp/mint_stderr.$$ 2>/dev/null)"
+        rm -f /tmp/mint_stderr.$$
+        fail "native mint send failed, rc=${mint_rc}, hash=${mint_hash}"
     fi
+    rm -f /tmp/mint_stderr.$$
 
     # Wait for mint tx to be confirmed on chain33
-    block_wait "${MAIN_CLI}" 1
+    # send command already waits for the tx to be committed in a block
+    local post_height
+    post_height=$(${MAIN_CLI} block last_header | jq '.height')
+    log_step "mint tx hash: ${mint_hash}, height after mint: ${post_height}"
 
     # 3. Get the full mint tx hash from chain33 for OP_RETURN commitment
     # The send output gives us the chain33 tx hash hex (may contain 0x prefix)
@@ -804,8 +819,9 @@ function run_tests() {
     scenario_user_deposit_via_btc_tx
     scenario_user_transfer_crosschain_asset
     scenario_user_withdraw_auto_confirm
-    scenario_restart_recovery
+    # Run native asset test before restart so chain33 consensus is stable
     scenario_native_asset_mint
+    scenario_restart_recovery
 }
 
 function run_native_tests() {
