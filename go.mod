@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/33cn/chain33 v1.69.1-0.20260508025622-0fa35083839d
+	github.com/33cn/chain33 v1.69.1-0.20260730124452-aa71469c0974
 	github.com/BurntSushi/toml v1.2.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/bitly/go-simplejson v0.5.0
