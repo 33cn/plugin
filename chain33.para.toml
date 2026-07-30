@@ -408,6 +408,7 @@ ForkIntrinsicGas=0
 ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEvmExecNonceV2=0
+ForkEVMFixOverflow=0
 [fork.sub.blackwhite]
 Enable=0
 ForkBlackWhiteV2=0
