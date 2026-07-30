@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"math"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
@@ -155,8 +157,14 @@ func updateAddrReciver(cachedb dbm.KVDB, token string, addr string, amount int64
 		return nil, err
 	}
 	if isadd {
+		if amount > 0 && recv > math.MaxInt64-amount {
+			return nil, types.ErrAmount
+		}
 		recv += amount
 	} else {
+		if amount > 0 && recv < math.MinInt64+amount {
+			return nil, types.ErrAmount
+		}
 		recv -= amount
 	}
 	err = setAddrReciver(cachedb, token, addr, recv)
