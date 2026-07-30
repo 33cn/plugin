@@ -108,7 +108,14 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		}
 
 		env.StateDB.Snapshot()
-		env.Transfer(env.StateDB, caller, receiver, msg.Value())
+		if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMFixOverflow) {
+			if !env.Transfer(env.StateDB, caller, receiver, msg.Value()) {
+				log.Error("innerExec", "Transfer failed", "from", caller.String(), "to", receiver.String(), "amount", msg.Value())
+				return nil, types.ErrNoBalance
+			}
+		} else {
+			env.Transfer(env.StateDB, caller, receiver, msg.Value())
+		}
 		curVer := evm.mStateDB.GetLastSnapshot()
 		kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
