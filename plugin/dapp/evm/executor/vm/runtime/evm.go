@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -18,6 +19,22 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
+
+// checkBlockedAccount 合约内部调用/创建的黑名单拦截（fork 门控）。
+// 命中返回包装后的 types.ErrBlockedAccount，由调用方返回 error 触发 RevertToSnapshot。
+// 与 executor 层共用 types 黑名单，按 EVM 地址（0x 字符串）检查。
+func checkBlockedAccount(evm *EVM, addrs ...common.Address) error {
+	cfg := evm.cfg
+	if cfg == nil || evm.BlockNumber == nil || !cfg.IsFork(evm.BlockNumber.Int64(), types.ForkAccountBlacklist) {
+		return nil
+	}
+	for _, addr := range addrs {
+		if types.IsBlockedAccount(addr.String()) {
+			return fmt.Errorf("%w: %s", types.ErrBlockedAccount, addr.String())
+		}
+	}
+	return nil
+}
 
 type (
 	// CanTransferFunc 检查制定账户是否有足够的金额进行转账
@@ -198,6 +215,12 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if !pass {
 		log.Error("Call", "preCheck:", err)
 		return nil, -1, gas, err
+	}
+
+	// 账户黑名单：合约内部调用拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）
+	if berr := checkBlockedAccount(evm, caller.Address(), addr); berr != nil {
+		log.Error("Call blocked account", "caller", caller.Address().String(), "addr", addr.String(), "err", berr)
+		return nil, -1, gas, berr
 	}
 
 	p, sp, isPrecompile := evm.precompile(addr)
@@ -479,6 +502,12 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	pass, err := evm.preCheck(caller, value)
 	if !pass {
 		return nil, -1, gas, err
+	}
+
+	// 账户黑名单：合约创建拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）
+	if berr := checkBlockedAccount(evm, caller.Address(), contractAddr); berr != nil {
+		log.Error("Create blocked account", "caller", caller.Address().String(), "contractAddr", contractAddr.String(), "err", berr)
+		return nil, -1, gas, berr
 	}
 
 	evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value)

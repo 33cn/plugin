@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
@@ -215,6 +216,12 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 
 	if tx == nil {
 		return fmt.Errorf("tx empty")
+	}
+
+	// 账户黑名单入口检查（fork 门控）
+	if err := checkEvmBlockedAccount(evm.GetAPI().GetConfig(), evm.GetHeight(), tx.From()); err != nil {
+		elog.Error("evm CheckTx blocked account", "txhash", hex.EncodeToString(tx.Hash()), "from", tx.From(), "err", err)
+		return err
 	}
 
 	return state.ProcessCheck(evm.GetMainHeight(), tx.Hash())
