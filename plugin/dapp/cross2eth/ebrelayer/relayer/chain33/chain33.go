@@ -617,13 +617,19 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 
 func (chain33Relayer *Relayer4Chain33) BurnAsyncFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return burnAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
 
 func (chain33Relayer *Relayer4Chain33) LockBTYAssetAsync(ownerPrivateKey, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return lockAsync(ownerPrivateKey, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
 
@@ -782,12 +788,18 @@ func (chain33Relayer *Relayer4Chain33) GetMultiSignAddr() string {
 
 func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return withdrawAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
 
 func (chain33Relayer *Relayer4Chain33) BurnWithIncreaseAsyncFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return burnWithIncreaseAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
