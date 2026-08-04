@@ -9,7 +9,7 @@ import (
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
 
@@ -119,7 +119,7 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	if err != nil {
 		return err
 	}
-	success, err := pubKey.Verify(signInfo, wallet.GetMsgHash(msg), mimc.NewMiMC(zt.ZkMimcHashSeed))
+	success, err := pubKey.Verify(signInfo, wallet.GetMsgHash(msg), legacymimc.NewMiMC(zt.ZkMimcHashSeed))
 	if err != nil {
 		return err
 	}

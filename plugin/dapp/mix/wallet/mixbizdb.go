@@ -7,7 +7,6 @@ package wallet
 import (
 	"encoding/hex"
 
-	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/common"
 
@@ -69,7 +68,7 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 				bizlog.Error("processWithdraw decode", "pubInput", m.PublicInput)
 				continue
 			}
-			nullHash := v.NullifierHash.GetWitnessValue(ecc.BN254)
+			nullHash := mixTy.VariableToElement(v.NullifierHash)
 			nulls = append(nulls, nullHash.String())
 		}
 		p.processNullifiers(nulls, table)
@@ -102,7 +101,7 @@ func (p *mixPolicy) processDeposit(deposit *mixTy.MixDepositAction, heightIndex 
 			bizlog.Error("processDeposit decode", "pubInput", proof.PublicInput)
 			return
 		}
-		noteHash := v.NoteHash.GetWitnessValue(ecc.BN254)
+		noteHash := mixTy.VariableToElement(v.NoteHash)
 		p.processSecretGroup(noteHash.String(), proof.Secrets, heightIndex, table)
 	}
 
@@ -117,7 +116,7 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 			bizlog.Error("processTransfer.input decode", "pubInput", in.PublicInput)
 			return
 		}
-		nullHash := v.NullifierHash.GetWitnessValue(ecc.BN254)
+		nullHash := mixTy.VariableToElement(v.NullifierHash)
 		nulls = append(nulls, nullHash.String())
 	}
 	p.processNullifiers(nulls, table)
@@ -129,7 +128,7 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Output.PublicInput)
 		return
 	}
-	noteHash := out.NoteHash.GetWitnessValue(ecc.BN254)
+	noteHash := mixTy.VariableToElement(out.NoteHash)
 	p.processSecretGroup(noteHash.String(), transfer.Output.Secrets, heightIndex, table)
 
 	//change
@@ -139,7 +138,7 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Change.PublicInput)
 		return
 	}
-	changeNoteHash := change.NoteHash.GetWitnessValue(ecc.BN254)
+	changeNoteHash := mixTy.VariableToElement(change.NoteHash)
 	p.processSecretGroup(changeNoteHash.String(), transfer.Change.Secrets, heightIndex, table)
 
 }
@@ -151,10 +150,10 @@ func (p *mixPolicy) processAuth(auth *mixTy.MixAuthorizeAction, table *table.Tab
 		bizlog.Error("processAuth decode", "pubInput", auth.ProofInfo.PublicInput)
 		return
 	}
-	authNullHash := v.AuthorizeHash.GetWitnessValue(ecc.BN254)
+	authNullHash := mixTy.VariableToElement(v.AuthorizeHash)
 	updateAuthHash(table, authNullHash.String())
 
-	authSpendHash := v.AuthorizeSpendHash.GetWitnessValue(ecc.BN254)
+	authSpendHash := mixTy.VariableToElement(v.AuthorizeSpendHash)
 	updateAuthSpend(table, authSpendHash.String())
 
 }

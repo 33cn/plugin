@@ -17,10 +17,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
-var h = mimc.NewMiMC("seed")
+var h = legacymimc.NewMiMC("seed")
 
 func TestLeafHash(t *testing.T) {
 	leaves := []string{

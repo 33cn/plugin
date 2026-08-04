@@ -1,3 +1,5 @@
+//go:build !386
+
 package types
 
 import (
@@ -14,6 +16,7 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
+	r1csbuilder "github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/test"
 )
 
@@ -36,17 +39,17 @@ func TestDeposit(t *testing.T) {
 	var depositCircuit DepositCircuit
 
 	// compiles our circuit into a R1CS
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &depositCircuit)
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1csbuilder.NewBuilder, &depositCircuit)
 	assert.Nil(t, err)
 
 	{
 		//var witness Deposit
-		depositCircuit.NoteHash.Assign("14803109164298493466684583242985432968056297173621710679077236816845588688436")
-		depositCircuit.Amount.Assign(28242048)
-		depositCircuit.ReceiverPubKey.Assign("13496572805321444273664325641440458311310163934354047265362731297880627774936")
-		depositCircuit.ReturnPubKey.Assign("10193030166569398670555398535278072963719579248877156082361830729347727033510")
-		depositCircuit.AuthorizePubKey.Assign("2302306531516619173363925550130201424458047172090558749779153607734711372580")
-		depositCircuit.NoteRandom.Assign("2824204835")
+		depositCircuit.NoteHash = "14803109164298493466684583242985432968056297173621710679077236816845588688436"
+		depositCircuit.Amount = 28242048
+		depositCircuit.ReceiverPubKey = "13496572805321444273664325641440458311310163934354047265362731297880627774936"
+		depositCircuit.ReturnPubKey = "10193030166569398670555398535278072963719579248877156082361830729347727033510"
+		depositCircuit.AuthorizePubKey = "2302306531516619173363925550130201424458047172090558749779153607734711372580"
+		depositCircuit.NoteRandom = "2824204835"
 		//assert.ProverSucceeded(r1cs, &depositCircuit)
 
 		var circuit DepositCircuit
@@ -55,7 +58,12 @@ func TestDeposit(t *testing.T) {
 
 	}
 	var pubBuf bytes.Buffer
-	witness.WritePublicTo(&pubBuf, ecc.BN254, &depositCircuit)
+	w, err := frontend.NewWitness(&depositCircuit, ecc.BN254.ScalarField())
+	assert.Nil(t, err)
+	pubW, err := w.Public()
+	assert.Nil(t, err)
+	_, err = pubW.WriteTo(&pubBuf)
+	assert.Nil(t, err)
 	//fmt.Println("buf",hex.EncodeToString(pubBuf.Bytes()))
 	pubStr := hex.EncodeToString(pubBuf.Bytes())
 
@@ -67,7 +75,9 @@ func TestDeposit(t *testing.T) {
 	//fmt.Println("vk",hex.EncodeToString(buf.Bytes()))
 	vkStr := hex.EncodeToString(buf.Bytes())
 
-	proof, err := groth16.Prove(r1cs, pk, &depositCircuit)
+	fw, err := frontend.NewWitness(&depositCircuit, ecc.BN254.ScalarField())
+	assert.Nil(t, err)
+	proof, err := groth16.Prove(r1cs, pk, fw)
 	assert.Nil(t, err)
 	buf.Reset()
 	proof.WriteTo(&buf)
@@ -90,7 +100,11 @@ func TestDeposit(t *testing.T) {
 	buf.Reset()
 	buf.Write(d)
 
-	err = groth16.ReadAndVerify(prt, vkt, &buf)
+	pubW2, err := witness.New(ecc.BN254.ScalarField())
+	assert.Nil(t, err)
+	_, err = pubW2.ReadFrom(&buf)
+	assert.Nil(t, err)
+	err = groth16.Verify(prt, vkt, pubW2)
 	assert.Nil(t, err)
 }
 
@@ -113,8 +127,8 @@ func TestDepositSetVal(t *testing.T) {
 
 	var depositCircuit DepositCircuit
 	getVal(&depositCircuit, val)
-	fmt.Println("deposit", depositCircuit.NoteHash.GetWitnessValue(ecc.BN254))
-	fmt.Println("amount", depositCircuit.Amount.GetWitnessValue(ecc.BN254))
+	fmt.Println("deposit", VariableToElement(depositCircuit.NoteHash))
+	fmt.Println("amount", VariableToElement(depositCircuit.Amount))
 
 }
 
@@ -131,7 +145,7 @@ func getVal(input frontend.Circuit, w Witness) {
 		f := tValue.FieldByName(field.Name)
 		a := f.Addr().Interface().(*frontend.Variable)
 		//a:=tValue.Field(i).Interface().(frontend.Variable)
-		a.Assign(v.String())
+		*a = v.String()
 	}
 }
 
@@ -144,12 +158,12 @@ func getVal(input frontend.Circuit, w Witness) {
 //	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &depositCircuit)
 //	assert.Nil(t, err)
 //
-//	depositCircuit.NoteHash.Assign("14803109164298493466684583242985432968056297173621710679077236816845588688436")
-//	depositCircuit.Amount.Assign(28242048)
-//	depositCircuit.ReceiverPubKey.Assign("13496572805321444273664325641440458311310163934354047265362731297880627774936")
-//	depositCircuit.ReturnPubKey.Assign("10193030166569398670555398535278072963719579248877156082361830729347727033510")
-//	depositCircuit.AuthorizePubKey.Assign("2302306531516619173363925550130201424458047172090558749779153607734711372580")
-//	depositCircuit.NoteRandom.Assign(2824204835)
+//	depositCircuit.NoteHash = "14803109164298493466684583242985432968056297173621710679077236816845588688436"
+//	depositCircuit.Amount = 28242048
+//	depositCircuit.ReceiverPubKey = "13496572805321444273664325641440458311310163934354047265362731297880627774936"
+//	depositCircuit.ReturnPubKey = "10193030166569398670555398535278072963719579248877156082361830729347727033510"
+//	depositCircuit.AuthorizePubKey = "2302306531516619173363925550130201424458047172090558749779153607734711372580"
+//	depositCircuit.NoteRandom = 2824204835
 //
 //
 //	pfStr,pubStr,vkStr := getZkProofKeys(t,r1cs,".","circuit_deposit",&depositCircuit)

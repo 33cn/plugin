@@ -1,9 +1,8 @@
 package types
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 type TransferOutputCircuit struct {
@@ -24,9 +23,9 @@ type TransferOutputCircuit struct {
 }
 
 // Define declares the circuit's constraints
-func (circuit *TransferOutputCircuit) Define(curveID ecc.ID, cs frontend.API) error {
+func (circuit *TransferOutputCircuit) Define(cs frontend.API) error {
 	// hash function
-	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
+	h, _ := legacymimc.NewCircuitMiMC(cs, MimcHashSeed)
 	mimc := &h
 	mimc.Write(circuit.ReceiverPubKey, circuit.ReturnPubKey, circuit.AuthorizePubKey, circuit.Amount, circuit.NoteRandom)
 	cs.AssertIsEqual(circuit.NoteHash, mimc.Sum())

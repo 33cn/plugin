@@ -19,6 +19,7 @@ package zksnark
 import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/backend/witness"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
@@ -52,7 +53,14 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 
 	// verify proof
 	//start := time.Now()
-	err = groth16.ReadAndVerify(proof, vk, pubBuf)
+	pubW, err := witness.New(ecc.BN254.ScalarField())
+	if err != nil {
+		return false, errors.Wrapf(err, "zkVerify.pub.witness")
+	}
+	if _, err = pubW.ReadFrom(pubBuf); err != nil {
+		return false, errors.Wrapf(err, "zkVerify.pub.witness.read")
+	}
+	err = groth16.Verify(proof, vk, pubW)
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.verify")
 	}

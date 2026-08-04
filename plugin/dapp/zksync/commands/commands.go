@@ -20,7 +20,7 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -724,7 +724,7 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	hash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
 	fmt.Println(hex.EncodeToString(hash.Sum(nil)))

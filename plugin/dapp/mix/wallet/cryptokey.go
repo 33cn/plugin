@@ -6,6 +6,8 @@ package wallet
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"encoding/hex"
 
 	"github.com/pkg/errors"
@@ -15,7 +17,7 @@ import (
 
 	wcom "github.com/33cn/chain33/wallet/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 const CECBLOCKSIZE = 32
@@ -103,6 +105,26 @@ func encryptData(peerPubKey string, data []byte) (*mixTy.DHSecret, error) {
 }
 
 func decryptDataWithPading(password, data []byte) ([]byte, error) {
+	// chain33 CBCEncrypterPrivkey 自 v0.69.1 后使用随机 IV，返回 IV(16)+ciphertext 格式。
+	// chain33 的 CBCDecrypterPrivkey 新格式仅支持 32 字节明文（钱包私钥场景），
+	// mix 加密数据明文大于 32 字节需在此自行按新格式解密，并回退兼容旧格式。
+	if len(data) > 16 {
+		key := make([]byte, 32)
+		copy(key, password)
+		block, err := aes.NewCipher(key)
+		if err == nil {
+			iv := data[:block.BlockSize()]
+			ciphertext := data[block.BlockSize():]
+			if len(ciphertext) > 0 && len(ciphertext)%block.BlockSize() == 0 {
+				decrypted := make([]byte, len(ciphertext))
+				cipher.NewCBCDecrypter(block, iv).CryptBlocks(decrypted, ciphertext)
+				if plain, err := pKCS5UnPadding(decrypted); err == nil {
+					return plain, nil
+				}
+			}
+		}
+	}
+	// 旧格式回退（IV 取 key 前 16 字节）
 	plainData := wcom.CBCDecrypterPrivkey(password, data)
 	return pKCS5UnPadding(plainData)
 }
@@ -142,7 +164,7 @@ func mimcHashByte(params [][]byte) []byte {
 }
 
 func mimcHashCalc(sum []byte) []byte {
-	h := mimc.NewMiMC(mixTy.MimcHashSeed)
+	h := legacymimc.NewMiMC(mixTy.MimcHashSeed)
 	h.Write(sum)
 	return h.Sum(nil)
 }

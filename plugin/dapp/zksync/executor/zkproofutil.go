@@ -23,14 +23,17 @@ func calcPubDataCommitHash(mimcHash hash.Hash, blockStart, blockEnd uint64, oldR
 	t = f.SetUint64(blockEnd).Bytes()
 	mimcHash.Write(t[:])
 
-	t = f.SetString(oldRoot).Bytes()
+	v, _ := f.SetString(oldRoot)
+	t = v.Bytes()
 	mimcHash.Write(t[:])
 
-	t = f.SetString(newRoot).Bytes()
+	v, _ = f.SetString(newRoot)
+	t = v.Bytes()
 	mimcHash.Write(t[:])
 
 	for _, r := range pubDatas {
-		t = f.SetString(r).Bytes()
+		v, _ = f.SetString(r)
+		t = v.Bytes()
 		mimcHash.Write(t[:])
 	}
 	ret := mimcHash.Sum(nil)
@@ -42,14 +45,16 @@ func calcOnChainPubDataCommitHash(mimcHash hash.Hash, newRoot string, pubDatas [
 	mimcHash.Reset()
 	var f fr.Element
 
-	t := f.SetString(newRoot).Bytes()
+	v, _ := f.SetString(newRoot)
+	t := v.Bytes()
 	mimcHash.Write(t[:])
 
 	sum := mimcHash.Sum(nil)
 
 	for _, p := range pubDatas {
 		mimcHash.Reset()
-		t = f.SetString(p).Bytes()
+		v, _ = f.SetString(p)
+		t = v.Bytes()
 		mimcHash.Write(sum)
 		mimcHash.Write(t[:])
 		sum = mimcHash.Sum(nil)

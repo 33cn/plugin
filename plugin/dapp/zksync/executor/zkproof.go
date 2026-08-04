@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"bytes"
 
 	"github.com/33cn/chain33/common"
@@ -9,11 +10,19 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	fr_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
 )
+
+// zkVariableToElement 将 circuit public input 变量值（string）转回 fr.Element
+func zkVariableToElement(v frontend.Variable) fr_bn254.Element {
+	var el fr_bn254.Element
+	el.SetString(fmt.Sprint(v))
+	return el
+}
 
 func makeSetVerifyKeyReceipt(oldKey, newKey *zt.ZkVerifyKey) *types.Receipt {
 	key := getVerifyKey()
@@ -249,7 +258,7 @@ type commitProofCircuit struct {
 	OnChainPubDataCommitment frontend.Variable `gnark:",public"`
 }
 
-func (circuit *commitProofCircuit) Define(curveID ecc.ID, api frontend.API) error {
+func (circuit *commitProofCircuit) Define(api frontend.API) error {
 	return nil
 }
 
@@ -472,26 +481,41 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 		return errors.Wrapf(err, "read public input str")
 	}
 	var proofCircuit commitProofCircuit
-	_, err = witness.ReadPublicFrom(pBuff, ecc.BN254, &proofCircuit)
+	w, err := witness.New(ecc.BN254.ScalarField())
+	if err != nil {
+		return errors.Wrapf(err, "create witness")
+	}
+	_, err = w.ReadFrom(pBuff)
 	if err != nil {
 		return errors.Wrapf(err, "read public input")
 	}
+	vec, ok := w.Vector().(fr_bn254.Vector)
+	if !ok {
+		return errors.New("wrong witness vector type")
+	}
+	//commitProofCircuit 的两个 public 字段按声明顺序对应 vector
+	if len(vec) >= 1 {
+		proofCircuit.PubDataCommitment = vec[0].String()
+	}
+	if len(vec) >= 2 {
+		proofCircuit.OnChainPubDataCommitment = vec[1].String()
+	}
 	//计算pubData hash 需要和commit的一致
-	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	commitPubDataHash := proofCircuit.PubDataCommitment.GetWitnessValue(ecc.BN254)
+	mimcHash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
+	commitPubDataHash := zkVariableToElement(proofCircuit.PubDataCommitment)
 	calcPubDataHash := calcPubDataCommitHash(mimcHash, proof.BlockStart, proof.BlockEnd, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
 	if commitPubDataHash.String() != calcPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "pubData hash not match, PI=%s,calc=%s", commitPubDataHash.String(), calcPubDataHash)
 	}
 
 	//计算onChain pubData hash 需要和commit的一致
-	commitOnChainPubDataHash := proofCircuit.OnChainPubDataCommitment.GetWitnessValue(ecc.BN254)
+	commitOnChainPubDataHash := zkVariableToElement(proofCircuit.OnChainPubDataCommitment)
 	calcOnChainPubDataHash := calcOnChainPubDataCommitHash(mimcHash, proof.NewTreeRoot, proof.OnChainPubDatas)
 	if commitOnChainPubDataHash.String() != calcOnChainPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "onChain pubData hash not match, PI=%s,calc=%s", commitOnChainPubDataHash.String(), calcOnChainPubDataHash)
 	}
 	//验证证明
-	ok, err := zksnark.Verify(verifyKey, proof.Proof, proof.PublicInput)
+	ok, err = zksnark.Verify(verifyKey, proof.Proof, proof.PublicInput)
 	if err != nil {
 		return errors.Wrapf(err, "proof verify error")
 	}
