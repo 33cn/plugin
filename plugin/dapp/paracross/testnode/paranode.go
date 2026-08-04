@@ -27,6 +27,9 @@ func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNo
 		cfg := types.NewChain33Config(DefaultConfig)
 		cfg.GetModuleConfig().RPC.ParaChain.MainChainGrpcAddr = main.GetCfg().RPC.GrpcBindAddr
 		para = testnode.NewWithConfig(cfg, nil)
+		// chain33 ForkParaFee 默认-1，测试模式 SetAllFork(0) 激活收费
+		// 导致 para 链处理同步区块时收手续费破坏共识，手动覆盖
+		para.GetClient().GetConfig().SetFork("ForkParaFee", types.MaxHeight)
 		para.Listen()
 	}
 	return &ParaNode{Main: main, Para: para}
