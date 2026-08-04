@@ -28,7 +28,7 @@ type SimExtend struct {
 
 // HeaderByNumber ...
 func (sim *SimExtend) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
-	return sim.Blockchain().CurrentBlock(), nil
+	return sim.Client.HeaderByNumber(ctx, number)
 }
 
 // NetworkID ...

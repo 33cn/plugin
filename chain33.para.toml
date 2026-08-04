@@ -1,4 +1,5 @@
 Title="user.p.para."
+DisableForkCheck=true
 TestNet=false
 CoinSymbol="para"
 EnableParaFork=true
@@ -324,6 +325,8 @@ ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
 ForkMaxTxFeeV1=0
+ForkAccountBlacklist=-1
+ForkParaFee=-1
 ForkEthAddressFormat=0
 
 [fork.sub.none]

@@ -33,8 +33,8 @@ build: depends
 
 build_ci: depends ## Build the binary file for CI (Linux/amd64|arm64 when not on Linux, for Docker)
 	@if [ "$$(uname)" = "Linux" ]; then \
-		go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
-		go build $(BUILD_FLAGS) -v -o $(APP); \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(APP); \
 	else \
 		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
 		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(APP); \
