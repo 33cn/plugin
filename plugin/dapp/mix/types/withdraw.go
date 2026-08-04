@@ -1,9 +1,8 @@
 package types
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 type WithdrawCircuit struct {
@@ -59,18 +58,18 @@ type WithdrawCircuit struct {
 }
 
 // Define declares the circuit's constraints
-func (circuit *WithdrawCircuit) Define(curveID ecc.ID, cs frontend.API) error {
+func (circuit *WithdrawCircuit) Define(cs frontend.API) error {
 	cs.AssertIsBoolean(circuit.SpendFlag)
 	cs.AssertIsBoolean(circuit.AuthorizeFlag)
 
 	// hash function
-	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
+	h, _ := legacymimc.NewCircuitMiMC(cs, MimcHashSeed)
 	mimc := &h
 	mimc.Write(circuit.SpendPriKey)
 	targetSpendKey := cs.Select(circuit.SpendFlag, circuit.ReceiverPubKey, circuit.ReturnPubKey)
 	cs.AssertIsEqual(targetSpendKey, mimc.Sum())
 
-	nullValue := cs.Constant(0)
+	nullValue := 0
 	mimc.Reset()
 	mimc.Write(targetSpendKey, circuit.Amount, circuit.NoteRandom)
 	calcAuthHash := mimc.Sum()
@@ -101,7 +100,7 @@ func (circuit *WithdrawCircuit) Define(curveID ecc.ID, cs frontend.API) error {
 	proofSet = append(proofSet, circuit.Path9)
 
 	//helper[0],valid[0]占位， 方便接口只设置有效值
-	helper = append(helper, cs.Constant("1"))
+	helper = append(helper, "1")
 	helper = append(helper, circuit.Helper0)
 	helper = append(helper, circuit.Helper1)
 	helper = append(helper, circuit.Helper2)
@@ -113,7 +112,7 @@ func (circuit *WithdrawCircuit) Define(curveID ecc.ID, cs frontend.API) error {
 	helper = append(helper, circuit.Helper8)
 	helper = append(helper, circuit.Helper9)
 
-	valid = append(valid, cs.Constant("1"))
+	valid = append(valid, "1")
 	valid = append(valid, circuit.Valid0)
 	valid = append(valid, circuit.Valid1)
 	valid = append(valid, circuit.Valid2)

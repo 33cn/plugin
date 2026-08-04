@@ -14,9 +14,9 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/backend/witness"
-
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
 
 	"github.com/pkg/errors"
 
@@ -24,8 +24,6 @@ import (
 	"github.com/33cn/chain33/types"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-
-	"github.com/consensys/gnark/backend"
 
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 )
@@ -140,18 +138,18 @@ func (p *mixPolicy) getTreeProof(exec, symbol, leaf string) (*mixTy.TreePathProo
 	return &proof, nil
 }
 
-func getCircuit(circuitTy mixTy.VerifyType) (frontend.CompiledConstraintSystem, error) {
+func getCircuit(circuitTy mixTy.VerifyType) (constraint.ConstraintSystem, error) {
 	switch circuitTy {
 	case mixTy.VerifyType_DEPOSIT:
-		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.DepositCircuit{})
+		return frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &mixTy.DepositCircuit{})
 	case mixTy.VerifyType_WITHDRAW:
-		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.WithdrawCircuit{})
+		return frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &mixTy.WithdrawCircuit{})
 	case mixTy.VerifyType_TRANSFERINPUT:
-		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.TransferInputCircuit{})
+		return frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &mixTy.TransferInputCircuit{})
 	case mixTy.VerifyType_TRANSFEROUTPUT:
-		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.TransferOutputCircuit{})
+		return frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &mixTy.TransferOutputCircuit{})
 	case mixTy.VerifyType_AUTHORIZE:
-		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.AuthorizeCircuit{})
+		return frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &mixTy.AuthorizeCircuit{})
 	default:
 		return nil, errors.Wrapf(types.ErrInvalidParam, "ty=%d", circuitTy)
 	}
@@ -189,8 +187,12 @@ func readZkKeyFile(path string) (string, error) {
 	return buf.String(), nil
 }
 
-func createProof(circuit frontend.CompiledConstraintSystem, pk groth16.ProvingKey, witness frontend.Circuit) (groth16.Proof, error) {
-	return groth16.Prove(circuit, pk, witness)
+func createProof(circuit constraint.ConstraintSystem, pk groth16.ProvingKey, witnessInput frontend.Circuit) (groth16.Proof, error) {
+	w, err := frontend.NewWitness(witnessInput, ecc.BN254.ScalarField())
+	if err != nil {
+		return nil, errors.Wrapf(err, "create witness")
+	}
+	return groth16.Prove(circuit, pk, w)
 
 }
 
@@ -201,17 +203,17 @@ func updateTreePath(obj interface{}, treeProof *mixTy.TreePathProof) {
 	}
 	index := 0
 	for i, t := range treeProof.TreePath {
-		tv.FieldByName("Path" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign(t)
-		tv.FieldByName("Helper" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign(strconv.Itoa(int(treeProof.Helpers[i])))
-		tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("1")
+		*(tv.FieldByName("Path" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable)) = t
+		*(tv.FieldByName("Helper" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable)) = strconv.Itoa(int(treeProof.Helpers[i]))
+		*(tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable)) = "1"
 		index = i + 1
 	}
 
 	//电路变量必须设置
 	for i := index; i < mixTy.TreeLevel; i++ {
-		tv.FieldByName("Path" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
-		tv.FieldByName("Helper" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
-		tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
+		*(tv.FieldByName("Path" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable)) = "0"
+		*(tv.FieldByName("Helper" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable)) = "0"
+		*(tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable)) = "0"
 
 	}
 }
@@ -251,8 +253,15 @@ func getZkProofKeys(circuitTy mixTy.VerifyType, path, file string, inputs fronte
 
 	//公开输入序列化
 	var pubBuf bytes.Buffer
-	_, err = witness.WritePublicTo(&pubBuf, ecc.BN254, inputs)
+	w, err := frontend.NewWitness(inputs, ecc.BN254.ScalarField())
 	if err != nil {
+		return nil, errors.Wrapf(err, "create public witness")
+	}
+	pubW, err := w.Public()
+	if err != nil {
+		return nil, errors.Wrapf(err, "extract public witness")
+	}
+	if _, err = pubW.WriteTo(&pubBuf); err != nil {
 		return nil, errors.Wrapf(err, "write public input")
 	}
 

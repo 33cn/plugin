@@ -4,23 +4,35 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/big"
 	"reflect"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	bn254 "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
+	twistededwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/backend/witness"
 	"github.com/pkg/errors"
 
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"github.com/consensys/gnark/std/hash/mimc"
+	stdtwistededwards "github.com/consensys/gnark/std/algebra/native/twistededwards"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
 type Witness []fr.Element
+
+// VariableToElement 将 circuit 的 public input 变量值转换回 fr.Element。
+// gnark v0.9.0 后 frontend.Variable 为 interface{}，保存的是字符串值，
+// 替代旧的 GetWitnessValue(ecc.BN254) 调用。
+func VariableToElement(v frontend.Variable) fr.Element {
+	var el fr.Element
+	el.SetString(fmt.Sprint(v))
+	return el
+}
 
 func (witness *Witness) LimitReadFrom(r io.Reader) (int64, error) {
 
@@ -46,7 +58,7 @@ func (witness *Witness) LimitReadFrom(r io.Reader) (int64, error) {
 	return dec.BytesRead() + 4, nil
 }
 
-func VerifyMerkleProof(cs frontend.API, mimc *mimc.MiMC, treeRootHash frontend.Variable, proofSet, helper, valid []frontend.Variable) {
+func VerifyMerkleProof(cs frontend.API, mimc *legacymimc.CircuitMiMC, treeRootHash frontend.Variable, proofSet, helper, valid []frontend.Variable) {
 	sum := leafSum(mimc, proofSet[0])
 
 	for i := 1; i < len(proofSet); i++ {
@@ -64,7 +76,7 @@ func VerifyMerkleProof(cs frontend.API, mimc *mimc.MiMC, treeRootHash frontend.V
 
 // nodeSum returns the hash created from data inserted to form a leaf.
 // Without domain separation.
-func nodeSum(mimc *mimc.MiMC, a, b frontend.Variable) frontend.Variable {
+func nodeSum(mimc *legacymimc.CircuitMiMC, a, b frontend.Variable) frontend.Variable {
 	mimc.Reset()
 	mimc.Write(a, b)
 	return mimc.Sum()
@@ -73,7 +85,7 @@ func nodeSum(mimc *mimc.MiMC, a, b frontend.Variable) frontend.Variable {
 
 // leafSum returns the hash created from data inserted to form a leaf.
 // Without domain separation.
-func leafSum(mimc *mimc.MiMC, data frontend.Variable) frontend.Variable {
+func leafSum(mimc *legacymimc.CircuitMiMC, data frontend.Variable) frontend.Variable {
 	mimc.Reset()
 	mimc.Write(data)
 	return mimc.Sum()
@@ -83,19 +95,15 @@ func CommitValueVerify(cs frontend.API, amount, amountRandom,
 	shieldAmountX, shieldAmountY, shieldPointHX, shieldPointHY frontend.Variable) {
 	cs.AssertIsLessOrEqual(amount, "9000000000000000000")
 
-	curve, _ := twistededwards.NewEdCurve(ecc.BN254)
-	var pointAmount twistededwards.Point
-	pointAmount.ScalarMulFixedBase(cs, curve.BaseX, curve.BaseY, amount, curve)
+	curve, _ := stdtwistededwards.NewEdCurve(cs, twistededwards.BN254)
+	params := curve.Params()
+	pointAmount := curve.ScalarMul(stdtwistededwards.Point{X: params.Base[0], Y: params.Base[1]}, amount)
 
-	var pointH twistededwards.Point
-	pointH.X = shieldPointHX
-	pointH.Y = shieldPointHY
+	pointH := stdtwistededwards.Point{X: shieldPointHX, Y: shieldPointHY}
 
-	var pointRandom twistededwards.Point
-	pointRandom.ScalarMulNonFixedBase(cs, &pointH, amountRandom, curve)
+	pointRandom := curve.ScalarMul(pointH, amountRandom)
 
-	var pointSum twistededwards.Point
-	pointSum.AddGeneric(cs, &pointAmount, &pointRandom, curve)
+	pointSum := curve.Add(pointAmount, pointRandom)
 	cs.AssertIsEqual(pointSum.X, shieldAmountX)
 	cs.AssertIsEqual(pointSum.Y, shieldAmountY)
 }
@@ -106,19 +114,24 @@ func ConstructCircuitPubInput(pubInput string, circuit frontend.Circuit) error {
 		return errors.Wrapf(err, "decode string=%s", pubInput)
 	}
 
-	var witness Witness
-	_, err = witness.LimitReadFrom(buf)
+	// 使用 gnark v0.9.0 的 witness API 读取，与 wallet 端的 w.Public().WriteTo() 格式匹配
+	pubW, err := witness.New(ecc.BN254.ScalarField())
 	if err != nil {
-		return errors.Wrapf(err, "LimitReadFrom pub input=%s", pubInput)
+		return errors.Wrapf(err, "new witness")
+	}
+	if _, err = pubW.ReadFrom(buf); err != nil {
+		return errors.Wrapf(err, "ReadFrom pub input=%s", pubInput)
 	}
 
+	// 从 witness 提取 Vector 并赋值到 circuit 字段
+	vec := pubW.Vector().(fr.Vector)
 	tValue := reflect.ValueOf(circuit)
 	if tValue.Kind() == reflect.Ptr {
 		tValue = tValue.Elem()
 	}
-	for i, v := range witness {
+	for i := 0; i < len(vec); i++ {
 		field := tValue.Type().Field(i)
-		tValue.FieldByName(field.Name).Addr().Interface().(*frontend.Variable).Assign(v.String())
+		*(tValue.FieldByName(field.Name).Addr().Interface().(*frontend.Variable)) = vec[i].String()
 	}
 	return nil
 }
@@ -133,7 +146,7 @@ func MulCurvePointG(val interface{}) *bn254.PointAffine {
 	var point bn254.PointAffine
 	ed := bn254.GetEdwardsCurve()
 
-	point.ScalarMul(&ed.Base, &scale)
+	point.ScalarMultiplication(&ed.Base, &scale)
 	return &point
 }
 
@@ -147,7 +160,7 @@ func MulCurvePointH(pointHX, pointHY, val string) *bn254.PointAffine {
 	pointH.X.SetString(pointHX)
 	pointH.Y.SetString(pointHY)
 
-	pointV.ScalarMul(&pointH, &scale)
+	pointV.ScalarMultiplication(&pointH, &scale)
 	return &pointV
 }
 

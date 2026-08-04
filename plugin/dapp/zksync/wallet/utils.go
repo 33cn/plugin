@@ -13,7 +13,7 @@ import (
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress string,
@@ -97,12 +97,13 @@ func setBeBitsToVal(bits []uint) string {
 }
 
 func StringToByte(s string) []byte {
-	byteArray := new(fr.Element).SetString(s).Bytes()
+	elem, _ := new(fr.Element).SetString(s)
+	byteArray := elem.Bytes()
 	return byteArray[:]
 }
 
 func ChunkStringToByte(s string) []byte {
-	f := new(fr.Element).SetString(s)
+	f, _ := new(fr.Element).SetString(s)
 	chunk := f.Bytes()
 	//bits := Byte2Bit(chunk[22:])
 	//for i := 0; i < len(bits)/2; i++ {
@@ -403,7 +404,7 @@ func GetWithdrawNFTMsg(payload *zt.ZkWithdrawNFT) *zt.ZkMsg {
 }
 
 func GetMsgHash(msg *zt.ZkMsg) []byte {
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	hash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(StringToByte(msg.GetFirst()))
 	hash.Write(StringToByte(msg.GetSecond()))
 	hash.Write(StringToByte(msg.GetThird()))
