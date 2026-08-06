@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
@@ -112,21 +113,14 @@ func TestDepositSetVal(t *testing.T) {
 
 	pubInput := "0000000218b9b448bd793dab9075f70ce404a87497b3a2d0d0b5d177441d6cada1e9b2d20000000000000000000000000000000000000000000000000000000001aef080"
 	str, _ := hex.DecodeString(pubInput)
-	var buf bytes.Buffer
-	buf.Write(str)
-	var val Witness
-	n, err := val.LimitReadFrom(&buf)
+	// 兼容 reader 解析旧格式（v0.5.2）pubInput：00000002 = 2 个 public element
+	w, err := ReadWitnessCompatible(str)
 	assert.Nil(t, err)
-	fmt.Println("n=", n)
-
-	//val=make([]fr.Element,2)
-	//val[0].SetInterface(0x18b9b448bd793dab9075f70ce404a87497b3a2d0d0b5d177441d6cada1e9b2d2)
-	//val[0].set
-	//val[1].SetInterface(0x0000000000000000000000000000000000000000000000000000000001aef080)
-	fmt.Println("0=", val[0].String(), "1=", val[1].String())
+	vec := w.Vector().(fr.Vector)
+	fmt.Println("0=", vec[0].String(), "1=", vec[1].String())
 
 	var depositCircuit DepositCircuit
-	getVal(&depositCircuit, val)
+	getVal(&depositCircuit, Witness(vec))
 	fmt.Println("deposit", VariableToElement(depositCircuit.NoteHash))
 	fmt.Println("amount", VariableToElement(depositCircuit.Amount))
 

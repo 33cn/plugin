@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"math/big"
 	"reflect"
 
@@ -32,30 +31,6 @@ func VariableToElement(v frontend.Variable) fr.Element {
 	var el fr.Element
 	el.SetString(fmt.Sprint(v))
 	return el
-}
-
-func (witness *Witness) LimitReadFrom(r io.Reader) (int64, error) {
-
-	var buf [4]byte
-	if read, err := io.ReadFull(r, buf[:4]); err != nil {
-		return int64(read), err
-	}
-	sliceLen := binary.BigEndian.Uint32(buf[:4])
-
-	if len(*witness) != int(sliceLen) {
-		*witness = make([]fr.Element, sliceLen)
-	}
-
-	lr := io.LimitReader(r, int64(sliceLen*fr.Limbs*8))
-	dec := ecc_bn254.NewDecoder(lr)
-
-	for i := 0; i < int(sliceLen); i++ {
-		if err := dec.Decode(&(*witness)[i]); err != nil {
-			return dec.BytesRead() + 4, err
-		}
-	}
-
-	return dec.BytesRead() + 4, nil
 }
 
 func VerifyMerkleProof(cs frontend.API, mimc *legacymimc.CircuitMiMC, treeRootHash frontend.Variable, proofSet, helper, valid []frontend.Variable) {
@@ -141,7 +116,10 @@ func ReadWitnessCompatible(buf []byte) (witness.Witness, error) {
 		}
 		return w, nil
 	}
-	// 新格式（v0.9.0）
+	// 新格式（v0.9.0）：总长必须为 %32==12，否则视为非法输入而非静默交给 ReadFrom
+	if len(buf)%32 != 12 || len(buf) < 12 {
+		return nil, errors.Wrapf(fmt.Errorf("invalid witness format"), "len=%d (expect %%32==4 old or %%32==12 new)", len(buf))
+	}
 	w, err := witness.New(ecc.BN254.ScalarField())
 	if err != nil {
 		return nil, errors.Wrapf(err, "new witness")
