@@ -109,6 +109,9 @@ func decryptDataWithPading(password, data []byte) ([]byte, error) {
 	// 旧格式为 ciphertext-only（IV=key[:16]）。mix 明文按 32 字节块 PKCS5 填充，因此
 	// 新格式总长 %32==16、旧格式总长 %32==0，用长度精确区分两种格式，避免旧格式数据
 	// 被误按新格式解析而产生静默错误明文（之前先试新格式再回退的判断方式不可靠）。
+	if len(data) == 0 {
+		return nil, types.ErrInvalidParam
+	}
 	key := make([]byte, 32)
 	copy(key, password)
 
@@ -127,7 +130,10 @@ func decryptDataWithPading(password, data []byte) ([]byte, error) {
 			}
 		}
 	}
-	// 旧格式：ciphertext-only，IV=key[:16]，走 chain33 legacy 分支
+	// 旧格式：ciphertext-only，必须 16 字节对齐，否则 chain33 legacy 分支的 CryptBlocks 会 panic
+	if len(data)%16 != 0 {
+		return nil, types.ErrInvalidParam
+	}
 	plainData := wcom.CBCDecrypterPrivkey(password, data)
 	return pKCS5UnPadding(plainData)
 }
