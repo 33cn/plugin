@@ -7,9 +7,9 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
-	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 )
 
 func getChain33Addr(privateKeyString string) string {
@@ -17,7 +17,7 @@ func getChain33Addr(privateKeyString string) string {
 	if err != nil {
 		panic(err)
 	}
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
+	privateKey, err := wallet.GenerateKeyCompat(bytes.NewReader(privateKeyBytes))
 	if err != nil {
 		panic(err)
 	}

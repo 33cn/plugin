@@ -18,9 +18,9 @@ import (
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
@@ -400,7 +400,6 @@ func TestDeposit(t *testing.T) {
 }
 
 func TestWithdraw(t *testing.T) {
-	t.Skip("chain33 go-ethereum upgrade changed secp256k1/eddsa key derivation; hardcoded Chain33Addr no longer matches - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -459,7 +458,6 @@ func TestWithdraw(t *testing.T) {
 }
 
 func TestTransfer(t *testing.T) {
-	t.Skip("same key derivation issue as TestWithdraw - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -537,7 +535,6 @@ func TestTransfer(t *testing.T) {
 }
 
 func TestTransfer2New(t *testing.T) {
-	t.Skip("same key derivation issue as TestWithdraw - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -604,7 +601,6 @@ func TestTransfer2New(t *testing.T) {
 }
 
 func TestTree2contract(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -684,7 +680,6 @@ func TestTree2contract(t *testing.T) {
 }
 
 func TestContract2Tree(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -788,9 +783,8 @@ func TestContract2Tree(t *testing.T) {
 	fmt.Println("accountInfo =", accountInfo)
 }
 
-//通过proxyExit模式进行提币时，需要确保未设置公钥，否则提币失败
+// 通过proxyExit模式进行提币时，需要确保未设置公钥，否则提币失败
 func TestProxyExitFaid(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -860,7 +854,6 @@ func TestProxyExitFaid(t *testing.T) {
 }
 
 func TestProxyExit(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -953,7 +946,6 @@ func TestProxyExit(t *testing.T) {
 }
 
 func TestMintNFT(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -1133,7 +1125,6 @@ func TestMintNFT(t *testing.T) {
 }
 
 func TestWithdrawNFT(t *testing.T) {
-	t.Skip("same key derivation issue as TestWithdraw - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -1201,7 +1192,6 @@ func TestWithdrawNFT(t *testing.T) {
 }
 
 func TestTransferNFT(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -1279,7 +1269,6 @@ func TestTransferNFT(t *testing.T) {
 }
 
 func TestNFTMisc(t *testing.T) {
-	t.Skip("key derivation changed after chain33 upgrade - see docs/chain33-go-ethereum-v1.14.8-upgrade.md")
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
 
@@ -1986,7 +1975,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 		return
 	}
 
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(key.Bytes()))
+	privateKey, err := wallet.GenerateKeyCompat(bytes.NewReader(key.Bytes()))
 	if err != nil {
 		return
 	}
