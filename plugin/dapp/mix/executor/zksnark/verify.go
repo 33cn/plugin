@@ -19,7 +19,6 @@ package zksnark
 import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/backend/witness"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
@@ -51,14 +50,10 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 		return false, errors.Wrapf(err, "zkVerify.pub.GetByteBuff")
 	}
 
-	// verify proof
-	//start := time.Now()
-	pubW, err := witness.New(ecc.BN254.ScalarField())
+	// 兼容读取新旧 witness 格式，保持存量 pubInput 可验证
+	pubW, err := mixTy.ReadWitnessCompatible(pubBuf.Bytes())
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.pub.witness")
-	}
-	if _, err = pubW.ReadFrom(pubBuf); err != nil {
-		return false, errors.Wrapf(err, "zkVerify.pub.witness.read")
 	}
 	err = groth16.Verify(proof, vk, pubW)
 	if err != nil {
