@@ -12,12 +12,12 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	bn254 "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	twistededwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
-	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/backend/witness"
+	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
 
-	stdtwistededwards "github.com/consensys/gnark/std/algebra/native/twistededwards"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
+	stdtwistededwards "github.com/consensys/gnark/std/algebra/native/twistededwards"
 
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -108,19 +108,60 @@ func CommitValueVerify(cs frontend.API, amount, amountRandom,
 	cs.AssertIsEqual(pointSum.Y, shieldAmountY)
 }
 
+// ReadWitnessCompatible 兼容读取 gnark v0.5.2（旧）与 v0.9.0（新）两种 witness 字节格式。
+//
+// 旧格式（v0.5.2）: [uint32(n)][n×32B]，总长 %32==4
+// 新格式（v0.9.0）: [uint32(nbPub)][uint32(nbSec)][uint32(len)][len×32B]，总长 %32==12
+// mix/zksync 链上存量交易的 pubInput 由旧格式产生，升级后必须能继续解析以保持共识兼容。
+func ReadWitnessCompatible(buf []byte) (witness.Witness, error) {
+	if len(buf)%32 == 4 && len(buf) >= 4 {
+		// 旧格式（v0.5.2）
+		n := binary.BigEndian.Uint32(buf[:4])
+		if int(n)*32+4 != len(buf) {
+			return nil, errors.Wrapf(fmt.Errorf("old witness length mismatch"), "n=%d bufLen=%d", n, len(buf))
+		}
+		vec := make([]fr.Element, n)
+		dec := ecc_bn254.NewDecoder(bytes.NewReader(buf[4:]))
+		for i := range vec {
+			if err := dec.Decode(&vec[i]); err != nil {
+				return nil, errors.Wrapf(err, "decode old witness element %d", i)
+			}
+		}
+		w, err := witness.New(ecc.BN254.ScalarField())
+		if err != nil {
+			return nil, errors.Wrapf(err, "new witness")
+		}
+		ch := make(chan any, len(vec))
+		for _, v := range vec {
+			ch <- v
+		}
+		close(ch)
+		if err := w.Fill(int(n), 0, ch); err != nil {
+			return nil, errors.Wrapf(err, "fill witness")
+		}
+		return w, nil
+	}
+	// 新格式（v0.9.0）
+	w, err := witness.New(ecc.BN254.ScalarField())
+	if err != nil {
+		return nil, errors.Wrapf(err, "new witness")
+	}
+	if _, err := w.ReadFrom(bytes.NewReader(buf)); err != nil {
+		return nil, errors.Wrapf(err, "read witness")
+	}
+	return w, nil
+}
+
 func ConstructCircuitPubInput(pubInput string, circuit frontend.Circuit) error {
 	buf, err := GetByteBuff(pubInput)
 	if err != nil {
 		return errors.Wrapf(err, "decode string=%s", pubInput)
 	}
 
-	// 使用 gnark v0.9.0 的 witness API 读取，与 wallet 端的 w.Public().WriteTo() 格式匹配
-	pubW, err := witness.New(ecc.BN254.ScalarField())
+	// 兼容读取新旧 witness 格式，与 wallet 端 w.Public().WriteTo()（新）及历史（旧）格式匹配
+	pubW, err := ReadWitnessCompatible(buf.Bytes())
 	if err != nil {
-		return errors.Wrapf(err, "new witness")
-	}
-	if _, err = pubW.ReadFrom(buf); err != nil {
-		return errors.Wrapf(err, "ReadFrom pub input=%s", pubInput)
+		return errors.Wrapf(err, "ReadWitnessCompatible pub input=%s", pubInput)
 	}
 
 	// 从 witness 提取 Vector 并赋值到 circuit 字段
@@ -175,7 +216,7 @@ func GetCurveSum(points ...*bn254.PointAffine) *bn254.PointAffine {
 	return &pointSum
 }
 
-//A=B+C
+// A=B+C
 func CheckSumEqual(points ...*bn254.PointAffine) bool {
 	if len(points) < 2 {
 		return false

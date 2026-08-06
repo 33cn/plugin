@@ -16,19 +16,19 @@ import (
 	"github.com/33cn/chain33/types"
 
 	wcom "github.com/33cn/chain33/wallet/common"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 )
 
 const CECBLOCKSIZE = 32
 
 /*
- 从secp256k1根私钥创建支票需要的私钥和公钥
- payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
+从secp256k1根私钥创建支票需要的私钥和公钥
+payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
 
- 支票花费key:  payPrivKey
- 支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
- DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
+支票花费key:  payPrivKey
+支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
+DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
 */
 func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	ecdh := X25519()
@@ -56,9 +56,9 @@ func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	return privacy
 }
 
-//CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
-//填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
-//则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
+// CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
+// 填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
+// 则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
 func pKCS5Padding(plainText []byte, blockSize int) []byte {
 	if blockSize < CECBLOCKSIZE {
 		blockSize = CECBLOCKSIZE
@@ -105,12 +105,15 @@ func encryptData(peerPubKey string, data []byte) (*mixTy.DHSecret, error) {
 }
 
 func decryptDataWithPading(password, data []byte) ([]byte, error) {
-	// chain33 CBCEncrypterPrivkey 自 v0.69.1 后使用随机 IV，返回 IV(16)+ciphertext 格式。
-	// chain33 的 CBCDecrypterPrivkey 新格式仅支持 32 字节明文（钱包私钥场景），
-	// mix 加密数据明文大于 32 字节需在此自行按新格式解密，并回退兼容旧格式。
-	if len(data) > 16 {
-		key := make([]byte, 32)
-		copy(key, password)
+	// chain33 CBCEncrypterPrivkey 自 v0.69.1 后使用随机 IV，返回 IV(16)+ciphertext 格式；
+	// 旧格式为 ciphertext-only（IV=key[:16]）。mix 明文按 32 字节块 PKCS5 填充，因此
+	// 新格式总长 %32==16、旧格式总长 %32==0，用长度精确区分两种格式，避免旧格式数据
+	// 被误按新格式解析而产生静默错误明文（之前先试新格式再回退的判断方式不可靠）。
+	key := make([]byte, 32)
+	copy(key, password)
+
+	// 新格式：IV(16) + ciphertext
+	if len(data)%32 == 16 {
 		block, err := aes.NewCipher(key)
 		if err == nil {
 			iv := data[:block.BlockSize()]
@@ -124,7 +127,7 @@ func decryptDataWithPading(password, data []byte) ([]byte, error) {
 			}
 		}
 	}
-	// 旧格式回退（IV 取 key 前 16 字节）
+	// 旧格式：ciphertext-only，IV=key[:16]，走 chain33 legacy 分支
 	plainData := wcom.CBCDecrypterPrivkey(password, data)
 	return pKCS5UnPadding(plainData)
 }
