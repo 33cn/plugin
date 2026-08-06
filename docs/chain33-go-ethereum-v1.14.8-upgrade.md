@@ -166,7 +166,7 @@ chain33 的 `b70757355 fix: CBC 随机 IV` 将 `CBCEncrypterPrivkey` 改为随�
 
 chain33 升级后，zksync 的 `SetPubKey` 校验（`mimc(pubkey.X || pubkey.Y)`）与 deposit 时硬编码的 `Chain33Addr` 不再匹配。复现确认当前派生结果与历史测试数据（`2b8a...`）不同，root cause 为跨链 key 派生链（secp256k1 → `GetLayer2PrivateKeySeed` → `eddsa.GenerateKey`）的深层变化。
 
-**影响**：依赖 `SetPubKey` 校验的 zksync 集成测试（TestTransfer/TestWithdraw/TestWithdrawNFT/TestTransfer2New/TestTree2contract/TestContract2Tree/TestMintNFT/TestProxyExit/TestProxyExitFaid/TestTransferNFT/TestNFTMisc）已标记 `t.Skip` 并说明原因。若主网 zksync 已有用户数据，需重新核对 key 派生与地址。
+**影响**：gnark-crypto v0.5.3 → v0.12.1 修正了 `eddsa.GenerateKey` 的标量反转边界（`j=sizeFr` → `sizeFr-1`），导致同一 seed 派生出的 layer2 地址变化。已通过 `zksync/wallet/eddsa_compat.go` 的 `GenerateKeyCompat`（复刻 v0.5.3 派生逻辑）恢复历史地址兼容，原 11 个集成测试（TestTransfer/TestWithdraw/TestWithdrawNFT/TestTransfer2New/TestTree2contract/TestContract2Tree/TestMintNFT/TestProxyExit/TestProxyExitFaid/TestTransferNFT/TestNFTMisc）已重新启用并通过。若主网 zksync 已有用户数据，使用兼容派生后地址与历史一致，无需迁移。
 
 #### 7. groth16 序列化格式影响（已知限制）
 
@@ -176,6 +176,12 @@ gnark v0.5.2 → v0.9.0 的 groth16 VK/PK/proof 二进制序列化格式变化�
 - 链上已部署的 mix VK 需重新生成部署（通过 `setVerifyKey`）
 
 **这是不可逆的升级影响**，与 MiMC 兼容无关。若 mix 链上有已部署的 VK 和 proof，升级后需重新生成部署。
+
+**额外部署限制**：除 VK 外，**旧 v0.5.2 格式的 proof 字节也无法被 v0.9.0 重读**（v0.9.0 `Proof.ReadFrom` 需要 Commitments/CommitmentPok 字段，旧 proof 只有 `Ar|Bs|Krs`）。这意味着包含历史 mix/zksync 交易的全新**全量同步**（re-execute 历史区块）会失败，导致状态哈希分叉。部署必须选择其一：
+1. **基于快照的同步**（跳过历史交易重放），或
+2. **mix/zksync dapp 状态重置**（历史 proof/note 数据作废）
+
+本 PR 保留了 witness 双格式读取（`ReadWitnessCompatible`）与 MiMC 哈希兼容，但 proof 字节本身无法跨版本，需在部署前明确上述方案。
 
 ## 编译与测试状态
 
