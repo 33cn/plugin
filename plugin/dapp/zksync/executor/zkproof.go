@@ -1,18 +1,17 @@
 package executor
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
-	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/consensys/gnark-crypto/ecc"
-	fr_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
-	"github.com/consensys/gnark/backend/witness"
+	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	fr_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
 )
@@ -164,7 +163,7 @@ func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
 	return &data, nil
 }
 
-//合约管理员或管理员设置在链上的管理员才可设置
+// 合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
@@ -452,11 +451,12 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 	return lastOnChainProofId, nil
 }
 
-//检查来自proof的pubdata和queue里的operation一致
-//链上每个op都会把数据压入queue中，包括fee，链下提交的证明的pubdatas要和压入的queue op顺序和数值严格一致，好处是抗回滚
-//first queue op从id=0开始,一旦被proof验证过后firstOpId会移到最后一个验证了的id
-//  1,2,3|,4,5,6,7|-----
-//       3=first queue op, 7=last queue op
+// 检查来自proof的pubdata和queue里的operation一致
+// 链上每个op都会把数据压入queue中，包括fee，链下提交的证明的pubdatas要和压入的queue op顺序和数值严格一致，好处是抗回滚
+// first queue op从id=0开始,一旦被proof验证过后firstOpId会移到最后一个验证了的id
+//
+//	1,2,3|,4,5,6,7|-----
+//	     3=first queue op, 7=last queue op
 func checkNewProofPubData(db dbm.KV, lastQueueId int64, pubData []string) (int64, error) {
 	ops := transferPubDataToOps(pubData)
 	for _, o := range ops {
@@ -481,11 +481,7 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 		return errors.Wrapf(err, "read public input str")
 	}
 	var proofCircuit commitProofCircuit
-	w, err := witness.New(ecc.BN254.ScalarField())
-	if err != nil {
-		return errors.Wrapf(err, "create witness")
-	}
-	_, err = w.ReadFrom(pBuff)
+	w, err := mixTy.ReadWitnessCompatible(pBuff.Bytes())
 	if err != nil {
 		return errors.Wrapf(err, "read public input")
 	}
@@ -525,7 +521,7 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 	return nil
 }
 
-//合约管理员或管理员设置在链上的管理员才可设置
+// 合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) {
