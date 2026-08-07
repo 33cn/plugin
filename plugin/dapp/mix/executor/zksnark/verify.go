@@ -17,7 +17,6 @@ limitations under the License.
 package zksnark
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -29,8 +28,9 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.vk.GetByteBuff")
 	}
-	vk := groth16.NewVerifyingKey(ecc.BN254)
-	if _, err := vk.ReadFrom(vkBuf); err != nil {
+	// 兼容读取新旧格式 VK（gnark v0.5.2 旧格式 / v0.9.0 新格式）
+	vk, err := mixTy.ReadVerifyingKeyCompatible(vkBuf.Bytes())
+	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.read.vk=%s", verifyKeyStr[:10])
 	}
 
@@ -39,8 +39,9 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.get.proof")
 	}
-	proof := groth16.NewProof(ecc.BN254)
-	if _, err = proof.ReadFrom(proofBuf); err != nil {
+	// 兼容读取新旧格式 Proof
+	proof, err := mixTy.ReadProofCompatible(proofBuf.Bytes())
+	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.read.proof=%s", proofStr[:10])
 	}
 
