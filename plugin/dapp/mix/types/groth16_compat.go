@@ -98,3 +98,86 @@ func ReadProofCompatible(buf []byte) (*groth16bn254.Proof, error) {
 	}
 	return proofOld, nil
 }
+
+// ReadProvingKeyCompatible 兼容读取 groth16 ProvingKey 字节：
+//
+//   - 新格式（gnark v0.9.0）：Domain + 主部分（G1.Alpha/Beta/Delta/A/B/Z/K、G2.Beta/Delta/B、
+//     nbWires、NbInfinityA/B、InfinityA/B）+ uint32(len(CommitmentKeys)) + CommitmentKeys
+//   - 旧格式（gnark v0.5.2）：Domain + 主部分，与 v0.9.0 的主部分逐字节相同（旧格式是新格式的前缀）
+//
+// 实现策略：先尝试 v0.9.0 的标准 ReadFrom（新格式），读旧格式会在解析完主部分后
+// 因缺少 uint32(len(CommitmentKeys)) 而返回 EOF/错误，此时回退到旧格式手动解析
+// （Domain + 主部分，CommitmentKeys 为空）。
+//
+// mix/zksync 电路不使用 gnark commitment（无 gnark:",commitment" 字段），旧格式 PK 的
+// CommitmentKeys 为空，groth16.Prove 中 commitment 相关路径不会触发，可直接用于生成 proof。
+func ReadProvingKeyCompatible(buf []byte) (*groth16bn254.ProvingKey, error) {
+	// 先尝试新格式（v0.9.0），新格式必须走标准 ReadFrom，保证行为不变
+	pk := &groth16bn254.ProvingKey{}
+	if _, err := pk.ReadFrom(bytes.NewReader(buf)); err == nil {
+		return pk, nil
+	}
+
+	// 旧格式（v0.5.2）：Domain + 主部分，无 uint32(len(CommitmentKeys)) / CommitmentKeys
+	pkOld := &groth16bn254.ProvingKey{}
+	n, err := pkOld.Domain.ReadFrom(bytes.NewReader(buf))
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode old pk Domain")
+	}
+	dec := bn254.NewDecoder(bytes.NewReader(buf[n:]))
+
+	// G1.Alpha/Beta/Delta/A/B/Z/K、G2.Beta/Delta/B、nbWires、NbInfinityA/B
+	if err := dec.Decode(&pkOld.G1.Alpha); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.Alpha")
+	}
+	if err := dec.Decode(&pkOld.G1.Beta); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.Beta")
+	}
+	if err := dec.Decode(&pkOld.G1.Delta); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.Delta")
+	}
+	if err := dec.Decode(&pkOld.G1.A); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.A")
+	}
+	if err := dec.Decode(&pkOld.G1.B); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.B")
+	}
+	if err := dec.Decode(&pkOld.G1.Z); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.Z")
+	}
+	if err := dec.Decode(&pkOld.G1.K); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G1.K")
+	}
+	if err := dec.Decode(&pkOld.G2.Beta); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G2.Beta")
+	}
+	if err := dec.Decode(&pkOld.G2.Delta); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G2.Delta")
+	}
+	if err := dec.Decode(&pkOld.G2.B); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk G2.B")
+	}
+	var nbWires uint64
+	if err := dec.Decode(&nbWires); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk nbWires")
+	}
+	if err := dec.Decode(&pkOld.NbInfinityA); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk NbInfinityA")
+	}
+	if err := dec.Decode(&pkOld.NbInfinityB); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk NbInfinityB")
+	}
+	pkOld.InfinityA = make([]bool, nbWires)
+	pkOld.InfinityB = make([]bool, nbWires)
+	if err := dec.Decode(&pkOld.InfinityA); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk InfinityA")
+	}
+	if err := dec.Decode(&pkOld.InfinityB); err != nil {
+		return nil, errors.Wrapf(err, "decode old pk InfinityB")
+	}
+	// 旧格式到主部分即结束，必须完整消费（防尾随垃圾）
+	if n+dec.BytesRead() != int64(len(buf)) {
+		return nil, errors.Errorf("old pk trailing bytes: read=%d len=%d", n+dec.BytesRead(), len(buf))
+	}
+	return pkOld, nil
+}
