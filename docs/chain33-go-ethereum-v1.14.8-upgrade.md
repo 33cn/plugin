@@ -168,32 +168,28 @@ chain33 升级后，zksync 的 `SetPubKey` 校验（`mimc(pubkey.X || pubkey.Y)`
 
 **影响**：gnark-crypto v0.5.3 → v0.12.1 修正了 `eddsa.GenerateKey` 的标量反转边界（`j=sizeFr` → `sizeFr-1`），导致同一 seed 派生出的 layer2 地址变化。已通过 `zksync/wallet/eddsa_compat.go` 的 `GenerateKeyCompat`（复刻 v0.5.3 派生逻辑）恢复历史地址兼容，原 11 个集成测试（TestTransfer/TestWithdraw/TestWithdrawNFT/TestTransfer2New/TestTree2contract/TestContract2Tree/TestMintNFT/TestProxyExit/TestProxyExitFaid/TestTransferNFT/TestNFTMisc）已重新启用并通过。若主网 zksync 已有用户数据，使用兼容派生后地址与历史一致，无需迁移。
 
-#### 7. groth16 序列化格式影响（已知限制）
+#### 7. groth16 序列化格式兼容
 
-gnark v0.5.2 → v0.9.0 的 groth16 VK/PK/proof 二进制序列化格式变化，导致：
+gnark v0.5.2 → v0.9.0 的 groth16 VK/PK/proof 二进制序列化格式变化（v0.9.0 追加 commitments 相关字段）。已实现**新旧格式兼容读取**：
 
-- `mix/executor/zksnark` 测试中预置的旧格式 VK 无法读取（`EOF`），6 个测试已标记 `t.Skip`
-- 链上已部署的 mix VK 需重新生成部署（通过 `setVerifyKey`）
+- `mix/types/groth16_compat.go`：`ReadVerifyingKeyCompatible` / `ReadProofCompatible`
+  - v0.5.2 旧格式（VK bellman 主部分、proof `Ar|Bs|Krs`）与新 v0.9.0 格式均可读取
+  - 旧格式是新格式的前缀（去掉 commitments 段）；mix/zksync 电路不使用 gnark commitment 特性，新旧 proof **语义等价**
+- `mix/executor/zksnark` 的 6 个旧格式 VK/proof 验证测试已恢复（不再 skip）
+- 链上已部署的旧格式 VK/proof **无需重置**，可继续验证；新格式同样正常
 
-**这是不可逆的升级影响**，与 MiMC 兼容无关。若 mix 链上有已部署的 VK 和 proof，升级后需重新生成部署。
-
-**额外部署限制**：除 VK 外，**旧 v0.5.2 格式的 proof 字节也无法被 v0.9.0 重读**（v0.9.0 `Proof.ReadFrom` 需要 Commitments/CommitmentPok 字段，旧 proof 只有 `Ar|Bs|Krs`）。这意味着包含历史 mix/zksync 交易的全新**全量同步**（re-execute 历史区块）会失败，导致状态哈希分叉。部署必须选择其一：
-1. **基于快照的同步**（跳过历史交易重放），或
-2. **mix/zksync dapp 状态重置**（历史 proof/note 数据作废）
-
-本 PR 保留了 witness 双格式读取（`ReadWitnessCompatible`）与 MiMC 哈希兼容，但 proof 字节本身无法跨版本，需在部署前明确上述方案。
+**安全性**：mix/zksync 电路不使用 commitment，新旧 proof 均不含 commitment（仅序列化格式差异），验证走标准 groth16，无安全影响。
 
 ## 编译与测试状态
 
 - 全项目编译通过
-- zksync 测试通过（除上述 key 派生相关集成测试已 skip）
-- mix 测试通过（除 zksnark 旧 VK 格式测试已 skip）
+- zksync 测试通过（key 派生已通过 `GenerateKeyCompat` 兼容）
+- mix 测试通过（含 zksnark 旧格式 VK/proof 验证）
+- cross2eth 合约测试通过（`Pending` 查询语义适配 simulated backend）
 - `cross2eth/contracts/gnosis/bsctest` 与 `chain33test` 为历史遗留（main 缺失），与本次升级无关
 
 ## 待办
 
-- [ ] zksync `SetPubKey` key 派生变化确认：若主网有数据需重新生成测试/链上数据
-- [ ] zksnark groth16 测试数据重新生成
 - [ ] 通过 dapp fork 切换 MiMC 到新哈希（`ForkMiMCHash`）
 
 ## 溯源参考
