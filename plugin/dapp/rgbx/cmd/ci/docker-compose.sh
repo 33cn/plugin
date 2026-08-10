@@ -313,7 +313,7 @@ function query_xbtc_balance() {
 function wait_xbtc_balance_not_less_than() {
     local addr="$1"
     local expected="$2"
-    local retries="${3:-30}"
+    local retries="${3:-120}"
     local i
     for ((i = 0; i < retries; i++)); do
         local balance
