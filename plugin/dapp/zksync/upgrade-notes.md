@@ -31,9 +31,7 @@ chain33 升级后，`SetPubKey` 校验的 key 派生链（secp256k1 签名 → `
 
 复现确认：当前派生结果与测试硬编码地址（`2b8a...`）不匹配，root cause 为跨链 key 派生链的深层变化。
 
-**影响**：
-- 依赖 `SetPubKey` 校验的集成测试（TestTransfer、TestWithdraw、TestWithdrawNFT、TestTransfer2New、TestTree2contract、TestContract2Tree、TestMintNFT、TestProxyExit、TestProxyExitFaid、TestTransferNFT、TestNFTMisc）已 `t.Skip`
-- 若主网 zksync 已有用户数据，需核对 key 派生与链上地址
+**修复**：新增 `wallet/eddsa_compat.go` 的 `GenerateKeyCompat`，复刻 gnark-crypto v0.5.3 的标量派生（`j=sizeFr` 反转边界），恢复历史地址派生。原 11 个 `t.Skip` 集成测试（TestTransfer、TestWithdraw、TestWithdrawNFT、TestTransfer2New、TestTree2contract、TestContract2Tree、TestMintNFT、TestProxyExit、TestProxyExitFaid、TestTransferNFT、TestNFTMisc）已重新启用并通过。历史用户地址与派生保持一致，无需迁移。
 
 ### 4. witness 读取
 
@@ -41,8 +39,17 @@ chain33 升级后，`SetPubKey` 校验的 key 派生链（secp256k1 签名 → `
 
 ## 测试状态
 
-- `zksync/types`、`wallet`：全部通过
-- `zksync/executor`：通过（key 派生相关集成测试已 skip）
+- `zksync/types`、`wallet`、`executor`：全部通过（含 11 个恢复的 key 派生集成测试）
+
+## 存量升级指引（线上 zksync）
+
+> **⚠️ 线上升级需进一步评估审计**：以下为已知要求与约束，非完整迁移方案，具体部署上线前必须做专项评估与审计。
+
+- **链上 VK 为单数**（`setVerifyKey` 覆盖更新），不支持 multi-VK 并存。
+- **历史同步**：VK 切换后，全量 re-execute 历史交易将无法用新 VK 验证旧 proof，**必须使用快照同步**（跳过历史重放），或外部证明方保持旧编译不切换。
+- **proof 生成**：由外部证明方完成，plugin 只验证。外部证明方升级电路编译（v0.9.0 R1CS）后需配套换 PK/VK（一次性切换）；保持旧编译则链上旧 VK（兼容 reader）可继续验证。
+- **历史数据**：MiMC 哈希 / 地址派生 / witness 均兼容，历史 leaf、merkle 树无缝。
+- **审计项**：VK 切换时机、历史同步策略、外部证明方密钥管理。
 
 ## 溯源参考
 
