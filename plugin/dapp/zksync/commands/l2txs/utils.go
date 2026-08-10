@@ -51,7 +51,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 		return
 	}
 
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(key.Bytes()))
+	privateKey, err := wallet.GenerateKeyCompat(bytes.NewReader(key.Bytes()))
 	if err != nil {
 		return
 	}
