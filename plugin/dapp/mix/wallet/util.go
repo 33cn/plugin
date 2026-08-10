@@ -235,8 +235,8 @@ func getZkProofKeys(circuitTy mixTy.VerifyType, path, file string, inputs fronte
 		return nil, err
 	}
 
-	pk, err := mixTy.ReadProvingKeyCompatible(pkBuf.Bytes())
-	if err != nil {
+	pk := groth16.NewProvingKey(ecc.BN254)
+	if _, err := pk.ReadFrom(pkBuf); err != nil {
 		return nil, errors.Wrapf(err, "read pk")
 	}
 
