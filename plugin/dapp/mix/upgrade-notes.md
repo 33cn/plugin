@@ -54,12 +54,23 @@ gnark v0.9.0 的 VK/PK/proof 二进制格式与 v0.5.2 不兼容，且密钥绑�
 - `testcase.sh` 的 `config vk` 改为 **运行时从 `./gnark/circuit_*.vk` 读取**，不再硬编码 —— 因为 groth16.Setup 是随机的，每次生成 PK/VK 都不同，硬编码 VK 与 CI 新生成 PK 必然不匹配（`pairing doesn't match`）
 - 已本地验证：新 PK 可被 v0.9.0 读取，deposit prove+verify 往返通过（off-chain mimc 与旧协议 hash 一致）
 
-**影响**：链上已部署的 mix VK 需重新生成部署（`setVerifyKey`）。`executor/zksnark` 测试预置的旧格式 VK 仍无法读取，相关测试保持 `t.Skip`。
+**兼容**：已实现新旧格式 VK/proof 兼容读取（`mix/types/groth16_compat.go`），旧 v0.5.2 格式 VK/proof 可读可验证（zksnark 6 个旧格式验证测试已恢复，无需 skip）。
+
+**PK 兼容未定论**：旧 v0.5.2 PK 能否用于新电路（v0.9.0 R1CS）**尚未实证定论**——R1CS 跨版本一致性需进一步验证（简单电路约束数一致但序列化不同；mix 含 twistededwards 的电路未验证）。工程上推荐用 `genzkkey` 重新生成密钥。
 
 ## 测试状态
 
 - `mix/executor`、`merkletree`、`types`、`wallet`：全部通过
-- `mix/executor/zksnark`：6 个测试 skip（旧 groth16 VK 格式）
+- `mix/executor/zksnark`：通过（含 6 个旧格式 VK/proof 验证测试，已恢复）
+
+## 存量升级指引（线上 mix 合约）
+
+> **⚠️ 线上升级需进一步评估审计**：以下为已知要求与约束，非完整迁移方案，具体部署上线前必须做专项评估与审计。
+
+- **密钥**：mix 新证明必须用重新生成的 PK/VK（gnark v0.9.0 编译的电路 R1CS 与旧不同，旧 PK 续用未定论）。流程：`genzkkey` 生成新密钥对 → `ConfigAddVerifyKey` 加新 VK（**multi-VK，保留旧 VK**）→ PK 分发给 wallet → 新旧并存过渡 → 稳定后清理旧 VK。
+- **历史数据**：MiMC 哈希 / 地址派生 / CBC 加密均兼容，历史 note、merkle 树、加密数据无缝可读。
+- **历史同步**：VK 切换后，全量 re-execute 历史交易需**保留旧 VK**（multi-VK 中）或使用**快照同步**；若删除旧 VK，历史交易将无法重新验证导致分叉。
+- **审计项**：密钥切换时机、多 VK 生命周期、历史同步策略、PK 分发安全。
 
 ## 溯源参考
 

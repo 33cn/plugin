@@ -191,6 +191,7 @@ gnark v0.5.2 → v0.9.0 的 groth16 VK/PK/proof 二进制序列化格式变化�
 ## 待办
 
 - [ ] 通过 dapp fork 切换 MiMC 到新哈希（`ForkMiMCHash`）
+- [ ] 已部署 mix / zksync 合约升级需评估审计，详见各 dapp `upgrade-notes.md` 的"存量升级指引"
 
 ## 溯源参考
 
