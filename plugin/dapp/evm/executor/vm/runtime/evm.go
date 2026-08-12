@@ -20,16 +20,18 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
-// checkBlockedAccount 合约内部调用/创建的黑名单拦截（fork 门控）。
+// checkBlockedAccount 合约内部调用/创建的黑名单拦截，按当前区块高度选取名单版本。
 // 命中返回包装后的 types.ErrBlockedAccount，由调用方返回 error 触发 RevertToSnapshot。
-// 与 executor 层共用 types 黑名单，按 EVM 地址（0x 字符串）检查。
+// 与 executor 层共用同一份名单，按 EVM 地址（0x 字符串）检查。
 func checkBlockedAccount(evm *EVM, addrs ...common.Address) error {
 	cfg := evm.cfg
-	if cfg == nil || evm.BlockNumber == nil || !cfg.IsFork(evm.BlockNumber.Int64(), types.ForkAccountBlacklist) {
+	if cfg == nil || evm.BlockNumber == nil {
 		return nil
 	}
+	height := evm.BlockNumber.Int64()
 	for _, addr := range addrs {
-		if types.IsBlockedAccount(addr.String()) {
+		if cfg.IsBlockedAccount(addr.String(), height) {
+			log.Error("checkBlockedAccount hit", "height", height, "addr", addr.String())
 			return fmt.Errorf("%w: %s", types.ErrBlockedAccount, addr.String())
 		}
 	}

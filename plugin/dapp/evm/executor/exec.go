@@ -439,18 +439,19 @@ func getCaller(tx *types.Transaction) common.Address {
 }
 
 // checkEvmBlockedAccount 在 EVM 执行内部拦截命中黑名单的地址（发送方/接收方/合约地址）。
-// 与 types.CheckTxBlockedAccount 共用同一黑名单，但按地址维度检查（此时地址已解析为字符串）。
-// 这里走 fork 门控：仅在 ForkAccountBlacklist 高度后生效。
+// 与 types.CheckTxBlockedAccount 共用同一份按高度分版本的名单，但按地址维度检查（此时地址已解析为字符串）。
+// 不需要额外的 fork 门控：名单版本已按高度选定，分叉高度之前取到的是空名单。
 // 返回 error 后由调用方按 ExecPack 语义处理（保持 revert + 扣费），不升级为 ExecErr。
 func checkEvmBlockedAccount(cfg *types.Chain33Config, height int64, addrs ...string) error {
-	if cfg == nil || !cfg.IsFork(height, types.ForkAccountBlacklist) {
+	if cfg == nil {
 		return nil
 	}
 	for _, addr := range addrs {
 		if addr == "" {
 			continue
 		}
-		if types.IsBlockedAccount(addr) {
+		if cfg.IsBlockedAccount(addr, height) {
+			log.Error("checkEvmBlockedAccount hit", "height", height, "addr", addr)
 			return fmt.Errorf("%w: %s", types.ErrBlockedAccount, addr)
 		}
 	}

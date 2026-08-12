@@ -97,18 +97,19 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 	return mdb
 }
 
-// isBlockedAccount 账户黑名单兜底判定，带 ForkAccountBlacklist 门控。
-// statedb 的转账结果直接进入状态计算，未到分叉高度时不得改变执行结果，否则会与未升级节点分链。
+// isBlockedAccount 账户黑名单兜底判定，按当前区块高度选取名单版本。
+// statedb 的转账结果直接进入状态计算，名单版本必须严格跟随高度，
+// 否则会用新名单判定旧区块，与未升级节点分链。
 func (mdb *MemoryStateDB) isBlockedAccount(addrs ...string) bool {
 	if mdb.api == nil {
 		return false
 	}
 	cfg := mdb.api.GetConfig()
-	if cfg == nil || !cfg.IsFork(mdb.blockHeight, types.ForkAccountBlacklist) {
+	if cfg == nil {
 		return false
 	}
 	for _, addr := range addrs {
-		if types.IsBlockedAccount(addr) {
+		if cfg.IsBlockedAccount(addr, mdb.blockHeight) {
 			return true
 		}
 	}
