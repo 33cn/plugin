@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
 	"reflect"
@@ -209,12 +210,27 @@ func (evm *EVMExecutor) createEvmContractAddress(b common.Address, nonce uint64)
 
 // CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
-	if evm.GetAPI().GetConfig().IsPara() {
+	cfg := evm.GetAPI().GetConfig()
+	if cfg.IsPara() {
 		return nil
 	}
 
 	if tx == nil {
 		return fmt.Errorf("tx empty")
+	}
+
+	// 分叉后拒绝金额超过 int64 上限的交易：
+	// EVMContractAction.Amount 为 uint64，下游记账体系为 int64，
+	// 超过 math.MaxInt64 会回绕为负数，曾导致伪 msg.value 攻击（详见 ForkEVMFixOverflow）
+	if cfg.IsDappFork(evm.GetMainHeight(), "evm", evmtypes.ForkEVMFixOverflow) {
+		var action evmtypes.EVMContractAction
+		if err := types.Decode(tx.Payload, &action); err != nil {
+			return err
+		}
+		if action.GetAmount() > math.MaxInt64 {
+			log.Error("CheckTx", "reject evm tx with amount overflow", "amount", action.GetAmount())
+			return types.ErrAmount
+		}
 	}
 
 	return state.ProcessCheck(evm.GetMainHeight(), tx.Hash())
