@@ -1,5 +1,4 @@
 Title="user.p.para."
-DisableForkCheck=true
 TestNet=false
 CoinSymbol="para"
 EnableParaFork=true
