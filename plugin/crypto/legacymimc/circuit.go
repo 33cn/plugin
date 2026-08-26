@@ -19,7 +19,8 @@ type CircuitMiMC struct {
 	api    frontend.API
 }
 
-// NewCircuitMiMC returns a CircuitMiMC instance with given seed's old constants
+// NewCircuitMiMC returns a CircuitMiMC instance with given seed's old constants.
+// 返回 (CircuitMiMC, error) 以对齐 gnark 上游 NewMiMC 的签名风格；本实现参数派生不会失败，error 恒为 nil。
 func NewCircuitMiMC(api frontend.API, seed string) (CircuitMiMC, error) {
 	params := NewParams(seed)
 	res := CircuitMiMC{}
