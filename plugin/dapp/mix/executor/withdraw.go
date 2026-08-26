@@ -53,9 +53,18 @@ func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (
 		return nil, errors.Wrapf(err, "setCircuitPubInput")
 	}
 
-	treeRootHash := mixTy.VariableToElement(input.TreeRootHash)
-	nullifierHash := mixTy.VariableToElement(input.NullifierHash)
-	authSpendHash := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	treeRootHash, err := mixTy.VariableToElement(input.TreeRootHash)
+	if err != nil {
+		return nil, err
+	}
+	nullifierHash, err := mixTy.VariableToElement(input.NullifierHash)
+	if err != nil {
+		return nil, err
+	}
+	authSpendHash, err := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	if err != nil {
+		return nil, err
+	}
 
 	err = spendVerify(a.db, exec, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
@@ -86,9 +95,15 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 		if err != nil {
 			return nil, err
 		}
-		v := mixTy.VariableToElement(input.Amount)
+		v, err := mixTy.VariableToElement(input.Amount)
+		if err != nil {
+			return nil, err
+		}
 		sumValue += v.Uint64()
-		nullHash := mixTy.VariableToElement(input.NullifierHash)
+		nullHash, err := mixTy.VariableToElement(input.NullifierHash)
+		if err != nil {
+			return nil, err
+		}
 		nulliferSet = append(nulliferSet, nullHash.String())
 	}
 

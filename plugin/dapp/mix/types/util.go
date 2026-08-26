@@ -27,10 +27,14 @@ type Witness []fr.Element
 // VariableToElement 将 circuit 的 public input 变量值转换回 fr.Element。
 // gnark v0.9.0 后 frontend.Variable 为 interface{}，保存的是字符串值，
 // 替代旧的 GetWitnessValue(ecc.BN254) 调用。
-func VariableToElement(v frontend.Variable) fr.Element {
+// SetString 失败（非法输入）时返回 error，避免在证明验证路径上静默得到零元素。
+func VariableToElement(v frontend.Variable) (fr.Element, error) {
 	var el fr.Element
-	el.SetString(fmt.Sprint(v))
-	return el
+	_, err := el.SetString(fmt.Sprint(v))
+	if err != nil {
+		return el, errors.Wrapf(err, "VariableToElement invalid value=%s", fmt.Sprint(v))
+	}
+	return el, nil
 }
 
 func VerifyMerkleProof(cs frontend.API, mimc *legacymimc.CircuitMiMC, treeRootHash frontend.Variable, proofSet, helper, valid []frontend.Variable) {
@@ -93,7 +97,7 @@ func ReadWitnessCompatible(buf []byte) (witness.Witness, error) {
 		// 旧格式（v0.5.2）
 		n := binary.BigEndian.Uint32(buf[:4])
 		if int(n)*32+4 != len(buf) {
-			return nil, errors.Wrapf(fmt.Errorf("old witness length mismatch"), "n=%d bufLen=%d", n, len(buf))
+			return nil, errors.Errorf("old witness length mismatch n=%d bufLen=%d", n, len(buf))
 		}
 		vec := make([]fr.Element, n)
 		dec := ecc_bn254.NewDecoder(bytes.NewReader(buf[4:]))
@@ -118,7 +122,7 @@ func ReadWitnessCompatible(buf []byte) (witness.Witness, error) {
 	}
 	// 新格式（v0.9.0）：总长必须为 %32==12，否则视为非法输入而非静默交给 ReadFrom
 	if len(buf)%32 != 12 || len(buf) < 12 {
-		return nil, errors.Wrapf(fmt.Errorf("invalid witness format"), "len=%d (expect %%32==4 old or %%32==12 new)", len(buf))
+		return nil, errors.Errorf("invalid witness format len=%d (expect %%32==4 old or %%32==12 new)", len(buf))
 	}
 	w, err := witness.New(ecc.BN254.ScalarField())
 	if err != nil {
@@ -142,15 +146,29 @@ func ConstructCircuitPubInput(pubInput string, circuit frontend.Circuit) error {
 		return errors.Wrapf(err, "ReadWitnessCompatible pub input=%s", pubInput)
 	}
 
-	// 从 witness 提取 Vector 并赋值到 circuit 字段
-	vec := pubW.Vector().(fr.Vector)
+	// 从 witness 提取 Vector 并赋值到 circuit 字段。
+	// 注意：witness 向量只包含 public 字段（gnark:",public" tag），且字段顺序与
+	// 结构体声明的 public 字段顺序一致 —— 修改电路结构体时不得重排/插入 public 字段，
+	// 否则此处会静默错配 public input。
+	vec, ok := pubW.Vector().(fr.Vector)
+	if !ok {
+		return errors.New("ConstructCircuitPubInput witness vector type assert fail")
+	}
 	tValue := reflect.ValueOf(circuit)
 	if tValue.Kind() == reflect.Ptr {
 		tValue = tValue.Elem()
 	}
+	numField := tValue.Type().NumField()
+	if len(vec) > numField {
+		return errors.Errorf("ConstructCircuitPubInput witness len=%d > circuit NumField=%d", len(vec), numField)
+	}
 	for i := 0; i < len(vec); i++ {
 		field := tValue.Type().Field(i)
-		*(tValue.FieldByName(field.Name).Addr().Interface().(*frontend.Variable)) = vec[i].String()
+		fv, ok := tValue.FieldByName(field.Name).Addr().Interface().(*frontend.Variable)
+		if !ok {
+			return errors.Errorf("ConstructCircuitPubInput field=%s not *frontend.Variable", field.Name)
+		}
+		*fv = vec[i].String()
 	}
 	return nil
 }

@@ -50,9 +50,15 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 		if err != nil {
 			return nil, errors.Wrap(err, "get pub input")
 		}
-		v := mixTy.VariableToElement(input.Amount)
+		v, err := mixTy.VariableToElement(input.Amount)
+		if err != nil {
+			return nil, err
+		}
 		sum += v.Uint64()
-		noteHash := mixTy.VariableToElement(input.NoteHash)
+		noteHash, err := mixTy.VariableToElement(input.NoteHash)
+		if err != nil {
+			return nil, err
+		}
 		notes = append(notes, noteHash.String())
 	}
 

@@ -121,8 +121,12 @@ func TestDepositSetVal(t *testing.T) {
 
 	var depositCircuit DepositCircuit
 	getVal(&depositCircuit, Witness(vec))
-	fmt.Println("deposit", VariableToElement(depositCircuit.NoteHash))
-	fmt.Println("amount", VariableToElement(depositCircuit.Amount))
+	noteHash, err := VariableToElement(depositCircuit.NoteHash)
+	assert.Nil(t, err)
+	amount, err := VariableToElement(depositCircuit.Amount)
+	assert.Nil(t, err)
+	fmt.Println("deposit", noteHash)
+	fmt.Println("amount", amount)
 
 }
 
