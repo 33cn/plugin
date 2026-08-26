@@ -13,7 +13,10 @@ import (
 
 func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizeCircuit) error {
 	//check tree rootHash exist
-	treeRootHash := mixTy.VariableToElement(input.TreeRootHash)
+	treeRootHash, err := mixTy.VariableToElement(input.TreeRootHash)
+	if err != nil {
+		return err
+	}
 	exist, err := checkTreeRootHashExist(a.db, exec, symbol, mixTy.Str2Byte(treeRootHash.String()))
 	if err != nil {
 		return errors.Wrapf(err, "roothash=%s not found,exec=%s,symbol=%s", treeRootHash.String(), exec, symbol)
@@ -23,7 +26,10 @@ func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizeCircu
 	}
 
 	//authorize key should not exist
-	authHash := mixTy.VariableToElement(input.AuthorizeHash)
+	authHash, err := mixTy.VariableToElement(input.AuthorizeHash)
+	if err != nil {
+		return err
+	}
 	authKey := calcAuthorizeHashKey(authHash.String())
 	_, err = a.db.Get(authKey)
 	if err == nil {
@@ -74,10 +80,16 @@ func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt,
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	authNullHash := mixTy.VariableToElement(input.AuthorizeHash)
+	authNullHash, err := mixTy.VariableToElement(input.AuthorizeHash)
+	if err != nil {
+		return nil, err
+	}
 	r := makeReceipt(calcAuthorizeHashKey(authNullHash.String()), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Nullifier: authNullHash.String(), Exist: true})
 	mergeReceipt(receipt, r)
-	authSpendHash := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	authSpendHash, err := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	if err != nil {
+		return nil, err
+	}
 	r = makeReceipt(calcAuthorizeSpendHashKey(authSpendHash.String()), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Nullifier: authSpendHash.String(), Exist: true})
 	mergeReceipt(receipt, r)
 

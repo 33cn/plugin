@@ -31,7 +31,7 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	// 兼容读取新旧格式 VK（gnark v0.5.2 旧格式 / v0.9.0 新格式）
 	vk, err := mixTy.ReadVerifyingKeyCompatible(vkBuf.Bytes())
 	if err != nil {
-		return false, errors.Wrapf(err, "zkVerify.read.vk=%s", verifyKeyStr[:10])
+		return false, errors.Wrapf(err, "zkVerify.read.vk=%s", safePrefix(verifyKeyStr, 10))
 	}
 
 	// load proof
@@ -42,7 +42,7 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	// 兼容读取新旧格式 Proof
 	proof, err := mixTy.ReadProofCompatible(proofBuf.Bytes())
 	if err != nil {
-		return false, errors.Wrapf(err, "zkVerify.read.proof=%s", proofStr[:10])
+		return false, errors.Wrapf(err, "zkVerify.read.proof=%s", safePrefix(proofStr, 10))
 	}
 
 	// decode pub input hex string
@@ -61,4 +61,13 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 		return false, errors.Wrapf(err, "zkVerify.verify")
 	}
 	return true, nil
+}
+
+// safePrefix 返回字符串前 n 字节，长度不足时返回整个字符串。
+// verifyKeyStr/proofStr 来自链上交易数据（攻击者可控），直接 s[:10] 会对短输入 panic。
+func safePrefix(s string, n int) string {
+	if len(s) > n {
+		return s[:n]
+	}
+	return s
 }

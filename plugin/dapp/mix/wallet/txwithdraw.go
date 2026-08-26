@@ -108,7 +108,10 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 
-		v := mixTy.VariableToElement(input.Amount)
+		v, err := mixTy.VariableToElement(input.Amount)
+		if err != nil {
+			return nil, errors.Wrapf(err, "VariableToElement input.Amount note=%s", note)
+		}
 		sum += v.Uint64()
 		proofs = append(proofs, proofInfo)
 	}

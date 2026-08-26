@@ -170,14 +170,17 @@ func TestUpdateTreePath(t *testing.T) {
 
 	var input mixTy.AuthorizeCircuit
 	updateTreePath(&input, &proof)
-	ret0 := mixTy.VariableToElement(input.Path0)
-	ret1 := mixTy.VariableToElement(input.Path1)
+	ret0, err := mixTy.VariableToElement(input.Path0)
+	assert.Nil(t, err)
+	ret1, err := mixTy.VariableToElement(input.Path1)
+	assert.Nil(t, err)
 
 	assert.Equal(t, path0, ret0.String())
 	assert.Equal(t, path1, ret1.String())
 
 	path2 := "0"
-	ret2 := mixTy.VariableToElement(input.Path2)
+	ret2, err := mixTy.VariableToElement(input.Path2)
+	assert.Nil(t, err)
 	assert.Equal(t, path2, ret2.String())
 
 }

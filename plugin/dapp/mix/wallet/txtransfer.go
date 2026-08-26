@@ -242,7 +242,10 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	var inputAmounts []uint64
 	var sumInput uint64
 	for _, i := range inputParts {
-		amount := mixTy.VariableToElement(i.Amount)
+		amount, err := mixTy.VariableToElement(i.Amount)
+		if err != nil {
+			return nil, errors.Wrapf(err, "VariableToElement i.Amount")
+		}
 		inputAmounts = append(inputAmounts, amount.Uint64())
 		sumInput += amount.Uint64()
 	}

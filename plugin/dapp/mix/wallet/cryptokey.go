@@ -115,20 +115,26 @@ func decryptDataWithPading(password, data []byte) ([]byte, error) {
 	key := make([]byte, 32)
 	copy(key, password)
 
-	// 新格式：IV(16) + ciphertext
+	// 新格式：IV(16) + ciphertext。与旧格式（总长 %32==0）互斥，故进入此分支即按新格式
+	// 解析，任何失败（key 非法 / 长度不齐 / padding 损坏）都如实返回错误，不再静默落回
+	// 旧格式分支——旧格式数据不可能进入此分支，落回只会掩盖新格式数据的真实错误。
 	if len(data)%32 == 16 {
 		block, err := aes.NewCipher(key)
-		if err == nil {
-			iv := data[:block.BlockSize()]
-			ciphertext := data[block.BlockSize():]
-			if len(ciphertext) > 0 && len(ciphertext)%block.BlockSize() == 0 {
-				decrypted := make([]byte, len(ciphertext))
-				cipher.NewCBCDecrypter(block, iv).CryptBlocks(decrypted, ciphertext)
-				if plain, err := pKCS5UnPadding(decrypted); err == nil {
-					return plain, nil
-				}
-			}
+		if err != nil {
+			return nil, errors.Wrapf(err, "decryptDataWithPading aes.NewCipher")
 		}
+		iv := data[:block.BlockSize()]
+		ciphertext := data[block.BlockSize():]
+		if len(ciphertext) == 0 || len(ciphertext)%block.BlockSize() != 0 {
+			return nil, types.ErrInvalidParam
+		}
+		decrypted := make([]byte, len(ciphertext))
+		cipher.NewCBCDecrypter(block, iv).CryptBlocks(decrypted, ciphertext)
+		plain, err := pKCS5UnPadding(decrypted)
+		if err != nil {
+			return nil, errors.Wrapf(err, "decryptDataWithPading new format unpadding")
+		}
+		return plain, nil
 	}
 	// 旧格式：ciphertext-only，必须 16 字节对齐，否则 chain33 legacy 分支的 CryptBlocks 会 panic
 	if len(data)%16 != 0 {

@@ -27,9 +27,18 @@ func transferInput(cfg *types.Chain33Config, db dbm.KV, execer, symbol string, p
 		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
 
-	treeRootHash := mixTy.VariableToElement(input.TreeRootHash)
-	nullifierHash := mixTy.VariableToElement(input.NullifierHash)
-	authSpendHash := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	treeRootHash, err := mixTy.VariableToElement(input.TreeRootHash)
+	if err != nil {
+		return nil, err
+	}
+	nullifierHash, err := mixTy.VariableToElement(input.NullifierHash)
+	if err != nil {
+		return nil, err
+	}
+	authSpendHash, err := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	if err != nil {
+		return nil, err
+	}
 	err = spendVerify(db, execer, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "transferInput verify spendVerify")
@@ -39,8 +48,14 @@ func transferInput(cfg *types.Chain33Config, db dbm.KV, execer, symbol string, p
 	conf := types.ConfSub(cfg, mixTy.MixX)
 	pointHX := conf.GStr("pointHX")
 	pointHY := conf.GStr("pointHY")
-	inputHX := mixTy.VariableToElement(input.ShieldPointHX)
-	inputHY := mixTy.VariableToElement(input.ShieldPointHY)
+	inputHX, err := mixTy.VariableToElement(input.ShieldPointHX)
+	if err != nil {
+		return nil, err
+	}
+	inputHY, err := mixTy.VariableToElement(input.ShieldPointHY)
+	if err != nil {
+		return nil, err
+	}
 	if pointHX != inputHX.String() || pointHY != inputHY.String() {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "input circuit H point=%s-%s not match config", inputHX.String(), inputHY.String())
 	}
@@ -70,8 +85,14 @@ func transferOutputVerify(cfg *types.Chain33Config, db dbm.KV, proof *mixTy.ZkPr
 	conf := types.ConfSub(cfg, mixTy.MixX)
 	pointHX := conf.GStr("pointHX")
 	pointHY := conf.GStr("pointHY")
-	inputHX := mixTy.VariableToElement(input.ShieldPointHX)
-	inputHY := mixTy.VariableToElement(input.ShieldPointHY)
+	inputHX, err := mixTy.VariableToElement(input.ShieldPointHX)
+	if err != nil {
+		return nil, err
+	}
+	inputHY, err := mixTy.VariableToElement(input.ShieldPointHY)
+	if err != nil {
+		return nil, err
+	}
 	if pointHX != inputHX.String() || pointHY != inputHY.String() {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "output circuit H point=%s-%s not match config", inputHX.String(), inputHY.String())
 	}
@@ -88,16 +109,32 @@ func transferOutputVerify(cfg *types.Chain33Config, db dbm.KV, proof *mixTy.ZkPr
 func VerifyCommitValues(inputs []*mixTy.TransferInputCircuit, outputs []*mixTy.TransferOutputCircuit, txFee uint64) bool {
 	var inputPoints, outputPoints []*twistededwards.PointAffine
 	for _, in := range inputs {
+		ax, err := mixTy.VariableToElement(in.ShieldAmountX)
+		if err != nil {
+			return false
+		}
+		ay, err := mixTy.VariableToElement(in.ShieldAmountY)
+		if err != nil {
+			return false
+		}
 		var p twistededwards.PointAffine
-		p.X.SetInterface(mixTy.VariableToElement(in.ShieldAmountX))
-		p.Y.SetInterface(mixTy.VariableToElement(in.ShieldAmountY))
+		p.X.SetInterface(ax)
+		p.Y.SetInterface(ay)
 		inputPoints = append(inputPoints, &p)
 	}
 
 	for _, out := range outputs {
+		ax, err := mixTy.VariableToElement(out.ShieldAmountX)
+		if err != nil {
+			return false
+		}
+		ay, err := mixTy.VariableToElement(out.ShieldAmountY)
+		if err != nil {
+			return false
+		}
 		var p twistededwards.PointAffine
-		p.X.SetInterface(mixTy.VariableToElement(out.ShieldAmountX))
-		p.Y.SetInterface(mixTy.VariableToElement(out.ShieldAmountY))
+		p.X.SetInterface(ax)
+		p.Y.SetInterface(ay)
 		outputPoints = append(outputPoints, &p)
 	}
 	//out value add fee
@@ -209,7 +246,10 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	mergeReceipt(receipt, rTxFee)
 
 	for _, k := range inputs {
-		nullHash := mixTy.VariableToElement(k.NullifierHash)
+		nullHash, err := mixTy.VariableToElement(k.NullifierHash)
+		if err != nil {
+			return nil, err
+		}
 		r := makeNullifierSetReceipt(nullHash.String(), &mixTy.ExistValue{Nullifier: nullHash.String(), Exist: true})
 		mergeReceipt(receipt, r)
 	}
@@ -217,7 +257,10 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	//push new commit to merkle tree
 	var leaves [][]byte
 	for _, h := range outputs {
-		noteHash := mixTy.VariableToElement(h.NoteHash)
+		noteHash, err := mixTy.VariableToElement(h.NoteHash)
+		if err != nil {
+			return nil, err
+		}
 		leaves = append(leaves, mixTy.Str2Byte(noteHash.String()))
 	}
 
