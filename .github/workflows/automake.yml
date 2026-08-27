@@ -39,8 +39,7 @@ jobs:
         with:
           branch: master
           extra_plugins: |
-            conventional-changelog/conventional-changelog-jshint
-            @semantic-release-replace-plugin
+            semantic-release-replace-plugin
             @semantic-release/exec
             @semantic-release/changelog
             @semantic-release/git
