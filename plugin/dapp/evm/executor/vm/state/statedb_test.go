@@ -1,6 +1,7 @@
 package state
 
 import (
+	"errors"
 	"math"
 	"testing"
 
@@ -177,4 +178,55 @@ func TestMemoryStateDBAddLogWithNoTopics(t *testing.T) {
 	if evmLog.GetAddress() != contractAddr.String() {
 		t.Fatalf("expected address %s, got %s", contractAddr.String(), evmLog.GetAddress())
 	}
+}
+
+// TestBlacklistBlocksFundOps 验证 ForkAccountBlacklist 激活后，黑名单地址的
+// CanTransfer / Transfer / TransferToToken 三个兜底路径均被拦截。
+// 覆盖 statedb.go 的黑名单分支（isBlockedAccount 命中 → 返回失败）。
+func TestBlacklistBlocksFundOps(t *testing.T) {
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig").Return(cfg)
+
+	dbDir, stateDB, localDB := util.CreateTestDB()
+	defer util.CloseTestDB(dbDir, stateDB)
+
+	coinsAccount, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), stateDB)
+	if err != nil {
+		t.Fatalf("failed to create coins account: %v", err)
+	}
+
+	execAddr := address.ExecAddress(cfg.ExecName("evm"))
+	mdb := NewMemoryStateDB(stateDB, localDB, coinsAccount, 1, api)
+	mdb.evmPlatformAddr = execAddr
+
+	// 启用黑名单 fork：local 标题下 SetAllFork(0)，ForkAccountBlacklist 从高度 0 生效
+	cfg.SetFork(ctypes.ForkAccountBlacklist, 0)
+
+	blockedAddr := "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+	restore := ctypes.SetBlockedAccountsForTest([]string{blockedAddr})
+	t.Cleanup(restore)
+
+	// CanTransfer：黑名单发送方拒绝
+	if mdb.CanTransfer(blockedAddr, 100) {
+		t.Fatal("CanTransfer accepted blacklisted sender")
+	}
+
+	// Transfer：黑名单发送方或接收方拒绝
+	if mdb.Transfer(blockedAddr, execAddr, 100) {
+		t.Fatal("Transfer accepted blacklisted sender")
+	}
+	if mdb.Transfer(execAddr, blockedAddr, 100) {
+		t.Fatal("Transfer accepted blacklisted recipient")
+	}
+
+	// TransferToToken：黑名单发送方拒绝并返回 ErrBlockedAccount
+	ok, err := mdb.TransferToToken(blockedAddr, execAddr, "BTY", 100)
+	if ok {
+		t.Fatal("TransferToToken accepted blacklisted sender")
+	}
+	if !errors.Is(err, ctypes.ErrBlockedAccount) {
+		t.Fatalf("expected ErrBlockedAccount, got %v", err)
+	}
+	t.Log("✓ blacklist blocks CanTransfer/Transfer/TransferToToken")
 }

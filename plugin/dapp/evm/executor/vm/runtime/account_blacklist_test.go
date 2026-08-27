@@ -70,3 +70,15 @@ func TestCallBlockedAccount(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, types.ErrBlockedAccount))
 }
+
+// TestCreateBlockedAccount 验证 EVM.Create 在黑名单地址下返回 error（触发上层 revert）。
+// 与 TestCallBlockedAccount 对称，覆盖 Create 路径的 checkBlockedAccount 分支。
+func TestCreateBlockedAccount(t *testing.T) {
+	evm := newBlockedEVM(t, []string{blockedRuntimeAddr})
+	caller := AccountRef(common.BytesToAddress(common.FromHex(blockedRuntimeAddr)))
+	contractAddr := common.BytesToAddress(common.FromHex("0x0000000000000000000000000000000000000002"))
+
+	_, _, _, err := evm.Create(caller, contractAddr, nil, 100000, "evm", "test", 0)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, types.ErrBlockedAccount))
+}
