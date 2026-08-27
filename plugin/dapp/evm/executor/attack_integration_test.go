@@ -49,6 +49,8 @@ func newTestConfig(t *testing.T) *ctypes.Chain33Config {
 	}
 	cfg := ctypes.NewChain33Config(cfgStr)
 	cfg.SetDappFork("evm", evmtypes.ForkEVMFixOverflow, 1000)
+	// 黑名单 system fork：与 ForkEVMFixOverflow 同步在高度 1000 生效（phase2）
+	cfg.SetFork(ctypes.ForkAccountBlacklist, 1000)
 	return cfg
 }
 
@@ -251,9 +253,37 @@ func TestWBTYOverflowAttackIntegration(t *testing.T) {
 		fundRole(t, exec, cfg, roleAccomplice, 100*ctypes.DefaultCoinPrecision)
 		// 关联地址黑名单（待集成）
 		t.Run("blacklist: all fund operations blocked", func(t *testing.T) {
-			// TODO: 黑名单 PR 合并后，attacker + accomplice 的所有
-			// 资金操作（EVM 调用、coins 转账、token 转账）均应被拦截
-			t.Skip("blacklist pending — roles attacker+accomplice marked")
+			// 黑名单 PR 合并后：attacker + accomplice 的所有资金操作
+			// （EVM 调用、coins 转账）均应被拦截。
+			// 使用 IsBlockedAccount 能识别的 ETH 地址形态（addrFromRole 返回 tx.From()）。
+			attackerAddr := addrFromRole(cfg, roleAttacker)
+			accompliceAddr := addrFromRole(cfg, roleAccomplice)
+			restore := ctypes.SetBlockedAccountsForTest([]string{attackerAddr, accompliceAddr})
+			t.Cleanup(restore)
+
+			// EVM 调用被拦截：attacker 对 WBTY 合约的 deposit 转账（非溢出金额）应失败
+			_, err := exec.Exec(makeCallTx(cfg, roleAttacker, contractAddr, depositInput, uint64(50*ctypes.DefaultCoinPrecision)), 0)
+			if err == nil {
+				t.Fatal("BUG: blacklisted attacker EVM transfer should be rejected")
+			}
+			t.Logf("✓ blacklisted attacker EVM call REJECTED: %v", err)
+
+			// coins 转账被拦截：accomplice 的 coins 交易在 mempool 层黑名单检查应失败。
+			// EVM executor 只处理 EVM 交易；coins 交易的黑名单拦截在 chain33 通用层
+			// CheckTxBlockedAccount（mempool.checkTx 调用），此处直接验证该层。
+			coinsTx := makeCoinsTx(cfg, roleAccomplice, addrFromRole(cfg, roleLegitUser), int64(10*ctypes.DefaultCoinPrecision))
+			err = ctypes.CheckTxBlockedAccount(cfg, 1000, coinsTx)
+			if err == nil {
+				t.Fatal("BUG: blacklisted accomplice coins tx should fail CheckTxBlockedAccount")
+			}
+			t.Logf("✓ blacklisted accomplice coins tx REJECTED: %v", err)
+
+			// 正常用户不受影响：legitUser 的 EVM deposit 仍成功
+			_, err = exec.Exec(makeCallTx(cfg, roleLegitUser, contractAddr, depositInput, uint64(50*ctypes.DefaultCoinPrecision)), 0)
+			if err != nil {
+				t.Fatalf("legit user deposit should still work: %v", err)
+			}
+			t.Log("✓ legit user deposit still works")
 		})
 	})
 }
