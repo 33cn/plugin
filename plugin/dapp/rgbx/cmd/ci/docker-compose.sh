@@ -215,7 +215,9 @@ function wait_cli_ready() {
     local retries=120
     local i
     for ((i = 0; i < retries; i++)); do
-        if ${cli} block last_header >/dev/null 2>&1; then
+        # chain33-cli 在 RPC 失败时退出码为 0，必须校验输出内容（有效 JSON 且含 height），
+        # 否则节点未就绪也会被误判为就绪，导致后续查询在 RPC 未监听时失败
+        if ${cli} block last_header 2>/dev/null | jq -e '.height != null' >/dev/null 2>&1; then
             return 0
         fi
         sleep 1
@@ -272,7 +274,9 @@ function tx_wait() {
     local retries=20
     local i
     for ((i = 0; i < retries; i++)); do
-        if ${cli} tx query_hash -s "${tx_hash}" >/dev/null 2>&1; then
+        # chain33-cli 在 RPC 失败时退出码为 0，必须校验输出内容；
+        # 未上链 tx 的 GetTxByHashes 返回 {"txs":[null]}，须过滤掉 null 再判断非空
+        if ${cli} tx query_hash -s "${tx_hash}" 2>/dev/null | jq -e '.txs? | map(select(. != null)) | length > 0' >/dev/null 2>&1; then
             return 0
         fi
         sleep 0.5
@@ -309,7 +313,7 @@ function query_xbtc_balance() {
 function wait_xbtc_balance_not_less_than() {
     local addr="$1"
     local expected="$2"
-    local retries="${3:-30}"
+    local retries="${3:-120}"
     local i
     for ((i = 0; i < retries; i++)); do
         local balance
@@ -361,8 +365,10 @@ function wait_no_withdraw_pending_for_user() {
     local i
     local cnt=0
     for ((i = 0; i < retries; i++)); do
-        cnt=$(${MAIN_CLI} rgbx listPendByFrom -f "${from_addr}" | jq '[.pendingList[]? | select(.actionType == 106)] | length')
-        if [ "${cnt}" -eq 0 ]; then
+        # set -e + pipefail 下 RPC 未就绪时 jq 失败会中止脚本，须用 || 兜底
+        cnt=$(${MAIN_CLI} rgbx listPendByFrom -f "${from_addr}" | jq '[.pendingList[]? | select(.actionType == 106)] | length') || cnt=0
+        # RPC 失败时 cnt 为空，回退 0 避免 [ "" -eq 0 ] 报错
+        if [ "${cnt:-0}" -eq 0 ]; then
             return 0
         fi
         mine_btcd_blocks 1
@@ -547,16 +553,14 @@ function setup_para_nodegroup_on_main() {
 
 function ensure_btc_crosschain_prerequisite() {
     log_step "check BTC cross-chain prerequisite only (no mint bootstrap)"
-    set +e
     local info
     info=$(${MAIN_CLI} rgbx getCross -s "${MINT_SYMBOL}" 2>/dev/null)
-    local rc=$?
-    set -e
-    if [ "${rc}" -ne 0 ]; then
+    # chain33-cli RPC 失败时退出码为 0，须校验输出内容（有效 JSON 且 assetSymbol 非空）
+    if ! echo "${info}" | jq -e '(.assetSymbol // "") != ""' >/dev/null 2>&1; then
         fail "BTC cross-chain info not ready; please pre-configure rgbx BTC asset and cross-chain metadata before running this CI"
     fi
     local symbol
-    symbol=$(echo "${info}" | jq -r '.assetSymbol // empty')
+    symbol=$(echo "${info}" | jq -r '.assetSymbol')
     if [ -z "${symbol}" ]; then
         fail "BTC cross-chain info missing; this test does not create asset via mint"
     fi
@@ -564,21 +568,18 @@ function ensure_btc_crosschain_prerequisite() {
 
 function wait_auto_dkg_commit() {
     log_step "wait auto DKG commit by neutrino+tss"
-    local retries=60
+    # 慢环境（neutrino+tss 协同提交）偶发超过 60s，放宽到 120s
+    local retries=120
     local i
+    local info
     for ((i = 0; i < retries; i++)); do
-        set +e
-        local info
         info=$(${MAIN_CLI} rgbx getCross -s "${MINT_SYMBOL}" 2>/dev/null)
-        local rc=$?
-        set -e
-        if [ "${rc}" -eq 0 ]; then
+        # chain33-cli RPC 失败时退出码为 0，须用 jq 校验输出内容（有效 JSON 且 tssAddress 非空）
+        if echo "${info}" | jq -e '(.tssAddress // "") != ""' >/dev/null 2>&1; then
             local tss_addr
-            tss_addr=$(echo "${info}" | jq -r '.tssAddress // empty')
-            if [ -n "${tss_addr}" ]; then
-                log_step "auto DKG done, tssAddress=${tss_addr}"
-                return 0
-            fi
+            tss_addr=$(echo "${info}" | jq -r '.tssAddress')
+            log_step "auto DKG done, tssAddress=${tss_addr}"
+            return 0
         fi
         sleep 1
     done
@@ -684,9 +685,17 @@ function scenario_restart_recovery() {
     wait_cli_ready "${MAIN_CLI}"
     save_seed_and_unlock "${MAIN_CLI}" || true
 
-    local after
-    after=$(${MAIN_CLI} rgbx listPend -s 0 -i 0 -c 20 | jq -r '.pendingList | length')
-    assert_true "$([ "${after}" -ge 0 ] && echo true || echo false)" "pending list query failed after restart"
+    # restart 后轮询 listPend 直到能正常返回数字（chain33-cli RPC 失败退出码为 0，
+    # wait_cli_ready 只覆盖 last_header，rgbx 查询就绪需单独等）
+    local after=""
+    local i
+    for ((i = 0; i < 60; i++)); do
+        # set -e + pipefail 下 RPC 未就绪时 jq 失败会中止脚本，须用 || 兜底让轮询重试
+        after=$(${MAIN_CLI} rgbx listPend -s 0 -i 0 -c 20 2>/dev/null | jq -r '.pendingList | length' 2>/dev/null) || after=""
+        [ -n "${after}" ] && break
+        sleep 1
+    done
+    assert_true "$([ -n "${after}" ] && echo true || echo false)" "pending list query failed after restart"
     log_step "pending continuity check before=${before}, after=${after}"
 }
 

@@ -13,9 +13,8 @@ import (
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	relayerutils "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	btcecsecp256k1 "github.com/btcsuite/btcd/btcec/v2"
-	ethSecp256k1 "github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -180,7 +179,7 @@ func MultisignTransfer(cmd *cobra.Command, _ []string) {
 		temp, _ := btcecsecp256k1.PrivKeyFromBytes(ownerPrivateKey.Bytes())
 		privateKey4chain33Ecdsa := temp.ToECDSA()
 
-		sig, err := ethSecp256k1.Sign(contentHash, math.PaddedBigBytes(privateKey4chain33Ecdsa.D, 32))
+		sig, err := crypto.Sign(contentHash, privateKey4chain33Ecdsa)
 		if nil != err {
 			fmt.Println("evmAbi.Pack(parameter, erc20.ERC20ABI, false)", "Failed", err.Error())
 			return

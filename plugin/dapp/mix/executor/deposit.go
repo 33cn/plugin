@@ -8,7 +8,6 @@ import (
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/golang/protobuf/proto"
 
 	"github.com/pkg/errors"
@@ -51,9 +50,15 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 		if err != nil {
 			return nil, errors.Wrap(err, "get pub input")
 		}
-		v := input.Amount.GetWitnessValue(ecc.BN254)
+		v, err := mixTy.VariableToElement(input.Amount)
+		if err != nil {
+			return nil, err
+		}
 		sum += v.Uint64()
-		noteHash := input.NoteHash.GetWitnessValue(ecc.BN254)
+		noteHash, err := mixTy.VariableToElement(input.NoteHash)
+		if err != nil {
+			return nil, err
+		}
 		notes = append(notes, noteHash.String())
 	}
 

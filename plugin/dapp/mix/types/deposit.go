@@ -1,9 +1,8 @@
 package types
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 //spend commit hash the circuit implementing
@@ -17,9 +16,9 @@ type DepositCircuit struct {
 	NoteRandom      frontend.Variable
 }
 
-func (circuit *DepositCircuit) Define(curveID ecc.ID, api frontend.API) error {
+func (circuit *DepositCircuit) Define(api frontend.API) error {
 	// hash function
-	mimc, _ := mimc.NewMiMC(MimcHashSeed, curveID, api)
+	mimc, _ := legacymimc.NewCircuitMiMC(api, MimcHashSeed)
 
 	mimc.Write(circuit.ReceiverPubKey, circuit.ReturnPubKey, circuit.AuthorizePubKey, circuit.Amount, circuit.NoteRandom)
 	api.AssertIsEqual(circuit.NoteHash, mimc.Sum())

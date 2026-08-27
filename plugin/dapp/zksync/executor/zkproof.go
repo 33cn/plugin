@@ -2,18 +2,26 @@ package executor
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/consensys/gnark/backend/witness"
+	fr_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
 )
+
+// zkVariableToElement 将 circuit public input 变量值（string）转回 fr.Element
+func zkVariableToElement(v frontend.Variable) fr_bn254.Element {
+	var el fr_bn254.Element
+	el.SetString(fmt.Sprint(v))
+	return el
+}
 
 func makeSetVerifyKeyReceipt(oldKey, newKey *zt.ZkVerifyKey) *types.Receipt {
 	key := getVerifyKey()
@@ -155,7 +163,7 @@ func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
 	return &data, nil
 }
 
-//合约管理员或管理员设置在链上的管理员才可设置
+// 合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
@@ -249,7 +257,7 @@ type commitProofCircuit struct {
 	OnChainPubDataCommitment frontend.Variable `gnark:",public"`
 }
 
-func (circuit *commitProofCircuit) Define(curveID ecc.ID, api frontend.API) error {
+func (circuit *commitProofCircuit) Define(api frontend.API) error {
 	return nil
 }
 
@@ -443,11 +451,12 @@ func checkNewProof(lastProof, newProof *zt.CommitProofState, lastOnChainProofId 
 	return lastOnChainProofId, nil
 }
 
-//检查来自proof的pubdata和queue里的operation一致
-//链上每个op都会把数据压入queue中，包括fee，链下提交的证明的pubdatas要和压入的queue op顺序和数值严格一致，好处是抗回滚
-//first queue op从id=0开始,一旦被proof验证过后firstOpId会移到最后一个验证了的id
-//  1,2,3|,4,5,6,7|-----
-//       3=first queue op, 7=last queue op
+// 检查来自proof的pubdata和queue里的operation一致
+// 链上每个op都会把数据压入queue中，包括fee，链下提交的证明的pubdatas要和压入的queue op顺序和数值严格一致，好处是抗回滚
+// first queue op从id=0开始,一旦被proof验证过后firstOpId会移到最后一个验证了的id
+//
+//	1,2,3|,4,5,6,7|-----
+//	     3=first queue op, 7=last queue op
 func checkNewProofPubData(db dbm.KV, lastQueueId int64, pubData []string) (int64, error) {
 	ops := transferPubDataToOps(pubData)
 	for _, o := range ops {
@@ -472,26 +481,37 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 		return errors.Wrapf(err, "read public input str")
 	}
 	var proofCircuit commitProofCircuit
-	_, err = witness.ReadPublicFrom(pBuff, ecc.BN254, &proofCircuit)
+	w, err := mixTy.ReadWitnessCompatible(pBuff.Bytes())
 	if err != nil {
 		return errors.Wrapf(err, "read public input")
 	}
+	vec, ok := w.Vector().(fr_bn254.Vector)
+	if !ok {
+		return errors.New("wrong witness vector type")
+	}
+	//commitProofCircuit 的两个 public 字段按声明顺序对应 vector
+	if len(vec) >= 1 {
+		proofCircuit.PubDataCommitment = vec[0].String()
+	}
+	if len(vec) >= 2 {
+		proofCircuit.OnChainPubDataCommitment = vec[1].String()
+	}
 	//计算pubData hash 需要和commit的一致
-	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	commitPubDataHash := proofCircuit.PubDataCommitment.GetWitnessValue(ecc.BN254)
+	mimcHash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
+	commitPubDataHash := zkVariableToElement(proofCircuit.PubDataCommitment)
 	calcPubDataHash := calcPubDataCommitHash(mimcHash, proof.BlockStart, proof.BlockEnd, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
 	if commitPubDataHash.String() != calcPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "pubData hash not match, PI=%s,calc=%s", commitPubDataHash.String(), calcPubDataHash)
 	}
 
 	//计算onChain pubData hash 需要和commit的一致
-	commitOnChainPubDataHash := proofCircuit.OnChainPubDataCommitment.GetWitnessValue(ecc.BN254)
+	commitOnChainPubDataHash := zkVariableToElement(proofCircuit.OnChainPubDataCommitment)
 	calcOnChainPubDataHash := calcOnChainPubDataCommitHash(mimcHash, proof.NewTreeRoot, proof.OnChainPubDatas)
 	if commitOnChainPubDataHash.String() != calcOnChainPubDataHash {
 		return errors.Wrapf(types.ErrInvalidParam, "onChain pubData hash not match, PI=%s,calc=%s", commitOnChainPubDataHash.String(), calcOnChainPubDataHash)
 	}
 	//验证证明
-	ok, err := zksnark.Verify(verifyKey, proof.Proof, proof.PublicInput)
+	ok, err = zksnark.Verify(verifyKey, proof.Proof, proof.PublicInput)
 	if err != nil {
 		return errors.Wrapf(err, "proof verify error")
 	}
@@ -501,7 +521,7 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 	return nil
 }
 
-//合约管理员或管理员设置在链上的管理员才可设置
+// 合约管理员或管理员设置在链上的管理员才可设置
 func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) {

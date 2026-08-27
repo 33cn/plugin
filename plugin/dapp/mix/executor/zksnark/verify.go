@@ -17,7 +17,6 @@ limitations under the License.
 package zksnark
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -29,9 +28,10 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.vk.GetByteBuff")
 	}
-	vk := groth16.NewVerifyingKey(ecc.BN254)
-	if _, err := vk.ReadFrom(vkBuf); err != nil {
-		return false, errors.Wrapf(err, "zkVerify.read.vk=%s", verifyKeyStr[:10])
+	// 兼容读取新旧格式 VK（gnark v0.5.2 旧格式 / v0.9.0 新格式）
+	vk, err := mixTy.ReadVerifyingKeyCompatible(vkBuf.Bytes())
+	if err != nil {
+		return false, errors.Wrapf(err, "zkVerify.read.vk=%s", safePrefix(verifyKeyStr, 10))
 	}
 
 	// load proof
@@ -39,9 +39,10 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.get.proof")
 	}
-	proof := groth16.NewProof(ecc.BN254)
-	if _, err = proof.ReadFrom(proofBuf); err != nil {
-		return false, errors.Wrapf(err, "zkVerify.read.proof=%s", proofStr[:10])
+	// 兼容读取新旧格式 Proof
+	proof, err := mixTy.ReadProofCompatible(proofBuf.Bytes())
+	if err != nil {
+		return false, errors.Wrapf(err, "zkVerify.read.proof=%s", safePrefix(proofStr, 10))
 	}
 
 	// decode pub input hex string
@@ -50,11 +51,23 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 		return false, errors.Wrapf(err, "zkVerify.pub.GetByteBuff")
 	}
 
-	// verify proof
-	//start := time.Now()
-	err = groth16.ReadAndVerify(proof, vk, pubBuf)
+	// 兼容读取新旧 witness 格式，保持存量 pubInput 可验证
+	pubW, err := mixTy.ReadWitnessCompatible(pubBuf.Bytes())
+	if err != nil {
+		return false, errors.Wrapf(err, "zkVerify.pub.witness")
+	}
+	err = groth16.Verify(proof, vk, pubW)
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.verify")
 	}
 	return true, nil
+}
+
+// safePrefix 返回字符串前 n 字节，长度不足时返回整个字符串。
+// verifyKeyStr/proofStr 来自链上交易数据（攻击者可控），直接 s[:10] 会对短输入 panic。
+func safePrefix(s string, n int) string {
+	if len(s) > n {
+		return s[:n]
+	}
+	return s
 }

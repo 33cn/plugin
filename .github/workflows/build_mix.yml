@@ -16,14 +16,15 @@ jobs:
       - name: set go env
         run: export PATH=${PATH}:`go env GOPATH`/bin
 
-      - name: download zk key file
+      - name: generate zk key file
         run: |
-          pwd&&cd ./plugin/dapp/mix/cmd/
-          wget https://github.com/mdj33/gnark/blob/main/chain33key.tar.gz?raw=true -O chain33key.tar.gz
-          tar -xzvf chain33key.tar.gz
-          cp chain33key/* ./gnark/
+          cd ./plugin/dapp/mix/cmd/
+          # groth16 PK/VK 与 gnark 版本绑定；链上已按 gnark v0.9.0 生成密钥，
+          # 此处实时生成保证密钥与代码一致（旧 v0.5.2 密钥无法被 v0.9.0 读取）
+          go run ./genzkkey ./gnark/
           cd -
       - name: deploy
         run: |
+          make build_ci
           make docker-compose dapp=mix
           make docker-compose-down dapp=mix

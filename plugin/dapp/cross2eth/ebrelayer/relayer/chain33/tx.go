@@ -32,9 +32,8 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4chain33/generated"
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	ethSecp256k1 "github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -523,7 +522,7 @@ func safeTransfer(ownerPrivateKeyStr, mulSign, chainName, rpcURL, receiver, toke
 		temp, _ := btcec_secp256k1.PrivKeyFromBytes(ownerPrivateKey.Bytes())
 		privateKey4Chain33_ecdsa := temp.ToECDSA()
 
-		sig, err := ethSecp256k1.Sign(contentHash, math.PaddedBigBytes(privateKey4Chain33_ecdsa.D, 32))
+		sig, err := crypto.Sign(contentHash, privateKey4Chain33_ecdsa)
 		if nil != err {
 			chain33txLog.Error("safeTransfer", "Failed to do ethSecp256k1.Sign to:", err.Error())
 			return "", err

@@ -20,11 +20,11 @@ proj := "build"
 default: build
 
 build:
-	@go build -v -i -o $(EBRELAER) $(SRC_EBRELAYER)
-	@go build -v -i -o $(CLI_A) $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_B) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_C) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_D) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" $(SRC_EBCLI)
+	@go build -v -o $(EBRELAER) $(SRC_EBRELAYER)
+	@go build -v -o $(CLI_A) $(SRC_EBCLI)
+	@go build -v -o $(CLI_B) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" $(SRC_EBCLI)
+	@go build -v -o $(CLI_C) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" $(SRC_EBCLI)
+	@go build -v -o $(CLI_D) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" $(SRC_EBCLI)
 	@cp ebrelayer/relayer.toml build/
 
 rebuild:
@@ -32,13 +32,13 @@ rebuild:
 	make build
 
 cli:
-	@go build -v -i -o $(CLI_A) $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_B) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_C) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_D) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" $(SRC_EBCLI)
+	@go build -v -o $(CLI_A) $(SRC_EBCLI)
+	@go build -v -o $(CLI_B) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" $(SRC_EBCLI)
+	@go build -v -o $(CLI_C) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" $(SRC_EBCLI)
+	@go build -v -o $(CLI_D) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" $(SRC_EBCLI)
 
 build_ci: depends ## Build the binary file for CI
-	@go build -v -i -o $(CLI) $(SRC_EBCLI)
+	@go build -v -o $(CLI) $(SRC_EBCLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
 	@cp chain33.toml build/
 

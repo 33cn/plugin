@@ -18,9 +18,9 @@ VERSION=$(git describe --tags || git rev-parse --short=8 HEAD)
 GitCommit=$(git rev-parse HEAD)
 BUILD_FLAGS='-X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.GitCommit='${GitCommit}'" -X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.BuildTime='${BuildTime}'" -X "github.com/33cn/plugin/version.Version='${VERSION}'"'
 
-go build -ldflags "${BUILD_FLAGS}" -i ${FLAG} -v -o "${OUT_DIR}/ebrelayer" "${SRC_EBRELAYER}"
-go build -ldflags "${BUILD_FLAGS}" -i ${FLAG} -v -o "${OUT_DIR}/ebcli_A" "${SRC_EBCLI}"
-go build -i ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
+go build -ldflags "${BUILD_FLAGS}" ${FLAG} -v -o "${OUT_DIR}/ebrelayer" "${SRC_EBRELAYER}"
+go build -ldflags "${BUILD_FLAGS}" ${FLAG} -v -o "${OUT_DIR}/ebcli_A" "${SRC_EBCLI}"
+go build ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
 
 cp ../../../../chain33.para.toml "${OUT_DIR}"
 cp ../ebrelayer/relayer.toml "${OUT_DIR}/relayer.toml"

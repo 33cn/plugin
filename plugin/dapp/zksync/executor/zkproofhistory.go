@@ -10,7 +10,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/pkg/errors"
 )
 
@@ -940,7 +940,7 @@ func getAccountMapByOp(op *zt.ZkOperation, accountMap map[uint64]*zt.HistoryLeaf
 }
 
 func getHistoryAccounts(accountMap map[uint64]*zt.HistoryLeaf, maxAccountId uint64) (*zt.HistoryAccountProofInfo, error) {
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	historyAccounts := &zt.HistoryAccountProofInfo{}
 	for i := uint64(zt.SystemDefaultAcctId); i <= maxAccountId; i++ {
 		if _, ok := accountMap[i]; !ok {
@@ -1048,7 +1048,7 @@ func GetHistoryAccountProof(historyAccountInfo *zt.HistoryAccountProofInfo, targ
 	if !tokenFound {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "AccountID=%d has no asset TokenID=%d", targetAccountID, targetTokenID)
 	}
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	accountMerkleProof, err := getMerkleTreeProof(targetAccountID, historyAccountInfo.LeafHashes, h)
 	if err != nil {
 		return nil, errors.Wrapf(err, "account.getMerkleTreeProof")

@@ -7,7 +7,6 @@ package wallet
 import (
 	"path/filepath"
 
-	"github.com/consensys/gnark-crypto/ecc"
 
 	"strconv"
 	"strings"
@@ -37,37 +36,37 @@ func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*mixTy.Tra
 	}
 
 	var input mixTy.TransferInputCircuit
-	input.NoteHash.Assign(note.NoteHash)
+	input.NoteHash = note.NoteHash
 
-	input.Amount.Assign(note.Secret.Amount)
-	input.ReceiverPubKey.Assign(note.Secret.ReceiverKey)
-	input.ReturnPubKey.Assign(note.Secret.ReturnKey)
-	input.AuthorizePubKey.Assign(note.Secret.AuthorizeKey)
-	input.NoteRandom.Assign(note.Secret.NoteRandom)
+	input.Amount = note.Secret.Amount
+	input.ReceiverPubKey = note.Secret.ReceiverKey
+	input.ReturnPubKey = note.Secret.ReturnKey
+	input.AuthorizePubKey = note.Secret.AuthorizeKey
+	input.NoteRandom = note.Secret.NoteRandom
 
 	//自己是payment 还是returner已经在解析note时候算好了，authSpendHash也对应算好了，如果note valid,则就用本地即可
-	input.AuthorizeSpendHash.Assign(note.AuthorizeSpendHash)
-	input.NullifierHash.Assign(note.Nullifier)
+	input.AuthorizeSpendHash = note.AuthorizeSpendHash
+	input.NullifierHash = note.Nullifier
 
-	input.SpendPriKey.Assign(privacyKey.Privacy.PaymentKey.SpendKey)
+	input.SpendPriKey = privacyKey.Privacy.PaymentKey.SpendKey
 
 	//self is returner auth to returner
 	if privacyKey.Privacy.PaymentKey.ReceiveKey == note.Secret.ReturnKey {
-		input.SpendFlag.Assign("0")
+		input.SpendFlag = "0"
 	} else {
-		input.SpendFlag.Assign("1")
+		input.SpendFlag = "1"
 	}
 	if len(note.AuthorizeSpendHash) > LENNULLKEY {
-		input.AuthorizeFlag.Assign("1")
+		input.AuthorizeFlag = "1"
 	} else {
-		input.AuthorizeFlag.Assign("0")
+		input.AuthorizeFlag = "0"
 	}
 
 	treeProof, err := p.getTreeProof(note.Secret.AssetExec, note.Secret.AssetSymbol, note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	input.TreeRootHash.Assign(treeProof.TreeRootHash)
+	input.TreeRootHash = treeProof.TreeRootHash
 	updateTreePath(&input, treeProof)
 	return &input, nil
 }
@@ -84,12 +83,12 @@ func (p *mixPolicy) getTransferOutput(exec, symbol string, req *mixTy.DepositInf
 	}
 
 	var input mixTy.TransferOutputCircuit
-	input.NoteHash.Assign(resp.NoteHash)
-	input.Amount.Assign(resp.Proof.Amount)
-	input.ReceiverPubKey.Assign(resp.Proof.ReceiverKey)
-	input.AuthorizePubKey.Assign(resp.Proof.AuthorizeKey)
-	input.ReturnPubKey.Assign(resp.Proof.ReturnKey)
-	input.NoteRandom.Assign(resp.Proof.NoteRandom)
+	input.NoteHash = resp.NoteHash
+	input.Amount = resp.Proof.Amount
+	input.ReceiverPubKey = resp.Proof.ReceiverKey
+	input.AuthorizePubKey = resp.Proof.AuthorizeKey
+	input.ReturnPubKey = resp.Proof.ReturnKey
+	input.NoteRandom = resp.Proof.NoteRandom
 
 	return &input, resp.Secrets, nil
 
@@ -243,7 +242,10 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	var inputAmounts []uint64
 	var sumInput uint64
 	for _, i := range inputParts {
-		amount := i.Amount.GetWitnessValue(ecc.BN254)
+		amount, err := mixTy.VariableToElement(i.Amount)
+		if err != nil {
+			return nil, errors.Wrapf(err, "VariableToElement i.Amount")
+		}
 		inputAmounts = append(inputAmounts, amount.Uint64())
 		sumInput += amount.Uint64()
 	}
@@ -298,24 +300,24 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 
 	//noteCommitX, transferX, changeX
 	for i, input := range inputParts {
-		input.ShieldAmountX.Assign(shieldValue.Inputs[i].X)
-		input.ShieldAmountY.Assign(shieldValue.Inputs[i].Y)
-		input.AmountRandom.Assign(shieldValue.InputRandoms[i])
-		input.ShieldPointHX.Assign(pointHX)
-		input.ShieldPointHY.Assign(pointHY)
+		input.ShieldAmountX = shieldValue.Inputs[i].X
+		input.ShieldAmountY = shieldValue.Inputs[i].Y
+		input.AmountRandom = shieldValue.InputRandoms[i]
+		input.ShieldPointHX = pointHX
+		input.ShieldPointHY = pointHY
 	}
 
-	outPart.ShieldAmountX.Assign(shieldValue.Output.X)
-	outPart.ShieldAmountY.Assign(shieldValue.Output.Y)
-	outPart.AmountRandom.Assign(shieldValue.OutputRandom)
-	outPart.ShieldPointHX.Assign(pointHX)
-	outPart.ShieldPointHY.Assign(pointHY)
+	outPart.ShieldAmountX = shieldValue.Output.X
+	outPart.ShieldAmountY = shieldValue.Output.Y
+	outPart.AmountRandom = shieldValue.OutputRandom
+	outPart.ShieldPointHX = pointHX
+	outPart.ShieldPointHY = pointHY
 
-	changePart.ShieldAmountX.Assign(shieldValue.Change.X)
-	changePart.ShieldAmountY.Assign(shieldValue.Change.Y)
-	changePart.AmountRandom.Assign(shieldValue.ChangeRandom)
-	changePart.ShieldPointHX.Assign(pointHX)
-	changePart.ShieldPointHY.Assign(pointHY)
+	changePart.ShieldAmountX = shieldValue.Change.X
+	changePart.ShieldAmountY = shieldValue.Change.Y
+	changePart.AmountRandom = shieldValue.ChangeRandom
+	changePart.ShieldPointHX = pointHX
+	changePart.ShieldPointHY = pointHY
 
 	//verify input
 	var inputProofs []*mixTy.ZkProofInfo

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
@@ -32,20 +31,20 @@ func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*mixTy.Wit
 	}
 
 	var input mixTy.WithdrawCircuit
-	input.NullifierHash.Assign(note.Nullifier)
-	input.NoteHash.Assign(note.NoteHash)
-	input.AuthorizeSpendHash.Assign(note.AuthorizeSpendHash)
+	input.NullifierHash = note.Nullifier
+	input.NoteHash = note.NoteHash
+	input.AuthorizeSpendHash = note.AuthorizeSpendHash
 
-	input.Amount.Assign(note.Secret.Amount)
-	input.ReceiverPubKey.Assign(note.Secret.ReceiverKey)
-	input.ReturnPubKey.Assign(note.Secret.ReturnKey)
-	input.AuthorizePubKey.Assign(note.Secret.AuthorizeKey)
-	input.NoteRandom.Assign(note.Secret.NoteRandom)
+	input.Amount = note.Secret.Amount
+	input.ReceiverPubKey = note.Secret.ReceiverKey
+	input.ReturnPubKey = note.Secret.ReturnKey
+	input.AuthorizePubKey = note.Secret.AuthorizeKey
+	input.NoteRandom = note.Secret.NoteRandom
 
 	if len(note.AuthorizeSpendHash) > LENNULLKEY {
-		input.AuthorizeFlag.Assign("1")
+		input.AuthorizeFlag = "1"
 	} else {
-		input.AuthorizeFlag.Assign("0")
+		input.AuthorizeFlag = "0"
 	}
 
 	//get spend privacy key
@@ -53,11 +52,11 @@ func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*mixTy.Wit
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAccountPrivacyKey addr=%s", note.Account)
 	}
-	input.SpendPriKey.Assign(privacyKey.Privacy.PaymentKey.SpendKey)
+	input.SpendPriKey = privacyKey.Privacy.PaymentKey.SpendKey
 	if privacyKey.Privacy.PaymentKey.ReceiveKey == note.Secret.ReturnKey {
-		input.SpendFlag.Assign("0")
+		input.SpendFlag = "0"
 	} else {
-		input.SpendFlag.Assign("1")
+		input.SpendFlag = "1"
 	}
 
 	//get tree path
@@ -65,7 +64,7 @@ func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*mixTy.Wit
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	input.TreeRootHash.Assign(treeProof.TreeRootHash)
+	input.TreeRootHash = treeProof.TreeRootHash
 	updateTreePath(&input, treeProof)
 
 	return &input, nil
@@ -109,7 +108,10 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 
-		v := input.Amount.GetWitnessValue(ecc.BN254)
+		v, err := mixTy.VariableToElement(input.Amount)
+		if err != nil {
+			return nil, errors.Wrapf(err, "VariableToElement input.Amount note=%s", note)
+		}
 		sum += v.Uint64()
 		proofs = append(proofs, proofInfo)
 	}
