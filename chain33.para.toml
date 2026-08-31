@@ -438,6 +438,7 @@ Enable=0
 
 [fork.sub.privacy]
 Enable=0
+ForkPrivacyAmountCheck=0
 
 [fork.sub.game]
 Enable=0
