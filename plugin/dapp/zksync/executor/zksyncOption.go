@@ -15,7 +15,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/pkg/errors"
 )
 
@@ -1013,7 +1013,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		}
 
 		//校验预存的地址是否和公钥匹配
-		hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+		hash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 		hash.Write(zt.Str2Byte(payload.PubKey.X))
 		hash.Write(zt.Str2Byte(payload.PubKey.Y))
 		calcChain33Addr := zt.Byte2Str(hash.Sum(nil))
@@ -1723,7 +1723,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 
 //计数新NFT Id的balance 参数hash作为其balance，不可变
 func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, protocol, amount uint64, contentHashPart1, contentHashPart2 string) (string, error) {
-	hashFn := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	hashFn := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hashFn.Reset()
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(creatorId).String()))
 	hashFn.Write(zt.Str2Byte(creatorSerialId))

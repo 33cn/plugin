@@ -47,6 +47,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExecutorName, ForkEVMAddressInit, 0)
 	cfg.RegisterDappFork(ExecutorName, ForkEvmExecNonce, 0)
 	cfg.RegisterDappFork(ExecutorName, ForkEvmExecNonceV2, 0)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMFixOverflow, 0)
 
 }
 

@@ -55,6 +55,8 @@ const (
 	//ForkEvmExecNonce 执行器校验nonce
 	ForkEvmExecNonce   = "ForkEvmExecNonce"
 	ForkEvmExecNonceV2 = "ForkEvmExecNonceV2"
+	// ForkEVMFixOverflow 修复 uint64→int64 金额溢出漏洞，在所有资产操作前增加溢出检查
+	ForkEVMFixOverflow = "ForkEVMFixOverflow"
 )
 
 var (

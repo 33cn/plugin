@@ -48,7 +48,7 @@ func TestBrigeTokenCreat(t *testing.T) {
 	require.Nil(t, err)
 
 	opts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    para.Operator,
 		Context: ctx,
 	}
@@ -135,7 +135,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	require.Nil(t, err)
 
 	opts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    para.Operator,
 		Context: ctx,
 	}
@@ -205,7 +205,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, sim)
 	require.Nil(t, err)
 	opts = &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		Context: ctx,
 	}
 
@@ -259,7 +259,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	//创建实例 为userOne铸币 userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -376,7 +376,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	//userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -482,6 +482,8 @@ func TestBridgeBankUnlock(t *testing.T) {
 		signature)
 	require.Nil(t, err)
 
+	// oracle claim 交易需确认后才生效，Commit 后再查询
+	sim.Commit()
 	userUSDTbalance, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
 	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance.Int64())
@@ -525,7 +527,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	//userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -669,7 +671,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	//创建实例 为userOne铸币 userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -743,6 +745,8 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		signature)
 	require.Nil(t, err)
 
+	// oracle claim 交易需确认后才生效，Commit 后再查询（模拟真实链上确认时序）
+	sim.Commit()
 	userUSDTbalance1, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
 	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance1.Int64())
@@ -768,6 +772,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		signature)
 	require.Nil(t, err)
 
+	sim.Commit()
 	userUSDTbalance2, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
 	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance2.Int64())

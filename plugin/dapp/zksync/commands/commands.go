@@ -18,10 +18,9 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -718,13 +717,13 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "eddsa.GetLayer2PrivateKeySeed"))
 		return
 	}
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(seed))
+	privateKey, err := wallet.GenerateKeyCompat(bytes.NewReader(seed))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "eddsa.GenerateKey"))
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "wallet.GenerateKeyCompat"))
 		return
 	}
 
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	hash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
 	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
@@ -790,7 +789,7 @@ func contractCmd() *cobra.Command {
 	return cmd
 }
 
-//CreateRawTransferCmd  create raw transfer tx
+// CreateRawTransferCmd  create raw transfer tx
 func CreateRawTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -818,7 +817,7 @@ func createTransfer(cmd *cobra.Command, args []string) {
 	commands.CreateAssetTransfer(cmd, args, zt.Zksync)
 }
 
-//CreateRawTransferToExecCmd create raw transfer to exec tx
+// CreateRawTransferToExecCmd create raw transfer to exec tx
 func CreateRawTransferToExecCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer_exec",
@@ -846,7 +845,7 @@ func createTransferToExec(cmd *cobra.Command, args []string) {
 	commands.CreateAssetSendToExec(cmd, args, zt.Zksync)
 }
 
-//CreateRawWithdrawCmd create raw withdraw tx
+// CreateRawWithdrawCmd create raw withdraw tx
 func CreateRawWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",

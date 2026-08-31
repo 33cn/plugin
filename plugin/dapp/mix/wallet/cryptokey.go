@@ -6,6 +6,8 @@ package wallet
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"encoding/hex"
 
 	"github.com/pkg/errors"
@@ -14,19 +16,19 @@ import (
 	"github.com/33cn/chain33/types"
 
 	wcom "github.com/33cn/chain33/wallet/common"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 const CECBLOCKSIZE = 32
 
 /*
- 从secp256k1根私钥创建支票需要的私钥和公钥
- payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
+从secp256k1根私钥创建支票需要的私钥和公钥
+payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
 
- 支票花费key:  payPrivKey
- 支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
- DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
+支票花费key:  payPrivKey
+支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
+DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
 */
 func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	ecdh := X25519()
@@ -54,9 +56,9 @@ func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	return privacy
 }
 
-//CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
-//填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
-//则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
+// CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
+// 填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
+// 则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
 func pKCS5Padding(plainText []byte, blockSize int) []byte {
 	if blockSize < CECBLOCKSIZE {
 		blockSize = CECBLOCKSIZE
@@ -103,6 +105,41 @@ func encryptData(peerPubKey string, data []byte) (*mixTy.DHSecret, error) {
 }
 
 func decryptDataWithPading(password, data []byte) ([]byte, error) {
+	// chain33 CBCEncrypterPrivkey 自 v0.69.1 后使用随机 IV，返回 IV(16)+ciphertext 格式；
+	// 旧格式为 ciphertext-only（IV=key[:16]）。mix 明文按 32 字节块 PKCS5 填充，因此
+	// 新格式总长 %32==16、旧格式总长 %32==0，用长度精确区分两种格式，避免旧格式数据
+	// 被误按新格式解析而产生静默错误明文（之前先试新格式再回退的判断方式不可靠）。
+	if len(data) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+	key := make([]byte, 32)
+	copy(key, password)
+
+	// 新格式：IV(16) + ciphertext。与旧格式（总长 %32==0）互斥，故进入此分支即按新格式
+	// 解析，任何失败（key 非法 / 长度不齐 / padding 损坏）都如实返回错误，不再静默落回
+	// 旧格式分支——旧格式数据不可能进入此分支，落回只会掩盖新格式数据的真实错误。
+	if len(data)%32 == 16 {
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "decryptDataWithPading aes.NewCipher")
+		}
+		iv := data[:block.BlockSize()]
+		ciphertext := data[block.BlockSize():]
+		if len(ciphertext) == 0 || len(ciphertext)%block.BlockSize() != 0 {
+			return nil, types.ErrInvalidParam
+		}
+		decrypted := make([]byte, len(ciphertext))
+		cipher.NewCBCDecrypter(block, iv).CryptBlocks(decrypted, ciphertext)
+		plain, err := pKCS5UnPadding(decrypted)
+		if err != nil {
+			return nil, errors.Wrapf(err, "decryptDataWithPading new format unpadding")
+		}
+		return plain, nil
+	}
+	// 旧格式：ciphertext-only，必须 16 字节对齐，否则 chain33 legacy 分支的 CryptBlocks 会 panic
+	if len(data)%16 != 0 {
+		return nil, types.ErrInvalidParam
+	}
 	plainData := wcom.CBCDecrypterPrivkey(password, data)
 	return pKCS5UnPadding(plainData)
 }
@@ -142,7 +179,7 @@ func mimcHashByte(params [][]byte) []byte {
 }
 
 func mimcHashCalc(sum []byte) []byte {
-	h := mimc.NewMiMC(mixTy.MimcHashSeed)
+	h := legacymimc.NewMiMC(mixTy.MimcHashSeed)
 	h.Write(sum)
 	return h.Sum(nil)
 }

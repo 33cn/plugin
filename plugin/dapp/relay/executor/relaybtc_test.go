@@ -53,7 +53,8 @@ func (s *suiteBtcStore) TestGetBtcHeadByHeight() {
 	header := types.Encode(head)
 	s.kvdb.On("Get", mock.Anything).Return(header, nil).Once()
 	val, _ := s.btc.getBtcHeadByHeight(10)
-	s.Assert().Equal(val, head)
+	// 用 proto.Equal 比较，避免 protobuf v2 的 sizeCache 内部字段差异
+	s.Assert().True(proto.Equal(val, head))
 
 }
 
@@ -65,7 +66,8 @@ func (s *suiteBtcStore) TestGetLastBtcHead() {
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once().On("Get", mock.Anything).Return(header, nil).Once()
 	val, err := s.btc.getLastBtcHead()
 	s.Assert().Nil(err)
-	s.Assert().Equal(val, head)
+	// 用 proto.Equal 比较，避免 protobuf v2 的 sizeCache 内部字段差异
+	s.Assert().True(proto.Equal(val, head))
 }
 
 func (s *suiteBtcStore) TestSaveBlockHead() {

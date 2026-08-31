@@ -29,9 +29,9 @@ func TestVerifyCommitValuesBasePoint(t *testing.T) {
 
 	ed := twistededwards.GetEdwardsCurve()
 	var p1, p2, p3 twistededwards.PointAffine
-	p1.ScalarMul(&ed.Base, &in44)
-	p2.ScalarMul(&ed.Base, &out10)
-	p3.ScalarMul(&ed.Base, &out34)
+	p1.ScalarMultiplication(&ed.Base, &in44)
+	p2.ScalarMultiplication(&ed.Base, &out10)
+	p3.ScalarMultiplication(&ed.Base, &out34)
 
 	//t.Log("p1.x", p1.X.String())
 	//t.Log("p1.y", p1.Y.String())
@@ -41,18 +41,18 @@ func TestVerifyCommitValuesBasePoint(t *testing.T) {
 	//t.Log("p3.y", p3.Y.String())
 
 	var input1 mixTy.TransferInputCircuit
-	input1.ShieldAmountX.Assign(p1.X.String())
-	input1.ShieldAmountY.Assign(p1.Y.String())
+	input1.ShieldAmountX = p1.X.String()
+	input1.ShieldAmountY = p1.Y.String()
 
 	var inputs []*mixTy.TransferInputCircuit
 	inputs = append(inputs, &input1)
 
 	var output1, output2 mixTy.TransferOutputCircuit
-	output1.ShieldAmountX.Assign(p2.X.String())
-	output1.ShieldAmountY.Assign(p2.Y.String())
+	output1.ShieldAmountX = p2.X.String()
+	output1.ShieldAmountY = p2.Y.String()
 
-	output2.ShieldAmountX.Assign(p3.X.String())
-	output2.ShieldAmountY.Assign(p3.Y.String())
+	output2.ShieldAmountX = p3.X.String()
+	output2.ShieldAmountY = p3.Y.String()
 
 	var outputs []*mixTy.TransferOutputCircuit
 	outputs = append(outputs, &output1)
@@ -81,30 +81,30 @@ func TestVerifyCommitValuesBaseAddHPoint(t *testing.T) {
 
 	ed := twistededwards.GetEdwardsCurve()
 	var p1, p2, p3, r1, r2, r3 twistededwards.PointAffine
-	p1.ScalarMul(&ed.Base, &in44)
-	p2.ScalarMul(&ed.Base, &out10)
-	p3.ScalarMul(&ed.Base, &out34)
-	r1.ScalarMul(&baseH, &rIn100)
-	r2.ScalarMul(&baseH, &rOut40)
-	r3.ScalarMul(&baseH, &rOut60)
+	p1.ScalarMultiplication(&ed.Base, &in44)
+	p2.ScalarMultiplication(&ed.Base, &out10)
+	p3.ScalarMultiplication(&ed.Base, &out34)
+	r1.ScalarMultiplication(&baseH, &rIn100)
+	r2.ScalarMultiplication(&baseH, &rOut40)
+	r3.ScalarMultiplication(&baseH, &rOut60)
 
 	p1.Add(&p1, &r1)
 	p2.Add(&p2, &r2)
 	p3.Add(&p3, &r3)
 
 	var input1 mixTy.TransferInputCircuit
-	input1.ShieldAmountX.Assign(p1.X.String())
-	input1.ShieldAmountY.Assign(p1.Y.String())
+	input1.ShieldAmountX = p1.X.String()
+	input1.ShieldAmountY = p1.Y.String()
 
 	var inputs []*mixTy.TransferInputCircuit
 	inputs = append(inputs, &input1)
 
 	var output1, output2 mixTy.TransferOutputCircuit
-	output1.ShieldAmountX.Assign(p2.X.String())
-	output1.ShieldAmountY.Assign(p2.Y.String())
+	output1.ShieldAmountX = p2.X.String()
+	output1.ShieldAmountY = p2.Y.String()
 
-	output2.ShieldAmountX.Assign(p3.X.String())
-	output2.ShieldAmountY.Assign(p3.Y.String())
+	output2.ShieldAmountX = p3.X.String()
+	output2.ShieldAmountY = p3.Y.String()
 
 	var outputs []*mixTy.TransferOutputCircuit
 	outputs = append(outputs, &output1)

@@ -1,9 +1,8 @@
 package types
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 type AuthorizeCircuit struct {
@@ -56,9 +55,9 @@ type AuthorizeCircuit struct {
 }
 
 // Define declares the circuit's constraints
-func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, api frontend.API) error {
+func (circuit *AuthorizeCircuit) Define(api frontend.API) error {
 	// hash function
-	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, api)
+	h, _ := legacymimc.NewCircuitMiMC(api, MimcHashSeed)
 	mimc := &h
 	mimc.Write(circuit.AuthorizePriKey)
 	api.AssertIsEqual(circuit.AuthorizePubKey, mimc.Sum())
@@ -91,7 +90,7 @@ func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, api frontend.API) error 
 	proofSet = append(proofSet, circuit.Path9)
 
 	//helper[0],valid[0]占位， 方便接口只设置有效值
-	helper = append(helper, api.Constant("1"))
+	helper = append(helper, "1")
 	helper = append(helper, circuit.Helper0)
 	helper = append(helper, circuit.Helper1)
 	helper = append(helper, circuit.Helper2)
@@ -103,7 +102,7 @@ func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, api frontend.API) error 
 	helper = append(helper, circuit.Helper8)
 	helper = append(helper, circuit.Helper9)
 
-	valid = append(valid, api.Constant("1"))
+	valid = append(valid, "1")
 	valid = append(valid, circuit.Valid0)
 	valid = append(valid, circuit.Valid1)
 	valid = append(valid, circuit.Valid2)

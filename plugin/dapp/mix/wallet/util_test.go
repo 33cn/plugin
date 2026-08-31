@@ -3,7 +3,6 @@ package wallet
 import (
 	"testing"
 
-	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -146,12 +145,12 @@ import (
 
 //func TestGetZkProofKeys(t *testing.T) {
 //	var depositCircuit mixTy.DepositCircuit
-//	depositCircuit.NoteHash.Assign("11183619348394875496624033204802036013086293645689330234403504655205992608466")
-//	depositCircuit.Amount.Assign(28242048)
-//	depositCircuit.ReceiverPubKey.Assign("13496572805321444273664325641440458311310163934354047265362731297880627774936")
-//	depositCircuit.ReturnPubKey.Assign("10193030166569398670555398535278072963719579248877156082361830729347727033510")
-//	depositCircuit.AuthorizePubKey.Assign("2302306531516619173363925550130201424458047172090558749779153607734711372580")
-//	depositCircuit.NoteRandom.Assign(2824204835)
+//	depositCircuit.NoteHash = "11183619348394875496624033204802036013086293645689330234403504655205992608466"
+//	depositCircuit.Amount = 28242048
+//	depositCircuit.ReceiverPubKey = "13496572805321444273664325641440458311310163934354047265362731297880627774936"
+//	depositCircuit.ReturnPubKey = "10193030166569398670555398535278072963719579248877156082361830729347727033510"
+//	depositCircuit.AuthorizePubKey = "2302306531516619173363925550130201424458047172090558749779153607734711372580"
+//	depositCircuit.NoteRandom = 2824204835
 //
 //	pkFile := "../cmd/gnark/circuit_deposit.pk"
 //	ret, err := getZkProofKeys(mixTy.VerifyType_DEPOSIT, pkFile, &depositCircuit, 0)
@@ -171,14 +170,17 @@ func TestUpdateTreePath(t *testing.T) {
 
 	var input mixTy.AuthorizeCircuit
 	updateTreePath(&input, &proof)
-	ret0 := input.Path0.GetWitnessValue(ecc.BN254)
-	ret1 := input.Path1.GetWitnessValue(ecc.BN254)
+	ret0, err := mixTy.VariableToElement(input.Path0)
+	assert.Nil(t, err)
+	ret1, err := mixTy.VariableToElement(input.Path1)
+	assert.Nil(t, err)
 
 	assert.Equal(t, path0, ret0.String())
 	assert.Equal(t, path1, ret1.String())
 
 	path2 := "0"
-	ret2 := input.Path2.GetWitnessValue(ecc.BN254)
+	ret2, err := mixTy.VariableToElement(input.Path2)
+	assert.Nil(t, err)
 	assert.Equal(t, path2, ret2.String())
 
 }

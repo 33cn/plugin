@@ -7,7 +7,6 @@ package wallet
 import (
 	"encoding/hex"
 
-	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/common"
 
@@ -69,7 +68,11 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 				bizlog.Error("processWithdraw decode", "pubInput", m.PublicInput)
 				continue
 			}
-			nullHash := v.NullifierHash.GetWitnessValue(ecc.BN254)
+			nullHash, err := mixTy.VariableToElement(v.NullifierHash)
+			if err != nil {
+				bizlog.Error("processWithdraw VariableToElement nullHash", "pubInput", m.PublicInput, "err", err)
+				continue
+			}
 			nulls = append(nulls, nullHash.String())
 		}
 		p.processNullifiers(nulls, table)
@@ -102,7 +105,11 @@ func (p *mixPolicy) processDeposit(deposit *mixTy.MixDepositAction, heightIndex 
 			bizlog.Error("processDeposit decode", "pubInput", proof.PublicInput)
 			return
 		}
-		noteHash := v.NoteHash.GetWitnessValue(ecc.BN254)
+		noteHash, err := mixTy.VariableToElement(v.NoteHash)
+		if err != nil {
+			bizlog.Error("processDeposit VariableToElement noteHash", "pubInput", proof.PublicInput, "err", err)
+			return
+		}
 		p.processSecretGroup(noteHash.String(), proof.Secrets, heightIndex, table)
 	}
 
@@ -117,7 +124,11 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 			bizlog.Error("processTransfer.input decode", "pubInput", in.PublicInput)
 			return
 		}
-		nullHash := v.NullifierHash.GetWitnessValue(ecc.BN254)
+		nullHash, err := mixTy.VariableToElement(v.NullifierHash)
+		if err != nil {
+			bizlog.Error("processTransfer.input VariableToElement nullHash", "pubInput", in.PublicInput, "err", err)
+			return
+		}
 		nulls = append(nulls, nullHash.String())
 	}
 	p.processNullifiers(nulls, table)
@@ -129,7 +140,11 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Output.PublicInput)
 		return
 	}
-	noteHash := out.NoteHash.GetWitnessValue(ecc.BN254)
+	noteHash, err := mixTy.VariableToElement(out.NoteHash)
+	if err != nil {
+		bizlog.Error("processTransfer.output VariableToElement noteHash", "pubInput", transfer.Output.PublicInput, "err", err)
+		return
+	}
 	p.processSecretGroup(noteHash.String(), transfer.Output.Secrets, heightIndex, table)
 
 	//change
@@ -139,7 +154,11 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Change.PublicInput)
 		return
 	}
-	changeNoteHash := change.NoteHash.GetWitnessValue(ecc.BN254)
+	changeNoteHash, err := mixTy.VariableToElement(change.NoteHash)
+	if err != nil {
+		bizlog.Error("processTransfer.change VariableToElement changeNoteHash", "pubInput", transfer.Change.PublicInput, "err", err)
+		return
+	}
 	p.processSecretGroup(changeNoteHash.String(), transfer.Change.Secrets, heightIndex, table)
 
 }
@@ -151,10 +170,18 @@ func (p *mixPolicy) processAuth(auth *mixTy.MixAuthorizeAction, table *table.Tab
 		bizlog.Error("processAuth decode", "pubInput", auth.ProofInfo.PublicInput)
 		return
 	}
-	authNullHash := v.AuthorizeHash.GetWitnessValue(ecc.BN254)
+	authNullHash, err := mixTy.VariableToElement(v.AuthorizeHash)
+	if err != nil {
+		bizlog.Error("processAuth VariableToElement authNullHash", "pubInput", auth.ProofInfo.PublicInput, "err", err)
+		return
+	}
 	updateAuthHash(table, authNullHash.String())
 
-	authSpendHash := v.AuthorizeSpendHash.GetWitnessValue(ecc.BN254)
+	authSpendHash, err := mixTy.VariableToElement(v.AuthorizeSpendHash)
+	if err != nil {
+		bizlog.Error("processAuth VariableToElement authSpendHash", "pubInput", auth.ProofInfo.PublicInput, "err", err)
+		return
+	}
 	updateAuthSpend(table, authSpendHash.String())
 
 }

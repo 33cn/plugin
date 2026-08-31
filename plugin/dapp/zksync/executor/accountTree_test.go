@@ -7,9 +7,9 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 )
 
 func getChain33Addr(privateKeyString string) string {
@@ -17,11 +17,11 @@ func getChain33Addr(privateKeyString string) string {
 	if err != nil {
 		panic(err)
 	}
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
+	privateKey, err := wallet.GenerateKeyCompat(bytes.NewReader(privateKeyBytes))
 	if err != nil {
 		panic(err)
 	}
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	hash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
 	return hex.EncodeToString(hash.Sum(nil))
@@ -38,7 +38,7 @@ func TestAccountHash(t *testing.T) {
 	pubkey.X = "110829526890202442231796950896186450339098004198300292113013256946470504791"
 	pubkey.Y = "12207062062295480868601430817261127111444831355336859496235449885847711361351"
 	//leaf.PubKey = &pubkey
-	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	mimcHash := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash := getLeafHash(mimcHash, &leaf)
 	var f fr.Element
 	f.SetBytes(hash)
