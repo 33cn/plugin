@@ -274,15 +274,16 @@ func (s *suiteRelay) TestExec_4() {
 		Hash:        relayRealBtcTxHash,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data: int64(100100)})
-	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
 		Height:     100000,
+		Time:       2500,
 		MerkleRoot: "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
 	}
 	headEnc := types.Encode(head)
 	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
+	heightBytes := types.Encode(&types.Int64{Data: int64(100100)})
+	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	order := &ty.RelayVerify{
 		OrderId: s.orderID,

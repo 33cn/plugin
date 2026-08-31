@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
@@ -110,7 +111,8 @@ func (b *btcWeb) GetTransaction(hash string) (*ty.BtcTransaction, error) {
 		return nil, err
 	}
 	btcTx := tx.BtcTransaction()
-	btcTx.RawTx = string(rawHex)
+	// 响应可能带换行/空格，去掉后再上链，避免链上 hex 解码失败
+	btcTx.RawTx = strings.TrimSpace(string(rawHex))
 	return btcTx, nil
 }
 
