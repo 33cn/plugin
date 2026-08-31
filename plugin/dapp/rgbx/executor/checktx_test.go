@@ -326,6 +326,20 @@ func Test_checkConfirm(t *testing.T) {
 	})))
 	require.Nil(t, state.Set(formatPayloadKey([]byte("hash12")), types.Encode(&rtypes.MintAsset{Symbol: "w", TotalAmount: 1})))
 
+	// Pending / payload at (13, 0) for spending input index out of range case
+	require.Nil(t, local.Set(formatPendingTxKey(13, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: []byte("hash13"),
+	})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte("hash13")), types.Encode(&rtypes.MintAsset{Symbol: "x13", TotalAmount: 1})))
+
+	// Pending / payload at (14, 0) for spending input utxo mismatch case
+	require.Nil(t, local.Set(formatPendingTxKey(14, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: "1111111111111111111111111111111111111111111111111111111111111111"},
+		TxHash: []byte("hash14"),
+	})))
+	require.Nil(t, state.Set(formatPayloadKey([]byte("hash14")), types.Encode(&rtypes.MintAsset{Symbol: "x14", TotalAmount: 1})))
+
 	// Proof 1: valid proof for height 10
 	validProof := &rtypes.BtcTxProof{
 		TxData:      spendTxData,
@@ -414,6 +428,30 @@ func Test_checkConfirm(t *testing.T) {
 				TxHash:        []byte("hash12"),
 				UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: -1},
 				BtcTxProof:    badMerkleProof,
+			},
+		},
+		{
+			// valid merkle proof but spending input index out of range
+			// (spendTx has 1 input, SpendingInputIdx=5)
+			expectErr: ErrInvalidSpendingTxIn,
+			action: &rtypes.ConfirmTx{
+				TxBlockHeight: 13,
+				TxIndex:       0,
+				TxHash:        []byte("hash13"),
+				UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 5, OpRetOutputIdx: -1},
+				BtcTxProof:    validProof,
+			},
+		},
+		{
+			// valid merkle proof and input index, but pending tx utxo does not
+			// match the spending tx input's previous outpoint
+			expectErr: ErrSpendingInputNotEqual,
+			action: &rtypes.ConfirmTx{
+				TxBlockHeight: 14,
+				TxIndex:       0,
+				TxHash:        []byte("hash14"),
+				UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: -1},
+				BtcTxProof:    validProof,
 			},
 		},
 	}

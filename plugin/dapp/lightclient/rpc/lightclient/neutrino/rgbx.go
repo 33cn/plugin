@@ -326,6 +326,10 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo, pendTx *rtypes.PendingT
 			return nil, err
 		}
 		confirm.BtcTxProof = btcProof
+	} else {
+		// client 未初始化时无法构造 BtcTxProof，确认交易将不带 merkle proof，
+		// 记录日志便于排查 nil-client 路径
+		log.Warn("createConfirmPayload client is nil, BtcTxProof omitted", "pendingTxHash", info.pendingTxHash)
 	}
 
 	return confirm, nil
