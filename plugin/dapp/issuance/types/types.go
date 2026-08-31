@@ -56,4 +56,5 @@ const (
 var (
 	ForkIssuanceTableUpdate = "ForkIssuanceTableUpdate"
 	ForkIssuancePrecision   = "ForkIssuancePrecision"
+	ForkIssuanceRepayOwner  = "ForkIssuanceRepayOwner"
 )

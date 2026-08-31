@@ -31,6 +31,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(CollateralizeX, "Enable", 0)
 	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizeTableUpdate, 0)
 	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizePrecision, 0)
+	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizeRepayOwner, 0)
 }
 
 //InitExecutor ...
