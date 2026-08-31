@@ -684,6 +684,7 @@ Enable=0
 
 [fork.sub.privacy]
 Enable=980000
+ForkPrivacyAmountCheck=0
 
 [fork.sub.qbftNode]
 Enable=0
