@@ -457,6 +457,7 @@ Enable=-1
 Enable=0
 
 [fork.sub.wasm]
+ForkWasmFixAddrNormalize=0
 Enable=0
 
 [fork.sub.valnode]
@@ -489,6 +490,7 @@ ForkAutonomyDelRule=0
 ForkAutonomyEnableItem=0
 
 [fork.sub.jsvm]
+ForkJSFixAddrNormalize=0
 Enable=0
 
 [fork.sub.evmxgo]

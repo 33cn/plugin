@@ -647,6 +647,7 @@ ForkCollateralizeTableUpdate=0
 ForkCollateralizePrecision=0
 
 [fork.sub.jsvm]
+ForkJSFixAddrNormalize=0
 Enable=0
 
 [fork.sub.lottery]
@@ -735,6 +736,7 @@ Enable=0
 Enable=0
 
 [fork.sub.wasm]
+ForkWasmFixAddrNormalize=0
 Enable=0
 
 [fork.sub.lightclient]
