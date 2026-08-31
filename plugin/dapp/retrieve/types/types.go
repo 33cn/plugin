@@ -22,6 +22,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RetrieveX, "Enable", 0)
 	cfg.RegisterDappFork(RetrieveX, ForkRetriveX, 0)
 	cfg.RegisterDappFork(RetrieveX, ForkRetriveAssetX, 0)
+	cfg.RegisterDappFork(RetrieveX, ForkRetrivePerformRelayX, 0)
 }
 
 //InitExecutor ...
