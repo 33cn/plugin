@@ -143,11 +143,13 @@ ForkBadRepeatSecret=2715575
 Enable=0
 ForkIssuanceTableUpdate=0
 ForkIssuancePrecision=0
+ForkIssuanceRepayOwner=0
 
 [fork.sub.collateralize]
 Enable=0
 ForkCollateralizeTableUpdate=0
 ForkCollateralizePrecision=0
+ForkCollateralizeRepayOwner=0
 
 [fork.sub.jsvm]
 Enable=0
