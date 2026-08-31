@@ -192,6 +192,7 @@ Enable=0
 
 [fork.sub.relay]
 Enable=570000
+ForkRelayVerifyBtcTx=0
 
 [fork.sub.retrieve]
 Enable=0

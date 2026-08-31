@@ -871,8 +871,9 @@ func (s *suiteVerify) TestVerify() {
 	transaction := &ty.BtcTransaction{
 		Vout:        []*ty.Vout{vout},
 		Time:        2500,
-		BlockHeight: 1000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		BlockHeight: 100000,
+		Hash:        relayRealBtcTxHash,
+		RawTx:       relayRealBtcRawTx,
 	}
 	strMerkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
 		"ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815"}
@@ -887,13 +888,14 @@ func (s *suiteVerify) TestVerify() {
 		TxIndex:     2,
 		BlockHash:   "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
 		Height:      100000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		Hash:        relayRealBtcTxHash,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(100100)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
+		Height:     100000,
 		MerkleRoot: "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
 	}
 	headEnc := types.Encode(head)

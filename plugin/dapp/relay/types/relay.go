@@ -14,6 +14,12 @@ import (
 // RelayX name for executor
 var RelayX = "relay"
 
+const (
+	// ForkRelayVerifyBtcTx 修复 relay verify btc tx 时交易内容与 SPV 证明脱钩的漏洞，
+	// 根据 rawTx 重算交易哈希，校验交易内容，确认数基于 SPV 证明的区块高度计算
+	ForkRelayVerifyBtcTx = "ForkRelayVerifyBtcTx"
+)
+
 //var tlog = log.New("module", name)
 //log for relay
 const (
@@ -57,6 +63,7 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RelayX, "Enable", 0)
+	cfg.RegisterDappFork(RelayX, ForkRelayVerifyBtcTx, 0)
 }
 
 //InitExecutor ...
