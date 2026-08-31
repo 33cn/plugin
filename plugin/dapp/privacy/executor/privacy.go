@@ -213,7 +213,25 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	if token == "" {
 		return types.ErrInvalidParam
 	}
+	cfg := p.GetAPI().GetConfig()
+	amountCheck := cfg.IsDappFork(p.GetHeight(), pty.PrivacyX, pty.ForkPrivacyAmountCheck)
+	output := action.GetOutput()
+	//分叉后校验所有utxo输出金额为正且不超过最大币量
+	var totalOutput int64
+	if amountCheck {
+		var err error
+		totalOutput, err = checkPrivacyOutputAmount(output, cfg)
+		if err != nil {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "check output amount err", err)
+			return err
+		}
+	}
 	if pty.ActionPublic2Privacy == action.Ty && action.GetPublic2Privacy() != nil {
+		//分叉后校验公转私的utxo输出总额与实际扣减的公开余额一致
+		if amountCheck && totalOutput != action.GetPublic2Privacy().GetAmount() {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "public2privacy output total", totalOutput, "not equal amount", action.GetPublic2Privacy().GetAmount())
+			return types.ErrAmount
+		}
 		return nil
 	}
 	input := action.GetInput()
@@ -223,7 +241,6 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrNilUtxoInput
 	}
 
-	output := action.GetOutput()
 	//私对私必须有utxo输出
 	if action.GetPrivacy2Privacy() != nil && len(output.GetKeyoutput()) == 0 {
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr)
@@ -236,7 +253,6 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrRingSign
 	}
 
-	cfg := p.GetAPI().GetConfig()
 	totalInput := int64(0)
 	keyinput := input.GetKeyinput()
 	keyImages := make([][]byte, len(keyinput))
@@ -294,7 +310,48 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 			return pty.ErrPrivacyTxFeeNotEnough
 		}
 	}
+
+	//分叉后私转私/私转公对所有资产类型(含token、平行链)强制金额守恒, 输入总额必须覆盖输出总额与手续费
+	if amountCheck {
+		maxAmount := types.MaxCoin * cfg.GetCoinPrecision()
+		for _, input := range keyinput {
+			if input.GetAmount() <= 0 || input.GetAmount() > maxAmount {
+				privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "invalid input amount", input.GetAmount())
+				return types.ErrAmount
+			}
+		}
+		feeAmount := totalInput - totalOutput
+		if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
+			amount := action.GetPrivacy2Public().GetAmount()
+			if amount <= 0 || amount > maxAmount {
+				privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "invalid privacy2public amount", amount)
+				return types.ErrAmount
+			}
+			feeAmount -= amount
+		}
+		if feeAmount < pty.PrivacyTxFee*cfg.GetCoinPrecision() {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", pty.PrivacyTxFee*cfg.GetCoinPrecision())
+			return pty.ErrPrivacyTxFeeNotEnough
+		}
+	}
 	return nil
+}
+
+//checkPrivacyOutputAmount 校验所有utxo输出金额为正且不超过最大币量, 返回输出总额
+func checkPrivacyOutputAmount(output *pty.PrivacyOutput, cfg *types.Chain33Config) (int64, error) {
+	maxAmount := types.MaxCoin * cfg.GetCoinPrecision()
+	totalOutput := int64(0)
+	for _, keyoutput := range output.GetKeyoutput() {
+		amount := keyoutput.GetAmount()
+		if amount <= 0 || amount > maxAmount {
+			return 0, types.ErrAmount
+		}
+		totalOutput += amount
+		if totalOutput > maxAmount {
+			return 0, types.ErrAmount
+		}
+	}
+	return totalOutput, nil
 }
 
 func batchGet(stateDB db.KV, keyImages [][]byte) (values [][]byte, err error) {

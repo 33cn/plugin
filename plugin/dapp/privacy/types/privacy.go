@@ -14,6 +14,12 @@ import (
 // PrivacyX privacy executor name
 var PrivacyX = "privacy"
 
+// ForkPrivacyAmountCheck 修复隐私交易金额守恒漏洞的分叉, 开启后CheckTx校验:
+// 1. 公转私的utxo输出总额与实际扣减的公开余额一致
+// 2. 所有utxo输入/输出金额为正且不超过最大币量
+// 3. 私转私/私转公对所有资产类型(含token、平行链)强制金额守恒, 输入总额 >= 输出总额 + 手续费
+const ForkPrivacyAmountCheck = "ForkPrivacyAmountCheck"
+
 // RescanUtxoFlag
 const (
 	UtxoFlagNoScan  int32 = 0
@@ -48,6 +54,7 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(PrivacyX, "Enable", 0)
+	cfg.RegisterDappFork(PrivacyX, ForkPrivacyAmountCheck, 0)
 }
 
 //InitExecutor ...
