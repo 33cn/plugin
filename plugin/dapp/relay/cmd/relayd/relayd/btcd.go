@@ -356,6 +356,7 @@ func (b *btcdClient) GetTransaction(hash string) (*ty.BtcTransaction, error) {
 	btxTx.Hash = hash
 	btxTx.Time = tx.Time
 	btxTx.BlockHeight = uint64(header.Height)
+	btxTx.RawTx = tx.Hex
 	vin := make([]*ty.Vin, len(tx.Vin))
 	for index, in := range tx.Vin {
 		var v ty.Vin

@@ -103,7 +103,15 @@ func (b *btcWeb) GetTransaction(hash string) (*ty.BtcTransaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tx.BtcTransaction(), nil
+
+	// 获取 raw tx hex，链上会根据其内容重算交易哈希
+	rawHex, err := b.requestURL(url + "?format=hex")
+	if err != nil {
+		return nil, err
+	}
+	btcTx := tx.BtcTransaction()
+	btcTx.RawTx = string(rawHex)
+	return btcTx, nil
 }
 
 func (b *btcWeb) GetSPV(height uint64, txHash string) (*ty.BtcSpv, error) {

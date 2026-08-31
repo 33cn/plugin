@@ -21,6 +21,10 @@ import (
 
 var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
 
+// 真实 BTC 交易(位于区块 100000)的哈希及序列化内容，供 verify 相关测试使用
+const relayRealBtcTxHash = "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"
+const relayRealBtcRawTx = "0100000001c33ebff2a709f13d9f9a7569ab16a32786af7d7e2de09265e41c61d078294ecf010000008a4730440220032d30df5ee6f57fa46cddb5eb8d0d9fe8de6b342d27942ae90a3231e0ba333e02203deee8060fdc70230a7f5b4ad7d7bc3e628cbe219a886b84269eaeb81e26b4fe014104ae31c31bf91278d99b8377a35bbce5b27d9fff15456839e919453fc7b3f721f0ba403ff96c9deeb680e5fd341c0fc3a7b90da4631ee39560639db462e9cb850fffffffff0240420f00000000001976a914b0dcbf97eabf4404e31d952477ce822dadbe7e1088acc060d211000000001976a9146b1281eec25ab4e1e0793ff4e08ab1abb3409cd988ac00000000"
+
 func init() {
 	Init(ty.RelayX, chainTestCfg, nil)
 }
@@ -250,8 +254,9 @@ func (s *suiteRelay) TestExec_4() {
 	transaction := &ty.BtcTransaction{
 		Vout:        []*ty.Vout{vout},
 		Time:        2500,
-		BlockHeight: 1000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		BlockHeight: 100000,
+		Hash:        relayRealBtcTxHash,
+		RawTx:       relayRealBtcRawTx,
 	}
 	strMerkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
 		"ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815"}
@@ -266,13 +271,14 @@ func (s *suiteRelay) TestExec_4() {
 		TxIndex:     2,
 		BlockHash:   "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
 		Height:      100000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		Hash:        relayRealBtcTxHash,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
+	heightBytes := types.Encode(&types.Int64{Data: int64(100100)})
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
+		Height:     100000,
 		MerkleRoot: "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
 	}
 	headEnc := types.Encode(head)
