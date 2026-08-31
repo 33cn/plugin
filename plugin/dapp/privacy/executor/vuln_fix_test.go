@@ -11,6 +11,7 @@ package executor
 //    负数输出抵消手续费守恒检查的攻击交易必须被拒绝(ErrAmount)；
 // 3. 私转私/私转公对所有资产类型(含 token、平行链)强制金额守恒，
 //    输出大于输入的交易必须被拒绝(ErrPrivacyTxFeeNotEnough)；
+//    utxo手续费燃烧语义与钱包构造一致：仅主链coins燃烧1 coin，token/平行链不燃烧；
 // 4. 合法的公转私/私转私/私转公流程不受影响。
 
 import (
@@ -239,6 +240,30 @@ func TestFixVuln_TokenPrivacy2Privacy_NoConservation(t *testing.T) {
 	mintedKey := CalcPrivacyOutputKey("token", "TEST", 1000000*precision, common.ToHex(tx.Hash()), 0)
 	v, _ := mock.stateDB.Get(mintedKey)
 	assert.Nil(t, v, "minted token UTXO must not exist in stateDB")
+
+	// 合法的 token 私转私：token/平行链场景不燃烧utxo手续费(与钱包构造逻辑一致)，
+	// 输入总额等于输出总额即可通过，参照 ci_paracross 的 token(GD) priv2priv 用例
+	_, pub3 := genFixOnetimeKeyPair(t)
+	legitTx, err := createTx(mock, &pty.Privacy2Privacy{
+		AssetExec: "token",
+		Tokenname: "TEST",
+		Input: &pty.PrivacyInput{Keyinput: []*pty.KeyInput{
+			{Amount: 1 * precision, KeyImage: ki1[:],
+				UtxoGlobalIndex: []*pty.UTXOGlobalIndex{{Txhash: fakePreTxHash, Outindex: 0}}},
+		}},
+		Output: &pty.PrivacyOutput{Keyoutput: []*pty.KeyOutput{
+			{Amount: 1 * precision, Onetimepubkey: pub3[:]},
+		}},
+	}, testPrivateKeys[0], true)
+	require.NoError(t, err)
+	signFixPrivacyTx(t, legitTx,
+		[]privacycrypto.PrivKeyPrivacy{priv1},
+		[]privacycrypto.PubKeyPrivacy{pub1},
+		[]*privacycrypto.KeyImage{ki1})
+	require.NoError(t, mock.exec.CheckTx(legitTx, 0), "legit token privacy2privacy with zero utxo fee must pass CheckTx")
+	receipt, err := mock.exec.Exec(legitTx, 0)
+	require.NoError(t, err)
+	util.SaveKVList(mock.stateDB, receipt.KV)
 }
 
 // TestFix_LegitPrivacyFlows 合法流程回归：

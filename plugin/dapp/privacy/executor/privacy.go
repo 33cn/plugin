@@ -312,6 +312,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	//分叉后私转私/私转公对所有资产类型(含token、平行链)强制金额守恒, 输入总额必须覆盖输出总额与手续费
+	//utxo手续费燃烧语义与钱包构造保持一致: 仅主链coins需燃烧1 coin的utxo手续费, token/平行链不燃烧, 手续费由交易fee支付
 	if amountCheck {
 		maxAmount := types.MaxCoin * cfg.GetCoinPrecision()
 		for _, input := range keyinput {
@@ -319,6 +320,10 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 				privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "invalid input amount", input.GetAmount())
 				return types.ErrAmount
 			}
+		}
+		var requiredFee int64
+		if !cfg.IsPara() && (assertExec == "" || assertExec == cfg.GetCoinExec()) {
+			requiredFee = pty.PrivacyTxFee * cfg.GetCoinPrecision()
 		}
 		feeAmount := totalInput - totalOutput
 		if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
@@ -329,8 +334,8 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 			}
 			feeAmount -= amount
 		}
-		if feeAmount < pty.PrivacyTxFee*cfg.GetCoinPrecision() {
-			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", pty.PrivacyTxFee*cfg.GetCoinPrecision())
+		if feeAmount < requiredFee {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", requiredFee)
 			return pty.ErrPrivacyTxFeeNotEnough
 		}
 	}
