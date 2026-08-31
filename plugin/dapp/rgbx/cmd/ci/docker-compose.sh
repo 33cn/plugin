@@ -846,10 +846,6 @@ function run_native_tests() {
     scenario_native_asset_mint
 }
 
-function run_all_tests_wrapper() {
-    run_tests
-}
-
 function print_logs_hint() {
     log_step "collect logs with: ${COMPOSE_BIN} logs --tail=200"
     log_step "neutrino peer endpoint: ${BTC_P2P_ADDR}"
@@ -889,9 +885,8 @@ native)
     print_logs_hint
     ;;
 all)
-    do_up_only
-    run_all_tests_wrapper
-    print_logs_hint
+    # `all` 与 `run` 等价：run_tests 已包含 scenario_native_asset_mint
+    do_run_all
     ;;
 up)
     do_up_only

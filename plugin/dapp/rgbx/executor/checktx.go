@@ -41,7 +41,6 @@ var (
 	ErrInvalidAssetSymbol               = errors.New("invalid asset symbol")
 	ErrInvalidBtcTxProof                = errors.New("invalid btc tx proof")
 	ErrWithdrawConfirmTimeoutNotAllowed = errors.New("withdraw confirm timeout not allowed")
-	ErrInvalidBtcProofIndex             = errors.New("invalid btc proof tx index")
 	ErrInvalidBtcBlockHash              = errors.New("invalid btc block hash")
 	ErrGetBtcHeader                     = errors.New("get btc header error")
 	ErrInvalidBtcProofBlock             = errors.New("invalid btc proof block info")

@@ -290,6 +290,81 @@ func Test_rgbx_validateBtcTxProof_success(t *testing.T) {
 	require.Equal(t, int32(2), tx.Version)
 }
 
+// Test_rgbx_validateBtcTxProof_twoLeafMerkle covers a real 2-tx block merkle
+// branch: both the left-leaf (index 0, branch contains right sibling) and the
+// right-leaf (index 1, branch contains left sibling) orderings must verify, and
+// a branch/index mismatch must be rejected.
+func Test_rgbx_validateBtcTxProof_twoLeafMerkle(t *testing.T) {
+	r := newRgbx().(*rgbx)
+
+	mkTx := func(version int32, val int64, script []byte) wire.MsgTx {
+		tx := wire.MsgTx{}
+		tx.Version = version
+		tx.TxOut = append(tx.TxOut, wire.NewTxOut(val, script))
+		return tx
+	}
+	tx0 := mkTx(2, 1000, []byte{0x51})
+	tx1 := mkTx(2, 2000, []byte{0x52})
+
+	tx0ID := tx0.TxHash()
+	tx1ID := tx1.TxHash()
+	leaves := [][]byte{tx0ID.CloneBytes(), tx1ID.CloneBytes()}
+
+	// Compute branches BEFORE GetMerkleRoot: GetMerkleRoot mutates the input
+	// leaf slice in place (writes the parent hash back), which would otherwise
+	// corrupt the leaves used for branch derivation.
+	_, branch0 := merkle.GetMerkleRootAndBranch(leaves, 0)
+	_, branch1 := merkle.GetMerkleRootAndBranch(leaves, 1)
+	root := merkle.GetMerkleRoot(leaves)
+	rootHash, err := chainhash.NewHash(root)
+	require.NoError(t, err)
+
+	// Branch for the left leaf (index 0) must be the right sibling (tx1ID).
+	require.Len(t, branch0, 1)
+	require.Equal(t, tx1ID.CloneBytes(), branch0[0])
+
+	// Branch for the right leaf (index 1) must be the left sibling (tx0ID).
+	require.Len(t, branch1, 1)
+	require.Equal(t, tx0ID.CloneBytes(), branch1[0])
+
+	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig").Return(types.NewChain33Config(types.GetDefaultCfgstring()))
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.Anything).Return(&ltypes.BtcHeader{
+		Hash:       "deadbeef",
+		Height:     100,
+		MerkleRoot: rootHash.String(),
+	}, nil)
+	r.SetAPI(api)
+
+	serialize := func(tx wire.MsgTx) []byte {
+		buf := new(bytes.Buffer)
+		require.NoError(t, tx.SerializeNoWitness(buf))
+		return buf.Bytes()
+	}
+
+	// Valid proof for the left leaf.
+	proof0 := &rtypes.BtcTxProof{TxData: serialize(tx0), BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 0, MerkleProof: branch0}
+	gotTx, err := r.validateBtcTxProof("tx0", proof0)
+	require.NoError(t, err)
+	require.Equal(t, int32(2), gotTx.Version)
+
+	// Valid proof for the right leaf.
+	proof1 := &rtypes.BtcTxProof{TxData: serialize(tx1), BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 1, MerkleProof: branch1}
+	gotTx, err = r.validateBtcTxProof("tx1", proof1)
+	require.NoError(t, err)
+	require.Equal(t, int32(2), gotTx.Version)
+
+	// Negative: tx1 data proven at index 0 (using tx0's branch) must fail.
+	badProof := &rtypes.BtcTxProof{TxData: serialize(tx1), BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 0, MerkleProof: branch0}
+	_, err = r.validateBtcTxProof("bad", badProof)
+	require.Equal(t, ErrInvalidBtcProofMerkle, err)
+
+	// Negative: tx0 data proven at index 1 (using tx1's branch) must fail.
+	badProof2 := &rtypes.BtcTxProof{TxData: serialize(tx0), BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 1, MerkleProof: branch1}
+	_, err = r.validateBtcTxProof("bad2", badProof2)
+	require.Equal(t, ErrInvalidBtcProofMerkle, err)
+}
+
 func Test_rgbx_checkWithdrawConfirm(t *testing.T) {
 	r := newRgbx()
 	api := &mocks.QueueProtocolAPI{}
