@@ -117,7 +117,7 @@ func TestAggregate(t *testing.T) {
 	assert.Error(t, err)
 }
 
-//benchmark
+// benchmark
 func BenchmarkBLSAggregateSignature(b *testing.B) {
 	msg := []byte(">16 character identical message")
 	n := 200

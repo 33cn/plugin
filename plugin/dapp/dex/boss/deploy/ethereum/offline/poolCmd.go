@@ -98,7 +98,7 @@ func (a *AddPool) AddPool2Farm(cmd *cobra.Command, args []string) {
 
 func (a *AddPool) reWriteAddPool2Farm(nonce uint64, masterChefAddrStr string, gasPrice *big.Int, key *ecdsa.PrivateKey) (signedTx, hash string, err error) {
 	masterChefAddr := common.HexToAddress(masterChefAddrStr)
-	parsed, err := abi.JSON(strings.NewReader(masterChef.MasterChefABI))
+	parsed, _ := abi.JSON(strings.NewReader(masterChef.MasterChefABI))
 	input, err := parsed.Pack("add", big.NewInt(a.allocPoint), common.HexToAddress(a.lpToken), a.withUpdate)
 	if err != nil {
 		panic(err)
@@ -185,7 +185,7 @@ func (u *updateAllocPoint) updateAllocPointCmdFlags(cmd *cobra.Command) {
 
 func (u *updateAllocPoint) rewriteUpdateAllocPoint(masterChefAddrStr string, nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey) (signedTx, hash string, err error) {
 	masterChefAddr := common.HexToAddress(masterChefAddrStr)
-	parsed, err := abi.JSON(strings.NewReader(masterChef.MasterChefABI))
+	parsed, _ := abi.JSON(strings.NewReader(masterChef.MasterChefABI))
 	input, err := parsed.Pack("set", big.NewInt(u.pid), big.NewInt(u.allocPoint), u.withUpdate)
 	if err != nil {
 		panic(err)
@@ -258,7 +258,7 @@ func (t *transferOwnerShip) TransferOwnerShip(cmd *cobra.Command, args []string)
 func TransferOwnerShipHandle(nonce uint64, gasPrice *big.Int, newOwner, contract string, key *ecdsa.PrivateKey) (signedtx, hash string, err error) {
 	contractAddr := common.HexToAddress(contract)
 	newOwnerAddr := common.HexToAddress(newOwner)
-	parsed, err := abi.JSON(strings.NewReader(syrupBar.SyrupBarABI))
+	parsed, _ := abi.JSON(strings.NewReader(syrupBar.SyrupBarABI))
 	input, err := parsed.Pack("transferOwnership", newOwnerAddr)
 	if err != nil {
 		return

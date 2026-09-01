@@ -40,7 +40,7 @@ const (
 	TradeOrderStatusGroupComplete
 )
 
-//SellOrderStatus : sell order status map
+// SellOrderStatus : sell order status map
 var SellOrderStatus = map[int32]string{
 	TradeOrderStatusNotStart:   "NotStart",
 	TradeOrderStatusOnSale:     "OnSale",
@@ -52,7 +52,7 @@ var SellOrderStatus = map[int32]string{
 	TradeOrderStatusBuyRevoked: "BuyRevoked",
 }
 
-//SellOrderStatus2Int : SellOrderStatus info to value in int32
+// SellOrderStatus2Int : SellOrderStatus info to value in int32
 var SellOrderStatus2Int = map[string]int32{
 	"NotStart":   TradeOrderStatusNotStart,
 	"OnSale":     TradeOrderStatusOnSale,
@@ -64,14 +64,14 @@ var SellOrderStatus2Int = map[string]int32{
 	"BuyRevoked": TradeOrderStatusBuyRevoked,
 }
 
-//MapSellOrderStatusStr2Int :
+// MapSellOrderStatusStr2Int :
 var MapSellOrderStatusStr2Int = map[string]int32{
 	"onsale":  TradeOrderStatusOnSale,
 	"soldout": TradeOrderStatusSoldOut,
 	"revoked": TradeOrderStatusRevoked,
 }
 
-//MapBuyOrderStatusStr2Int :
+// MapBuyOrderStatusStr2Int :
 var MapBuyOrderStatusStr2Int = map[string]int32{
 	"onbuy":      TradeOrderStatusOnBuy,
 	"boughtout":  TradeOrderStatusBoughtOut,

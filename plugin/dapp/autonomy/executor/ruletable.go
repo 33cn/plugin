@@ -24,7 +24,7 @@ var ruleOpt = &table.Option{
 	Index:   []string{"addr", "status", "addr_status"},
 }
 
-//NewRuleTable 新建表
+// NewRuleTable 新建表
 func NewRuleTable(kvdb db.KV) *table.Table {
 	rowmeta := NewRuleRow()
 	newTable, err := table.NewTable(rowmeta, kvdb, ruleOpt)
@@ -34,22 +34,22 @@ func NewRuleTable(kvdb db.KV) *table.Table {
 	return newTable
 }
 
-//RuleRow table meta 结构
+// RuleRow table meta 结构
 type RuleRow struct {
 	*auty.AutonomyProposalRule
 }
 
-//NewRuleRow 新建一个meta 结构
+// NewRuleRow 新建一个meta 结构
 func NewRuleRow() *RuleRow {
 	return &RuleRow{AutonomyProposalRule: &auty.AutonomyProposalRule{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
 func (r *RuleRow) CreateRow() *table.Row {
 	return &table.Row{Data: &auty.AutonomyProposalRule{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (r *RuleRow) SetPayload(data types.Message) error {
 	if d, ok := data.(*auty.AutonomyProposalRule); ok {
 		r.AutonomyProposalRule = d
@@ -58,7 +58,7 @@ func (r *RuleRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (r *RuleRow) Get(key string) ([]byte, error) {
 	if key == "heightindex" {
 		return []byte(dapp.HeightIndexStr(r.Height, int64(r.Index))), nil

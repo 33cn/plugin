@@ -130,7 +130,7 @@ func (MixWalletRescanStatus) EnumDescriptor() ([]byte, []int) {
 	return file_mixwallet_proto_rawDescGZIP(), []int{1}
 }
 
-//支持同时存入多个地址，多个地址具有相同的returnAddr和AuthorizeAddr,如果不同，则单个来存
+// 支持同时存入多个地址，多个地址具有相同的returnAddr和AuthorizeAddr,如果不同，则单个来存
 type DepositInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -202,7 +202,7 @@ func (x *DepositInfo) GetAmounts() string {
 	return ""
 }
 
-//钱包生成deposit tx
+// 钱包生成deposit tx
 type DepositTxReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -321,7 +321,7 @@ func (x *DepositProofResp) GetSecrets() *DHSecretGroup {
 	return nil
 }
 
-//可withdraw 多个note
+// 可withdraw 多个note
 type WithdrawTxReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -385,7 +385,7 @@ func (x *WithdrawTxReq) GetZkPath() string {
 	return ""
 }
 
-//只授权一个note，超过一个，toAddr不好设置
+// 只授权一个note，超过一个，toAddr不好设置
 type AuthTxReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -661,7 +661,7 @@ func (x *CreateZkKeyFileReq) GetSavePath() string {
 	return ""
 }
 
-//加密了的input/output amount
+// 加密了的input/output amount
 type ShieldAmount struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

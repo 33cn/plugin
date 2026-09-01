@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-//var version control
+// var version control
 var (
 	Version   = "1.71.1"
 	GitCommit string
@@ -16,7 +16,7 @@ var (
 	Platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 )
 
-//GetVersion 获取版本信息
+// GetVersion 获取版本信息
 func GetVersion() string {
 	if GitCommit != "" {
 		return Version + "-" + GitCommit

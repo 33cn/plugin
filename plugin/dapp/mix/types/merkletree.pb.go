@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//子树用高度和hash描述，2^10=1024个叶子节点，子树高度不会超过10
+// 子树用高度和hash描述，2^10=1024个叶子节点，子树高度不会超过10
 type CommitSubTree struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -77,7 +77,7 @@ func (x *CommitSubTree) GetHash() []byte {
 	return nil
 }
 
-//merkel tree由子树和叶子组成，三种场景:1,初始只一个叶子, 2,全是子树, 3,子树加一个叶子，不会有两个叶子，两个叶子一定构成子树
+// merkel tree由子树和叶子组成，三种场景:1,初始只一个叶子, 2,全是子树, 3,子树加一个叶子，不会有两个叶子，两个叶子一定构成子树
 type CommitSubTrees struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -125,8 +125,8 @@ func (x *CommitSubTrees) GetSubTrees() []*CommitSubTree {
 	return nil
 }
 
-//描述当前commitTree的状态
-//一颗merkel树1024叶子，考虑数据库读取原因，每个叶子都会存到相应seq db，待第1024次时候归档，重新开始新的merkle树，
+// 描述当前commitTree的状态
+// 一颗merkel树1024叶子，考虑数据库读取原因，每个叶子都会存到相应seq db，待第1024次时候归档，重新开始新的merkle树，
 type CommitTreeStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

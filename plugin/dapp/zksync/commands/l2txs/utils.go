@@ -12,10 +12,10 @@ import (
 	chain33Crypto "github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/golang/protobuf/proto"
 )

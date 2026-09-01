@@ -484,7 +484,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess stopped, bet failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess A bet txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess A bet txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
@@ -495,7 +495,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("sendGuessPublishTx failed,only admin can publish.")
 	} else {
-		fmt.Println(fmt.Sprintf("publish ok, but it's not correct, txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("publish ok, but it's not correct, txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
@@ -506,7 +506,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("sendGuessPublishTx failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("publish ok, txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("publish ok, txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
@@ -517,7 +517,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess abort failed, already published.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess abort txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID1)
@@ -543,7 +543,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess abort failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess abort txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID2)
@@ -554,7 +554,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess stop failed,it's already aborted.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess stop txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess stop txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 	reply = queryGuessByIds(strGameID2)
@@ -590,7 +590,7 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess abort failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess abort txid: %s\n", hex.EncodeToString(txid))
 	}
 	time.Sleep(2 * time.Second)
 

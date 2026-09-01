@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-//const ...
+// const ...
 const (
 	EthNullAddr = "0x0000000000000000000000000000000000000000"
 )

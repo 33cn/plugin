@@ -8,7 +8,7 @@ const (
 	keyWalletAutoMiner = "WalletAutoMiner"
 )
 
-//CalcWalletAutoMiner calculate wallet auto miner
+// CalcWalletAutoMiner calculate wallet auto miner
 func CalcWalletAutoMiner() []byte {
 	return []byte(keyWalletAutoMiner)
 }

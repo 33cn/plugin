@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//StaticsCmd ...
+// StaticsCmd ...
 func StaticsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "statics",
@@ -22,7 +22,7 @@ func StaticsCmd() *cobra.Command {
 	return cmd
 }
 
-//ShowLockStaticsCmd ...
+// ShowLockStaticsCmd ...
 func ShowLockStaticsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lock",
@@ -33,12 +33,12 @@ func ShowLockStaticsCmd() *cobra.Command {
 	return cmd
 }
 
-//ShowLockStaticsFlags ...
+// ShowLockStaticsFlags ...
 func ShowLockStaticsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("token", "t", "", "token address, optional, nil for ETH")
 }
 
-//ShowLockStatics ...
+// ShowLockStatics ...
 func ShowLockStatics(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenAddr, _ := cmd.Flags().GetString("token")
@@ -51,7 +51,7 @@ func ShowLockStatics(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ShowDepositStaticsCmd ...
+// ShowDepositStaticsCmd ...
 func ShowDepositStaticsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deposit",
@@ -62,13 +62,13 @@ func ShowDepositStaticsCmd() *cobra.Command {
 	return cmd
 }
 
-//ShowDepositStaticsFlags ...
+// ShowDepositStaticsFlags ...
 func ShowDepositStaticsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("token", "t", "", "token address")
 	_ = cmd.MarkFlagRequired("token")
 }
 
-//ShowDepositStatics ...
+// ShowDepositStatics ...
 func ShowDepositStatics(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenAddr, _ := cmd.Flags().GetString("token")

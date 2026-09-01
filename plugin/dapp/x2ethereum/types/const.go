@@ -1,6 +1,6 @@
 package types
 
-//key
+// key
 var (
 	ProphecyKey                         = []byte("prefix_for_Prophecy")
 	Eth2Chain33Key                      = []byte("prefix_for_Eth2Chain33")
@@ -60,10 +60,10 @@ const (
 	NameWithdrawFromExecAction      = "WithdrawFromExec"
 )
 
-//DefaultConsensusNeeded ...
+// DefaultConsensusNeeded ...
 const DefaultConsensusNeeded = int64(70)
 
-//direct ...
+// direct ...
 const (
 	DirEth2Chain33  = "eth2chain33"
 	DirChain33ToEth = "chain33toeth"
@@ -71,7 +71,7 @@ const (
 	BurnClaim       = "burn"
 )
 
-//DirectionType type
+// DirectionType type
 var DirectionType = [3]string{"", DirEth2Chain33, DirChain33ToEth}
 
 // query function name
@@ -84,7 +84,7 @@ const (
 	FuncQueryRelayerBalance            = "GetRelayerBalance"
 )
 
-//lock type
+// lock type
 const (
 	LockClaimType = int32(1)
 	BurnClaimType = int32(2)

@@ -21,7 +21,7 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
 )
 
-//ExecCli ...
+// ExecCli ...
 type ExecCli struct {
 	ldb        db.KVDB
 	sdb        db.DB
@@ -44,7 +44,7 @@ type ExecCli struct {
 	accF1 *account.DB
 }
 
-//Nodes ...
+// Nodes ...
 var (
 	Nodes = []string{
 		"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
@@ -55,7 +55,7 @@ var (
 	}
 )
 
-//NewExecCli ...
+// NewExecCli ...
 func NewExecCli() *ExecCli {
 	dir, sdb, ldb := util.CreateTestDB()
 	log.Println(dir)
@@ -149,7 +149,7 @@ func NewExecCli() *ExecCli {
 	}
 }
 
-//Send ...
+// Send ...
 func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLog, error) {
 	var err error
 	tx, err = types.FormatTx(c.cfg, et.ExchangeX, tx)
@@ -200,7 +200,7 @@ func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLo
 	return receipt.Logs, nil
 }
 
-//Query ...
+// Query ...
 func (c *ExecCli) Query(fn string, msg proto.Message) ([]byte, error) {
 	api, _ := client.New(c.q.Client(), nil)
 	exec := executor.NewExchange()
@@ -236,7 +236,7 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	return tx, nil
 }
 
-//GetExecAccount ...
+// GetExecAccount ...
 func (c *ExecCli) GetExecAccount(addr string, exec string, symbol string) (*types.Account, error) {
 	//mavl-{coins}-{bty}-exec-{26htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp}:{1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP}
 	//mavl-{token}-{ccny}-exec-{26htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp}:{1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP}

@@ -5,7 +5,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-//Cli interface
+// Cli interface
 type Cli interface {
 	Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLog, error)
 	Query(fn string, msg proto.Message) ([]byte, error)

@@ -53,7 +53,7 @@ func sendSignTxs2Chain33Cmd() *cobra.Command {
 }
 
 func addSendSignTxs2Chain33Flags(cmd *cobra.Command) {
-	cmd.Flags().StringP("path", "p", "./", "(optional)path of txs file,default to current directroy")
+	cmd.Flags().StringP("path", "p", "./", "(optional)path of txs file,default to current directory")
 	cmd.Flags().StringP("file", "f", "", "file name which contains the txs to be sent to chain33")
 	_ = cmd.MarkFlagRequired("file")
 }

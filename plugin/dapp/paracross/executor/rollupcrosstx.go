@@ -15,13 +15,13 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-//Exec_RollupCrossTx exec commit rollup
+// Exec_RollupCrossTx exec commit rollup
 func (p *Paracross) Exec_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(p, tx)
 	return a.rollupCrossTx(commit)
 }
 
-//当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
+// 当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
 func (p *Paracross) setAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 
 	dbSet := &types.LocalDBSet{}
@@ -29,7 +29,7 @@ func (p *Paracross) setAutoRollBack(tx *types.Transaction, kv []*types.KeyValue)
 	return dbSet
 }
 
-//ExecLocal_RollupCrossTx exec local commit rollup
+// ExecLocal_RollupCrossTx exec local commit rollup
 func (p *Paracross) ExecLocal_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.Transaction,
 	receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 
@@ -67,7 +67,7 @@ func (p *Paracross) ExecLocal_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.
 	return p.setAutoRollBack(tx, dbSet.KV), nil
 }
 
-//ExecDelLocal_RollupCrossTx exec local commit rollup
+// ExecDelLocal_RollupCrossTx exec local commit rollup
 func (p *Paracross) ExecDelLocal_RollupCrossTx(_ *pt.RollupCrossTx, tx *types.Transaction,
 	_ *types.ReceiptData, _ int) (*types.LocalDBSet, error) {
 	kvs, err := p.DelRollbackKV(tx, tx.Execer)

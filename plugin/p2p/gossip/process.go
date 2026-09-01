@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//Package gossip ...
+// Package gossip ...
 package gossip
 
 import (
@@ -470,7 +470,7 @@ func (n *Node) postMempool(txHash string, tx *types.Transaction) error {
 	return err
 }
 
-//检测是否冗余发送, 或者添加到发送过滤(内部存在直接修改读写保护的数据, 对filter lru的读写需要外层锁保护)
+// 检测是否冗余发送, 或者添加到发送过滤(内部存在直接修改读写保护的数据, 对filter lru的读写需要外层锁保护)
 func (n *Node) addIgnoreSendPeerAtomic(filter *utils.Filterdata, key, pid string) (exist bool) {
 
 	filter.GetAtomicLock()

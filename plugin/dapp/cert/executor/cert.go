@@ -103,7 +103,8 @@ func (c *Cert) CheckTx(tx *types.Transaction, index int) error {
 	return authority.Author.Validate(tx.GetSignature())
 }
 
-/**
+/*
+*
 根据前缀查找证书变更记录，cert回滚、重启、同步用到
 */
 func (c *Cert) loadHistoryByPrefix() error {
@@ -139,7 +140,8 @@ func (c *Cert) loadHistoryByPrefix() error {
 	return ct.ErrGetHistoryCertData
 }
 
-/**
+/*
+*
 根据具体高度查找变更记录，cert回滚用到
 */
 func (c *Cert) loadHistoryByHeight() error {

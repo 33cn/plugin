@@ -32,7 +32,7 @@ func newJumpDldCli(para *client, cfg *subConfig) *jumpDldClient {
 	return &jumpDldClient{paraClient: para}
 }
 
-//校验按高度获取的block hash和前一步对应高度的blockhash比对
+// 校验按高度获取的block hash和前一步对应高度的blockhash比对
 func verifyBlockHash(heights []*types.BlockInfo, blocks []*types.ParaTxDetail) error {
 	heightMap := make(map[int64][]byte)
 	for _, h := range heights {
@@ -81,7 +81,7 @@ func (j *jumpDldClient) getParaHeightList(startHeight, endHeight int64) ([]*type
 	}
 }
 
-//把不连续的平行链区块高度按offset分成二维数组，方便后面处理
+// 把不连续的平行链区块高度按offset分成二维数组，方便后面处理
 func splitHeights2Rows(heights []*types.BlockInfo, offset int) [][]*types.BlockInfo {
 	var ret [][]*types.BlockInfo
 	for i := 0; i < len(heights); i += offset {
@@ -94,8 +94,8 @@ func splitHeights2Rows(heights []*types.BlockInfo, offset int) [][]*types.BlockI
 	return ret
 }
 
-//按高度每次获取实际1000个有平行链交易的区块，这些区块并不一定连续，为了连续处理有交易和没有交易的区块，需要特殊设置起始结束高度，
-//但每次处理的起始高度和结束高度都包含了有交易的1000个平行链高度
+// 按高度每次获取实际1000个有平行链交易的区块，这些区块并不一定连续，为了连续处理有交易和没有交易的区块，需要特殊设置起始结束高度，
+// 但每次处理的起始高度和结束高度都包含了有交易的1000个平行链高度
 func getHeaderStartEndRange(startHeight, endHeight int64, arr [][]*types.BlockInfo, i int) (int64, int64) {
 	single := arr[i]
 	s := startHeight
@@ -185,7 +185,7 @@ func (j *jumpDldClient) processTxJobs(ch chan *paraTxBlocksJob) {
 	}
 }
 
-//按高度list请求平行链区块，服务器有可能返回少于请求高度，少于时候需要继续请求
+// 按高度list请求平行链区块，服务器有可能返回少于请求高度，少于时候需要继续请求
 func (j *jumpDldClient) fetchHeightListBlocks(hlist []int64, title string) (*types.ParaTxDetails, error) {
 	index := 0
 	retBlocks := &types.ParaTxDetails{}
@@ -272,7 +272,7 @@ func (j *jumpDldClient) procParaTxHeaders(startHeight, endHeight int64, paraBloc
 	return nil
 }
 
-//每1000header执行一次比全部获取出来更有效率，可以和同步层更好并行处理，节约时间，1000paraTxBlocks花时间很少，相比headers获取，串行获取时间可以忽略
+// 每1000header执行一次比全部获取出来更有效率，可以和同步层更好并行处理，节约时间，1000paraTxBlocks花时间很少，相比headers获取，串行获取时间可以忽略
 func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*types.BlockInfo, jobCh chan *paraTxBlocksJob) error {
 	title := j.paraClient.GetAPI().GetConfig().GetTitle()
 	heightsRows := splitHeights2Rows(heights, int(types.MaxBlockCountPerTime))
@@ -302,10 +302,10 @@ func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*type
 	return nil
 }
 
-//Jump Download 是选择有平行链交易的区块跳跃下载的功能，分为三个步骤：
-//0. 只获取当前主链高度1w高度前的区块，默认没有分叉，都是addType　block
-//1. 获取所有平行链交易的高度列表，大概5s以内
-//2. 按高度列表获取含平行链交易的主链区块每次获取一段1000高度，并获取相关范围的主链headers，一起执行，单独获取headers和同步处理不能并行
+// Jump Download 是选择有平行链交易的区块跳跃下载的功能，分为三个步骤：
+// 0. 只获取当前主链高度1w高度前的区块，默认没有分叉，都是addType　block
+// 1. 获取所有平行链交易的高度列表，大概5s以内
+// 2. 按高度列表获取含平行链交易的主链区块每次获取一段1000高度，并获取相关范围的主链headers，一起执行，单独获取headers和同步处理不能并行
 func (j *jumpDldClient) tryJumpDownload() {
 	curMainHeight, err := j.paraClient.GetLastHeightOnMainChain()
 	if err != nil {

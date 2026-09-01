@@ -9,7 +9,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/issuance/types"
 )
 
-//Query_IssuanceInfoByID ...
+// Query_IssuanceInfoByID ...
 func (c *Issuance) Query_IssuanceInfoByID(req *pty.ReqIssuanceInfo) (types.Message, error) {
 	issu, err := queryIssuanceByID(c.GetStateDB(), req.IssuanceId)
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *Issuance) Query_IssuanceInfoByID(req *pty.ReqIssuanceInfo) (types.Messa
 	}, nil
 }
 
-//Query_IssuanceInfoByIDs ...
+// Query_IssuanceInfoByIDs ...
 func (c *Issuance) Query_IssuanceInfoByIDs(req *pty.ReqIssuanceInfos) (types.Message, error) {
 	infos := &pty.RepIssuanceCurrentInfos{}
 	for _, id := range req.IssuanceIds {
@@ -58,7 +58,7 @@ func (c *Issuance) Query_IssuanceInfoByIDs(req *pty.ReqIssuanceInfos) (types.Mes
 	return infos, nil
 }
 
-//Query_IssuanceByStatus ...
+// Query_IssuanceByStatus ...
 func (c *Issuance) Query_IssuanceByStatus(req *pty.ReqIssuanceByStatus) (types.Message, error) {
 	ids := &pty.RepIssuanceIDs{}
 	issuIDs, err := queryIssuanceByStatus(c.GetLocalDB(), req.Status, req.IssuanceId)
@@ -71,7 +71,7 @@ func (c *Issuance) Query_IssuanceByStatus(req *pty.ReqIssuanceByStatus) (types.M
 	return ids, nil
 }
 
-//Query_IssuanceRecordByID ...
+// Query_IssuanceRecordByID ...
 func (c *Issuance) Query_IssuanceRecordByID(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	ret := &pty.RepIssuanceDebtInfo{}
 	issuRecord, err := queryIssuanceRecordByID(c.GetStateDB(), req.IssuanceId, req.DebtId)
@@ -84,7 +84,7 @@ func (c *Issuance) Query_IssuanceRecordByID(req *pty.ReqIssuanceRecords) (types.
 	return ret, nil
 }
 
-//Query_IssuanceRecordsByAddr ...
+// Query_IssuanceRecordsByAddr ...
 func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	ret := &pty.RepIssuanceRecords{}
 	records, err := queryIssuanceRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.Status, req.DebtId)
@@ -106,7 +106,7 @@ func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecords) (typ
 	return ret, nil
 }
 
-//Query_IssuanceRecordsByStatus ...
+// Query_IssuanceRecordsByStatus ...
 func (c *Issuance) Query_IssuanceRecordsByStatus(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	ret := &pty.RepIssuanceRecords{}
 	records, err := queryIssuanceRecordsByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status, req.DebtId)
@@ -119,7 +119,7 @@ func (c *Issuance) Query_IssuanceRecordsByStatus(req *pty.ReqIssuanceRecords) (t
 	return ret, nil
 }
 
-//Query_IssuancePrice ...
+// Query_IssuancePrice ...
 func (c *Issuance) Query_IssuancePrice(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	price, err := getLatestPrice(c.GetStateDB())
 	if err != nil {
@@ -130,7 +130,7 @@ func (c *Issuance) Query_IssuancePrice(req *pty.ReqIssuanceRecords) (types.Messa
 	return &pty.RepIssuancePrice{Price: price}, nil
 }
 
-//Query_IssuanceUserBalance ...
+// Query_IssuanceUserBalance ...
 func (c *Issuance) Query_IssuanceUserBalance(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	balance, err := queryIssuanceUserBalance(c.GetStateDB(), c.GetLocalDB(), req.Addr)
 	if err != nil {

@@ -21,7 +21,7 @@ var (
 	start         = int(1)
 )
 
-//Key ...
+// Key ...
 type Key struct {
 	ID uuid.UUID // Version 4 "random" for unique id not derived from key data
 	// to simplify lookups we also store the address
@@ -31,7 +31,7 @@ type Key struct {
 	PrivateKey *ecdsa.PrivateKey
 }
 
-//NewAccount ...
+// NewAccount ...
 func NewAccount() (privateKeystr, addr string, err error) {
 	_, privateKeystr, addr, err = newKeyAndStore(crand.Reader)
 	if err != nil {
@@ -40,7 +40,7 @@ func NewAccount() (privateKeystr, addr string, err error) {
 	return
 }
 
-//GetAccount ...
+// GetAccount ...
 func (ethRelayer *Relayer4Ethereum) GetAccount(passphrase string) (privateKey, addr string, err error) {
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
 	if nil != err {
@@ -56,7 +56,7 @@ func (ethRelayer *Relayer4Ethereum) GetAccount(passphrase string) (privateKey, a
 	return
 }
 
-//GetValidatorAddr ...
+// GetValidatorAddr ...
 func (ethRelayer *Relayer4Ethereum) GetValidatorAddr() (validators x2ethTypes.ValidatorAddr4EthRelayer, err error) {
 	var chain33AccountAddr string
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
@@ -104,7 +104,7 @@ func (ethRelayer *Relayer4Ethereum) ImportPrivateKey(passphrase, privateKeyStr s
 	return
 }
 
-//RestorePrivateKeys ...
+// RestorePrivateKeys ...
 func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passphrase string) error {
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
 	if nil != err {
@@ -131,7 +131,7 @@ func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passphrase string) error 
 	return nil
 }
 
-//StoreAccountWithNewPassphase ...
+// StoreAccountWithNewPassphase ...
 func (ethRelayer *Relayer4Ethereum) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
 	if nil != err {
@@ -149,7 +149,7 @@ func (ethRelayer *Relayer4Ethereum) StoreAccountWithNewPassphase(newPassphrase, 
 	return ethRelayer.db.SetSync(ethAccountKey, encodedInfo)
 }
 
-//checksum: first four bytes of double-SHA256.
+// checksum: first four bytes of double-SHA256.
 func checksum(input []byte) (cksum [4]byte) {
 	h := sha256.New()
 	_, err := h.Write(input)

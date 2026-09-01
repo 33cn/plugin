@@ -207,7 +207,7 @@ func (db *Database) InsertBlob(hash common.Hash, blob []byte) {
 	db.insert(hash, blob, rawNode(blob))
 }
 
-//把flags 去掉，减少内存占用
+// 把flags 去掉，减少内存占用
 func simplifyNode(n node) node {
 	switch n := n.(type) {
 	case *shortNode:

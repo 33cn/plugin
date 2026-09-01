@@ -29,13 +29,13 @@ var (
 
 var driverName = "retrieve"
 
-//Init retrieve
+// Init retrieve
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newRetrieve, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Retrieve{}))

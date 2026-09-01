@@ -550,7 +550,7 @@ useBalance=false
 jdkPath="../../../../build/j2sdk-image"
 `
 
-//GetDefaultCfgstring ...
+// GetDefaultCfgstring ...
 func GetDefaultCfgstring() string {
 	return cfgstring
 	//return defaultCfgstring

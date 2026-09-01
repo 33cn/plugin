@@ -479,7 +479,7 @@ func (x *TokenWitness) GetSibling() *SiblingPath {
 	return nil
 }
 
-//one operation branch
+// one operation branch
 type OperationMetaBranch struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -933,7 +933,7 @@ func (x *ZkFee) GetTokenID() uint64 {
 	return 0
 }
 
-//optional, 记录operation的queue对应的tx的block height和txIndex，方便定位
+// optional, 记录operation的queue对应的tx的block height和txIndex，方便定位
 type OpBlockInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1758,7 +1758,7 @@ func (x *ZkContractToTreeWitnessInfo) GetBlockInfo() *OpBlockInfo {
 	return nil
 }
 
-//直接产生新的tree地址
+// 直接产生新的tree地址
 type ZkContractToTreeNewWitnessInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
