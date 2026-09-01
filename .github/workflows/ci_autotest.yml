@@ -1,0 +1,65 @@
+name: ci_autotest
+on: [push, pull_request]
+
+# 对应 Makefile 的 autotest_ci / autotest_tick：
+#   autotest_ci    -> chain33 build/autotest/jerkinsci 目录，solo 模式跑全量测试用例
+#   autotest_tick  -> chain33 build/autotest/gitlabci 目录，双节点 + ticket 挖矿场景
+# 两者都是 docker-compose 起链后跑 autotest 二进制，与 build.yml 的
+# `make autotest dapp=all`（local 模式，docker-compose 起 dapp 集群）互补。
+
+jobs:
+  autotest_ci:
+    name: autotest_ci
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Golang
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+        id: go
+
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+
+      - name: autotest ci
+        run: |
+          make build_ci
+          make autotest_ci
+
+      - name: cleanup
+        if: always()
+        run: make clean || true
+
+  autotest_tick:
+    name: autotest_tick
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Golang
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+        id: go
+
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+
+      - name: autotest tick
+        run: |
+          make build_ci
+          make autotest_tick
+
+      - name: cleanup
+        if: always()
+        run: make clean || true
