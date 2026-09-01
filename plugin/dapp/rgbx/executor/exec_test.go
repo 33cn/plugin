@@ -356,11 +356,84 @@ func TestRgbx_Exec_Confirm_WithMerkleProof(t *testing.T) {
 	asset := &rtypes.RgbxAsset{}
 	require.NoError(t, readDB(state, formatAssetKey(symbol), asset))
 	require.Equal(t, formatSymbol(symbol), asset.Symbol)
-	spendHash := chainhash.DoubleHashH(txData).String()
+	spendHash := txID.String()
 	require.Equal(t, spendHash, asset.GenesisBtcTxHash)
 
 	owner := rtypes.FormatUtxo(spendHash, uint32(confirm.UtxoProof.GetOpRetOutputIdx()+1))
 	accDB, err := r.newAccount(symbol)
 	require.NoError(t, err)
 	require.Equal(t, int64(1000), accDB.LoadAccount(owner).Balance)
+}
+
+// TestRgbx_Exec_Confirm_TrailingBytes: spendHash must be the merkle-certified
+// txid even when raw TxData carries trailing garbage bytes (btcd's
+// DeserializeNoWitness accepts them). Deriving spendHash from the raw bytes
+// (old DoubleHashH) would have diverged from the certified txid; Exec_Confirm
+// now derives it from the parsed tx.
+func TestRgbx_Exec_Confirm_TrailingBytes(t *testing.T) {
+	r := newRgbx().(*rgbx)
+	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
+	out, err := wire.NewOutPointFromString(utxoAddr)
+	require.NoError(t, err)
+
+	pendingHash := []byte("merkle-mint-trailing")
+	symbol := "nativetrailing"
+
+	var spendTx wire.MsgTx
+	spendTx.Version = 2
+	spendTx.TxIn = append(spendTx.TxIn, &wire.TxIn{PreviousOutPoint: *out})
+	commitment, err := txscript.NullDataScript(pendingHash)
+	require.NoError(t, err)
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(0, commitment))
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(5000, []byte{0x51}))
+
+	buf := new(bytes.Buffer)
+	require.NoError(t, spendTx.SerializeNoWitness(buf))
+	cleanData := buf.Bytes()
+	txID := spendTx.TxHash()
+	// attacker appends trailing garbage to the raw bytes
+	txData := append(append([]byte{}, cleanData...), 0xde, 0xad, 0xbe, 0xef)
+
+	dummyID := chainhash.DoubleHashH(bytes.Repeat([]byte{0xbb}, 32))
+	leaves := [][]byte{txID.CloneBytes(), dummyID.CloneBytes()}
+	_, branch := merkle.GetMerkleRootAndBranch(leaves, 0)
+
+	confirm := &rtypes.ConfirmTx{
+		ActionType:    rtypes.TyMintAction,
+		TxBlockHeight: 10,
+		TxIndex:       0,
+		TxHash:        pendingHash,
+		UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: 0},
+		BtcTxProof:    &rtypes.BtcTxProof{TxData: txData, BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 0, MerkleProof: branch},
+	}
+
+	dir, state, local := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig").Return(testCfg)
+	r.SetAPI(api)
+	r.SetStateDB(state)
+	r.SetLocalDB(local)
+	require.NoError(t, state.Set(formatPayloadKey(pendingHash), types.Encode(&rtypes.MintAsset{Symbol: symbol, TotalAmount: 1000})))
+	require.NoError(t, local.Set(formatPendingTxKey(10, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: pendingHash,
+	})))
+
+	tx := &types.Transaction{}
+	tx.Sign(types.SECP256K1, testPriv)
+
+	// Call Exec_Confirm directly (in production checkConfirm rejects trailing
+	// bytes first) to prove the spendHash derivation itself is malleability-free.
+	receipt, err := r.Exec_Confirm(confirm, tx, 0)
+	require.NoError(t, err)
+	require.NotEmpty(t, receipt.KV)
+	util.SaveKVList(state, receipt.KV)
+
+	asset := &rtypes.RgbxAsset{}
+	require.NoError(t, readDB(state, formatAssetKey(symbol), asset))
+	require.Equal(t, formatSymbol(symbol), asset.Symbol)
+	// spendHash must equal the clean txid, not DoubleHashH of the dirty bytes
+	require.Equal(t, txID.String(), asset.GenesisBtcTxHash)
+	require.NotEqual(t, chainhash.DoubleHashH(txData).String(), asset.GenesisBtcTxHash)
 }

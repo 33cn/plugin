@@ -290,6 +290,37 @@ func Test_rgbx_validateBtcTxProof_success(t *testing.T) {
 	require.Equal(t, int32(2), tx.Version)
 }
 
+// Test_rgbx_validateBtcTxProof_trailingBytesRejected: btcd DeserializeNoWitness
+// accepts trailing garbage bytes after a valid tx; those bytes would let a
+// raw-byte spendHash diverge from the merkle-certified txid, so they must be
+// rejected at decode time.
+func Test_rgbx_validateBtcTxProof_trailingBytesRejected(t *testing.T) {
+	r, proof, rootStr := newBtcTxProofFixture(t)
+	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig").Return(types.NewChain33Config(types.GetDefaultCfgstring()))
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.Anything).Return(&ltypes.BtcHeader{
+		Hash:       "deadbeef",
+		Height:     100,
+		MerkleRoot: rootStr,
+	}, nil)
+	r.SetAPI(api)
+
+	// clean proof passes
+	_, err := r.validateBtcTxProof("tx1", proof)
+	require.NoError(t, err)
+
+	// trailing bytes appended -> must be rejected
+	dirty := &rtypes.BtcTxProof{
+		TxData:      append(append([]byte{}, proof.TxData...), 0xde, 0xad, 0xbe, 0xef),
+		BlockHeight: proof.BlockHeight,
+		BlockHash:   proof.BlockHash,
+		TxIndex:     proof.TxIndex,
+		MerkleProof: proof.MerkleProof,
+	}
+	_, err = r.validateBtcTxProof("tx-dirty", dirty)
+	require.Equal(t, ErrInvalidBtcTxProof, err)
+}
+
 // Test_rgbx_validateBtcTxProof_twoLeafMerkle covers a real 2-tx block merkle
 // branch: both the left-leaf (index 0, branch contains right sibling) and the
 // right-leaf (index 1, branch contains left sibling) orderings must verify, and

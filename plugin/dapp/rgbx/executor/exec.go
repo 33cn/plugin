@@ -7,7 +7,6 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -148,7 +147,6 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 	}
 
 	btcTxData := confirm.GetBtcTxProof().GetTxData()
-	spendHash := chainhash.DoubleHashH(btcTxData).String()
 	// 绑定资产的utxo已经在btc链上花费，但op return不存在或承诺数据不正确，
 	// 交易仅做标记并返回，相关资产永久冻结，无法转移
 	var btcTx wire.MsgTx
@@ -160,6 +158,10 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 			return nil, err
 		}
 	}
+	// spendHash 取 merkle 证明所绑定交易的 txid（解析后重序列化的 no-witness 哈希），
+	// 不用原始字节直接哈希——原始字节可拼接尾随字节改变 DoubleHashH 结果，
+	// 导致 spendHash 与 merkle 验证过的 txid 不一致，污染 GenesisBtcTxHash 与资产 owner
+	spendHash := btcTx.TxHash().String()
 
 	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
 	if opRetIdx < 0 || int(opRetIdx) >= len(btcTx.TxOut) ||
