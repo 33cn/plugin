@@ -1,0 +1,45 @@
+name: ci_fork_test
+
+# 原 .gitlab-ci.yml 的 fork_test* 系列迁移而来。
+# GitLab 侧由 onceEveryday 变量 + forkTest 分支控制，只每天跑一次（fork 测试很慢），
+# 这里用 schedule + 手动触发等价替代，不挂在 push/pull_request 上。
+#
+# 覆盖关系：proj=fork dapp=all 是 GitLab 四个 fork_test 任务的超集 ——
+# docker-compose-pre.sh forktest all 会先跑 system-fork-test.sh（对应 fork_test），
+# 再遍历所有带 fork-test.sh 的 dapp（目前只有 paracross，对应 fork_test_paracross）。
+# fork_test_privacy 在 GitLab 上本就是空转：privacy 没有 fork-test.sh。
+on:
+  schedule:
+    # 每天 18:37 UTC（北京时间次日 02:37）。避开整点，GitHub 官方建议错峰以降低排队延迟
+    - cron: '37 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  fork_test:
+    name: fork_test
+    runs-on: ubuntu-22.04
+    # fork 测试需反复制造分叉并等待链重组收敛，远慢于普通 dapp testcase
+    timeout-minutes: 120
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Golang
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+        id: go
+
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+
+      - name: fork test
+        run: |
+          make build_ci
+          make fork-test proj=fork dapp=all
+
+      - name: cleanup
+        if: always()
+        run: make docker-compose-down proj=fork dapp=all
