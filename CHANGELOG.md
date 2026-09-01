@@ -1,5 +1,22 @@
 changelog
 
+# [1.71.0](https://github.com/33cn/plugin/compare/v1.70.0...v1.71.0) (2026-09-01)
+
+
+### Bug Fixes
+
+* move native asset test before restart, remove redundant block_wait, add mint send error handling ([88b9b20](https://github.com/33cn/plugin/commit/88b9b20b7fa24294b828471d142f7fc456eb15a4))
+* **rgbx:** add native asset mint CI scenario with btcMintSpend command ([fb08b30](https://github.com/33cn/plugin/commit/fb08b30b9f2fe1a25bb7908bfbd4d9caf6d24e82))
+* **rgbx:** address PR [#1299](https://github.com/33cn/plugin/issues/1299) review - nil-client log, dead code, merkle proof tests ([801a7da](https://github.com/33cn/plugin/commit/801a7da338a22cd12db56fd5b8c760be7cfb7821))
+* **rgbx:** derive spendHash from merkle-certified txid, reject trailing tx bytes ([b34b6b6](https://github.com/33cn/plugin/commit/b34b6b6463c9816cb5342df1f2c15581687007cf))
+* **rgbx:** improve OP_RETURN matching in createConfirmPayload, prefer matching commitment ([600f885](https://github.com/33cn/plugin/commit/600f885a6d7603ce7b1f37c4bc38a7122fea0705))
+* update exec_test.go to compute expected spendHash from BtcTxProof.TxData ([d3dcd6c](https://github.com/33cn/plugin/commit/d3dcd6cc88c330cec577d25583a897116d448760))
+
+
+### Features
+
+* **rgbx:** add BTC Merkle proof verification to native asset confirm ([92fe0d4](https://github.com/33cn/plugin/commit/92fe0d40145f7f002f7628408d53e3c02f1770fc))
+
 # [1.70.0](https://github.com/33cn/plugin/compare/v1.69.0...v1.70.0) (2026-08-27)
 
 
