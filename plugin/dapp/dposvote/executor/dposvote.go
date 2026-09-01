@@ -70,13 +70,13 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	InitExecType()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&DPos{}))
 }
 
-//DPos 执行器，用于Dpos候选节点注册、投票，VRF信息注册管理等功能
+// DPos 执行器，用于Dpos候选节点注册、投票，VRF信息注册管理等功能
 type DPos struct {
 	drivers.DriverBase
 }
@@ -88,17 +88,17 @@ func newDposVote() drivers.Driver {
 	return t
 }
 
-//GetName 获取DPos执行器的名称
+// GetName 获取DPos执行器的名称
 func GetName() string {
 	return newDposVote().GetName()
 }
 
-//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+// ExecutorOrder Exec 的时候 同时执行 ExecLocal
 func (g *DPos) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
 
-//GetDriverName 获取DPos执行器的名称
+// GetDriverName 获取DPos执行器的名称
 func (g *DPos) GetDriverName() string {
 	return dty.DPosX
 }

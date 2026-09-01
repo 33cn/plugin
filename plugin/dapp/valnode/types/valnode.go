@@ -22,12 +22,12 @@ func init() {
 	types.RegExec(ValNodeX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ValNodeX, "Enable", 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ValNodeX, NewType(cfg))
 }

@@ -42,7 +42,7 @@ type Action struct {
 	api       client.QueueProtocolAPI
 }
 
-//NewAction ...
+// NewAction ...
 func NewAction(e *Accountmanager, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -50,18 +50,18 @@ func NewAction(e *Accountmanager, tx *types.Transaction, index int) *Action {
 		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetLocalDB(), index, e.GetAPI()}
 }
 
-//GetIndex get index 主键索引,实际上是以过期时间为主键
+// GetIndex get index 主键索引,实际上是以过期时间为主键
 func (a *Action) GetIndex() int64 {
 	return a.blocktime*types.MaxTxsPerBlock + int64(a.index)
 }
 
-//GetKVSet get kv set
+// GetKVSet get kv set
 func (a *Action) GetKVSet(account *et.Account) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcAccountKey(account.AccountID), Value: types.Encode(account)})
 	return kvset
 }
 
-//Register ...
+// Register ...
 func (a *Action) Register(payload *et.Register) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	account1, err := findAccountByID(a.localDB, payload.AccountID)
@@ -92,7 +92,7 @@ func (a *Action) Register(payload *et.Register) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//Reset 为了避免别人恶意重置别人的帐号,这个操作仅有系统管理员有权限去操作
+// Reset 为了避免别人恶意重置别人的帐号,这个操作仅有系统管理员有权限去操作
 func (a *Action) Reset(payload *et.ResetKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	cfg := a.api.GetConfig()
@@ -119,7 +119,7 @@ func (a *Action) Reset(payload *et.ResetKey) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//Transfer ...
+// Transfer ...
 func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -197,7 +197,7 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//Supervise ...
+// Supervise ...
 func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 	//鉴权，看一下地址是否时管理员地址
 	cfg := a.api.GetConfig()
@@ -240,7 +240,7 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//Apply ...
+// Apply ...
 func (a *Action) Apply(payload *et.Apply) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -363,7 +363,7 @@ func getConfigKey(key string, db dbm.KV) ([]byte, error) {
 	return value, nil
 }
 
-//正序遍历数据，与传入时间进行对比，看是否逾期
+// 正序遍历数据，与传入时间进行对比，看是否逾期
 func findAccountListByIndex(localdb dbm.KV, expireTime int64, primaryKey string) (*et.ReplyAccountList, error) {
 	table := NewAccountTable(localdb)
 	var rows []*tab.Row

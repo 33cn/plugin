@@ -1,11 +1,11 @@
 package types
 
 import (
-	"github.com/consensys/gnark/frontend"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
+	"github.com/consensys/gnark/frontend"
 )
 
-//spend commit hash the circuit implementing
+// spend commit hash the circuit implementing
 type DepositCircuit struct {
 	NoteHash frontend.Variable `gnark:",public"`
 	Amount   frontend.Variable `gnark:",public"`

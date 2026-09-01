@@ -66,7 +66,7 @@ func init() {
 	Init(mty.MultiSigX, chainTestCfg, nil)
 }
 
-//创建一个多重签名的账户
+// 创建一个多重签名的账户
 func TestMultiSigAccCreate(t *testing.T) {
 
 	total := int64(100000)
@@ -470,7 +470,7 @@ func testMultiSigOwnerReplace(t *testing.T, driver drivers.Driver, env execEnv, 
 	assert.Equal(t, int(ty), mty.TyLogMultiSigTx)
 }
 
-//account 操作测试
+// account 操作测试
 func testMultiSigAccWeightModify(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
 	params := &mty.MultiSigAccOperate{
 		MultiSigAccAddr:   multiSigAddr,
@@ -613,12 +613,12 @@ func testMultiSigAccDailyLimitModify(t *testing.T, driver drivers.Driver, env ex
 
 }
 
-//account 操作测试
-//当前账户的信息，txcount：6 Requiredweight:4
-//ownerAddr:"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" weight:2
-//ownerAddr:"1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" weight:10 ]
-//[symbol:"bty" execer:"coins" dailyLimit:10 ]
-//6
+// account 操作测试
+// 当前账户的信息，txcount：6 Requiredweight:4
+// ownerAddr:"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" weight:2
+// ownerAddr:"1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" weight:10 ]
+// [symbol:"bty" execer:"coins" dailyLimit:10 ]
+// 6
 // 4}
 func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, api *apimock.QueueProtocolAPI, multiSigAddr string) {
 	//首先创建一个修改Requiredweight权重的交易。由AddrB提交此交易，权限不够交易不被执行。
@@ -767,7 +767,7 @@ func testMultiSigAccConfirmTx(t *testing.T, driver drivers.Driver, env execEnv, 
 
 }
 
-//合约内转账到多重签名账户
+// 合约内转账到多重签名账户
 func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
 	params := &mty.MultiSigExecTransferTo{
 		Symbol:   Symbol,
@@ -839,7 +839,7 @@ func testMultiSigAccExecTransferTo(t *testing.T, driver drivers.Driver, env exec
 
 }
 
-//合约内转账到多重签名账户
+// 合约内转账到多重签名账户
 func testMultiSigAccExecTransferFrom(t *testing.T, driver drivers.Driver, env execEnv, multiSigAddr string) {
 	params := &mty.MultiSigExecTransferFrom{
 		Symbol:   Symbol,

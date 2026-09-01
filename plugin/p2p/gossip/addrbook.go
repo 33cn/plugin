@@ -323,9 +323,7 @@ func (a *AddrBook) AddAddress(addr *NetAddress, ka *KnownAddress) {
 func (a *AddrBook) RemoveAddr(peeraddr string) {
 	a.mtx.Lock()
 	defer a.mtx.Unlock()
-	if _, ok := a.addrPeer[peeraddr]; ok {
-		delete(a.addrPeer, peeraddr)
-	}
+	delete(a.addrPeer, peeraddr)
 }
 
 // GetPeers return peerlist
@@ -362,7 +360,7 @@ func (a *AddrBook) initKey() {
 			return
 		}
 	}
-	panic(fmt.Sprintf("p2p initPrivPubkey failed"))
+	panic("p2p initPrivPubkey failed")
 
 }
 
@@ -374,7 +372,7 @@ func (a *AddrBook) setKey(privkey, pubkey string) {
 
 }
 
-//ResetPeerkey reset priv,pub key
+// ResetPeerkey reset priv,pub key
 func (a *AddrBook) ResetPeerkey(privkey, pubkey string) {
 
 	if privkey == "" || pubkey == "" {

@@ -46,7 +46,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	InitExecType()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&privacy{}))
@@ -148,9 +148,9 @@ func (p *privacy) getGlobalUtxoIndex(req *pty.ReqUTXOGlobalIndex) (types.Message
 	return utxoGlobalIndexResp, nil
 }
 
-//ShowAmountsOfUTXO 获取指定amount下的所有utxo，这样就可以查询当前系统不同amout下存在的UTXO,可以帮助查询用于混淆用的资源
-//也可以确认币种的碎片化问题
-//显示存在的各种不同的额度的UTXO,如1,3,5,10,20,30,100...
+// ShowAmountsOfUTXO 获取指定amount下的所有utxo，这样就可以查询当前系统不同amout下存在的UTXO,可以帮助查询用于混淆用的资源
+// 也可以确认币种的碎片化问题
+// 显示存在的各种不同的额度的UTXO,如1,3,5,10,20,30,100...
 func (p *privacy) ShowAmountsOfUTXO(reqtoken *pty.ReqPrivacyToken) (types.Message, error) {
 	querydb := p.GetLocalDB()
 
@@ -177,7 +177,7 @@ func (p *privacy) ShowAmountsOfUTXO(reqtoken *pty.ReqPrivacyToken) (types.Messag
 	return replyAmounts, nil
 }
 
-//ShowUTXOs4SpecifiedAmount 显示在指定额度下的UTXO的具体信息，如区块高度，交易hash，输出索引等具体信息
+// ShowUTXOs4SpecifiedAmount 显示在指定额度下的UTXO的具体信息，如区块高度，交易hash，输出索引等具体信息
 func (p *privacy) ShowUTXOs4SpecifiedAmount(reqtoken *pty.ReqPrivacyToken) (types.Message, error) {
 	querydb := p.GetLocalDB()
 
@@ -308,7 +308,7 @@ func batchGet(stateDB db.KV, keyImages [][]byte) (values [][]byte, err error) {
 	return values, nil
 }
 
-//通过keyImage确认是否存在双花，有效即不存在双花，返回true，反之则返回false
+// 通过keyImage确认是否存在双花，有效即不存在双花，返回true，反之则返回false
 func (p *privacy) checkUTXOValid(keyImages [][]byte) (bool, int32) {
 	stateDB := p.GetStateDB()
 	values, err := batchGet(stateDB, keyImages)

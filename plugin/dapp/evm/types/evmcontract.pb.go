@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//合约对象信息
+// 合约对象信息
 type EVMContractObject struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

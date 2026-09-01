@@ -7,9 +7,9 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
 
@@ -42,7 +42,7 @@ type zksync struct {
 	drivers.DriverBase
 }
 
-//NewExchange ...
+// NewExchange ...
 func NewZksync() drivers.Driver {
 	t := &zksync{}
 	t.SetChild(t)
@@ -55,7 +55,7 @@ func GetName() string {
 	return NewZksync().GetName()
 }
 
-//GetDriverName ...
+// GetDriverName ...
 func (z *zksync) GetDriverName() string {
 	return driverName
 }
@@ -129,7 +129,7 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
-//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+// ExecutorOrder Exec 的时候 同时执行 ExecLocal
 func (z *zksync) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }

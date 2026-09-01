@@ -491,7 +491,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	if pubkeyT > 0 && (len(pubkeyX) == 0 || len(pubkeyY) == 0) {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("set proxy pubkey, need set pubkeyX pubkeyY"))
+		fmt.Fprintln(os.Stderr, "set proxy pubkey, need set pubkeyX pubkeyY")
 		return
 	}
 

@@ -42,13 +42,13 @@ func (policy *privacyPolicy) rescanAllTxAddToUpdateUTXOs() {
 	bizlog.Debug("rescanAllTxToUpdateUTXOs success!")
 }
 
-//从blockchain模块同步addr参与的所有交易详细信息
+// 从blockchain模块同步addr参与的所有交易详细信息
 func (policy *privacyPolicy) rescanReqTxDetailByAddr(addr string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	policy.reqTxDetailByAddr(addr)
 }
 
-//从blockchain模块同步addr参与的所有交易详细信息
+// 从blockchain模块同步addr参与的所有交易详细信息
 func (policy *privacyPolicy) reqTxDetailByAddr(addr string) {
 	if len(addr) == 0 {
 		bizlog.Error("reqTxDetailByAddr input addr is nil!")
@@ -357,6 +357,7 @@ func (policy *privacyPolicy) selectUTXO(assetExec, token, addr string, amount in
 /*
 buildInput 构建隐私交易的输入信息
 操作步骤
+
 	1.从当前钱包中选择可用并且足够支付金额的UTXO列表
 	2.如果需要混淆(mixcout>0)，则根据UTXO的金额从数据库中获取足够数量的UTXO，与当前UTXO进行混淆
 	3.通过公式 x=Hs(aR)+b，计算出一个整数，因为 xG = Hs(ar)G+bG = Hs(aR)G+B，所以可以继续使用这笔交易
@@ -796,7 +797,7 @@ func (policy *privacyPolicy) rescanUTXOs(req *privacytypes.ReqRescanUtxos) (*pri
 	return &repRescanUtxos, nil
 }
 
-//从blockchain模块同步addr参与的所有交易详细信息
+// 从blockchain模块同步addr参与的所有交易详细信息
 func (policy *privacyPolicy) rescanReqUtxosByAddr(addrs []string) {
 	defer policy.getWalletOperate().GetWaitGroup().Done()
 	bizlog.Debug("RescanAllUTXO begin!")
@@ -888,7 +889,7 @@ func (policy *privacyPolicy) reqUtxosByAddr(addrs []string) {
 	policy.store.saveREscanUTXOsAddresses(storeAddrs, privacytypes.UtxoFlagScanEnd)
 }
 
-//TODO:input也可能时混淆的utxo, 需要增加判定实际的utxo
+// TODO:input也可能时混淆的utxo, 需要增加判定实际的utxo
 func (policy *privacyPolicy) deleteScanPrivacyInputUtxo() {
 	maxUTXOsPerTime := 1000
 	for {

@@ -13,13 +13,13 @@ var (
 	deployLog = log15.New("contract deployer", "deployer")
 )
 
-//DeployResult ...
+// DeployResult ...
 type DeployResult struct {
 	Address common.Address
 	TxHash  string
 }
 
-//X2EthContracts ...
+// X2EthContracts ...
 type X2EthContracts struct {
 	BridgeRegistry *generated.BridgeRegistry
 	BridgeBank     *generated.BridgeBank
@@ -28,7 +28,7 @@ type X2EthContracts struct {
 	Oracle         *generated.Oracle
 }
 
-//X2EthDeployResult ...
+// X2EthDeployResult ...
 type X2EthDeployInfo struct {
 	BridgeRegistry *DeployResult
 	BridgeBank     *DeployResult
@@ -37,7 +37,7 @@ type X2EthDeployInfo struct {
 	Oracle         *DeployResult
 }
 
-//DeployPara ...
+// DeployPara ...
 type DeployPara struct {
 	DeployPrivateKey *ecdsa.PrivateKey
 	Deployer         common.Address
@@ -47,7 +47,7 @@ type DeployPara struct {
 	InitPowers       []*big.Int
 }
 
-//OperatorInfo ...
+// OperatorInfo ...
 type OperatorInfo struct {
 	PrivateKey *ecdsa.PrivateKey
 	Address    common.Address

@@ -112,7 +112,7 @@ func ShowCackeBalanceCmd() *cobra.Command {
 	return cmd
 }
 
-//GetBalanceFlags ...
+// GetBalanceFlags ...
 func ShowBalanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("owner", "o", "", "owner address")
 	_ = cmd.MarkFlagRequired("owner")
@@ -122,7 +122,7 @@ func ShowBalanceFlags(cmd *cobra.Command) {
 
 }
 
-//GetBalance ...
+// GetBalance ...
 func ShowCakeBalance(cmd *cobra.Command, args []string) {
 	owner, _ := cmd.Flags().GetString("owner")
 	pid, _ := cmd.Flags().GetInt64("pid")

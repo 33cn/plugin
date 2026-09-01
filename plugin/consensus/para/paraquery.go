@@ -13,7 +13,7 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-//IsCaughtUp 是否追上最新高度,
+// IsCaughtUp 是否追上最新高度,
 func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error) {
 	if client == nil {
 		return nil, fmt.Errorf("%s", "client not bind message queue.")

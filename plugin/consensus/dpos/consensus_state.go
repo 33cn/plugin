@@ -139,11 +139,11 @@ func (cs *ConsensusState) IsRunning() bool {
 	return atomic.LoadUint32(&cs.started) == 1 && atomic.LoadUint32(&cs.stopped) == 0
 }
 
-//----------------------------------------
+// ----------------------------------------
 // String returns a string.
 func (cs *ConsensusState) String() string {
 	// better not to access shared variables
-	return fmt.Sprintf("ConsensusState") //(H:%v R:%v S:%v", cs.Height, cs.Round, cs.Step)
+	return "ConsensusState" //(H:%v R:%v S:%v", cs.Height, cs.Round, cs.Step)
 }
 
 // GetValidatorMgr returns a copy of the ValidatorMgr.
@@ -429,11 +429,7 @@ func (cs *ConsensusState) CheckVotes() (ty int, vote *dpostype.VoteItem) {
 	voteStat := map[string]int{}
 	for i := 0; i < len(cs.dposVotes); i++ {
 		key := string(cs.dposVotes[i].VoteItem.VoteID)
-		if _, ok := voteStat[key]; ok {
-			voteStat[key]++
-		} else {
-			voteStat[key] = 1
-		}
+		voteStat[key]++
 	}
 
 	key := ""

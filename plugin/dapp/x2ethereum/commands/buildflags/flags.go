@@ -4,5 +4,5 @@
 
 package buildflags
 
-//NodeAddr ---
+// NodeAddr ---
 var NodeAddr string

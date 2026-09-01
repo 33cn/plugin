@@ -33,7 +33,7 @@ func calcEvmxgoStatusKeyLocal(token string) []byte {
 	return []byte(fmt.Sprintf(evmxgoCreatedSTONewLocal+"%s", token))
 }
 
-//存储地址上收币的信息
+// 存储地址上收币的信息
 func calcAddrKey(token string, addr string) []byte {
 	return []byte(fmt.Sprintf("LODB-evmxgo-%s-Addr:%s", token, address.FormatAddrKey(addr)))
 }

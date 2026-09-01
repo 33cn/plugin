@@ -202,7 +202,7 @@ func MultisignTransfer(cmd *cobra.Command, _ []string) {
 }
 
 func getMulSignNonce(mulsign, rpcLaddr string) int64 {
-	parameter := fmt.Sprintf("nonce()")
+	parameter := "nonce()"
 
 	result := chain33Relayer.Query(mulsign, parameter, mulsign, rpcLaddr, generated.GnosisSafeABI)
 	if nil == result {

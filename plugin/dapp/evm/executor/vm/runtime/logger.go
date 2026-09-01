@@ -130,7 +130,7 @@ func formatMemory(data []byte) (res []string) {
 	return
 }
 
-//CaptureFault 目前实现为空
+// CaptureFault 目前实现为空
 func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error {
 	return nil
 }

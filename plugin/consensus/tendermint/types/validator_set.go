@@ -394,8 +394,8 @@ func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height
 // * over 2/3 of the power in old signed this block
 //
 // newSet is the validator set that signed this block
-// * only votes from old are sufficient for 2/3 majority
-//   in the new set as well
+//   - only votes from old are sufficient for 2/3 majority
+//     in the new set as well
 //
 // That means that:
 // * 10% of the valset can't just declare themselves kings

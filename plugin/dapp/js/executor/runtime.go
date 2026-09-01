@@ -6,7 +6,7 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
-//让 js 具有访问 区块链 的一些能力
+// 让 js 具有访问 区块链 的一些能力
 func execaddressFunc(vm *otto.Otto) {
 	vm.Set("execaddress", func(call otto.FunctionCall) otto.Value {
 		key, err := call.Argument(0).ToString()

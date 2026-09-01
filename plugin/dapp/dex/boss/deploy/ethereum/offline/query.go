@@ -57,7 +57,6 @@ func (q *queryCmd) query(cmd *cobra.Command, args []string) {
 	info.Nonce = nonce
 	info.Timestamp = time.Now().Format(time.RFC3339)
 	writeToFile("accountinfo.txt", &info)
-	return
 
 }
 

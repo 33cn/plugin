@@ -22,7 +22,7 @@ var boardOpt = &table.Option{
 	Index:   []string{"id", "status"},
 }
 
-//NewStageTable 新建表
+// NewStageTable 新建表
 func NewStageTable(kvdb db.KV) *table.Table {
 	rowmeta := NewStageRow()
 	table, err := table.NewTable(rowmeta, kvdb, boardOpt)
@@ -32,22 +32,22 @@ func NewStageTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//StageRow table meta 结构
+// StageRow table meta 结构
 type StageRow struct {
 	*pt.LocalSelfConsStageInfo
 }
 
-//NewStageRow 新建一个meta 结构
+// NewStageRow 新建一个meta 结构
 func NewStageRow() *StageRow {
 	return &StageRow{LocalSelfConsStageInfo: &pt.LocalSelfConsStageInfo{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
 func (r *StageRow) CreateRow() *table.Row {
 	return &table.Row{Data: &pt.LocalSelfConsStageInfo{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (r *StageRow) SetPayload(data types.Message) error {
 	if d, ok := data.(*pt.LocalSelfConsStageInfo); ok {
 		r.LocalSelfConsStageInfo = d
@@ -56,7 +56,7 @@ func (r *StageRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (r *StageRow) Get(key string) ([]byte, error) {
 	if key == "heightindex" {
 		return []byte(r.TxIndex), nil

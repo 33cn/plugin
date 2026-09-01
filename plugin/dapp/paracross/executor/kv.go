@@ -199,30 +199,30 @@ func calcLocalNodeGroupAllPrefix() []byte {
 
 /////bind miner
 
-//统计共识节点绑定挖矿地址总数量
-//key: prefix-nodeAddr  val: bindTotalCount
+// 统计共识节点绑定挖矿地址总数量
+// key: prefix-nodeAddr  val: bindTotalCount
 func calcParaNodeBindMinerCount(node string) []byte {
 	return []byte(fmt.Sprintf(paraBindMinderNode+"%s", node))
 }
 
-//记录共识节点某一索引绑定的挖矿地址，一一对应，以此地址获取更详细信息
-//key: prefix-nodeAddr-index   val:bindMinerAddr
+// 记录共识节点某一索引绑定的挖矿地址，一一对应，以此地址获取更详细信息
+// key: prefix-nodeAddr-index   val:bindMinerAddr
 func calcParaNodeBindMinerIndex(node string, index int64) []byte {
 	return []byte(fmt.Sprintf(paraBindMinderNode+"%s-%d", node, index))
 }
 
-//记录node和miner bind详细信息
-//key: prefix-nodeAddr-miner  val:miner detail info
+// 记录node和miner bind详细信息
+// key: prefix-nodeAddr-miner  val:miner detail info
 func calcParaBindMinerAddr(node, miner string) []byte {
 	return []byte(fmt.Sprintf(paraBindMinderNode+"%s-%s", node, address.FormatAddrKey(miner)))
 }
 
-//key: prefix-minerAddr  val: node list
+// key: prefix-minerAddr  val: node list
 func calcParaMinerBindNodeList(miner string) []byte {
 	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s", address.FormatAddrKey(miner)))
 }
 
-/////supervision
+// ///supervision
 func calcParaSupervisionNodeGroupAddrsKey(title string) []byte {
 	return []byte(fmt.Sprintf(paraSupervisionNodes+"%s", title))
 }

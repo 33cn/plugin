@@ -213,7 +213,7 @@ func (*TokenAction_TokenMint) isTokenAction_Value() {}
 
 func (*TokenAction_TokenBurn) isTokenAction_Value() {}
 
-//创建token，支持最大精确度是8位小数,即存入数据库的实际总额需要放大1e8倍
+// 创建token，支持最大精确度是8位小数,即存入数据库的实际总额需要放大1e8倍
 type TokenPreCreate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

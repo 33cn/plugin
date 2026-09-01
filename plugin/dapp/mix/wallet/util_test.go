@@ -3,7 +3,6 @@ package wallet
 import (
 	"testing"
 
-
 	"github.com/33cn/chain33/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/stretchr/testify/assert"

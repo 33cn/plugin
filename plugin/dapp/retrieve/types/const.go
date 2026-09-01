@@ -4,7 +4,7 @@
 
 package types
 
-//retrieve
+// retrieve
 const (
 	RetrieveBackup = iota + 1
 	RetrievePreapre

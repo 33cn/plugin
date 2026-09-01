@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//"BridgeToken creation (Chain33 assets)"
+// "BridgeToken creation (Chain33 assets)"
 func TestBrigeTokenCreat(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
@@ -109,11 +109,11 @@ func TestBrigeTokenCreat(t *testing.T) {
 	}
 }
 
-//测试在chain33上锁定资产,然后在以太坊上铸币
-//发行token="BTY"
-//铸币NewOracleClaim
-//铸币成功
-//Bridge token minting (for locked chain33 assets)
+// 测试在chain33上锁定资产,然后在以太坊上铸币
+// 发行token="BTY"
+// 铸币NewOracleClaim
+// 铸币成功
+// Bridge token minting (for locked chain33 assets)
 func TestBrigeTokenMint(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
@@ -232,8 +232,8 @@ func TestBrigeTokenMint(t *testing.T) {
 	t.Logf("The minted amount is:%d", balance.Int64())
 }
 
-//测试在以太坊上lock数字资产,包括Eth和Erc20
-//Bridge deposit locking (deposit erc20/eth assets)
+// 测试在以太坊上lock数字资产,包括Eth和Erc20
+// Bridge deposit locking (deposit erc20/eth assets)
 func TestBridgeDepositLock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Bridge deposit locking (Erc20/Eth assets)")
@@ -338,10 +338,10 @@ func TestBridgeDepositLock(t *testing.T) {
 	t.Logf("eth bridgeBankBalance changes to:%d", bridgeBankBalance.Int64())
 }
 
-//测试在以太坊上unlock数字资产,包括Eth和Erc20,
-//即从chain33取回在eth上发行的的ETH或ERC20数字资产，之前通过lock操作发送到了chain33
-//现在则通过NewProphecyClaim 的burn操作将数字资产取回
-//Ethereum/ERC20 token unlocking (for burned chain33 assets)
+// 测试在以太坊上unlock数字资产,包括Eth和Erc20,
+// 即从chain33取回在eth上发行的的ETH或ERC20数字资产，之前通过lock操作发送到了chain33
+// 现在则通过NewProphecyClaim 的burn操作将数字资产取回
+// Ethereum/ERC20 token unlocking (for burned chain33 assets)
 func TestBridgeBankUnlock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Ethereum/ERC20 token unlocking (for burned chain33 assets)")
@@ -490,8 +490,8 @@ func TestBridgeBankUnlock(t *testing.T) {
 	require.Equal(t, userUSDTbalance.Int64(), newProphecyAmount)
 }
 
-//测试在以太坊上多次unlock数字资产Eth
-//Ethereum/ERC20 token second unlocking (for burned chain33 assets)
+// 测试在以太坊上多次unlock数字资产Eth
+// Ethereum/ERC20 token second unlocking (for burned chain33 assets)
 func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:to be unlocked incrementally by successive burn prophecies (for burned chain33 assets)")
@@ -638,8 +638,8 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	require.Equal(t, userEthbalance.Int64()+newProphecyAmountSecond, userEthbalanceAfter.Int64())
 }
 
-//测试在以太坊上多次unlock数字资产Erc20
-//Ethereum/ERC20 token unlocking (for burned chain33 assets)
+// 测试在以太坊上多次unlock数字资产Erc20
+// Ethereum/ERC20 token unlocking (for burned chain33 assets)
 func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:ERC20 to be unlocked incrementally by successive burn prophecies (for burned chain33 assets))")

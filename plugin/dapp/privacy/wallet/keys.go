@@ -71,13 +71,13 @@ func calcPrivacyDBVersion() []byte {
 }
 
 // calcUTXOKey 计算可用UTXO的健值,为输出交易哈希+输出索引位置
-//key and prefix for privacy
-//types.PrivacyDBStore的数据存储由calcUTXOKey生成key，
-//1.当该utxo的目的地址是钱包管理的其中一个隐私地址时，该key作为value，保存在calcUTXOKey4TokenAddr由生成的key对应的kv中；
-//2.当进行支付时，calcUTXOKey4TokenAddr对应的kv被删除，进而由calcPrivacyFUTXOKey生成的key对应kv中，其中平移的只是key，
+// key and prefix for privacy
+// types.PrivacyDBStore的数据存储由calcUTXOKey生成key，
+// 1.当该utxo的目的地址是钱包管理的其中一个隐私地址时，该key作为value，保存在calcUTXOKey4TokenAddr由生成的key对应的kv中；
+// 2.当进行支付时，calcUTXOKey4TokenAddr对应的kv被删除，进而由calcPrivacyFUTXOKey生成的key对应kv中，其中平移的只是key，
 // 本身的具体数据并不进行重新存储，即将utxo变化为futxo；
-//3.当包含该交易的块得到确认时，如果发现输入包含在futxo中，则通过类似的方法，将其key设置到stxo中，
-//4.当发生区块链分叉回退时，即发生del block的情况时，同时
+// 3.当包含该交易的块得到确认时，如果发现输入包含在futxo中，则通过类似的方法，将其key设置到stxo中，
+// 4.当发生区块链分叉回退时，即发生del block的情况时，同时
 // 4.a 当确认其中的输入存在于stxo时，则将其从stxo中转移至ftxo中，
 // 4.b 当确认其中的输出存在于utxo或ftxo中时，则将其从utxo或ftxo中同时进行删除，同时删除types.PrivacyDBStore在数据库中的值
 // 4.c 当确认其中的输出存在于stxo中时，则发生了异常，正常情况下，花费该笔utxo的交易需要被先回退，进而回退该笔交易，观察此种情况的发生
@@ -94,7 +94,7 @@ func calcPrivacyAddrKey(addr string) []byte {
 	return []byte(fmt.Sprintf("%s-%s", Privacy4Addr, address.FormatAddrKey(addr)))
 }
 
-//calcAddrKey 通过addr地址查询Account账户信息
+// calcAddrKey 通过addr地址查询Account账户信息
 func calcAddrKey(addr string) []byte {
 	return []byte(fmt.Sprintf("Addr:%s", address.FormatAddrKey(addr)))
 }
@@ -159,8 +159,8 @@ func calcRevertSendTxKey(assetExec, tokenname, addr, txhash string) []byte {
 	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RevertSendtx, assetExec, tokenname, address.FormatAddrKey(addr), txhash))
 }
 
-//通过height*100000+index 查询Tx交易信息
-//key:Tx:height*100000+index
+// 通过height*100000+index 查询Tx交易信息
+// key:Tx:height*100000+index
 func calcTxKey(key string) []byte {
 	return []byte(fmt.Sprintf("%s:%s", PrivacyTX, key))
 }

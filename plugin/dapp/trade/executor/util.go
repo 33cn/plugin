@@ -26,7 +26,7 @@ import (
 
 */
 
-//GetExecSymbol : return exec, symbol
+// GetExecSymbol : return exec, symbol
 func GetExecSymbol(order *pt.SellOrder) (string, string) {
 	if order.AssetExec == "" {
 		return defaultAssetExec, defaultAssetExec + "." + order.TokenSymbol

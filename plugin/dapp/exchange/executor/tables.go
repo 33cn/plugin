@@ -24,7 +24,7 @@ const (
 	KeyPrefixLocalDB = "LODB-exchange"
 )
 
-//状态数据库中存储具体挂单信息
+// 状态数据库中存储具体挂单信息
 func calcOrderKey(orderID int64) []byte {
 	key := fmt.Sprintf("%s"+"orderID:%022d", KeyPrefixStateDB, orderID)
 	return []byte(key)
@@ -37,7 +37,7 @@ var opt_exchange_depth = &table.Option{
 	Index:   nil,
 }
 
-//重新设计表，list查询全部在订单信息localdb查询中
+// 重新设计表，list查询全部在订单信息localdb查询中
 var opt_exchange_order = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "order",
@@ -52,7 +52,7 @@ var opt_exchange_history = &table.Option{
 	Index:   []string{"name", "addr_status"},
 }
 
-//NewMarketDepthTable 新建表
+// NewMarketDepthTable 新建表
 func NewMarketDepthTable(kvdb db.KV) *table.Table {
 	rowmeta := NewMarketDepthRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_depth)
@@ -62,7 +62,7 @@ func NewMarketDepthTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//NewMarketOrderTable ...
+// NewMarketOrderTable ...
 func NewMarketOrderTable(kvdb db.KV) *table.Table {
 	rowmeta := NewOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_order)
@@ -72,7 +72,7 @@ func NewMarketOrderTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//NewHistoryOrderTable ...
+// NewHistoryOrderTable ...
 func NewHistoryOrderTable(kvdb db.KV) *table.Table {
 	rowmeta := NewHistoryOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_history)
@@ -82,22 +82,22 @@ func NewHistoryOrderTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//OrderRow table meta 结构
+// OrderRow table meta 结构
 type OrderRow struct {
 	*ety.Order
 }
 
-//NewOrderRow 新建一个meta 结构
+// NewOrderRow 新建一个meta 结构
 func NewOrderRow() *OrderRow {
 	return &OrderRow{Order: &ety.Order{}}
 }
 
-//CreateRow ...
+// CreateRow ...
 func (r *OrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.Order{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (r *OrderRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*ety.Order); ok {
 		r.Order = txdata
@@ -106,7 +106,7 @@ func (r *OrderRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (r *OrderRow) Get(key string) ([]byte, error) {
 	if key == "orderID" {
 		return []byte(fmt.Sprintf("%022d", r.OrderID)), nil
@@ -118,22 +118,22 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-//HistoryOrderRow table meta 结构
+// HistoryOrderRow table meta 结构
 type HistoryOrderRow struct {
 	*ety.Order
 }
 
-//NewHistoryOrderRow ...
+// NewHistoryOrderRow ...
 func NewHistoryOrderRow() *HistoryOrderRow {
 	return &HistoryOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
 
-//CreateRow ...
+// CreateRow ...
 func (m *HistoryOrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (m *HistoryOrderRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*ety.Order); ok {
 		m.Order = txdata
@@ -142,7 +142,7 @@ func (m *HistoryOrderRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	if key == "index" {
 		return []byte(fmt.Sprintf("%022d", m.Index)), nil
@@ -154,22 +154,22 @@ func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-//MarketDepthRow table meta 结构
+// MarketDepthRow table meta 结构
 type MarketDepthRow struct {
 	*ety.MarketDepth
 }
 
-//NewMarketDepthRow 新建一个meta 结构
+// NewMarketDepthRow 新建一个meta 结构
 func NewMarketDepthRow() *MarketDepthRow {
 	return &MarketDepthRow{MarketDepth: &ety.MarketDepth{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (m *MarketDepthRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.MarketDepth{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (m *MarketDepthRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*ety.MarketDepth); ok {
 		m.MarketDepth = txdata
@@ -178,7 +178,7 @@ func (m *MarketDepthRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (m *MarketDepthRow) Get(key string) ([]byte, error) {
 	if key == "price" {
 		return []byte(fmt.Sprintf("%s:%s:%d:%016d", m.LeftAsset.GetSymbol(), m.RightAsset.GetSymbol(), m.Op, m.Price)), nil

@@ -20,8 +20,8 @@ const (
 	ForkRelayVerifyBtcTx = "ForkRelayVerifyBtcTx"
 )
 
-//var tlog = log.New("module", name)
-//log for relay
+// var tlog = log.New("module", name)
+// log for relay
 const (
 	TyLogRelayCreate       = 350
 	TyLogRelayRevokeCreate = 351
@@ -60,13 +60,13 @@ func init() {
 	types.RegExec(RelayX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RelayX, "Enable", 0)
 	cfg.RegisterDappFork(RelayX, ForkRelayVerifyBtcTx, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(RelayX, NewType(cfg))
 }
