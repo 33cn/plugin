@@ -31,13 +31,13 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # bridgevmxgo 的 cmd/build.sh 用 git describe --tags 注入版本号
           fetch-depth: 0
 
       - name: Set up Golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
         id: go
