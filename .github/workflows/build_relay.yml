@@ -1,0 +1,43 @@
+name: ci_relay
+
+# relay 集成测试：btcd(simnet) + relayd + 6 个 chain33 节点。
+# 依赖 plugin/dapp/relay/cmd/build.sh 在 make build_ci 时构建 relayd 并生成
+# build/ci/relay（relayd、relayd.toml、Dockerfile-relayd、docker-compose-relay.yml、
+# testcase.sh），否则 make docker-compose dapp=relay 会打印
+# "dapp=relay not exist or is system dir" 后直接返回 0（假绿）。
+# agents/** push 用于在 agent 分支上远程迭代，成熟后可移除。
+on:
+  push:
+    branches: [ master, 'agents/**' ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ci_relay:
+    name: ci_relay
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          # build 脚本用 git describe --tags 注入版本号
+          fetch-depth: 0
+
+      - name: Set up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+        id: go
+
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+
+      - name: deploy
+        run: |
+          make build_ci
+          make docker-compose dapp=relay
+
+      - name: cleanup
+        if: always()
+        run: make docker-compose-down dapp=relay
