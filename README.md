@@ -5,7 +5,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 [![Go Report Card](https://goreportcard.com/badge/github.com/33cn/plugin?branch=master)](https://goreportcard.com/report/github.com/33cn/plugin)
 [![codecov](https://codecov.io/gh/33cn/plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/33cn/plugin)
 
-# chain33 官方插件系统（v1.71.1）
+# chain33 官方插件系统（v1.71.2）
 
 * chain33地址: https://github.com/33cn/chain33
 * chain33官网: https://chain.33.cn

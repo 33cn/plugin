@@ -1,5 +1,12 @@
 changelog
 
+## [1.71.2](https://github.com/33cn/plugin/compare/v1.71.1...v1.71.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* resolve shellcheck warnings and UNKOWN typo in RPC placeholders ([d48f7e3](https://github.com/33cn/plugin/commit/d48f7e319a9eb70911d7c541a823797da7ba46b4))
+
 ## [1.71.1](https://github.com/33cn/plugin/compare/v1.71.0...v1.71.1) (2026-09-02)
 
 
