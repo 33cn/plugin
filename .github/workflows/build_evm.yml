@@ -1,5 +1,8 @@
 name: ci_evm
-on: [push,pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
 
 jobs:
   ci_evm:
