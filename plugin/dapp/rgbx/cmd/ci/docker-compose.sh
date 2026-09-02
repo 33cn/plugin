@@ -635,14 +635,20 @@ function scenario_user_transfer_crosschain_asset() {
     transfer_hash=$(${MAIN_CLI} send rgbx transfer -a "${xbtc_transfer_amount}" -s XBTC \
         -t "${USER_B_ADDR}" -k "${GENESIS_KEY}")
     assert_length "${transfer_hash}" 66 "transfer tx hash"
-    # tx_wait "${MAIN_CLI}" "${transfer_hash}"
 
+    # send 仅把 tx 放入主链 mempool，solo 出块并执行该笔 transfer 需要时间；
+    # 立即查余额会撞上「打包/执行尚未完成」的竞态（CI 慢环境偶发红）。
+    # 与 deposit 场景一致：轮询直到 B 到账（同一笔 tx 原子执行，B 增加即 A 已扣减），再断言精确值。
     local after_a
     local after_b
-    after_a=$(query_xbtc_balance "${USER_MAIN_ADDR}")
-    after_b=$(query_xbtc_balance "${USER_B_ADDR}")
+    local expected_a
+    local expected_b
     expected_a=$(awk "BEGIN{printf \"%.4f\", ${before_a} - ${xbtc_transfer_amount}}")
     expected_b=$(awk "BEGIN{printf \"%.4f\", ${before_b} + ${xbtc_transfer_amount}}")
+    wait_xbtc_balance_not_less_than "${USER_B_ADDR}" "${expected_b}"
+
+    after_a=$(query_xbtc_balance "${USER_MAIN_ADDR}")
+    after_b=$(query_xbtc_balance "${USER_B_ADDR}")
     assert_balance "${after_a}" "${expected_a}" "user A xbtc not decreased after transfer"
     assert_balance "${after_b}" "${expected_b}" "user B xbtc not increased after transfer"
 }
