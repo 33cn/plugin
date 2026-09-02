@@ -336,6 +336,10 @@ function relay_test() {
         count=$((count - 1))
         if [ $count -le 0 ]; then
             echo "wrong relay status finish real buy order id"
+            echo "=========== # relayd logs ==========="
+            docker compose logs relayd 2>&1 | tail -80
+            echo "=========== # chain33 relay logs ==========="
+            docker compose logs chain33 2>&1 | grep -iE "verify|relay" | tail -60
             exit 1
         fi
     done

@@ -16,6 +16,7 @@ import (
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
@@ -342,9 +343,13 @@ func verifyBtcTxContent(btcTx *ty.BtcTransaction, spv *ty.BtcSpv, order *ty.Rela
 		return nil, ty.ErrRelayBtcTxHashErr
 	}
 
+	// 订单收款地址可能属于任一 btc 网络(集成测试为 simnet)，
+	// 用能成功解码订单地址的网络参数解析输出地址，
+	// 否则硬编码 MainNet 会把 simnet 输出地址重编码成 mainnet 地址，永远匹配不上
+	params := addrNetParams(order.XAddr)
 	var foundtx bool
 	for _, out := range msgTx.TxOut {
-		_, addrs, _, err := txscript.ExtractPkScriptAddrs(out.PkScript, &chaincfg.MainNetParams)
+		_, addrs, _, err := txscript.ExtractPkScriptAddrs(out.PkScript, params)
 		if err != nil {
 			continue
 		}
@@ -388,6 +393,21 @@ func (b *btcStore) verifyCmdBtcTx(verify *ty.RelayVerifyCli) error {
 	}
 
 	return nil
+}
+
+// addrNetParams 返回能成功解码 addr 的 btc 网络参数，全部失败时回退 MainNet
+func addrNetParams(addr string) *chaincfg.Params {
+	for _, p := range []*chaincfg.Params{
+		&chaincfg.MainNetParams,
+		&chaincfg.TestNet3Params,
+		&chaincfg.RegressionNetParams,
+		&chaincfg.SimNetParams,
+	} {
+		if _, err := btcutil.DecodeAddress(addr, p); err == nil {
+			return p
+		}
+	}
+	return &chaincfg.MainNetParams
 }
 
 // decodeRawTx 将 hex 编码的原始 btc 交易反序列化为 MsgTx

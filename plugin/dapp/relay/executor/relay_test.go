@@ -5,14 +5,21 @@
 package executor
 
 import (
+	"bytes"
 	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
@@ -370,6 +377,47 @@ func (s *suiteRelay) TestExec_9_QryStatus5() {
 func TestRunSuiteRelay(t *testing.T) {
 	log := new(suiteRelay)
 	suite.Run(t, log)
+}
+
+// TestVerifyBtcTxContentSimnet 集成测试场景回归: btcd simnet 的订单收款地址
+// 必须按 simnet 网络参数解析输出地址，硬编码 MainNet 会因地址编码不一致误判
+func TestVerifyBtcTxContentSimnet(t *testing.T) {
+	hash160 := bytes.Repeat([]byte{0xab}, 20)
+	addr, err := btcutil.NewAddressPubKeyHash(hash160, &chaincfg.SimNetParams)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkScript, err := txscript.PayToAddrScript(addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msgTx := wire.NewMsgTx(2)
+	// Deserialize 会把 vin 数 0 当作 witness marker，因此至少带一个输入
+	// (真实的 btc 交易也必然有输入)
+	msgTx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0xffffffff), nil, nil))
+	msgTx.AddTxOut(wire.NewTxOut(100000, pkScript))
+	var buf bytes.Buffer
+	if err := msgTx.SerializeNoWitness(&buf); err != nil {
+		t.Fatal(err)
+	}
+	rawHash := txidFromMsgTx(msgTx)
+	// reverse 原地修改切片，先拷贝一份作为期望值
+	want := append([]byte{}, rawHash...)
+	btcTx := &ty.BtcTransaction{
+		Hash:  common.ToHex(reverse(rawHash)),
+		RawTx: common.ToHex(buf.Bytes()),
+	}
+	spv := &ty.BtcSpv{Hash: btcTx.Hash}
+	order := &ty.RelayOrder{XAddr: addr.EncodeAddress(), XAmount: 100000}
+
+	got, err := verifyBtcTxContent(btcTx, spv, order)
+	if err != nil {
+		t.Fatalf("verifyBtcTxContent simnet addr: %v", err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("verifyBtcTxContent rawHash mismatch, got %x want %x", got, want)
+	}
 }
 
 //////////////////////////////////////
