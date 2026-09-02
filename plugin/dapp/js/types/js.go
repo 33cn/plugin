@@ -35,6 +35,14 @@ var (
 //JsX 插件名字
 var JsX = "jsvm"
 
+// dapp 分叉
+const (
+	// ForkJSFixAddrNormalize 修复 exec_transfer 缺少地址归一化的问题:
+	// eth 地址大小写变体可绕过 account 层 from==to 自我转账检查(存储 key 已归一化为小写),
+	// 分叉后在调用 account 层前先将 from/to 归一化
+	ForkJSFixAddrNormalize = "ForkJSFixAddrNormalize"
+)
+
 //错误常量
 var (
 	ErrDupName            = errors.New("ErrDupName")
@@ -63,6 +71,7 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(JsX, "Enable", 0)
+	cfg.RegisterDappFork(JsX, ForkJSFixAddrNormalize, 0)
 }
 
 //InitExecutor ...

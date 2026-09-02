@@ -4,6 +4,8 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/common"
+	ptypes "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/robertkrimen/otto"
 )
 
@@ -401,6 +403,13 @@ func (u *js) execTransferFunc(vm *otto.Otto) {
 		}
 		if err := address.CheckAddress(to, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
+		}
+		// 分叉后对 from/to 做 eth 地址归一化(与存储 key 格式一致), 防止大小写变体
+		// 绕过 account 层 from==to 自我转账检查造成造币
+		cfg := u.GetAPI().GetConfig()
+		if cfg.IsDappFork(u.GetHeight(), ptypes.JsX, ptypes.ForkJSFixAddrNormalize) {
+			from = common.FmtEthAddressWithFork(from, cfg, u.GetHeight())
+			to = common.FmtEthAddressWithFork(to, cfg, u.GetHeight())
 		}
 		amount, err := call.Argument(4).ToInteger()
 		if err != nil {
