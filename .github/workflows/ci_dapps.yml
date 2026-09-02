@@ -1,5 +1,8 @@
 name: ci_dapps
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
 
 # 原 Jenkins ci-plugin (Jenkinsfile) 迁移而来。
 # Jenkins 执行 `docker-compose-pre.sh run <proj> all`，即遍历 build/ci 下所有

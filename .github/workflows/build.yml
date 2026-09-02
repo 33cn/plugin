@@ -1,5 +1,8 @@
 name: ci_base
-on: [push,pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
 
 jobs:
   check_fmt:
