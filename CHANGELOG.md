@@ -1,5 +1,13 @@
 changelog
 
+## [1.71.1](https://github.com/33cn/plugin/compare/v1.71.0...v1.71.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **relay:** bind verifyBtcTx to txid and header time ([949da7f](https://github.com/33cn/plugin/commit/949da7f19cbdc48e97c257cdbb6a25a2f35a07ac))
+* **relay:** recompute btc tx hash from rawtx in verifyBtcTx with fork ForkRelayVerifyBtcTx ([5281dad](https://github.com/33cn/plugin/commit/5281dadf4a0cf1cfbe1a293a050c5876b6336517))
+
 # [1.71.0](https://github.com/33cn/plugin/compare/v1.70.0...v1.71.0) (2026-09-01)
 
 
