@@ -84,24 +84,20 @@ chain33 侧看到的 `Para` 是 100 字节 ABI calldata，`IsBlockedAccountRaw` 
 
 用例：`TestGapB3_SelfdestructBeneficiary`。
 
-### B3b. DELEGATECALL / CALLCODE 到黑名单代码执行 SELFDESTRUCT
+### B3b. DELEGATECALL 到黑名单代码执行 SELFDESTRUCT —— Call 检查覆盖不到
 
 ```
 干净用户 U → 干净合约 P → DELEGATECALL → 黑名单合约 A 的代码执行 SELFDESTRUCT
 ```
 
-DELEGATECALL / CALLCODE 借代码在调用者上下文执行，一般不构成打出。
+`runtime.DelegateCall` 没有黑名单检查（借代码在调用者上下文执行，一般不构成打出）。
 但 `opSuicide` 的**付款方取 `contract.CodeAddr`（= A）**，金额取 `contract.Address()`（= P）的余额：
 攻击者给 P 充值 X，就能让 A 向受益人付出 X。
 
-**拦截点（两道）：**
-1. `runtime/evm.go` `DelegateCall` / `CallCode` 对 `addr` 的检查 —— 拒绝借用黑名单代码，opSuicide 不会执行；
-2. `statedb.go` `Transfer` 的 `sender` 检查 —— 兜底，即使第一道被绕过也拒绝 A 付款。
+这条路径证明 `statedb.Transfer` 的 `sender` 检查不是对 `Call` 检查的重复，
+而是唯一能拦下它的位置。
 
-`StaticCall` 不检查：只读上下文下 `opSuicide` 返回 `ErrWriteProtection`。
-
-用例：`TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr` 分别验证两道闸各自独立有效；
-`TestDelegateCallBlockedCode` 覆盖 `DelegateCall` / `CallCode` 的返回值。
+用例：`TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr`。
 
 ### B4. 黑名单合约内部带 value 的 CALL
 
@@ -119,14 +115,13 @@ DELEGATECALL / CALLCODE 借代码在调用者上下文执行，一般不构成�
 
 ## 4. 代码取舍
 
-### 实质防线（4 处，不可替代）
+### 实质防线（3 处，不可替代）
 
 | 位置 | 覆盖 |
 |---|---|
 | `runtime/evm.go` `Call` 的 **target** 检查 | B1 |
-| `runtime/evm.go` `DelegateCall` / `CallCode` 的 **addr** 检查 | B3b |
 | `statedb.go` `TransferToToken` 的 **from** 检查 | B2 |
-| `statedb.go` `Transfer` 的 **sender** 检查 | B3 / B3b 兜底 / B4 |
+| `statedb.go` `Transfer` 的 **sender** 检查 | B3 / B3b / B4 |
 
 ### 纵深防御（对真实交易冗余，源码中已逐处注明）
 

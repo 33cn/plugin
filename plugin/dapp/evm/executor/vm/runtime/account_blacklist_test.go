@@ -82,26 +82,3 @@ func TestCreateBlockedAccount(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, types.ErrBlockedAccount))
 }
-
-// TestDelegateCallBlockedCode 验证 EVM.DelegateCall / CallCode 拒绝借用黑名单地址的代码。
-// 二者在 HasSuicided 之前做 addr 检查，用空 StateDB 即可到达该分支；
-// fork 关闭的对照与余额断言见 blacklist_gap_test.go 的 TestGapB3b。
-func TestDelegateCallBlockedCode(t *testing.T) {
-	blocked := common.BytesToAddress(common.FromHex(blockedRuntimeAddr))
-	clean := common.BytesToAddress(common.FromHex("0x0000000000000000000000000000000000000003"))
-
-	t.Run("DelegateCall hit", func(t *testing.T) {
-		evm := newBlockedEVM(t, []string{blockedRuntimeAddr})
-		_, _, err := evm.DelegateCall(AccountRef(clean), blocked, nil, 100000)
-		require.Error(t, err)
-		assert.True(t, errors.Is(err, types.ErrBlockedAccount))
-	})
-
-	t.Run("CallCode hit", func(t *testing.T) {
-		evm := newBlockedEVM(t, []string{blockedRuntimeAddr})
-		_, _, err := evm.CallCode(AccountRef(clean), blocked, nil, 100000, 0)
-		require.Error(t, err)
-		assert.True(t, errors.Is(err, types.ErrBlockedAccount))
-	})
-
-}
