@@ -198,6 +198,7 @@ ForkRelayVerifyBtcTx=0
 Enable=0
 ForkRetrive=180000
 ForkRetriveAsset=3150000
+ForkRetrivePerformRelay=0
 
 [fork.sub.storage]
 Enable=0
