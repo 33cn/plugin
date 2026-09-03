@@ -254,15 +254,15 @@ func TestGapB3_SelfdestructBeneficiary(t *testing.T) {
 	require.Equal(t, stash, env.balance(user))
 }
 
-// TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr 场景 B3 的变体，
-// 也是 Call/Create 检查覆盖不到、只有 statedb.Transfer 能拦的路径：
+// TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr 场景 B3 的变体：
 //
 //	干净用户 U → 干净合约 P → DELEGATECALL → 黑名单合约 A 的代码执行 SELFDESTRUCT
 //
-// evm.DelegateCall 没有黑名单检查（DELEGATECALL 借代码在调用者上下文执行，
-// 通常不构成打出）。但 opSuicide 的付款方取 contract.CodeAddr（= A），
-// 金额取 contract.Address()（= P）的余额：攻击者给 P 充值 X，即可让 A 向受益人付出 X。
-// 这使 statedb.Transfer 的 sender 检查成为真正的最后一道闸，而非冗余。
+// DELEGATECALL 借代码在调用者上下文执行，通常不构成打出。但 opSuicide 的付款方取
+// contract.CodeAddr（= A），金额取 contract.Address()（= P）的余额：
+// 攻击者给 P 充值 X，即可让 A 向受益人付出 X。
+// 现在有两道闸：runtime.DelegateCall 的 addr 检查（第一道）和 statedb.Transfer 的
+// sender 检查（兜底）。本用例分别验证两道闸各自独立有效，并以 fork 关闭为对照证明路径是活的。
 func TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr(t *testing.T) {
 	user, proxy, proxy2, blockedC := addr(0x14), addr(0xb4), addr(0xb5), addr(0xa4)
 	env := newGapEnv(t, []string{blockedC.String()})
@@ -276,9 +276,21 @@ func TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr(t *testing.T) {
 	env.deploy(proxy2, user, buildDelegateCallCode(blockedC))
 	env.deploy(blockedC, user, buildSelfdestructCode(user))
 
+	// 第一道闸：DelegateCall 的 addr 检查。命中后 opSuicide 根本不会执行，A 不会被标记自毁。
 	_, _, _, err := env.evm.Call(AccountRef(user), proxy, nil, 5_000_000, 0)
 	require.NoError(t, err)
-	require.Equal(t, stash, env.balance(blockedC), "delegatecall+selfdestruct must not drain the blocked code address")
+	require.Equal(t, stash, env.balance(blockedC), "delegatecall into blocked code must be refused")
+	require.Zero(t, env.balance(user))
+	require.False(t, env.mdb.HasSuicided(proxy.String()), "first gate fires before opSuicide runs")
+
+	// 兜底：把 DelegateCall 的检查"拆掉"（直接构造 delegate 合约对象跑 A 的代码），
+	// statedb.Transfer 的 sender 检查仍拒绝 A 付款。
+	parent := NewContract(AccountRef(user), AccountRef(proxy), new(big.Int), 5_000_000)
+	delegate := NewContract(parent, AccountRef(proxy), new(big.Int), 5_000_000).AsDelegate()
+	delegate.SetCallCode(&blockedC, env.mdb.GetCodeHash(blockedC.String()), env.mdb.GetCode(blockedC.String()))
+	_, err = run(env.evm, delegate, nil, false)
+	require.NoError(t, err, "SELFDESTRUCT itself does not error; the transfer is refused")
+	require.Equal(t, stash, env.balance(blockedC), "statedb.Transfer sender check must refuse A as payer")
 	require.Zero(t, env.balance(user))
 
 	// 对照：fork 关闭时 A 的余额确实经由 CodeAddr 被打出（proxy 已自毁，换 proxy2 触发）。

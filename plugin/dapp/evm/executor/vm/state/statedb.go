@@ -105,8 +105,8 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 //   - TransferToToken 的 from：token 预编译的 from 取自 calldata，与 caller 无绑定，
 //     第三方合约可指定 from=黑名单；calldata 长度 100 字节，chain33 的 Para 维度看不见。
 //   - Transfer 的 sender：SELFDESTRUCT 经 AddBalance 以合约为付款方转账，
-//     且 opSuicide 的付款方取 contract.CodeAddr，DELEGATECALL 到黑名单代码时
-//     runtime 层没有任何检查，只有这里能拦。
+//     且 opSuicide 的付款方取 contract.CodeAddr，DELEGATECALL / CALLCODE 到黑名单代码时
+//     runtime 层的 addr 检查是第一道，这里是兜底。
 //
 // recipient 维度拦的是"打入"（等同冻结），保留以符合 chain33"禁止收发"的原始设计。
 func (mdb *MemoryStateDB) isBlockedAccount(addrs ...string) bool {

@@ -30,9 +30,10 @@ import (
 // （docs/security/evm-account-blacklist.md 场景 B1，blacklist_gap_test.go 有对应用例）。
 // caller 维度则是纵深防御：顶层 caller 即 tx.From 已被框架拦截，
 // 内部 caller 若是黑名单合约，它必须先通过某次 Call 的 target 检查才能执行到这里。
-// CallCode / DelegateCall / StaticCall 不做检查：它们借目标代码在调用者上下文执行，
-// 动的是调用者的存储和余额，不构成从黑名单打出的路径；
-// 唯一例外（DELEGATECALL 到黑名单代码执行 SELFDESTRUCT）由 statedb.Transfer 兜底。
+// CallCode / DelegateCall 也检查 addr：二者借目标代码在调用者上下文执行，本不动目标的余额，
+// 但 opSuicide 以 contract.CodeAddr（= addr）为付款方，黑名单代码里的 SELFDESTRUCT
+// 会转出黑名单地址的余额（blacklist_gap_test.go 场景 B3b），statedb.Transfer 兜底。
+// StaticCall 只读，opSuicide 在 readOnly 下返回 ErrWriteProtection，无需检查。
 func checkBlockedAccount(evm *EVM, addrs ...common.Address) error {
 	cfg := evm.cfg
 	if cfg == nil || evm.BlockNumber == nil || !cfg.IsFork(evm.BlockNumber.Int64(), types.ForkAccountBlacklist) {
@@ -338,6 +339,14 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		return nil, gas, err
 	}
 
+	// 账户黑名单：CALLCODE 借 addr 的代码在调用者上下文执行，但 SetCallCode 把 CodeAddr 设为 addr，
+	// 而 opSuicide 以 CodeAddr 为付款方，因此黑名单代码里的 SELFDESTRUCT 会转出黑名单地址的余额。
+	// 在此拒绝借用黑名单代码，与 Call 的 target 检查对齐。
+	if berr := checkBlockedAccount(evm, addr); berr != nil {
+		log.Error("CallCode blocked account", "caller", caller.Address().String(), "addr", addr.String(), "err", berr)
+		return nil, gas, berr
+	}
+
 	// 如果是已经销毁状态的合约是不允许调用的
 	if evm.StateDB.HasSuicided(addr.String()) {
 		return nil, gas, model.ErrDestruct
@@ -390,6 +399,14 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	pass, err := evm.preCheck(caller, 0)
 	if !pass {
 		return nil, gas, err
+	}
+
+	// 账户黑名单：DELEGATECALL 借 addr 的代码在调用者上下文执行，但 SetCallCode 把 CodeAddr 设为 addr，
+	// 而 opSuicide 以 CodeAddr 为付款方，因此黑名单代码里的 SELFDESTRUCT 会转出黑名单地址的余额
+	// （blacklist_gap_test.go 场景 B3b）。在此拒绝借用黑名单代码，statedb.Transfer 的 sender 检查仍作兜底。
+	if berr := checkBlockedAccount(evm, addr); berr != nil {
+		log.Error("DelegateCall blocked account", "caller", caller.Address().String(), "addr", addr.String(), "err", berr)
+		return nil, gas, berr
 	}
 
 	// 如果是已经销毁状态的合约是不允许调用的
