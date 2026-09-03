@@ -278,7 +278,7 @@ func TestWBTYOverflowAttackIntegration(t *testing.T) {
 			// coins 转账被拦截：accomplice 的 coins 交易在 mempool 层黑名单检查应失败。
 			// EVM executor 只处理 EVM 交易；coins 交易的黑名单拦截在 chain33 通用层
 			// CheckTxBlockedAccount（mempool.checkTx 调用），此处直接验证该层。
-			coinsTx := makeCoinsTx(cfg, roleAccomplice, addrFromRole(cfg, roleLegitUser), int64(10*ctypes.DefaultCoinPrecision))
+			coinsTx := makeCoinsTx(cfg, roleAccomplice, addrFromRole(cfg, roleLegitUser), 10*ctypes.DefaultCoinPrecision)
 			err = ctypes.CheckTxBlockedAccount(cfg, 1000, coinsTx)
 			if err == nil {
 				t.Fatal("BUG: blacklisted accomplice coins tx should fail CheckTxBlockedAccount")
