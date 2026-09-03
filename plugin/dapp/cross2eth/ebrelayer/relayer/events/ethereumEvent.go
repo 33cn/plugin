@@ -67,7 +67,7 @@ type NewProphecyClaimEvent struct {
 	Amount           *big.Int
 }
 
-//LogNewBridgeToken ...
+// LogNewBridgeToken ...
 type LogNewBridgeToken struct {
 	Token  common.Address
 	Symbol string
@@ -101,7 +101,7 @@ func UnpackLogLock(contractAbi abi.ABI, eventName string, eventData []byte) (loc
 	return event, nil
 }
 
-//UnpackLogBurn ...
+// UnpackLogBurn ...
 func UnpackLogBurn(contractAbi abi.ABI, eventName string, eventData []byte) (burnEvent *BurnEvent, err error) {
 	event := &BurnEvent{}
 	// Parse the event's attributes as Ethereum network variables

@@ -11,13 +11,13 @@ import (
 2. 启动一个平行链节点：注意，这个要测试的话，会依赖平行链插件
 */
 
-//ParaNode 平行链节点由两个节点组成
+// ParaNode 平行链节点由两个节点组成
 type ParaNode struct {
 	Main *testnode.Chain33Mock
 	Para *testnode.Chain33Mock
 }
 
-//NewParaNode 创建一个平行链节点
+// NewParaNode 创建一个平行链节点
 func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNode {
 	if main == nil {
 		main = testnode.New("", nil)
@@ -35,7 +35,7 @@ func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNo
 	return &ParaNode{Main: main, Para: para}
 }
 
-//Close 关闭系统
+// Close 关闭系统
 func (node *ParaNode) Close() {
 	node.Para.Close()
 	node.Main.Close()

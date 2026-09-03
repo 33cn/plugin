@@ -65,8 +65,8 @@ func NewMainChainClient(paraRemoteGrpcClient string) chain33Ty.Chain33Client {
 	return grpcClient
 }
 
-//该命令用于从区块链获取包含l2交易的区块
-//./chain33-cli zksync sendl2 fetch -s 800 -e 6015 -p . --rpc_laddr 172.18.0.6:8902
+// 该命令用于从区块链获取包含l2交易的区块
+// ./chain33-cli zksync sendl2 fetch -s 800 -e 6015 -p . --rpc_laddr 172.18.0.6:8902
 func fetchL2BlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fetch",

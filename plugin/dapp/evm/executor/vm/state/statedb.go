@@ -172,7 +172,7 @@ func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
 	return uint64(ac.GetBalance())
 }
 
-//GetAccountNonce 获取普通地址下的nonce,用于兼容eth签名交易
+// GetAccountNonce 获取普通地址下的nonce,用于兼容eth签名交易
 func (mdb *MemoryStateDB) GetAccountNonce(addr string) uint64 {
 	//增加合约账户信息
 	nonceV, _ := mdb.LocalDB.Get(secp256k1eth.CaculCoinsEvmAccountKey(addr))
@@ -560,7 +560,7 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 	return true
 }
 
-//TransferToToken evm call token
+// TransferToToken evm call token
 func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (bool, error) {
 	// 账户黑名单兜底：收发任一方命中名单即拒绝 token 转账
 	if mdb.isBlockedAccount(from, recipient) {
@@ -601,7 +601,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 
 }
 
-//TokenBalance 查询token 账户下的余额
+// TokenBalance 查询token 账户下的余额
 func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbol string) (int64, error) {
 	tokenAccount, err := account.NewAccountDB(mdb.GetConfig(), execer, tokensymbol, mdb.StateDB)
 	if err != nil {
@@ -614,7 +614,7 @@ func (mdb *MemoryStateDB) TokenBalance(caller common.Address, execer, tokensymbo
 	return acc.Balance, nil
 }
 
-//tokenStatus 获取token 状态信息
+// tokenStatus 获取token 状态信息
 func (mdb *MemoryStateDB) tokenStatus(tokensymbol string) (*tokenty.LocalToken, error) {
 	tokenPreCreatedSTONewLocal := "LODB-token-create-sto-"
 	tokenKey := []byte(fmt.Sprintf(tokenPreCreatedSTONewLocal+"%d-%s-", 1, tokensymbol))
@@ -633,7 +633,7 @@ func (mdb *MemoryStateDB) tokenStatus(tokensymbol string) (*tokenty.LocalToken, 
 	return &tokenInfo, nil
 }
 
-//TokenSupply 获取token 总量
+// TokenSupply 获取token 总量
 func (mdb *MemoryStateDB) TokenSupply(tokensymbol string) (int64, error) {
 	tokenInfo, err := mdb.tokenStatus(tokensymbol)
 	if err != nil {
@@ -809,7 +809,7 @@ func (mdb *MemoryStateDB) GetConfig() *types.Chain33Config {
 	return mdb.api.GetConfig()
 }
 
-//GetApi return QueueProtocolAPI
+// GetApi return QueueProtocolAPI
 func (mdb *MemoryStateDB) GetApi() client.QueueProtocolAPI {
 	return mdb.api
 }

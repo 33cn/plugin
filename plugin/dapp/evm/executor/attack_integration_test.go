@@ -204,7 +204,7 @@ func TestWBTYOverflowAttackIntegration(t *testing.T) {
 		t.Logf("✓ victim deposited %d into pool", poolValue)
 
 		// 攻击者 withdraw
-		wdInput := vcomm.FromHex("2e1a7d4d") // withdraw(uint256)
+		wdInput := vcomm.FromHex("2e1a7d4d")                                                                                        // withdraw(uint256)
 		amt7M := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x6a, 0xc7, 0x60, 0x00} // 7,000,000 as uint256
 		wdInput = append(wdInput, amt7M...)
 		r, err = exec.Exec(makeCallTx(cfg, roleAttacker, contractAddr, wdInput, 0), 0)

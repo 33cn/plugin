@@ -11,8 +11,8 @@ import (
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 )
 
-//Query_MultiSigAccCount 获取多重签名账户的数量，用于分批获取多重签名账户地址
-//返回ReplyMultiSigAccounts
+// Query_MultiSigAccCount 获取多重签名账户的数量，用于分批获取多重签名账户地址
+// 返回ReplyMultiSigAccounts
 func (m *MultiSig) Query_MultiSigAccCount(in *types.ReqNil) (types.Message, error) {
 	db := m.GetLocalDB()
 	count, err := getMultiSigAccCount(db)
@@ -23,14 +23,17 @@ func (m *MultiSig) Query_MultiSigAccCount(in *types.ReqNil) (types.Message, erro
 	return &types.Int64{Data: count}, nil
 }
 
-//Query_MultiSigAccounts 获取指定区间的多重签名账户
-//输入：
-//message ReqMultiSigAccs {
-//	int64	start	= 1;
-//	int64	end		= 2;
-//输出：
-//message ReplyMultiSigAccs {
-//    repeated string address = 1;
+// Query_MultiSigAccounts 获取指定区间的多重签名账户
+// 输入：
+//
+//	message ReqMultiSigAccs {
+//		int64	start	= 1;
+//		int64	end		= 2;
+//
+// 输出：
+//
+//	message ReplyMultiSigAccs {
+//	   repeated string address = 1;
 func (m *MultiSig) Query_MultiSigAccounts(in *mty.ReqMultiSigAccs) (types.Message, error) {
 	accountAddrs := &mty.ReplyMultiSigAccs{}
 
@@ -67,18 +70,21 @@ func (m *MultiSig) validateMultiSignAddr(addr string) error {
 	return multiSignDriver.ValidateAddr(addr)
 }
 
-//Query_MultiSigAccountInfo 获取指定多重签名账号的状态信息
-//输入：
-//message ReqMultiSigAccountInfo {
-//	string MultiSigAccAddr = 1;
-//返回：
-//message MultiSig {
-//    string 							createAddr        	= 1;
-//    string 							multiSigAddr      	= 2;
-//    repeated Owner           			owners				= 3;
-//    repeated DailyLimit          		dailyLimits   		= 4;
-//    uint64           					txCount				= 5;
-//	  uint64           					requiredWeight		= 6;
+// Query_MultiSigAccountInfo 获取指定多重签名账号的状态信息
+// 输入：
+//
+//	message ReqMultiSigAccountInfo {
+//		string MultiSigAccAddr = 1;
+//
+// 返回：
+//
+//	message MultiSig {
+//	   string 							createAddr        	= 1;
+//	   string 							multiSigAddr      	= 2;
+//	   repeated Owner           			owners				= 3;
+//	   repeated DailyLimit          		dailyLimits   		= 4;
+//	   uint64           					txCount				= 5;
+//		  uint64           					requiredWeight		= 6;
 func (m *MultiSig) Query_MultiSigAccountInfo(in *mty.ReqMultiSigAccInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -99,12 +105,14 @@ func (m *MultiSig) Query_MultiSigAccountInfo(in *mty.ReqMultiSigAccInfo) (types.
 	return multiSigAcc, nil
 }
 
-//Query_MultiSigAccTxCount 获取指定多重签名账号下的tx交易数量
-//输入：
-//message ReqMultiSigAccountInfo {
-//	string MultiSigAccAddr = 1;
-//返回：
-//uint64
+// Query_MultiSigAccTxCount 获取指定多重签名账号下的tx交易数量
+// 输入：
+//
+//	message ReqMultiSigAccountInfo {
+//		string MultiSigAccAddr = 1;
+//
+// 返回：
+// uint64
 func (m *MultiSig) Query_MultiSigAccTxCount(in *mty.ReqMultiSigAccInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -126,18 +134,21 @@ func (m *MultiSig) Query_MultiSigAccTxCount(in *mty.ReqMultiSigAccInfo) (types.M
 	return &mty.Uint64{Data: multiSigAcc.TxCount}, nil
 }
 
-//Query_MultiSigTxids 获取txids通过设置的过滤条件和区间，pending, executed
-//输入：
-//message ReqMultiSigTxids {
-//  string multisigaddr = 1;
-//	uint64 fromtxid = 2;
-//	uint64 totxid = 3;
-//	bool   pending = 4;
-//	bool   executed	= 5;
+// Query_MultiSigTxids 获取txids通过设置的过滤条件和区间，pending, executed
+// 输入：
+//
+//	message ReqMultiSigTxids {
+//	 string multisigaddr = 1;
+//		uint64 fromtxid = 2;
+//		uint64 totxid = 3;
+//		bool   pending = 4;
+//		bool   executed	= 5;
+//
 // 返回:
-//message ReplyMultiSigTxids {
-//  string 			multisigaddr = 1;
-//	repeated uint64	txids		 = 2;
+//
+//	message ReplyMultiSigTxids {
+//	 string 			multisigaddr = 1;
+//		repeated uint64	txids		 = 2;
 func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message, error) {
 	if in == nil || in.FromTxId > in.ToTxId || in.FromTxId < 0 {
 		return nil, types.ErrInvalidParam
@@ -175,15 +186,18 @@ func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message,
 
 }
 
-//Query_MultiSigTxInfo 获取txid交易的信息，以及参与确认的owner信息
-//输入:
-//message ReqMultiSigTxInfo {
-//  string multisigaddr = 1;
-//	uint64 txid = 2;
-//返回:
-//message ReplyMultiSigTxInfo {
-//    MultiSigTransaction multisigtxinfo = 1;
-//    repeated Owner confirmowners = 3;
+// Query_MultiSigTxInfo 获取txid交易的信息，以及参与确认的owner信息
+// 输入:
+//
+//	message ReqMultiSigTxInfo {
+//	 string multisigaddr = 1;
+//		uint64 txid = 2;
+//
+// 返回:
+//
+//	message ReplyMultiSigTxInfo {
+//	   MultiSigTransaction multisigtxinfo = 1;
+//	   repeated Owner confirmowners = 3;
 func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -208,13 +222,15 @@ func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Messag
 	return multiSigTx, nil
 }
 
-//Query_MultiSigTxConfirmedWeight 获取txid交易已经确认的权重之和
-//输入:
-//message ReqMultiSigTxInfo {
-//  string multisigaddr = 1;
-//	uint64 txid = 2;
-//返回:
-//message Int64
+// Query_MultiSigTxConfirmedWeight 获取txid交易已经确认的权重之和
+// 输入:
+//
+//	message ReqMultiSigTxInfo {
+//	 string multisigaddr = 1;
+//		uint64 txid = 2;
+//
+// 返回:
+// message Int64
 func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -242,15 +258,18 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 	return &mty.Uint64{Data: totalWeight}, nil
 }
 
-//Query_MultiSigAccUnSpentToday  获取指定资产当日还能使用的免多重签名的余额
-//输入:
-//message ReqMultiSigAccUnSpentToday {
-//	string multiSigAddr = 1;
-//	string execer 		= 2;
-//	string symbol 		= 3;
-//返回:
-//message ReplyMultiSigAccUnSpentToday {
-//	uint64 	amount = 1;
+// Query_MultiSigAccUnSpentToday  获取指定资产当日还能使用的免多重签名的余额
+// 输入:
+//
+//	message ReqMultiSigAccUnSpentToday {
+//		string multiSigAddr = 1;
+//		string execer 		= 2;
+//		string symbol 		= 3;
+//
+// 返回:
+//
+//	message ReplyMultiSigAccUnSpentToday {
+//		uint64 	amount = 1;
 func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -313,17 +332,20 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 	return replyUnSpentAssets, nil
 }
 
-//Query_MultiSigAccAssets  获取多重签名账户上的所有资产，或者指定资产
-//输入:
-//message ReqAccAssets {
-//	string multiSigAddr = 1;
-//	Assets assets 		= 2;
-//	bool   isAll 		= 3;
-//返回:
-//message MultiSigAccAssets {
-//	Assets 		assets 		= 1;
-//	int64   	recvAmount 	= 2;
-//   Account 	account 	= 3;
+// Query_MultiSigAccAssets  获取多重签名账户上的所有资产，或者指定资产
+// 输入:
+//
+//	message ReqAccAssets {
+//		string multiSigAddr = 1;
+//		Assets assets 		= 2;
+//		bool   isAll 		= 3;
+//
+// 返回:
+//
+//	message MultiSigAccAssets {
+//		Assets 		assets 		= 1;
+//		int64   	recvAmount 	= 2;
+//	  Account 	account 	= 3;
 func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -387,11 +409,11 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 	return replyAccAssets, nil
 }
 
-//Query_MultiSigAccAllAddress 获取指定地址创建的所有多重签名账户
-//输入:
-//createaddr
-//返回:
-//[]string
+// Query_MultiSigAccAllAddress 获取指定地址创建的所有多重签名账户
+// 输入:
+// createaddr
+// 返回:
+// []string
 func (m *MultiSig) Query_MultiSigAccAllAddress(in *mty.ReqMultiSigAccInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam

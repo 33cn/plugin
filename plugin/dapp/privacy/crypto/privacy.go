@@ -41,7 +41,6 @@ type sigcomm struct {
 	comm   ellipticCurvePoint
 }
 
-//
 type sigcommArray [32 * 3]byte
 
 // KeyImage key image type
@@ -88,8 +87,8 @@ func NewPrivacyWithPrivKey(privKey *[KeyLen32]byte) (privacy *Privacy, err error
 	return privacy, nil
 }
 
-//GenerateOneTimeAddr (A, B) => Hs(rA)G + B, rG=>R
-//func GenerateOneTimeAddr(viewPub, spendPub, skAddr32 *[32]byte, outputIndex int64) (pubkeyOnetime, RtxPublicKey *[32]byte, errInfo error) {
+// GenerateOneTimeAddr (A, B) => Hs(rA)G + B, rG=>R
+// func GenerateOneTimeAddr(viewPub, spendPub, skAddr32 *[32]byte, outputIndex int64) (pubkeyOnetime, RtxPublicKey *[32]byte, errInfo error) {
 func GenerateOneTimeAddr(viewPub, spendPub, skAddr32 *[32]byte, outputIndex int64) (pubkeyOnetime *[32]byte, errInfo error) {
 
 	//to calculate rA
@@ -138,7 +137,7 @@ func GenerateOneTimeAddr(viewPub, spendPub, skAddr32 *[32]byte, outputIndex int6
 	return
 }
 
-//RecoverOnetimePriKey calculate Hs(aR) + b
+// RecoverOnetimePriKey calculate Hs(aR) + b
 func RecoverOnetimePriKey(R []byte, viewSecretKey, spendSecretKey crypto.PrivKey, outputIndex int64) (crypto.PrivKey, error) {
 	var viewSecAddr, spendSecAddr, RtxPubAddr *[32]byte
 	viewSecAddr = (*[32]byte)(unsafe.Pointer(&viewSecretKey.Bytes()[0]))

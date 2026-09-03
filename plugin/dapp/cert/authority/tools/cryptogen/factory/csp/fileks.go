@@ -82,33 +82,25 @@ func (ks *fileBasedKeyStore) StoreKey(k Key) (err error) {
 	if k == nil {
 		return errors.New("Invalid key. It must be different from nil")
 	}
-	switch k.(type) {
+	switch kk := k.(type) {
 	case *ecdsaPrivateKey:
-		kk := k.(*ecdsaPrivateKey)
-
 		err = ks.storePrivateKeyByte(hex.EncodeToString(k.SKI()), kk.privKey)
 		if err != nil {
 			return fmt.Errorf("Failed storing ECDSA private key [%s]", err)
 		}
 
 	case *ecdsaPublicKey:
-		kk := k.(*ecdsaPublicKey)
-
 		err = ks.storePublicKey(hex.EncodeToString(k.SKI()), kk.pubKey)
 		if err != nil {
 			return fmt.Errorf("Failed storing ECDSA public key [%s]", err)
 		}
 	case *SM2PrivateKey:
-		kk := k.(*SM2PrivateKey)
-
 		err = ks.storePrivateKeyByte(hex.EncodeToString(k.SKI()), kk.PrivKey)
 		if err != nil {
 			return fmt.Errorf("Failed storing SM2 private key [%s]", err)
 		}
 
 	case *SM2PublicKey:
-		kk := k.(*SM2PublicKey)
-
 		err = ks.storePublicKey(hex.EncodeToString(k.SKI()), kk.PubKey)
 		if err != nil {
 			return fmt.Errorf("Failed storing SM2 public key [%s]", err)

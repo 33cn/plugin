@@ -24,7 +24,7 @@ const (
 	LogNewProphecyClaim
 )
 
-//const
+// const
 const (
 	ClaimTypeBurn = uint8(1)
 	ClaimTypeLock = uint8(2)

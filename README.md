@@ -1,12 +1,11 @@
 [![API Reference](
 https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
 )](https://godoc.org/github.com/33cn/plugin)
-[![pipeline status](https://api.travis-ci.org/33cn/plugin.svg?branch=master)](https://travis-ci.org/33cn/plugin/)
+[![ci_base](https://github.com/33cn/plugin/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/33cn/plugin/actions/workflows/build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/33cn/plugin?branch=master)](https://goreportcard.com/report/github.com/33cn/plugin)
-[![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/33cn/plugin?svg=true&branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20failed&pendingText=Windows%20-%20pending)](https://ci.appveyor.com/project/33cn/plugin)
 [![codecov](https://codecov.io/gh/33cn/plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/33cn/plugin)
 
-# chain33 官方插件系统（v1.69.0）
+# chain33 官方插件系统（v1.71.2）
 
 * chain33地址: https://github.com/33cn/chain33
 * chain33官网: https://chain.33.cn
@@ -85,4 +84,6 @@ make push b=branch_dev_name m="hello world"
 在build目录下写testcase和相关的Dockerfile和docker-compose配置文件,
 testcase的规则参考plugin/dapp/testcase_compose_rule.md
 
-用户可以在travis自己工程里面设置自己plugin的DAPP变量，如DAPP设置为relay，则travis里面run relay的testcase
+CI 全部由 GitHub Actions 驱动（`.github/workflows/`）。新增 dapp 的 testcase 后，
+在 `.github/workflows/ci_dapps.yml` 的 matrix 里加一行 `- dapp: <name>` 即可，
+本地可用 `make docker-compose dapp=<name>` 复现，`make docker-compose-down dapp=<name>` 清理。

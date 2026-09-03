@@ -53,9 +53,9 @@ func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte,
 	if contract.CodeAddr != nil {
 		p, sp, _ := evm.precompile(*contract.CodeAddr)
 		if p != nil {
-			ret, contract.Gas, err = RunPrecompiledContract(p, input, contract.Gas)
+			_, contract.Gas, _ = RunPrecompiledContract(p, input, contract.Gas)
 		} else if sp != nil {
-			ret, contract.Gas, err = RunStateFulPrecompiledContract(evm, contract, sp, input, contract.Gas)
+			_, contract.Gas, _ = RunStateFulPrecompiledContract(evm, contract, sp, input, contract.Gas)
 		}
 	}
 	// 在此处打印下自定义合约的错误信息

@@ -66,7 +66,7 @@ func TestParseRollbackOps(t *testing.T) {
 
 }
 
-//测试deposit withdraw merge
+// 测试deposit withdraw merge
 func TestParseRollbackOps2(t *testing.T) {
 	special := &zt.ZkDepositWitnessInfo{
 		AccountID: 5,

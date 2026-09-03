@@ -290,7 +290,7 @@ func (ethRelayer *Relayer4Ethereum) getLastBridgeBankProcessedHeight() ebTypes.E
 	return logIndex
 }
 
-//构建一个引导查询使用的bridgeBankTx
+// 构建一个引导查询使用的bridgeBankTx
 func (ethRelayer *Relayer4Ethereum) initBridgeBankTx() {
 	log, _ := ethRelayer.getEthTxEvent(0, 0)
 	if nil != log {
@@ -659,7 +659,7 @@ func (ethRelayer *Relayer4Ethereum) getAllTxsUnconfirm() (txInfos []*ebTypes.TxR
 	return
 }
 
-//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+// 判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
 func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash string) bool {
 	key1 := ethTxIsRelayedUnconfirmKey(ethRelayer.name, txhash)
 	data, err := ethRelayer.db.Get(key1)

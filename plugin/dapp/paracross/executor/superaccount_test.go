@@ -48,7 +48,7 @@ func createRawNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Transaction, e
 	return tx, nil
 }
 
-//createRawNodeGroupApplyTx create raw tx for node group
+// createRawNodeGroupApplyTx create raw tx for node group
 func createRawNodeGroupApplyTx(apply *pt.ParaNodeGroupConfig) (*types.Transaction, error) {
 	apply.Id = strings.Trim(apply.Id, " ")
 

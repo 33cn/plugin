@@ -68,7 +68,7 @@ func (x *x2ethereum) ExecLocal_SetConsensusThreshold(payload *x2eTy.MsgConsensus
 	return x.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-//设置自动回滚
+// 设置自动回滚
 func (x *x2ethereum) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 	dbSet := &types.LocalDBSet{}
 	dbSet.KV = x.AddRollbackKV(tx, tx.Execer, kv)

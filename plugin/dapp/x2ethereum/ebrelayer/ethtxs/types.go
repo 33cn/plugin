@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-//const ...
+// const ...
 const (
 	X2Eth      = "x2ethereum"
 	BurnAction = "Chain33ToEthBurn"

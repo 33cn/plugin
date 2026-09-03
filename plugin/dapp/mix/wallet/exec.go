@@ -52,7 +52,7 @@ func (p *mixPolicy) On_GetRescanStatus(in *types.ReqNil) (types.Message, error) 
 
 }
 
-//重新扫描所有notes
+// 重新扫描所有notes
 func (p *mixPolicy) On_RescanNotes(in *types.ReqNil) (types.Message, error) {
 	err := p.tryRescanNotes()
 	if err != nil {

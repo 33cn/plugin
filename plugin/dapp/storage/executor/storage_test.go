@@ -254,7 +254,7 @@ func CreateTx(action string, message types.Message, priv string, cfg *types.Chai
 	return tx, err
 }
 
-//模拟区块中交易得执行过程
+// 模拟区块中交易得执行过程
 func Exec_Block(t *testing.T, stateDB dbm.DB, kvdb dbm.KVDB, env *execEnv, txs ...*types.Transaction) error {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.RegisterDappFork(oty.StorageX, oty.ForkStorageLocalDB, 0)

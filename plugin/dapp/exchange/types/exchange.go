@@ -52,14 +52,14 @@ const (
 	OpSell
 )
 
-//order status
+// order status
 const (
 	Ordered = iota
 	Completed
 	Revoked
 )
 
-//const
+// const
 const (
 	ListDESC = int32(0)
 	ListASC  = int32(1)
@@ -177,12 +177,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ExchangeX, NewType(cfg))
 }
 
-//ExchangeType ...
+// ExchangeType ...
 type ExchangeType struct {
 	types.ExecTypeBase
 }
 
-//NewType ...
+// NewType ...
 func NewType(cfg *types.Chain33Config) *ExchangeType {
 	c := &ExchangeType{}
 	c.SetChild(c)

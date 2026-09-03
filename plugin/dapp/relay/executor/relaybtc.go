@@ -16,7 +16,9 @@ import (
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/golang/protobuf/proto"
 )
@@ -179,14 +181,23 @@ func (b *btcStore) getBtcCurHeight(req *ty.ReqRelayQryBTCHeadHeight) (types.Mess
 	return &replay, nil
 }
 
-func (b *btcStore) getMerkleRootFromHeader(blockhash string) (string, error) {
-	value, err := b.db.Get(calcBtcHeaderKeyHash(blockhash))
+func (b *btcStore) getBtcHeadByHash(hash string) (*ty.BtcHeader, error) {
+	value, err := b.db.Get(calcBtcHeaderKeyHash(hash))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var header ty.BtcHeader
 	if err = types.Decode(value, &header); err != nil {
+		return nil, err
+	}
+
+	return &header, nil
+}
+
+func (b *btcStore) getMerkleRootFromHeader(blockhash string) (string, error) {
+	header, err := b.getBtcHeadByHash(blockhash)
+	if err != nil {
 		return "", err
 	}
 
@@ -194,48 +205,95 @@ func (b *btcStore) getMerkleRootFromHeader(blockhash string) (string, error) {
 
 }
 
-func (b *btcStore) verifyBtcTx(verify *ty.RelayVerify, order *ty.RelayOrder) error {
-	var foundtx bool
-	for _, outtx := range verify.GetTx().GetVout() {
-		if outtx.Address == order.XAddr && outtx.Value >= order.XAmount {
-			foundtx = true
+func (b *btcStore) verifyBtcTx(cfg *types.Chain33Config, height int64, verify *ty.RelayVerify, order *ty.RelayOrder) error {
+	isFork := cfg.IsDappFork(height, ty.RelayX, ty.ForkRelayVerifyBtcTx)
+
+	var rawHash []byte
+	var err error
+	var head *ty.BtcHeader
+	if isFork {
+		// ForkRelayVerifyBtcTx 之后，交易哈希必须根据 rawTx 内容重算，
+		// 订单要求的收款地址和金额必须真实存在于 rawTx 的输出中
+		rawHash, err = verifyBtcTxContent(verify.GetTx(), verify.GetSpv(), order)
+		if err != nil {
+			return err
+		}
+
+		// 区块头由 relayd 同步且经过难度校验，其高度与时间可信
+		head, err = b.getBtcHeadByHash(verify.GetSpv().GetBlockHash())
+		if err != nil {
+			return err
+		}
+		if verify.GetTx().GetBlockHeight() != head.Height ||
+			(verify.GetSpv().GetHeight() != 0 && verify.GetSpv().GetHeight() != head.Height) {
+			relaylog.Error("verifyTx", "tx block height", verify.GetTx().GetBlockHeight(), "spv height",
+				verify.GetSpv().GetHeight(), "real header height", head.Height)
+			return ty.ErrRelayBtcTxHeightErr
+		}
+	} else {
+		var foundtx bool
+		for _, outtx := range verify.GetTx().GetVout() {
+			if outtx.Address == order.XAddr && outtx.Value >= order.XAmount {
+				foundtx = true
+			}
+		}
+
+		if !foundtx {
+			return ty.ErrRelayVerifyAddrNotFound
 		}
 	}
 
-	if !foundtx {
-		return ty.ErrRelayVerifyAddrNotFound
-	}
-
 	acceptTime := time.Unix(order.AcceptTime, 0)
-	txTime := time.Unix(verify.GetTx().Time, 0)
 	confirmTime := time.Unix(order.ConfirmTime, 0)
+	var txTime time.Time
+	if isFork {
+		// 分叉后交易时间取自 SPV 证明所在区块头的时间，避免伪造 Tx.Time 重放旧交易
+		txTime = time.Unix(head.Time, 0)
+	} else {
+		txTime = time.Unix(verify.GetTx().Time, 0)
+	}
 
 	if txTime.Sub(acceptTime) < 0 || confirmTime.Sub(txTime) < 0 {
 		relaylog.Error("verifyTx", "tx time not correct to accept", txTime.Sub(acceptTime), "to confirm time", confirmTime.Sub(txTime))
 		return ty.ErrRelayBtcTxTimeErr
 	}
 
-	height, err := b.getLastBtcHeadHeight()
+	lastHeight, err := b.getLastBtcHeadHeight()
 	if err != nil {
 		return err
 	}
 
-	if verify.Tx.BlockHeight+uint64(order.XBlockWaits) > uint64(height) {
+	// 确认数基于 SPV 证明实际所在区块的高度计算，区块头由 relayd 同步且经过难度校验，其高度可信
+	txBlockHeight := verify.GetTx().GetBlockHeight()
+	if isFork {
+		txBlockHeight = head.Height
+	}
+
+	if txBlockHeight+uint64(order.XBlockWaits) > uint64(lastHeight) {
 		return ty.ErrRelayWaitBlocksErr
 	}
 
-	rawHash, err := btcHashStrRevers(verify.GetTx().GetHash())
-	if err != nil {
-		return err
+	if !isFork {
+		rawHash, err = btcHashStrRevers(verify.GetTx().GetHash())
+		if err != nil {
+			return err
+		}
 	}
+
 	sibs := verify.GetSpv().GetBranchProof()
 
 	verifyRoot := merkle.GetMerkleRootFromBranch(sibs, rawHash, verify.GetSpv().GetTxIndex())
-	str, err := b.getMerkleRootFromHeader(verify.GetSpv().GetBlockHash())
-	if err != nil {
-		return err
+
+	var merkleRootStr string
+	if isFork {
+		merkleRootStr = head.MerkleRoot
+	} else {
+		merkleRootStr, err = b.getMerkleRootFromHeader(verify.GetSpv().GetBlockHash())
+		if err != nil {
+			return err
+		}
 	}
-	realMerkleRoot, err := btcHashStrRevers(str)
+	realMerkleRoot, err := btcHashStrRevers(merkleRootStr)
 	if err != nil {
 		return err
 	}
@@ -247,6 +305,61 @@ func (b *btcStore) verifyBtcTx(verify *ty.RelayVerify, order *ty.RelayOrder) err
 
 	return nil
 
+}
+
+// verifyBtcTxContent 根据 rawTx 重算 btc 交易哈希，校验与自报的 hash 及 SPV 证明的哈希一致，
+// 并校验订单要求的收款地址和金额真实存在于 rawTx 的输出中，返回重算的交易哈希
+func verifyBtcTxContent(btcTx *ty.BtcTransaction, spv *ty.BtcSpv, order *ty.RelayOrder) ([]byte, error) {
+	rawTx := btcTx.GetRawTx()
+	if rawTx == "" {
+		relaylog.Error("verifyBtcTxContent", "empty rawTx of hash", btcTx.GetHash())
+		return nil, ty.ErrRelayBtcTxHashErr
+	}
+
+	msgTx, err := decodeRawTx(rawTx)
+	if err != nil {
+		relaylog.Error("verifyBtcTxContent", "decode rawTx err", err)
+		return nil, ty.ErrRelayBtcTxHashErr
+	}
+
+	// txid 使用不含 witness 的序列化计算，与区块 merkle 树一致(segwit 交易的 txid != wtxid)
+	rawHash := txidFromMsgTx(msgTx)
+
+	claimHash, err := btcHashStrRevers(btcTx.GetHash())
+	if err != nil {
+		relaylog.Error("verifyBtcTxContent", "decode claimed hash err", err)
+		return nil, ty.ErrRelayBtcTxHashErr
+	}
+
+	if !bytes.Equal(rawHash, claimHash) {
+		relaylog.Error("verifyBtcTxContent", "recomputed hash", common.ToHex(reverse(rawHash)), "not match claimed hash", btcTx.GetHash())
+		return nil, ty.ErrRelayBtcTxHashErr
+	}
+
+	// SPV 证明中的交易哈希也必须与重算结果一致
+	if spv.GetHash() != "" && spv.GetHash() != btcTx.GetHash() {
+		relaylog.Error("verifyBtcTxContent", "spv hash", spv.GetHash(), "not match tx hash", btcTx.GetHash())
+		return nil, ty.ErrRelayBtcTxHashErr
+	}
+
+	var foundtx bool
+	for _, out := range msgTx.TxOut {
+		_, addrs, _, err := txscript.ExtractPkScriptAddrs(out.PkScript, &chaincfg.MainNetParams)
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			if addr.EncodeAddress() == order.XAddr && uint64(out.Value) >= order.XAmount {
+				foundtx = true
+			}
+		}
+	}
+
+	if !foundtx {
+		return nil, ty.ErrRelayVerifyAddrNotFound
+	}
+
+	return rawHash, nil
 }
 
 func (b *btcStore) verifyCmdBtcTx(verify *ty.RelayVerifyCli) error {
@@ -277,13 +390,34 @@ func (b *btcStore) verifyCmdBtcTx(verify *ty.RelayVerifyCli) error {
 	return nil
 }
 
-func getRawTxHash(rawtx string) ([]byte, error) {
-	data, err := common.FromHex(rawtx)
+// decodeRawTx 将 hex 编码的原始 btc 交易反序列化为 MsgTx
+func decodeRawTx(rawTx string) (*wire.MsgTx, error) {
+	data, err := common.FromHex(rawTx)
 	if err != nil {
 		return nil, err
 	}
-	h := common.Sha2Sum(data)
-	return h, nil
+	msgTx := wire.NewMsgTx(wire.TxVersion)
+	if err := msgTx.Deserialize(bytes.NewReader(data)); err != nil {
+		return nil, err
+	}
+	return msgTx, nil
+}
+
+// txidFromMsgTx 计算 btc 交易的 txid：对不含 witness 的序列化做 double-sha256，
+// 与区块 merkle 树使用的 txid 一致(segwit 交易的 txid != wtxid)
+func txidFromMsgTx(msgTx *wire.MsgTx) []byte {
+	var buf bytes.Buffer
+	// SerializeNoWitness 写入 bytes.Buffer 不会失败
+	_ = msgTx.SerializeNoWitness(&buf)
+	return common.Sha2Sum(buf.Bytes())
+}
+
+func getRawTxHash(rawtx string) ([]byte, error) {
+	msgTx, err := decodeRawTx(rawtx)
+	if err != nil {
+		return nil, err
+	}
+	return txidFromMsgTx(msgTx), nil
 }
 
 func getSiblingHash(sibling string) ([][]byte, error) {

@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BurntSushi/toml"
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	vcomm "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/BurntSushi/toml"
 
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	ctypes "github.com/33cn/chain33/types"
@@ -248,33 +248,33 @@ func TestQuickEstimateGasValue(t *testing.T) {
 		expect uint64
 	}{
 		{
-			name: "nil default",
-			toml: ``,
+			name:   "nil default",
+			toml:   ``,
 			expect: 1300,
 		},
 		{
-			name: "float from toml",
-			toml: `gasmultiple = 2.0`,
+			name:   "float from toml",
+			toml:   `gasmultiple = 2.0`,
 			expect: 2000,
 		},
 		{
-			name: "int from toml",
-			toml: `gasmultiple = 2`,
+			name:   "int from toml",
+			toml:   `gasmultiple = 2`,
 			expect: 2000,
 		},
 		{
-			name: "below 1.0 clamped",
-			toml: `gasmultiple = 0.5`,
+			name:   "below 1.0 clamped",
+			toml:   `gasmultiple = 0.5`,
 			expect: 1000,
 		},
 		{
-			name: "exactly 1.0",
-			toml: `gasmultiple = 1.0`,
+			name:   "exactly 1.0",
+			toml:   `gasmultiple = 1.0`,
 			expect: 1000,
 		},
 		{
-			name: "invalid string fallback",
-			toml: `gasmultiple = "invalid"`,
+			name:   "invalid string fallback",
+			toml:   `gasmultiple = "invalid"`,
 			expect: 1300,
 		},
 	}

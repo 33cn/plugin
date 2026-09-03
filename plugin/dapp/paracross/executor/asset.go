@@ -17,21 +17,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-//SymbolBty ...
+// SymbolBty ...
 const SymbolBty = "bty"
 
 /*
 资产　=　assetExec + assetSymbol 唯一确定一个资产
 
-				exec              		symbol								tx.title=user.p.test1   tx.title=user.p.test2
-1. 主链上的资产：
-				coins					bty                     	  		transfer                 transfer
-				paracross				user.p.test1.coins.fzm    			withdraw                 transfer
+		exec              		symbol								tx.title=user.p.test1   tx.title=user.p.test2
+	 1. 主链上的资产：
+	    coins					bty                     	  		transfer                 transfer
+	    paracross				user.p.test1.coins.fzm    			withdraw                 transfer
 
-2. 平行链上的资产：
-				user.p.test1.coins		fzm              					transfer                 NAN
-    			user.p.test1.paracross	coins.bty    						withdraw                 NAN
-    			user.p.test1.paracross	paracross.user.p.test2.coins.cny	withdraw                 NAN
+	 2. 平行链上的资产：
+	    user.p.test1.coins		fzm              					transfer                 NAN
+	    user.p.test1.paracross	coins.bty    						withdraw                 NAN
+	    user.p.test1.paracross	paracross.user.p.test2.coins.cny	withdraw                 NAN
 
 其中user.p.test1.paracross.paracross.user.p.test2.coins.cny资产解释：
 user.p.test1.paracross.是平行链paracross执行器，　paracross.user.p.test2.coins.cny的paracross代表从主链的paracross转移过来的user.p.test2.coins.cny资产
@@ -63,7 +63,9 @@ func getCrossAction(transfer *pt.CrossAssetTransfer, txExecer string) (int64, er
 
 /*
 修正原生执行器名字
-								      								type			realExec    realSymbol
+
+	type			realExec    realSymbol
+
 coins+bty															mainTransfer	coins		bty
 paracross+user.p.test1.coins.bty									paraWithdraw	coins		bty
 user.p.test1.coins+bty												paraTransfer    coins		bty
@@ -137,7 +139,7 @@ func (a *action) crossAssetTransfer(transfer *pt.CrossAssetTransfer, act int64, 
 	}
 }
 
-//主链先transfer, 然后平行链create　asset, 如果平行链失败，主链再rollback
+// 主链先transfer, 然后平行链create　asset, 如果平行链失败，主链再rollback
 func (a *action) mainAssetTransfer(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
@@ -148,7 +150,7 @@ func (a *action) mainAssetTransfer(transfer *pt.CrossAssetTransfer, transferTx *
 	return a.execCreateAsset(transfer, transferTx)
 }
 
-//平行链先销毁，　共识后主链再withdraw
+// 平行链先销毁，　共识后主链再withdraw
 func (a *action) mainAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
@@ -159,7 +161,7 @@ func (a *action) mainAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *
 	return a.execDestroyAsset(withdraw, withdrawTx)
 }
 
-//平行链先转移，　共识后主链create asset
+// 平行链先转移，　共识后主链create asset
 func (a *action) paraAssetTransfer(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
@@ -171,7 +173,7 @@ func (a *action) paraAssetTransfer(transfer *pt.CrossAssetTransfer, transferTx *
 	return a.execCreateAsset(transfer, transferTx)
 }
 
-//平行链从主链提回，　先在主链处理，然后在平行链处理，　如果平行链执行失败，共识后主链再回滚
+// 平行链从主链提回，　先在主链处理，然后在平行链处理，　如果平行链执行失败，共识后主链再回滚
 func (a *action) paraAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
@@ -221,7 +223,7 @@ func (a *action) execTransfer(transfer *pt.CrossAssetTransfer, transferTx *types
 	return r, nil
 }
 
-//withdraw是共识交易触发的，a.tx是共识交易，　withdrawTx是最初提交的withdraw的tx
+// withdraw是共识交易触发的，a.tx是共识交易，　withdrawTx是最初提交的withdraw的tx
 func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	accDB, err := a.createAccount(cfg, a.db, withdraw.AssetExec, withdraw.AssetSymbol)
@@ -254,9 +256,9 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 	return r, nil
 }
 
-//主链Alice的token转移到user.p.bb.平行链，在平行链上表示为mavl-paracross-token.symbol-Addr(Alice),这里并没有放在Addr(user.p.bb.paracross)子账号下
-//平行链转移到主链的token在主链表示为mavl-paracross-user.p.aa.token.symbol-exec-Addr(Alice)，再转移到另一个user.p.bb.平行链，需要先transfer到paracross执行器下
-//在平行链bb上铸造新币，表示为mavl-paracross-paracross.user.p.aa.token.symbol-exec-Addr(Alice)，第二个paracross代表在主链原生执行器为paracross
+// 主链Alice的token转移到user.p.bb.平行链，在平行链上表示为mavl-paracross-token.symbol-Addr(Alice),这里并没有放在Addr(user.p.bb.paracross)子账号下
+// 平行链转移到主链的token在主链表示为mavl-paracross-user.p.aa.token.symbol-exec-Addr(Alice)，再转移到另一个user.p.bb.平行链，需要先transfer到paracross执行器下
+// 在平行链bb上铸造新币，表示为mavl-paracross-paracross.user.p.aa.token.symbol-exec-Addr(Alice)，第二个paracross代表在主链原生执行器为paracross
 func (a *action) createParaAccount(cross *pt.CrossAssetTransfer, crossTx *types.Transaction) (*account.DB, error) {
 	cfg := a.api.GetConfig()
 	paraTitle, err := getTitleFrom(crossTx.Execer)
@@ -306,7 +308,7 @@ func (a *action) execDestroyAsset(withdraw *pt.CrossAssetTransfer, withdrawTx *t
 	return r, nil
 }
 
-//旧的接口，只有主链向平行链转移
+// 旧的接口，只有主链向平行链转移
 func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {
 	tr := &pt.CrossAssetTransfer{
 		AssetSymbol: transfer.Cointoken,
@@ -318,7 +320,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 	return a.mainAssetTransfer(tr, a.tx)
 }
 
-//旧的接口，只有主链从平行链转移
+// 旧的接口，只有主链从平行链转移
 func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	tr := &pt.CrossAssetTransfer{
 		AssetExec:   withdraw.ExecName,
@@ -353,7 +355,7 @@ func (a *action) assetTransferRollback(transfer *pt.CrossAssetTransfer, transfer
 	return nil, nil
 }
 
-//平行链从主链withdraw在平行链执行失败，主链恢复数据，主链执行
+// 平行链从主链withdraw在平行链执行失败，主链恢复数据，主链执行
 func (a *action) paraAssetWithdrawRollback(wtw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
@@ -387,9 +389,9 @@ func (a *action) createAccount(cfg *types.Chain33Config, db db.KV, exec, symbol 
 	return account.NewAccountDB(cfg, exec, symbol, db)
 }
 
-//对于旧的assetTransfer,assetWithdraw资产转移接口，没有填AssetExec，这里只支持coins，如果主链是coinsx执行器，则旧接口会失败，需要用新接口。
-//新接口必须填AssetExec,主链和平行链从跨链交易资产参数上会保持一致，目的资产不依赖目标的toml配置文件
-//比如主链是coinsx 平行链也会铸造coinsx.bty资产，withdraw到主链也是coinsx
+// 对于旧的assetTransfer,assetWithdraw资产转移接口，没有填AssetExec，这里只支持coins，如果主链是coinsx执行器，则旧接口会失败，需要用新接口。
+// 新接口必须填AssetExec,主链和平行链从跨链交易资产参数上会保持一致，目的资产不依赖目标的toml配置文件
+// 比如主链是coinsx 平行链也会铸造coinsx.bty资产，withdraw到主链也是coinsx
 func adaptNullAssetExec(transfer *pt.CrossAssetTransfer) {
 	if transfer.AssetSymbol == "" {
 		transfer.AssetExec = "coins"

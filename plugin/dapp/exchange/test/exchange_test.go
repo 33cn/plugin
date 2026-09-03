@@ -85,10 +85,10 @@ func TestSample0(t *testing.T) {
 	assert.Nil(t, depth)
 }
 
-//买卖单价格相同，测试正常撮合流程，查询功能是否可用
-//1.先挂数量是10的买单。
-//2.然后再挂数量是5的吃单
-//3.最后撤销未成交部分的买单
+// 买卖单价格相同，测试正常撮合流程，查询功能是否可用
+// 1.先挂数量是10的买单。
+// 2.然后再挂数量是5的吃单
+// 3.最后撤销未成交部分的买单
 func TestCase1(t *testing.T) {
 	//先挂数量是10的买单
 	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 10 * types.DefaultCoinPrecision, Op: et.OpBuy}

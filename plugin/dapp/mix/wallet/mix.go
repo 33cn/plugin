@@ -92,7 +92,7 @@ func (p *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy, erro
 	return &mixTy.WalletAddrPrivacy{Privacy: newPrivacy, Addr: addr}, nil
 }
 
-//查询钱包里面所有的地址对应的PrivacyKeys
+// 查询钱包里面所有的地址对应的PrivacyKeys
 func (p *mixPolicy) getWalletPrivacyKeys() ([]*mixTy.WalletAddrPrivacy, error) {
 	//通过Account前缀查找获取钱包中的所有账户信息
 	WalletAccStores, err := p.store.GetAccountByPrefix("Account")
@@ -146,7 +146,7 @@ func (p *mixPolicy) tryRescanNotes() error {
 	return nil
 }
 
-//从localdb中把Mix合约的交易按升序都获取出来依次处理
+// 从localdb中把Mix合约的交易按升序都获取出来依次处理
 func (p *mixPolicy) rescanNotes() {
 	var txInfo mixTy.LocalMixTx
 	i := 0
@@ -207,7 +207,6 @@ func (p *mixPolicy) rescanNotes() {
 	}
 
 	p.store.setRescanNoteStatus(int32(mixTy.MixWalletRescanStatus_FINISHED))
-	return
 }
 
 func (p *mixPolicy) processPrivcyTxs(ReqHashes *types.ReqHashes) {

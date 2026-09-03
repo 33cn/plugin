@@ -3,7 +3,10 @@ name: manually make bin for all branch
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
-on: [push,pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -11,9 +14,9 @@ jobs:
     name: automake
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Golang env
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
         id: go

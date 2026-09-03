@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress string,
@@ -65,7 +65,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, toEthAddress str
 	return payload, nil
 }
 
-//11 => 00001011, 数组index0值为0，大端表示
+// 11 => 00001011, 数组index0值为0，大端表示
 func getBigEndBitsWithFixLen(val *big.Int, n uint64) []uint {
 	l := val.BitLen()
 	if n < uint64(l) {
@@ -87,7 +87,7 @@ func getBigEndBitsWithFixLen(val *big.Int, n uint64) []uint {
 	return bits
 }
 
-//把bits以小端模式构建big.Int
+// 把bits以小端模式构建big.Int
 func setBeBitsToVal(bits []uint) string {
 	a := big.NewInt(0)
 	for i := 0; i < len(bits); i++ {
@@ -342,7 +342,7 @@ func GetMintNFTMsg(payload *zt.ZkMintNFT) *zt.ZkMsg {
 
 	part1, part2, _, err := zt.SplitNFTContent(payload.ContentHash)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("split content hash=%s wrong", payload.ContentHash))
+		fmt.Printf("split content hash=%s wrong\n", payload.ContentHash)
 		panic(err)
 	}
 
@@ -411,9 +411,9 @@ func GetMsgHash(msg *zt.ZkMsg) []byte {
 	return hash.Sum(nil)
 }
 
-//GetLayer2PrivateKeySeed 通过用户secp256k1私钥对特定信息的签名的hash产生layer2的eddsa签名的私钥种子来产生用户layer2的私钥
-//在memtamask或钱包app可以不暴露用户私钥而只是内部签名的方式来产生layer2私钥，更加安全
-//refer to https://blogs.loopring.org/new-approach-to-generating-layer-2-account-keys-cn/
+// GetLayer2PrivateKeySeed 通过用户secp256k1私钥对特定信息的签名的hash产生layer2的eddsa签名的私钥种子来产生用户layer2的私钥
+// 在memtamask或钱包app可以不暴露用户私钥而只是内部签名的方式来产生layer2私钥，更加安全
+// refer to https://blogs.loopring.org/new-approach-to-generating-layer-2-account-keys-cn/
 func GetLayer2PrivateKeySeed(privateKey, exchangeAddr, nonce string) ([]byte, error) {
 	c, err := crypto.Load(secp256k1.Name, -1)
 	if err != nil {

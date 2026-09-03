@@ -7,8 +7,8 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 )
 
 /*
@@ -146,16 +146,30 @@ func (r *rgbx) Exec_Confirm(confirm *rtypes.ConfirmTx, tx *types.Transaction, in
 		return r.confirmWithdrawSettlement(confirm, txHash, confirmHash)
 	}
 
-	spendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()
+	btcTxData := confirm.GetBtcTxProof().GetTxData()
 	// 绑定资产的utxo已经在btc链上花费，但op return不存在或承诺数据不正确，
 	// 交易仅做标记并返回，相关资产永久冻结，无法转移
-	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
-	if confirm.GetUtxoProof().GetOpRetOutputIdx() < 0 ||
-		!bytes.Equal(commitment, confirm.GetUtxoProof().OpRetOutputPkScript) {
+	var btcTx wire.MsgTx
+	opRetIdx := confirm.GetUtxoProof().GetOpRetOutputIdx()
+	if opRetIdx >= 0 && len(btcTxData) > 0 {
+		if err := btcTx.DeserializeNoWitness(bytes.NewReader(btcTxData)); err != nil {
+			elog.Error("Exec_Confirm deserialize btc tx", "action", action,
+				"txHash", txHash, "confirmHash", confirmHash, "err", err)
+			return nil, err
+		}
+	}
+	// spendHash 取 merkle 证明所绑定交易的 txid（解析后重序列化的 no-witness 哈希），
+	// 不用原始字节直接哈希——原始字节可拼接尾随字节改变 DoubleHashH 结果，
+	// 导致 spendHash 与 merkle 验证过的 txid 不一致，污染 GenesisBtcTxHash 与资产 owner
+	spendHash := btcTx.TxHash().String()
 
-		elog.Warn("checkConfirm op return commitment", "action", action,
-			"txHash", txHash, "confirmHash", confirmHash, "opRetIdx", confirm.GetUtxoProof().GetOpRetOutputIdx(),
-			"spendHash", spendHash, "commit", hex.EncodeToString(confirm.GetUtxoProof().OpRetOutputPkScript),
+	commitment, _ := txscript.NullDataScript(confirm.GetTxHash())
+	if opRetIdx < 0 || int(opRetIdx) >= len(btcTx.TxOut) ||
+		!bytes.Equal(commitment, btcTx.TxOut[opRetIdx].PkScript) {
+
+		elog.Warn("Exec_Confirm op return commitment", "action", action,
+			"txHash", txHash, "confirmHash", confirmHash, "opRetIdx", opRetIdx,
+			"spendHash", spendHash, "txOutLen", len(btcTx.TxOut),
 			"expectCommit", hex.EncodeToString(commitment))
 		return &types.Receipt{Ty: types.ExecOk}, nil
 	}

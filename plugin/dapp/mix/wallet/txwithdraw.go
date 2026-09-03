@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	"github.com/pkg/errors"

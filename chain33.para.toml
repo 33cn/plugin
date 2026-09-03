@@ -429,6 +429,7 @@ Enable=0
 
 [fork.sub.relay]
 Enable=0
+ForkRelayVerifyBtcTx=0
 
 [fork.sub.norm]
 Enable=0

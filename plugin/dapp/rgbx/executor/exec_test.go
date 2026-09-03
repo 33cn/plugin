@@ -1,16 +1,21 @@
 package executor
 
 import (
+	"bytes"
+	"encoding/hex"
 	"testing"
 
 	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	paratypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -95,10 +100,16 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
 	normal, normal1, collect, collect1 := "normal", "normal1", "collect", "collect1"
 
-	mintScript, _ := txscript.NullDataScript([]byte(normal))
-	mintScript1, _ := txscript.NullDataScript([]byte(collect))
-	transferScript, _ := txscript.NullDataScript([]byte(normal1))
-	transferScript1, _ := txscript.NullDataScript([]byte(collect1))
+	buildTxWithOpReturn := func(data []byte) []byte {
+		tx := wire.NewMsgTx(wire.TxVersion)
+		tx.AddTxIn(wire.NewTxIn(&wire.OutPoint{}, nil, nil))
+		script, _ := txscript.NullDataScript(data)
+		tx.AddTxOut(wire.NewTxOut(0, script))
+		buf := new(bytes.Buffer)
+		_ = tx.SerializeNoWitness(buf)
+		return buf.Bytes()
+	}
+
 	tcArr := []*testCase{
 		{
 			expectErr: nil,
@@ -110,19 +121,37 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(normal), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript}},
+			action: &rtypes.ConfirmTx{
+				ActionType: rtypes.TyMintAction,
+				TxHash:     []byte(normal),
+				UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(normal))},
+			},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{ActionType: rtypes.TyMintAction, TxHash: []byte(collect), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: mintScript1}},
+			action: &rtypes.ConfirmTx{
+				ActionType: rtypes.TyMintAction,
+				TxHash:     []byte(collect),
+				UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(collect))},
+			},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{TxHash: []byte(normal1), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript}},
+			action: &rtypes.ConfirmTx{
+				TxHash:     []byte(normal1),
+				UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(normal1))},
+			},
 		},
 		{
 			expectErr: nil,
-			action:    &rtypes.ConfirmTx{TxHash: []byte(collect1), UtxoProof: &rtypes.UtxoSpendingProof{OpRetOutputPkScript: transferScript1}},
+			action: &rtypes.ConfirmTx{
+				TxHash:     []byte(collect1),
+				UtxoProof:  &rtypes.UtxoSpendingProof{OpRetOutputIdx: 0},
+				BtcTxProof: &rtypes.BtcTxProof{TxData: buildTxWithOpReturn([]byte(collect1))},
+			},
 		},
 	}
 
@@ -163,7 +192,8 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	require.Nil(t, readDB(state, formatAssetKey(collect), asset))
 	require.Equal(t, formatSymbol(collect), asset.Symbol)
 	require.Equal(t, rtypes.Collectible, rtypes.AssetType(asset.Type))
-	owner := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
+	collectSpendHash := chainhash.DoubleHashH(buildTxWithOpReturn([]byte(collect))).String()
+	owner := rtypes.FormatUtxo(collectSpendHash, 1)
 	require.Equal(t, owner, asset.Owner)
 
 	// check transfer
@@ -171,7 +201,8 @@ func TestRgbx_Exec_Confirm(t *testing.T) {
 	require.Equal(t, addr, asset.Owner)
 	require.Equal(t, int64(0), accDB.LoadAccount(utxoAddr).Balance)
 	require.Equal(t, int64(1), accDB.LoadAccount(addr).Balance)
-	changeAddr := rtypes.FormatUtxo(chainhash.DoubleHashH(nil).String(), 1)
+	normal1SpendHash := chainhash.DoubleHashH(buildTxWithOpReturn([]byte(normal1))).String()
+	changeAddr := rtypes.FormatUtxo(normal1SpendHash, 1)
 	require.Equal(t, int64(1), accDB.LoadAccount(changeAddr).Balance)
 }
 
@@ -236,4 +267,173 @@ func TestRgbx_Exec_CommitDKG(t *testing.T) {
 	recp := testExec(t, r, rtypes.NameCommitDKGAction, commit, nil, 0)
 	require.NotNil(t, recp)
 	require.NotEmpty(t, recp.KV)
+}
+
+// TestRgbx_Exec_Confirm_WithMerkleProof walks the full confirm happy path with a
+// real BtcTxProof (BlockHeight/BlockHash/TxIndex/MerkleProof): checkConfirm must
+// validate the BTC merkle proof, then Exec_Confirm must perform the state
+// transition and mint the native asset.
+func TestRgbx_Exec_Confirm_WithMerkleProof(t *testing.T) {
+	r := newRgbx().(*rgbx)
+	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
+	out, err := wire.NewOutPointFromString(utxoAddr)
+	require.NoError(t, err)
+
+	pendingHash := []byte("merkle-mint")
+	symbol := "nativemerkle"
+
+	// BTC spend tx: spends the genesis utxo, output 0 = OP_RETURN commitment
+	// to the pending chain33 tx hash, output 1 = value (owner utxo).
+	var spendTx wire.MsgTx
+	spendTx.Version = 2
+	spendTx.TxIn = append(spendTx.TxIn, &wire.TxIn{PreviousOutPoint: *out})
+	commitment, err := txscript.NullDataScript(pendingHash)
+	require.NoError(t, err)
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(0, commitment))
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(5000, []byte{0x51}))
+
+	buf := new(bytes.Buffer)
+	require.NoError(t, spendTx.SerializeNoWitness(buf))
+	txData := buf.Bytes()
+	txID := spendTx.TxHash()
+
+	// Build a 2-tx block merkle tree so the proof carries a real branch.
+	// Compute the branch before GetMerkleRoot, which mutates its leaf slice.
+	dummyID := chainhash.DoubleHashH(bytes.Repeat([]byte{0xaa}, 32))
+	leaves := [][]byte{txID.CloneBytes(), dummyID.CloneBytes()}
+	_, branch := merkle.GetMerkleRootAndBranch(leaves, 0)
+	root := merkle.GetMerkleRoot(leaves)
+	rootHash, err := chainhash.NewHash(root)
+	require.NoError(t, err)
+
+	confirm := &rtypes.ConfirmTx{
+		ActionType:    rtypes.TyMintAction,
+		TxBlockHeight: 10,
+		TxIndex:       0,
+		TxHash:        pendingHash,
+		UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: 0},
+		BtcTxProof:    &rtypes.BtcTxProof{TxData: txData, BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 0, MerkleProof: branch},
+	}
+
+	dir, state, local := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig").Return(testCfg)
+	api.On("Query", ltypes.LightclientX, "GetBtcHeader", mock.Anything).Return(&ltypes.BtcHeader{
+		Hash:       "deadbeef",
+		Height:     100,
+		MerkleRoot: rootHash.String(),
+	}, nil)
+	r.SetAPI(api)
+	r.SetStateDB(state)
+	r.SetLocalDB(local)
+
+	// Pending payload (MintAsset) in state, pending tx in local db.
+	require.NoError(t, state.Set(formatPayloadKey(pendingHash), types.Encode(&rtypes.MintAsset{Symbol: symbol, TotalAmount: 1000})))
+	require.NoError(t, local.Set(formatPendingTxKey(10, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: pendingHash,
+	})))
+
+	tx := &types.Transaction{}
+	tx.Sign(types.SECP256K1, testPriv)
+	txHash := hex.EncodeToString(tx.Hash())
+
+	// 1) merkle proof verification
+	err = r.checkConfirm(tx.From(), txHash, confirm)
+	require.NoError(t, err)
+
+	// 2) state transition + mint
+	receipt, err := r.Exec_Confirm(confirm, tx, 0)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+	require.NotEmpty(t, receipt.KV)
+	util.SaveKVList(state, receipt.KV)
+
+	// 3) verify the asset was minted with the spend tx as genesis.
+	// For a Normal asset the owner utxo holds the balance in the account DB
+	// (asset.Owner is only populated for collectibles).
+	asset := &rtypes.RgbxAsset{}
+	require.NoError(t, readDB(state, formatAssetKey(symbol), asset))
+	require.Equal(t, formatSymbol(symbol), asset.Symbol)
+	spendHash := txID.String()
+	require.Equal(t, spendHash, asset.GenesisBtcTxHash)
+
+	owner := rtypes.FormatUtxo(spendHash, uint32(confirm.UtxoProof.GetOpRetOutputIdx()+1))
+	accDB, err := r.newAccount(symbol)
+	require.NoError(t, err)
+	require.Equal(t, int64(1000), accDB.LoadAccount(owner).Balance)
+}
+
+// TestRgbx_Exec_Confirm_TrailingBytes: spendHash must be the merkle-certified
+// txid even when raw TxData carries trailing garbage bytes (btcd's
+// DeserializeNoWitness accepts them). Deriving spendHash from the raw bytes
+// (old DoubleHashH) would have diverged from the certified txid; Exec_Confirm
+// now derives it from the parsed tx.
+func TestRgbx_Exec_Confirm_TrailingBytes(t *testing.T) {
+	r := newRgbx().(*rgbx)
+	utxoAddr := "74503993e7c8d4280f6fbb99ae5aaa92231a1981a358e40f97e2b4f4dfbea13c:0"
+	out, err := wire.NewOutPointFromString(utxoAddr)
+	require.NoError(t, err)
+
+	pendingHash := []byte("merkle-mint-trailing")
+	symbol := "nativetrailing"
+
+	var spendTx wire.MsgTx
+	spendTx.Version = 2
+	spendTx.TxIn = append(spendTx.TxIn, &wire.TxIn{PreviousOutPoint: *out})
+	commitment, err := txscript.NullDataScript(pendingHash)
+	require.NoError(t, err)
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(0, commitment))
+	spendTx.TxOut = append(spendTx.TxOut, wire.NewTxOut(5000, []byte{0x51}))
+
+	buf := new(bytes.Buffer)
+	require.NoError(t, spendTx.SerializeNoWitness(buf))
+	cleanData := buf.Bytes()
+	txID := spendTx.TxHash()
+	// attacker appends trailing garbage to the raw bytes
+	txData := append(append([]byte{}, cleanData...), 0xde, 0xad, 0xbe, 0xef)
+
+	dummyID := chainhash.DoubleHashH(bytes.Repeat([]byte{0xbb}, 32))
+	leaves := [][]byte{txID.CloneBytes(), dummyID.CloneBytes()}
+	_, branch := merkle.GetMerkleRootAndBranch(leaves, 0)
+
+	confirm := &rtypes.ConfirmTx{
+		ActionType:    rtypes.TyMintAction,
+		TxBlockHeight: 10,
+		TxIndex:       0,
+		TxHash:        pendingHash,
+		UtxoProof:     &rtypes.UtxoSpendingProof{SpendingInputIdx: 0, OpRetOutputIdx: 0},
+		BtcTxProof:    &rtypes.BtcTxProof{TxData: txData, BlockHeight: 100, BlockHash: "deadbeef", TxIndex: 0, MerkleProof: branch},
+	}
+
+	dir, state, local := util.CreateTestDB()
+	defer util.CloseTestDB(dir, state)
+	api := &mocks.QueueProtocolAPI{}
+	api.On("GetConfig").Return(testCfg)
+	r.SetAPI(api)
+	r.SetStateDB(state)
+	r.SetLocalDB(local)
+	require.NoError(t, state.Set(formatPayloadKey(pendingHash), types.Encode(&rtypes.MintAsset{Symbol: symbol, TotalAmount: 1000})))
+	require.NoError(t, local.Set(formatPendingTxKey(10, 0), types.Encode(&rtypes.PendingTx{
+		Utxo:   &rtypes.OutPoint{Hash: out.Hash.String()},
+		TxHash: pendingHash,
+	})))
+
+	tx := &types.Transaction{}
+	tx.Sign(types.SECP256K1, testPriv)
+
+	// Call Exec_Confirm directly (in production checkConfirm rejects trailing
+	// bytes first) to prove the spendHash derivation itself is malleability-free.
+	receipt, err := r.Exec_Confirm(confirm, tx, 0)
+	require.NoError(t, err)
+	require.NotEmpty(t, receipt.KV)
+	util.SaveKVList(state, receipt.KV)
+
+	asset := &rtypes.RgbxAsset{}
+	require.NoError(t, readDB(state, formatAssetKey(symbol), asset))
+	require.Equal(t, formatSymbol(symbol), asset.Symbol)
+	// spendHash must equal the clean txid, not DoubleHashH of the dirty bytes
+	require.Equal(t, txID.String(), asset.GenesisBtcTxHash)
+	require.NotEqual(t, chainhash.DoubleHashH(txData).String(), asset.GenesisBtcTxHash)
 }

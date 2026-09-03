@@ -1,0 +1,58 @@
+name: ci_dapps
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+# 原 Jenkins ci-plugin (Jenkinsfile) 迁移而来。
+# Jenkins 执行 `docker-compose-pre.sh run <proj> all`，即遍历 build/ci 下所有
+# 带 testcase.sh 的 dapp 目录；其中 cross2eth/mix/rgbx/rollup 在 Jenkins 里被
+# rm 掉（已有独立 workflow），evm/paracross 也已有独立 workflow。
+# 剩余 5 个 dapp 由本 workflow 接管，逐个并行跑，与 Jenkins 的串行 all 等价。
+
+jobs:
+  ci_dapps:
+    name: ci_${{ matrix.dapp }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      # 一个 dapp 失败不影响其他 dapp，便于一次 CI 暴露全部问题
+      fail-fast: false
+      matrix:
+        include:
+          - dapp: autonomy
+            timeout: 60
+          - dapp: bridgevmxgo
+            # ganache(eth+bsc) + 4 个 ebrelayer + 5 个 chain33 节点 + nginx，最重
+            timeout: 90
+          - dapp: evm2
+            timeout: 60
+          - dapp: unfreeze
+            timeout: 60
+          - dapp: zksync
+            timeout: 60
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          # bridgevmxgo 的 cmd/build.sh 用 git describe --tags 注入版本号
+          fetch-depth: 0
+
+      - name: Set up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+        id: go
+
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+
+      - name: deploy
+        run: |
+          make build_ci
+          make docker-compose dapp=${{ matrix.dapp }}
+
+      - name: cleanup
+        if: always()
+        run: make docker-compose-down dapp=${{ matrix.dapp }}

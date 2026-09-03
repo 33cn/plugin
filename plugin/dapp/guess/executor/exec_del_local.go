@@ -139,22 +139,22 @@ func (g *Guess) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, err
 	return dbSet, nil
 }
 
-//ExecDelLocal_Start Guess执行器Start交易撤销
+// ExecDelLocal_Start Guess执行器Start交易撤销
 func (g *Guess) ExecDelLocal_Start(payload *gty.GuessGameStart, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
-//ExecDelLocal_Bet Guess执行器Bet交易撤销
+// ExecDelLocal_Bet Guess执行器Bet交易撤销
 func (g *Guess) ExecDelLocal_Bet(payload *gty.GuessGameBet, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
-//ExecDelLocal_Publish Guess执行器Publish交易撤销
+// ExecDelLocal_Publish Guess执行器Publish交易撤销
 func (g *Guess) ExecDelLocal_Publish(payload *gty.GuessGamePublish, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }
 
-//ExecDelLocal_Abort Guess执行器Abort交易撤销
+// ExecDelLocal_Abort Guess执行器Abort交易撤销
 func (g *Guess) ExecDelLocal_Abort(payload *gty.GuessGameAbort, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return g.execLocal(receiptData)
 }

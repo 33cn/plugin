@@ -27,7 +27,7 @@ func GetL2FirstQueueId(db dbm.KV) (int64, error) {
 	return id.Data, nil
 }
 
-//L2 queue id 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
+// L2 queue id 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
 func GetL2LastQueueId(db dbm.KV) (int64, error) {
 	key := getL2LastQueueIdKey()
 	r, err := db.Get(key)
@@ -59,7 +59,7 @@ func GetL2QueueIdOp(db dbm.KV, id int64) (*zt.ZkOperation, error) {
 	return &data, nil
 }
 
-//GetProofId2QueueId proof中的pubdata 对应的operation的start/end queueId
+// GetProofId2QueueId proof中的pubdata 对应的operation的start/end queueId
 func GetProofId2QueueId(db dbm.KV, id uint64) (*zt.ProofId2QueueIdData, error) {
 	key := getProofId2QueueIdKey(id)
 	r, err := db.Get(key)
@@ -358,9 +358,9 @@ func checkSameMintNFT(queueOp, pubDataOp *zt.ZkOperation) error {
 		return errors.Wrapf(types.ErrInvalidParam, "mintNFT recv acctId queue=%d, pub=%d", q.RecipientID, p.RecipientID)
 	}
 	if q.ErcProtocol != p.ErcProtocol {
-		return errors.Wrapf(types.ErrInvalidParam, "mintNFT protocal queue=%d, pub=%d", q.ErcProtocol, p.ErcProtocol)
+		return errors.Wrapf(types.ErrInvalidParam, "mintNFT protocol queue=%d, pub=%d", q.ErcProtocol, p.ErcProtocol)
 	}
-	for i, _ := range q.ContentHash {
+	for i := range q.ContentHash {
 		if q.ContentHash[i] != p.ContentHash[i] {
 			return errors.Wrapf(types.ErrInvalidParam, "mintNFT contentHash i=%d queue=%s, pub=%s", i, q.ContentHash[i], p.ContentHash[i])
 		}
@@ -394,9 +394,9 @@ func checkSameWithdrawNFT(queueOp, pubDataOp *zt.ZkOperation) error {
 		return errors.Wrapf(types.ErrInvalidParam, "withdrawNFT withdraw amount queue=%d, pub=%d", q.WithdrawAmount, p.WithdrawAmount)
 	}
 	if q.ErcProtocol != p.ErcProtocol {
-		return errors.Wrapf(types.ErrInvalidParam, "withdrawNFT protocal queue=%d, pub=%d", q.ErcProtocol, p.ErcProtocol)
+		return errors.Wrapf(types.ErrInvalidParam, "withdrawNFT protocol queue=%d, pub=%d", q.ErcProtocol, p.ErcProtocol)
 	}
-	for i, _ := range q.ContentHash {
+	for i := range q.ContentHash {
 		if q.ContentHash[i] != p.ContentHash[i] {
 			return errors.Wrapf(types.ErrInvalidParam, "withdrawNFT contentHash i=%d queue=%s, pub=%s", i, q.ContentHash[i], p.ContentHash[i])
 		}
@@ -463,7 +463,7 @@ func checkPackValue(amount string, manMaxBitWidth int64) error {
 	return nil
 }
 
-//根据系统和token精度，计算合约转化为二层tree侧的amount，合约侧amount都是系统精度
+// 根据系统和token精度，计算合约转化为二层tree侧的amount，合约侧amount都是系统精度
 func GetTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal int) (amount4Tree, totalAmount4Tree, feeAmount4Tree string, err error) {
 	amount4Tree, err = TransferDecimalAmount(amount, sysDecimal, tokenDecimal)
 	if err != nil {
@@ -488,7 +488,7 @@ func GetTreeSideAmount(amount, totalAmount, fee string, sysDecimal, tokenDecimal
 	return amount4Tree, totalAmount4Tree, feeAmount4Tree, nil
 }
 
-//from向to小数对齐，如果from>to, 需要裁减掉差别部分，且差别部分需要全0，如果from<to,差别部分需要补0
+// from向to小数对齐，如果from>to, 需要裁减掉差别部分，且差别部分需要全0，如果from<to,差别部分需要补0
 func TransferDecimalAmount(amount string, fromDecimal, toDecimal int) (string, error) {
 	amountInt, ok := new(big.Int).SetString(amount, 10)
 	if !ok {

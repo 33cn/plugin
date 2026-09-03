@@ -245,7 +245,7 @@ func opSAR(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	return nil, nil
 }
 
-//使用keccak256进行哈希运算
+// 使用keccak256进行哈希运算
 func opSha3(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	offset, size := callContext.stack.pop(), callContext.stack.peek()
 	data := callContext.memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
@@ -676,7 +676,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	return nil, nil
 }
 
-//CREATE2
+// CREATE2
 func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	var (
 		endowment    = callContext.stack.pop()

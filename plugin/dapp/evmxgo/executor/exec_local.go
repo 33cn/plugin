@@ -229,7 +229,7 @@ func (e *evmxgo) ExecLocal_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types
 	return e.ExecLocal_Burn(pay, tx, receiptData, index)
 }
 
-//当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
+// 当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
 func (e *evmxgo) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 
 	dbSet := &types.LocalDBSet{}

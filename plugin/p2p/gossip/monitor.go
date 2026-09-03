@@ -613,49 +613,45 @@ func (n *Node) monitorCerts() {
 		return
 	}
 
-	for {
-		select {
-		case <-ticker.C:
-			//check serialNum
-			var resp []string
-			var s struct {
-				Serials []string `json:"serials,omitempty"`
-			}
-			s.Serials = getSerialNums()
-			if len(s.Serials) == 0 {
-				continue
-			}
-			log.Debug("check cert serialNum++++++", "certNum.", len(s.Serials))
-			err = jcli.Call("Validate", s, &resp)
-			if err != nil {
-				log.Error("monitorCerts", "rpc call err", err)
-				continue
-			}
+	for range ticker.C {
+		//check serialNum
+		var resp []string
+		var s struct {
+			Serials []string `json:"serials,omitempty"`
+		}
+		s.Serials = getSerialNums()
+		if len(s.Serials) == 0 {
+			continue
+		}
+		log.Debug("check cert serialNum++++++", "certNum.", len(s.Serials))
+		err = jcli.Call("Validate", s, &resp)
+		if err != nil {
+			log.Error("monitorCerts", "rpc call err", err)
+			continue
+		}
 
-			log.Debug("monitorCerts", "resp", resp)
-			tempCerts := getSerials()
-			for _, serialNum := range resp {
-				//设置证书序列号状态
-				certinfo := updateCertSerial(serialNum, true)
-				delete(tempCerts, serialNum)
-				for pname, peer := range n.nodeInfo.peerInfos.GetPeerInfos() {
-					if peer.GetAddr() == certinfo.ip {
-						v, ok := latestSerials.Load(certinfo.ip)
-						if ok && v.(string) == serialNum {
-							n.remove(pname) //断开已经连接的节点
-						}
+		log.Debug("monitorCerts", "resp", resp)
+		tempCerts := getSerials()
+		for _, serialNum := range resp {
+			//设置证书序列号状态
+			certinfo := updateCertSerial(serialNum, true)
+			delete(tempCerts, serialNum)
+			for pname, peer := range n.nodeInfo.peerInfos.GetPeerInfos() {
+				if peer.GetAddr() == certinfo.ip {
+					v, ok := latestSerials.Load(certinfo.ip)
+					if ok && v.(string) == serialNum {
+						n.remove(pname) //断开已经连接的节点
 					}
 				}
 			}
-			log.Debug("monitorCert", "tempCerts", tempCerts)
-			//处理解除吊销的节点
-			for serialNum, info := range tempCerts {
-				if info.revoke {
-					// 被撤销的证书恢复正常
-					updateCertSerial(serialNum, !info.revoke)
-				}
+		}
+		log.Debug("monitorCert", "tempCerts", tempCerts)
+		//处理解除吊销的节点
+		for serialNum, info := range tempCerts {
+			if info.revoke {
+				// 被撤销的证书恢复正常
+				updateCertSerial(serialNum, !info.revoke)
 			}
-
 		}
 	}
 

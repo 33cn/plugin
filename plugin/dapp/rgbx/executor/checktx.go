@@ -9,8 +9,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/txscript"
 )
 
 var (
@@ -26,7 +25,6 @@ var (
 	ErrTxAlreadyConfirmed               = errors.New("tx already confirmed")
 	ErrConfirmedHashNotEqual            = errors.New("confirmed hash not equal")
 	ErrSpendingInputNotEqual            = errors.New("spending input not equal")
-	ErrOpRetOutputPkScriptNotEqual      = errors.New("ErrOpRetOutputPkScriptNotEqual")
 	ErrInvalidCommitAddress             = errors.New("ErrInvalidCommitAddress")
 	ErrFromUtxoPkScriptNotSet           = errors.New("ErrFromUtxoPkScriptNotSet")
 	ErrInvalidAssetPrecision            = errors.New("ErrInvalidAssetPrecision")
@@ -43,7 +41,6 @@ var (
 	ErrInvalidAssetSymbol               = errors.New("invalid asset symbol")
 	ErrInvalidBtcTxProof                = errors.New("invalid btc tx proof")
 	ErrWithdrawConfirmTimeoutNotAllowed = errors.New("withdraw confirm timeout not allowed")
-	ErrInvalidBtcProofIndex             = errors.New("invalid btc proof tx index")
 	ErrInvalidBtcBlockHash              = errors.New("invalid btc block hash")
 	ErrGetBtcHeader                     = errors.New("get btc header error")
 	ErrInvalidBtcProofBlock             = errors.New("invalid btc proof block info")
@@ -358,51 +355,47 @@ func (r *rgbx) checkConfirm(fromAddr, txHash string, confirm *rtypes.ConfirmTx) 
 		return nil
 	}
 
-	btcSpendHash := chainhash.DoubleHashH(confirm.GetUtxoProof().GetSpendingTx()).String()
-	spendingTx := wire.MsgTx{}
-	err = spendingTx.DeserializeNoWitness(bytes.NewReader(confirm.GetUtxoProof().GetSpendingTx()))
+	btcTx, err := r.validateBtcTxProof(txHash, confirm.GetBtcTxProof())
 	if err != nil {
-		elog.Error("checkConfirm decode spending tx", "action", action,
-			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"btcSpendingTx", hex.EncodeToString(confirm.GetUtxoProof().GetSpendingTx()),
-			"decode err", err)
-		return ErrDecodeBtcTx
+		elog.Error("checkConfirm validate btc tx proof", "action", action,
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"btcProof", btcProof2String(confirm.GetBtcTxProof()), "err", err)
+		return err
 	}
 
 	spendingInputIdx := int(confirm.GetUtxoProof().GetSpendingInputIdx())
-	if spendingInputIdx >= len(spendingTx.TxIn) {
+	if spendingInputIdx >= len(btcTx.TxIn) {
 		elog.Error("checkConfirm spending tx input", "action", action,
-			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"inputIdx", spendingInputIdx, "txInLen", len(spendingTx.TxIn), "btcSpendHash", btcSpendHash)
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"inputIdx", spendingInputIdx, "txInLen", len(btcTx.TxIn))
 		return ErrInvalidSpendingTxIn
 	}
 
 	// check input
 	expectInput := pendingTx.Utxo.ToString()
-	actualInput := spendingTx.TxIn[int(confirm.GetUtxoProof().GetSpendingInputIdx())].PreviousOutPoint.String()
+	actualInput := btcTx.TxIn[spendingInputIdx].PreviousOutPoint.String()
 	if expectInput != actualInput {
 		elog.Error("checkConfirm input utxo not equal", "action", action,
-			"txHash", txHash, "confirmTxHash", hex.EncodeToString(confirm.GetTxHash()),
-			"expectInput", expectInput, "actualInput", actualInput, "btcSpendHash", btcSpendHash)
+			"txHash", txHash, "confirmTxHash", confirmTxHash,
+			"expectInput", expectInput, "actualInput", actualInput)
 		return ErrSpendingInputNotEqual
 	}
 
 	opRetOutIdx := int(confirm.GetUtxoProof().GetOpRetOutputIdx())
 	// 表示op_return输出不存在，即utxo已经在btc链花费, 但没有构建rgbx所约束的op_return输出
-	if opRetOutIdx < 0 || opRetOutIdx >= len(spendingTx.TxOut) {
+	if opRetOutIdx < 0 || opRetOutIdx >= len(btcTx.TxOut) {
 		elog.Debug("checkConfirm opReturn output not exist",
 			"action", action, "txHash", txHash,
-			"confirmTxHash", confirmTxHash, "btcSpendHash", btcSpendHash)
+			"confirmTxHash", confirmTxHash)
 		return nil
 	}
 
-	// 提供的op_return pkScript参数非法，和btc原始交易中的输出不符
-	if !bytes.Equal(confirm.GetUtxoProof().OpRetOutputPkScript,
-		spendingTx.TxOut[int(confirm.GetUtxoProof().GetOpRetOutputIdx())].PkScript) {
-		elog.Error("checkConfirm opReturn pkScript not equal",
+	// 验证指定输出是否为OP_RETURN，如果不是则说明该utxo已花费但无有效承诺（资产冻结）
+	if len(btcTx.TxOut[opRetOutIdx].PkScript) == 0 || btcTx.TxOut[opRetOutIdx].PkScript[0] != txscript.OP_RETURN {
+		elog.Debug("checkConfirm opReturn output not OP_RETURN",
 			"action", action, "txHash", txHash,
-			"confirmTxHash", confirmTxHash, "btcSpendHash", btcSpendHash)
-		return ErrOpRetOutputPkScriptNotEqual
+			"confirmTxHash", confirmTxHash)
+		return nil
 	}
 
 	return nil
