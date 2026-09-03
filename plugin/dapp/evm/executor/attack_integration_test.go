@@ -251,22 +251,29 @@ func TestWBTYOverflowAttackIntegration(t *testing.T) {
 		// 关联地址 coins 转账（黑名单功能待集成）
 		fundRole(t, exec, cfg, roleAttacker, 100*ctypes.DefaultCoinPrecision)
 		fundRole(t, exec, cfg, roleAccomplice, 100*ctypes.DefaultCoinPrecision)
-		// 关联地址黑名单（待集成）
+		// 关联地址黑名单
 		t.Run("blacklist: all fund operations blocked", func(t *testing.T) {
-			// 黑名单 PR 合并后：attacker + accomplice 的所有资金操作
-			// （EVM 调用、coins 转账）均应被拦截。
+			// attacker + accomplice 的所有资金操作（EVM 调用、coins 转账）均应被拦截。
 			// 使用 IsBlockedAccount 能识别的 ETH 地址形态（addrFromRole 返回 tx.From()）。
 			attackerAddr := addrFromRole(cfg, roleAttacker)
 			accompliceAddr := addrFromRole(cfg, roleAccomplice)
 			restore := ctypes.SetBlockedAccountsForTest([]string{attackerAddr, accompliceAddr})
 			t.Cleanup(restore)
 
-			// EVM 调用被拦截：attacker 对 WBTY 合约的 deposit 转账（非溢出金额）应失败
-			_, err := exec.Exec(makeCallTx(cfg, roleAttacker, contractAddr, depositInput, uint64(50*ctypes.DefaultCoinPrecision)), 0)
-			if err == nil {
-				t.Fatal("BUG: blacklisted attacker EVM transfer should be rejected")
+			// 真实节点上的闸门在 chain33 框架层：executor.checkTx 在调用驱动 Exec 之前
+			// 就以 CheckTxBlockedAccount 按 from 维度拒绝，交易根本进不到 EVM 驱动。
+			attackTx := makeCallTx(cfg, roleAttacker, contractAddr, depositInput, uint64(50*ctypes.DefaultCoinPrecision))
+			if err := ctypes.CheckTxBlockedAccount(cfg, 1000, attackTx); err == nil {
+				t.Fatal("BUG: chain33 checkTx should reject blacklisted attacker EVM tx")
 			}
-			t.Logf("✓ blacklisted attacker EVM call REJECTED: %v", err)
+
+			// 直接调驱动 Exec 绕过了框架 checkTx，这条路径真实节点不存在；
+			// 此处只验证 EVM 层的纵深防御同样拒绝（结果与框架层一致，不产生额外状态）。
+			_, err := exec.Exec(attackTx, 0)
+			if err == nil {
+				t.Fatal("BUG: EVM-layer defence in depth should also reject blacklisted attacker")
+			}
+			t.Logf("✓ blacklisted attacker EVM call REJECTED at both layers: %v", err)
 
 			// coins 转账被拦截：accomplice 的 coins 交易在 mempool 层黑名单检查应失败。
 			// EVM executor 只处理 EVM 交易；coins 交易的黑名单拦截在 chain33 通用层
@@ -278,8 +285,12 @@ func TestWBTYOverflowAttackIntegration(t *testing.T) {
 			}
 			t.Logf("✓ blacklisted accomplice coins tx REJECTED: %v", err)
 
-			// 正常用户不受影响：legitUser 的 EVM deposit 仍成功
-			_, err = exec.Exec(makeCallTx(cfg, roleLegitUser, contractAddr, depositInput, uint64(50*ctypes.DefaultCoinPrecision)), 0)
+			// 正常用户不受影响：legitUser 的 EVM deposit 在两层都放行
+			legitTx := makeCallTx(cfg, roleLegitUser, contractAddr, depositInput, uint64(50*ctypes.DefaultCoinPrecision))
+			if err := ctypes.CheckTxBlockedAccount(cfg, 1000, legitTx); err != nil {
+				t.Fatalf("legit user tx should pass chain33 checkTx: %v", err)
+			}
+			_, err = exec.Exec(legitTx, 0)
 			if err != nil {
 				t.Fatalf("legit user deposit should still work: %v", err)
 			}

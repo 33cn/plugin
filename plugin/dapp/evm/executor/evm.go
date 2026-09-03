@@ -218,7 +218,9 @@ func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 		return fmt.Errorf("tx empty")
 	}
 
-	// 账户黑名单入口检查（fork 门控）
+	// 账户黑名单入口检查（fork 门控）。
+	// 纵深防御：chain33 executor.checkTx 在调用本方法之前已按 from 维度拦截，
+	// 且本方法开头对平行链直接返回，此分支只在主链、且框架检查被绕过时才会命中。
 	if err := checkEvmBlockedAccount(evm.GetAPI().GetConfig(), evm.GetHeight(), tx.From()); err != nil {
 		elog.Error("evm CheckTx blocked account", "txhash", hex.EncodeToString(tx.Hash()), "from", tx.From(), "err", err)
 		return err

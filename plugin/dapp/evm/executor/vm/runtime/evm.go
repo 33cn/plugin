@@ -23,6 +23,16 @@ import (
 // checkBlockedAccount 合约内部调用/创建的黑名单拦截（fork 门控）。
 // 命中返回包装后的 types.ErrBlockedAccount，由调用方返回 error 触发 RevertToSnapshot。
 // 与 executor 层共用 types 黑名单，按 EVM 地址（0x 字符串）检查。
+//
+// 这是 chain33 框架层看不见的一层：框架只解析交易信封（from/to/ContractAddr/Para），
+// 合约运行后内部 CALL 了谁只存在于运行时栈上。Call 的 target 检查是阻止
+// "干净用户 → 干净合约 → CALL → 黑名单合约 → 转出自身余额" 的唯一位置
+// （docs/security/evm-account-blacklist.md 场景 B1，blacklist_gap_test.go 有对应用例）。
+// caller 维度则是纵深防御：顶层 caller 即 tx.From 已被框架拦截，
+// 内部 caller 若是黑名单合约，它必须先通过某次 Call 的 target 检查才能执行到这里。
+// CallCode / DelegateCall / StaticCall 不做检查：它们借目标代码在调用者上下文执行，
+// 动的是调用者的存储和余额，不构成从黑名单打出的路径；
+// 唯一例外（DELEGATECALL 到黑名单代码执行 SELFDESTRUCT）由 statedb.Transfer 兜底。
 func checkBlockedAccount(evm *EVM, addrs ...common.Address) error {
 	cfg := evm.cfg
 	if cfg == nil || evm.BlockNumber == nil || !cfg.IsFork(evm.BlockNumber.Int64(), types.ForkAccountBlacklist) {
@@ -217,7 +227,8 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, -1, gas, err
 	}
 
-	// 账户黑名单：合约内部调用拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）
+	// 账户黑名单：合约内部调用拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）。
+	// addr（被调目标）是本检查的实质价值所在，caller 为纵深防御，见 checkBlockedAccount 注释。
 	if berr := checkBlockedAccount(evm, caller.Address(), addr); berr != nil {
 		log.Error("Call blocked account", "caller", caller.Address().String(), "addr", addr.String(), "err", berr)
 		return nil, -1, gas, berr
@@ -513,7 +524,9 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		return nil, -1, gas, err
 	}
 
-	// 账户黑名单：合约创建拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）
+	// 账户黑名单：合约创建拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）。
+	// 顶层 Create 的 caller / contractAddr 已由 chain33 覆盖；此处主要拦 CREATE/CREATE2
+	// 派生出的合约地址恰好命中名单的情况（概率意义上的兜底）。
 	if berr := checkBlockedAccount(evm, caller.Address(), contractAddr); berr != nil {
 		log.Error("Create blocked account", "caller", caller.Address().String(), "contractAddr", contractAddr.String(), "err", berr)
 		return nil, -1, gas, berr

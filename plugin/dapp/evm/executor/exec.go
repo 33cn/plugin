@@ -102,7 +102,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			receiver = common.BytesToAddress(msg.Para())
 		}
 
-		// 账户黑名单：拦截收发双方命中名单的转账，保持 ExecPack 语义（返回 error 由上层包装）
+		// 账户黑名单：拦截收发双方命中名单的转账，保持 ExecPack 语义（返回 error 由上层包装）。
+		// caller 已由 chain33 from 维度覆盖；receiver 在 Para 超过 20 字节时只有这里能拦（见 checkEvmBlockedAccount 注释）。
 		if err := checkEvmBlockedAccount(cfg, evm.GetHeight(), caller.String(), receiver.String()); err != nil {
 			log.Error("innerExec blocked account transfer", "caller", caller.String(), "receiver", receiver.String(), "value", msg.Value(), "err", err)
 			return nil, err
@@ -148,7 +149,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
 
-	// 账户黑名单：合约调用/创建时拦截发送方与目标合约地址命中名单的情况
+	// 账户黑名单：合约调用/创建时拦截发送方与目标合约地址命中名单的情况。
+	// 两个维度均已由 chain33 的 from / ContractAddr 检查覆盖，此处为纵深防御。
 	if err := checkEvmBlockedAccount(cfg, evm.GetHeight(), msg.From().String(), contractAddrStr); err != nil {
 		log.Error("innerExec blocked account call/create", "from", msg.From().String(), "contractAddr", contractAddrStr, "err", err)
 		return nil, err
@@ -442,6 +444,14 @@ func getCaller(tx *types.Transaction) common.Address {
 // 与 types.CheckTxBlockedAccount 共用同一黑名单，但按地址维度检查（此时地址已解析为字符串）。
 // 这里走 fork 门控：仅在 ForkAccountBlacklist 高度后生效。
 // 返回 error 后由调用方按 ExecPack 语义处理（保持 revert + 扣费），不升级为 ExecErr。
+//
+// 分层说明（详见 docs/security/evm-account-blacklist.md）：
+// 交易信封上的 from / to / ContractAddr / 20 字节 Para 已由 chain33 在
+// mempool、出块验块、executor.checkTx 三层拦截，真实节点上命中名单的交易进不到本驱动。
+// 因此 innerExec 里对 msg.From / receiver / contractAddr 的检查对真实交易是纵深防御：
+// 唯一的实质覆盖是 isTransferOnly 路径的 receiver —— Para 超过 20 字节时
+// chain33 的 Para 维度看不见，而 BytesToAddress 取后 20 字节仍能解析出黑名单地址。
+// 这些分支已随本分支在主网执行过，撤除需新开 fork 或先审计历史，不可直接删除。
 func checkEvmBlockedAccount(cfg *types.Chain33Config, height int64, addrs ...string) error {
 	if cfg == nil || !cfg.IsFork(height, types.ForkAccountBlacklist) {
 		return nil
