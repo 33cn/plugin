@@ -5,10 +5,9 @@ name: ci_relay
 # build/ci/relay（relayd、relayd.toml、Dockerfile-relayd、docker-compose-relay.yml、
 # testcase.sh），否则 make docker-compose dapp=relay 会打印
 # "dapp=relay not exist or is system dir" 后直接返回 0（假绿）。
-# agents/** push 用于在 agent 分支上远程迭代，成熟后可移除。
 on:
   push:
-    branches: [ master, 'agents/**' ]
+    branches: [ master ]
   pull_request:
   workflow_dispatch:
 
