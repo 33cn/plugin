@@ -1,5 +1,12 @@
 changelog
 
+## [1.71.3](https://github.com/33cn/plugin/compare/v1.71.2...v1.71.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **relay:** decode verify order addr with its own btc network params ([3b2dd17](https://github.com/33cn/plugin/commit/3b2dd177d7d2d7c91db9ffac110b5dddf328b03f))
+
 ## [1.71.2](https://github.com/33cn/plugin/compare/v1.71.1...v1.71.2) (2026-09-02)
 
 
