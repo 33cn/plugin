@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	chain33Address "github.com/33cn/chain33/common/address"
 	ethCommon "github.com/ethereum/go-ethereum/common"
@@ -17,6 +19,7 @@ import (
 	chain33Types "github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/chain33"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
@@ -26,6 +29,22 @@ import (
 var (
 	mlog = log15.New("relayer manager", "manager")
 )
+
+// 已广播的 lock 交易记录。ebcli 的同步 lock 命令在 rpc 失败时会重试（最多 3 次），
+// 若上一次调用已把 lock 交易广播到以太坊，重试必须复用该交易而不是重新执行，
+// 否则同一笔资产会被锁定两次，导致 chain33 端重复铸币。
+type pendingLockRecord struct {
+	txHash string
+	stamp  time.Time
+}
+
+var (
+	pendingLocksMu sync.Mutex
+	pendingLocks   = make(map[string]*pendingLockRecord)
+)
+
+// pendingLockTTL 记录的有效期，过期记录视为失效，重新执行 lock
+const pendingLockTTL = 10 * time.Minute
 
 // status ...
 const (
@@ -556,6 +575,18 @@ func (manager *Manager) LockEthErc20AssetAsync(lockEthErc20Asset *relayerTypes.L
 	return nil
 }
 
+// recordPendingLock 记录已广播的 lock 交易，并顺带清理过期记录
+func recordPendingLock(key string, rec *pendingLockRecord) {
+	pendingLocksMu.Lock()
+	defer pendingLocksMu.Unlock()
+	for k, v := range pendingLocks {
+		if time.Since(v.stamp) >= pendingLockTTL {
+			delete(pendingLocks, k)
+		}
+	}
+	pendingLocks[key] = rec
+}
+
 // LockEthErc20Asset ...
 func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset *relayerTypes.LockEthErc20, result *interface{}) error {
 	manager.mtx.Lock()
@@ -567,10 +598,50 @@ func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset *relayerTypes.LockEt
 	if !ok {
 		return errors.New("no Ethereum chain named as you configured")
 	}
+
+	// 以链名+锁定参数作为幂等键：同一笔 lock 的重试复用已广播的交易，防止重复锁定
+	lockKey := strings.Join([]string{
+		lockEthErc20Asset.ChainName,
+		lockEthErc20Asset.OwnerKey,
+		lockEthErc20Asset.TokenAddr,
+		lockEthErc20Asset.Amount,
+		lockEthErc20Asset.Chain33Receiver,
+	}, "|")
+
+	pendingLocksMu.Lock()
+	rec, exist := pendingLocks[lockKey]
+	valid := exist && time.Since(rec.stamp) < pendingLockTTL
+	pendingLocksMu.Unlock()
+	if valid {
+		hash, err := ethInt.WaitLockTx(rec.txHash)
+		if nil == err {
+			*result = rpctypes.Reply{
+				IsOk: true,
+				Msg:  hash,
+			}
+			return nil
+		}
+		// 已广播的交易确认失败（回滚），删除记录重新执行 lock
+		if errors.Is(err, ethtxs.ErrLockTxFailed) {
+			pendingLocksMu.Lock()
+			delete(pendingLocks, lockKey)
+			pendingLocksMu.Unlock()
+		} else {
+			// 交易仍在确认中，保留记录，返回错误让调用方稍后重试
+			return err
+		}
+	}
+
 	txhash, err := ethInt.LockEthErc20Asset(lockEthErc20Asset.OwnerKey, lockEthErc20Asset.TokenAddr, lockEthErc20Asset.Amount, lockEthErc20Asset.Chain33Receiver)
 	if nil != err {
+		// 交易已广播但确认失败：记录 tx hash，重试时复用该交易
+		var broadcastErr *ethtxs.LockBroadcastError
+		if errors.As(err, &broadcastErr) {
+			recordPendingLock(lockKey, &pendingLockRecord{txHash: broadcastErr.TxHash.Hex(), stamp: time.Now()})
+		}
 		return err
 	}
+	recordPendingLock(lockKey, &pendingLockRecord{txHash: txhash, stamp: time.Now()})
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  txhash,
