@@ -97,6 +97,34 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 	return mdb
 }
 
+// isBlockedAccount 账户黑名单兜底判定，带 ForkAccountBlacklist 门控。
+// statedb 的转账结果直接进入状态计算，未到分叉高度时不得改变执行结果，否则会与未升级节点分链。
+//
+// 这一层是资产打出的最后一道闸，覆盖 chain33 与 runtime.Call 都看不见的两条路径
+// （docs/security/evm-account-blacklist.md 场景 B2 / B3，blacklist_gap_test.go 有对应用例）：
+//   - TransferToToken 的 from：token 预编译的 from 取自 calldata，与 caller 无绑定，
+//     第三方合约可指定 from=黑名单；calldata 长度 100 字节，chain33 的 Para 维度看不见。
+//   - Transfer 的 sender：SELFDESTRUCT 经 AddBalance 以合约为付款方转账，
+//     且 opSuicide 的付款方取 contract.CodeAddr，DELEGATECALL 到黑名单代码时
+//     runtime 层没有任何检查，只有这里能拦。
+//
+// recipient 维度拦的是"打入"（等同冻结），保留以符合 chain33"禁止收发"的原始设计。
+func (mdb *MemoryStateDB) isBlockedAccount(addrs ...string) bool {
+	if mdb.api == nil {
+		return false
+	}
+	cfg := mdb.api.GetConfig()
+	if cfg == nil || !cfg.IsFork(mdb.blockHeight, types.ForkAccountBlacklist) {
+		return false
+	}
+	for _, addr := range addrs {
+		if types.IsBlockedAccount(addr) {
+			return true
+		}
+	}
+	return false
+}
+
 // Prepare 每一个交易执行之前调用此方法，设置此交易的上下文信息
 // 目前的上下文中包含交易哈希以及交易在区块中的序号
 func (mdb *MemoryStateDB) Prepare(txHash common.Hash, txIndex int) {
@@ -444,6 +472,14 @@ func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, 
 
 // CanTransfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) CanTransfer(sender string, amount uint64) bool {
+	// 账户黑名单兜底：命中名单的发送方一律视为不可转账。
+	// 与 Transfer 的 sender 检查重复；注意上层会把 false 翻译成 ErrNoBalance
+	// （exec.go innerExec / runtime.preCheck），排查时以日志中的 "blocked account" 为准。
+	// 该分支已随本分支在主网执行过，撤除需新开 fork，不可直接删除。
+	if mdb.isBlockedAccount(sender) {
+		log15.Error("CanTransfer blocked account", "sender", sender, "height", mdb.blockHeight)
+		return false
+	}
 	var senderAcc *types.Account
 	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
 	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
@@ -488,6 +524,13 @@ const (
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)
+	// 账户黑名单兜底：收发任一方命中名单即拒绝转账（返回 false，由上层触发 revert）。
+	// sender 维度覆盖 SELFDESTRUCT / DELEGATECALL+SELFDESTRUCT 打出路径，见 isBlockedAccount 注释。
+	if mdb.isBlockedAccount(sender, recipient) {
+		log15.Error("Transfer blocked account", "sender", sender, "recipient", recipient,
+			"amount", amount, "height", mdb.blockHeight)
+		return false
+	}
 	var (
 		ret *types.Receipt
 		err error
@@ -533,6 +576,13 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 
 // TransferToToken evm call token
 func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount int64) (bool, error) {
+	// 账户黑名单兜底：收发任一方命中名单即拒绝 token 转账。
+	// from 维度是 token 预编译第三方代打路径的唯一防线，见 isBlockedAccount 注释。
+	if mdb.isBlockedAccount(from, recipient) {
+		log15.Error("TransferToToken blocked account", "from", from, "recipient", recipient,
+			"symbol", symbol, "amount", amount, "height", mdb.blockHeight)
+		return false, fmt.Errorf("%w: token transfer %s -> %s", types.ErrBlockedAccount, from, recipient)
+	}
 	tokenInfo, err := mdb.tokenStatus(symbol)
 	if err != nil {
 		return false, err
