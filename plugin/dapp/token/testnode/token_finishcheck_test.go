@@ -2,9 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package executor_test
+package testnode
 
 // 链上端到端回归测试（testnode）：验证 finishCreate 的全局 symbol 唯一性修复。
+//
+// 单独放在 token/testnode 包：本测试通过 _ "github.com/33cn/plugin/plugin" 注册全部 dapp
+// driver，而 executor 包内的 token_test.go 也会调用 Init() 注册 token driver，二者在同一
+// 测试二进制中会触发 "Register called twice for driver token" panic。
 //
 // 漏洞：tokendb.go finishCreate 只按 (symbol, owner) 查 per-owner 记录并检查状态，
 // 缺少像 preCreate 那样对全局 symbol 唯一性（checkTokenExist）的检查。同一 symbol
