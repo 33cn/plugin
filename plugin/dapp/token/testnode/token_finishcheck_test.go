@@ -111,7 +111,7 @@ func TestVulnE2ETokenDupFinishCreateRejected(t *testing.T) {
 	require.Nil(t, mocker.SendHot())
 
 	symbol := "DUPREJECT"
-	total := int64(10000 * types.DefaultCoinPrecision)
+	total := 10000 * types.DefaultCoinPrecision
 	ownerA := mocker.GetGenesisAddress()
 	ownerB := mocker.GetHotAddress()
 
@@ -149,7 +149,7 @@ func TestVulnE2ETokenDupFinishCreatePreFork(t *testing.T) {
 	require.Nil(t, mocker.SendHot())
 
 	symbol := "DUPPREFORK"
-	total := int64(10000 * types.DefaultCoinPrecision)
+	total := 10000 * types.DefaultCoinPrecision
 	ownerA := mocker.GetGenesisAddress()
 	ownerB := mocker.GetHotAddress()
 
