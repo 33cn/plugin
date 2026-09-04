@@ -1,5 +1,17 @@
 changelog
 
+# [1.72.0](https://github.com/33cn/plugin/compare/v1.71.3...v1.72.0) (2026-09-04)
+
+
+### Bug Fixes
+
+* **fork:** remove duplicated ForkAccountBlacklist/ForkParaFee configs ([9e5ba9e](https://github.com/33cn/plugin/commit/9e5ba9e74d15e1328cd73c58684e4f9d7c933ca2))
+
+
+### Features
+
+* add EVM account blacklist and bump chain33 to aa71469 ([80d3dfa](https://github.com/33cn/plugin/commit/80d3dfa19c724b9e536a5dbc671cec0b8b9ec2a2))
+
 ## [1.71.3](https://github.com/33cn/plugin/compare/v1.71.2...v1.71.3) (2026-09-03)
 
 
