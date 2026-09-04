@@ -239,6 +239,7 @@ ForkBadTokenSymbol= 0
 ForkTokenPrice=0
 ForkTokenSymbolWithNumber=0
 ForkTokenCheck= 0
+ForkTokenFinishCheck= 0
 
 [fork.sub.manage]
 Enable=0

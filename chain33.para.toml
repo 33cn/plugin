@@ -366,6 +366,7 @@ ForkTokenPrice=0
 ForkTokenSymbolWithNumber=0
 ForkTokenCheck= 0
 ForkTokenEvm=0
+ForkTokenFinishCheck=0
 
 [fork.sub.trade]
 Enable=0

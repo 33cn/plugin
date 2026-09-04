@@ -251,6 +251,13 @@ func (action *tokenAction) finishCreate(tokenFinish *pty.TokenFinishCreate) (*ty
 		return nil, pty.ErrTokenNotPrecreated
 	}
 
+	// 全局检查token symbol唯一性，防止同一symbol被不同owner重复finish导致超发
+	if cfg.IsDappFork(action.height, pty.TokenX, pty.ForkTokenFinishCheckX) {
+		if checkTokenExist(tokenFinish.GetSymbol(), action.db) {
+			return nil, pty.ErrTokenExist
+		}
+	}
+
 	approverValid := false
 	conf := types.ConfSub(cfg, driverName)
 	for _, approver := range conf.GStrList("tokenApprs") {
