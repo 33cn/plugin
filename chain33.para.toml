@@ -347,6 +347,7 @@ ForkTicketVrf =0
 Enable=0
 ForkRetrive=0
 ForkRetriveAsset=0
+ForkRetrivePerformRelay=0
 
 [fork.sub.hashlock]
 Enable=0

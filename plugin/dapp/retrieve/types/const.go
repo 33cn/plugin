@@ -36,4 +36,6 @@ var (
 
 	ForkRetriveAssetX = "ForkRetriveAsset"
 	ForkRetriveX      = "ForkRetrive"
+	// ForkRetrivePerformRelayX 修复 ForkRetriveAsset 分支下 perform 成功后未清除找回关系导致的 perform 重放漏洞
+	ForkRetrivePerformRelayX = "ForkRetrivePerformRelay"
 )
