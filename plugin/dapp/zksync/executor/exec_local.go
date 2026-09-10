@@ -5,12 +5,12 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
-//ExecLocal_Deposit asset withdraw local db process
+// ExecLocal_Deposit asset withdraw local db process
 func (z *zksync) ExecLocal_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
-//ExecLocal_Withdraw asset withdraw local db process
+// ExecLocal_Withdraw asset withdraw local db process
 func (z *zksync) ExecLocal_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
@@ -20,7 +20,7 @@ func (z *zksync) ExecLocal_ContractToTree(payload *zt.ZkContractToTree, tx *type
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
-//ExecLocal_Authorize asset withdraw local db process
+// ExecLocal_Authorize asset withdraw local db process
 func (z *zksync) ExecLocal_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }

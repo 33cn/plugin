@@ -43,7 +43,7 @@ func (blockID BlockID) String() string {
 	return Fmt(`%v`, blockID.Hash)
 }
 
-//TendermintBlock struct
+// TendermintBlock struct
 type TendermintBlock struct {
 	*tmtypes.TendermintBlock
 }

@@ -38,7 +38,7 @@ const (
 	TyLogTicketBind = 114
 )
 
-//ticket
+// ticket
 const (
 	// TicketActionGenesis action type
 	TicketActionGenesis = 11
@@ -75,14 +75,14 @@ func init() {
 
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketId", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(TicketX, NewType(cfg))
 }

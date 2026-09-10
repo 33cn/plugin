@@ -718,7 +718,7 @@ func BenchmarkSet(b *testing.B) {
 	fmt.Println("mpt BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-//上一个用例，一次性插入多对kv；本用例每次插入30对kv，分多次插入，测试性能表现。
+// 上一个用例，一次性插入多对kv；本用例每次插入30对kv，分多次插入，测试性能表现。
 func BenchmarkStoreSet(b *testing.B) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
@@ -790,7 +790,7 @@ func BenchmarkSetIter(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-//一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
+// 一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
 func BenchmarkMemSet(b *testing.B) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
@@ -824,7 +824,7 @@ func BenchmarkMemSet(b *testing.B) {
 	fmt.Println("kvmvcc BenchmarkMemSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-//一次设定30对kv，设定N次，计算每次设定30对kv的耗时。
+// 一次设定30对kv，设定N次，计算每次设定30对kv的耗时。
 func BenchmarkStoreMemSet(b *testing.B) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)
@@ -947,7 +947,7 @@ func BenchmarkStoreCommit(b *testing.B) {
 	b.StopTimer()
 }
 
-//一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
+// 一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
 func BenchmarkIterMemSet(b *testing.B) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)

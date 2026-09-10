@@ -229,7 +229,7 @@ func (x *GroupMember) GetNickName() string {
 	return ""
 }
 
-//创建投票组
+// 创建投票组
 type CreateGroup struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -301,7 +301,7 @@ func (x *CreateGroup) GetDescription() string {
 	return ""
 }
 
-//更新投票组
+// 更新投票组
 type UpdateGroup struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -532,7 +532,7 @@ func (x *GroupInfos) GetGroupList() []*GroupInfo {
 	return nil
 }
 
-//投票选项
+// 投票选项
 type VoteOption struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -889,7 +889,7 @@ func (x *UpdateMember) GetName() string {
 	return ""
 }
 
-//投票信息
+// 投票信息
 type VoteInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1221,7 +1221,7 @@ func (x *ReqStrings) GetItems() []string {
 	return nil
 }
 
-//列表请求结构
+// 列表请求结构
 type ReqListItem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

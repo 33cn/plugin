@@ -23,7 +23,7 @@ var codecache *lru.Cache
 
 var isinit int64
 
-//Init 插件初始化
+// Init 插件初始化
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	if atomic.CompareAndSwapInt64(&isinit, 0, 1) {
 		//最新的64个code做cache
@@ -37,7 +37,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	InitExecType()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&js{}))
@@ -64,12 +64,12 @@ func newjs() drivers.Driver {
 	return t
 }
 
-//GetName 获取名字
+// GetName 获取名字
 func GetName() string {
 	return newjs().GetName()
 }
 
-//GetDriverName 获取插件的名字
+// GetDriverName 获取插件的名字
 func (u *js) GetDriverName() string {
 	return driverName
 }

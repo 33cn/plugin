@@ -554,7 +554,7 @@ func (cs *ConsensusState) handleTxsAvailable(height int64) {
 	switch cs.Step {
 	case ttypes.RoundStepNewHeight: // timeoutCommit phase
 		// +1ms to ensure RoundStepNewRound timeout always happens after RoundStepNewHeight
-		timeoutCommit := cs.StartTime.Sub(time.Now()) + 1*time.Millisecond
+		timeoutCommit := time.Until(cs.StartTime) + 1*time.Millisecond
 		cs.scheduleTimeout(timeoutCommit, height, 0, ttypes.RoundStepNewRound)
 	case ttypes.RoundStepNewRound: // after timeoutCommit
 		cs.enterPropose(height, 0)
@@ -566,7 +566,9 @@ func (cs *ConsensusState) handleTxsAvailable(height int64) {
 // Used internally by handleTimeout and handleMsg to make state transitions
 
 // Enter: `timeoutNewHeight` by startTime (commitTime+timeoutCommit),
-// 	or, if SkipTimeout==true, after receiving all precommits from (height,round-1)
+//
+//	or, if SkipTimeout==true, after receiving all precommits from (height,round-1)
+//
 // Enter: `timeoutPrecommits` after any +2/3 precommits from (height,round-1)
 // Enter: +2/3 precommits for nil at (height,round-1)
 // Enter: +2/3 prevotes any or +2/3 precommits for block or any from (height, round)
@@ -1195,11 +1197,11 @@ func (cs *ConsensusState) finalizeCommit(height int64) {
 	block := cs.ProposalBlock
 
 	if !ok {
-		panic(fmt.Sprintf("Cannot finalizeCommit, commit does not have two thirds majority"))
+		panic("Cannot finalizeCommit, commit does not have two thirds majority")
 	}
 
 	if !block.HashesTo(blockID.Hash) {
-		panic(fmt.Sprintf("Cannot finalizeCommit, ProposalBlock does not hash to commit hash"))
+		panic("Cannot finalizeCommit, ProposalBlock does not hash to commit hash")
 	}
 	if err := cs.blockExec.ValidateBlock(cs.state, block); err != nil {
 		panic(fmt.Sprintf("+2/3 committed an invalid block: %v", err))

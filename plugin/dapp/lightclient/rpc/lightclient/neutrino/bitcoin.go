@@ -16,6 +16,7 @@ import (
 	ltypes "github.com/33cn/plugin/plugin/dapp/lightclient/lighttypes"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/walletdb"
 )
@@ -578,4 +579,31 @@ func (n *neutrinoClient) processWithdrawConfirm(confirm *confirmWithdraw) bool {
 		"btcTxHash", confirm.btcPending.txHash.String(), "confirmHash", confirmHash)
 	return true
 
+}
+
+// buildNativeConfirmBtcTxProof 构造原生资产 Confirm 交易的 BTC Merkle 证明
+func (n *neutrinoClient) buildNativeConfirmBtcTxProof(spendingTx *wire.MsgTx, blockHash chainhash.Hash, blockHeight uint32) (*rtypes.BtcTxProof, error) {
+	// 创建 btcPendingTx 包装，复用 buildTxExistenceProof
+	pending := &btcPendingTx{
+		tx:          spendingTx,
+		blockHash:   blockHash,
+		blockHeight: int32(blockHeight),
+		txHash:      spendingTx.TxHash(),
+	}
+	spv, err := n.bw.buildTxExistenceProof(pending)
+	if err != nil {
+		return nil, err
+	}
+	// 序列化交易 txData
+	buf := bytes.NewBuffer(make([]byte, 0, spendingTx.SerializeSizeStripped()))
+	if err = spendingTx.SerializeNoWitness(buf); err != nil {
+		return nil, err
+	}
+	return &rtypes.BtcTxProof{
+		TxData:      buf.Bytes(),
+		BlockHash:   blockHash.String(),
+		BlockHeight: uint64(blockHeight),
+		TxIndex:     spv.GetTxIndex(),
+		MerkleProof: spv.GetBranchProof(),
+	}, nil
 }

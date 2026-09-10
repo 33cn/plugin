@@ -44,7 +44,7 @@ func setPrefix() {
 
 }
 
-//support multi version verify parameter setting
+// support multi version verify parameter setting
 func getVerifyKeysKey(ty int32) []byte {
 	return []byte(fmt.Sprintf(verifyKeys+"%d", ty))
 }

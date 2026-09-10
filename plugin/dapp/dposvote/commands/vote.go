@@ -787,8 +787,8 @@ func evaluate(cmd *cobra.Command, args []string) {
 	vrfHash, vrfProof := vrfPriv.Evaluate(m)
 	fmt.Println("vrf evaluate:")
 	fmt.Println("input:", data)
-	fmt.Println(fmt.Sprintf("hash:%x", vrfHash))
-	fmt.Println(fmt.Sprintf("proof:%x", vrfProof))
+	fmt.Printf("hash:%x\n", vrfHash)
+	fmt.Printf("proof:%x\n", vrfProof)
 }
 
 // DPosCBRecordCmd to create keyfiles

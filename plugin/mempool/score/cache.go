@@ -60,7 +60,7 @@ func NewQueue(subcfg subConfig) *Queue {
 //		cache.subConfig.PricePower - cache.subConfig.TimeParam*item.EnterTime, Value: item}, nil
 //}
 
-//GetItem 获取数据通过 key
+// GetItem 获取数据通过 key
 func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 	item, err := cache.Queue.GetItem(hash)
 	if err != nil {

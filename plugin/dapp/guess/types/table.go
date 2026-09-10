@@ -22,7 +22,7 @@ var opt_guess_user = &table.Option{
 	Index:   []string{"addr", "startindex"},
 }
 
-//NewGuessUserTable 新建表
+// NewGuessUserTable 新建表
 func NewGuessUserTable(kvdb db.KV) *table.Table {
 	rowmeta := NewGuessUserRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_guess_user)
@@ -32,22 +32,22 @@ func NewGuessUserTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//GuessUserRow table meta 结构
+// GuessUserRow table meta 结构
 type GuessUserRow struct {
 	*UserBet
 }
 
-//NewGuessUserRow 新建一个meta 结构
+// NewGuessUserRow 新建一个meta 结构
 func NewGuessUserRow() *GuessUserRow {
 	return &GuessUserRow{UserBet: &UserBet{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (tx *GuessUserRow) CreateRow() *table.Row {
 	return &table.Row{Data: &UserBet{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (tx *GuessUserRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*UserBet); ok {
 		tx.UserBet = txdata
@@ -56,7 +56,7 @@ func (tx *GuessUserRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (tx *GuessUserRow) Get(key string) ([]byte, error) {
 	if key == "index" {
 		return []byte(fmt.Sprintf("%018d", tx.Index)), nil
@@ -76,7 +76,7 @@ var opt_guess_game = &table.Option{
 	Index:   []string{"gameid", "status", "admin", "admin_status", "category_status"},
 }
 
-//NewGuessGameTable 新建表
+// NewGuessGameTable 新建表
 func NewGuessGameTable(kvdb db.KV) *table.Table {
 	rowmeta := NewGuessGameRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_guess_game)
@@ -86,22 +86,22 @@ func NewGuessGameTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//GuessGameRow table meta 结构
+// GuessGameRow table meta 结构
 type GuessGameRow struct {
 	*GuessGame
 }
 
-//NewGuessGameRow 新建一个meta 结构
+// NewGuessGameRow 新建一个meta 结构
 func NewGuessGameRow() *GuessGameRow {
 	return &GuessGameRow{GuessGame: &GuessGame{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (tx *GuessGameRow) CreateRow() *table.Row {
 	return &table.Row{Data: &GuessGame{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (tx *GuessGameRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*GuessGame); ok {
 		tx.GuessGame = txdata
@@ -110,7 +110,7 @@ func (tx *GuessGameRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (tx *GuessGameRow) Get(key string) ([]byte, error) {
 	if key == "startindex" {
 		return []byte(fmt.Sprintf("%018d", tx.StartIndex)), nil

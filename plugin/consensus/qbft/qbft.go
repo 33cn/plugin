@@ -711,7 +711,7 @@ func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
 		if val == nil {
 			nodes = append(nodes, &tmtypes.QbftNodeInfo{})
 		} else {
-			ipstr, idstr := "UNKOWN", "UNKOWN"
+			ipstr, idstr := "UNKNOWN", "UNKNOWN"
 			pub, err := ttypes.ConsensusCrypto.PubKeyFromBytes(val.PubKey)
 			if err != nil {
 				qbftlog.Error("Query_NodeInfo invalid pubkey", "err", err)

@@ -82,7 +82,7 @@ func (x *ParacrossStatusDetails) GetBlockHash() [][]byte {
 	return nil
 }
 
-//记录不同blockHash的详细数据
+// 记录不同blockHash的详细数据
 type ParacrossStatusBlockDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1120,7 +1120,7 @@ func (x *ConfigCancelInfo) GetId() string {
 	return ""
 }
 
-//广义配置类型
+// 广义配置类型
 type ParaStageConfig struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

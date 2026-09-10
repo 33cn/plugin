@@ -136,7 +136,7 @@ func (s *storage) ExecLocal_EncryptAdd(payload *ety.EncryptNotaryAdd, tx *types.
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-//设置自动回滚
+// 设置自动回滚
 func (s *storage) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 
 	dbSet := &types.LocalDBSet{}

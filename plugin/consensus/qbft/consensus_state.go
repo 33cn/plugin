@@ -588,7 +588,7 @@ func (cs *ConsensusState) handleTxsAvailable(height int64) {
 	switch cs.Step {
 	case ttypes.RoundStepNewHeight: // timeoutCommit phase
 		// +1ms to ensure RoundStepNewRound timeout always happens after RoundStepNewHeight
-		timeoutCommit := cs.StartTime.Sub(time.Now()) + 1*time.Millisecond
+		timeoutCommit := time.Until(cs.StartTime) + 1*time.Millisecond
 		cs.scheduleTimeout(timeoutCommit, height, round, ttypes.RoundStepNewRound)
 	case ttypes.RoundStepNewRound: // after timeoutCommit
 		cs.enterPropose(height, round)
@@ -600,7 +600,9 @@ func (cs *ConsensusState) handleTxsAvailable(height int64) {
 // Used internally by handleTimeout and handleMsg to make state transitions
 
 // Enter: `timeoutNewHeight` by startTime (commitTime+timeoutCommit),
-// 	or, if SkipTimeout==true, after receiving all precommits from (height,round-1)
+//
+//	or, if SkipTimeout==true, after receiving all precommits from (height,round-1)
+//
 // Enter: `timeoutPrecommits` after any +2/3 precommits from (height,round-1)
 // Enter: +2/3 precommits for nil at (height,round-1)
 // Enter: +2/3 prevotes any or +2/3 precommits for block or any from (height, round)

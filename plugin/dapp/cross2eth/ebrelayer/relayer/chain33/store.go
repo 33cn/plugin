@@ -11,7 +11,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 )
 
-//key ...
+// key ...
 var (
 	lastSyncHeightPrefix               = []byte("chain33-lastSyncHeight:")
 	eth2Chain33BurnLockTxStaticsPrefix = "chain33-eth2chain33BurnLockStatics"
@@ -49,7 +49,7 @@ func calcRelayFromEthStaticsKey(txindex int64, claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-%012d", eth2Chain33BurnLockTxStaticsPrefix, claimType, txindex))
 }
 
-//未完成，处在pending状态
+// 未完成，处在pending状态
 func calcRelayFromEthStaticsList(claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-", eth2Chain33BurnLockTxStaticsPrefix, claimType))
 }
@@ -194,7 +194,7 @@ func (chain33Relayer *Relayer4Chain33) getChain33UpdateTxIndex(claimType events.
 	return txIndexWrapper.Data
 }
 
-//获取上次同步到app的高度
+// 获取上次同步到app的高度
 func (chain33Relayer *Relayer4Chain33) loadLastSyncHeight() int64 {
 	height, err := utils.LoadInt64FromDB(lastSyncHeightPrefix, chain33Relayer.db)
 	if nil != err && err != chain33Types.ErrHeightNotExist {
@@ -321,7 +321,7 @@ func (chain33Relayer *Relayer4Chain33) restoreSymbol2chainName() map[string]stri
 	return symbol2EthChain.Symbol2Name
 }
 
-//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+// 判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
 func (chain33Relayer *Relayer4Chain33) checkTxProcessed(txhash string) bool {
 	key1 := chain33TxIsRelayedUnconfirmKey(txhash)
 	data, err := chain33Relayer.db.Get(key1)

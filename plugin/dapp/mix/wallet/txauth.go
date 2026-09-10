@@ -41,23 +41,23 @@ func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*mixTy.AuthorizeCircuit,
 
 	var input mixTy.AuthorizeCircuit
 
-	input.NoteHash.Assign(note.NoteHash)
-	input.Amount.Assign(note.Secret.Amount)
-	input.ReceiverPubKey.Assign(note.Secret.ReceiverKey)
-	input.ReturnPubKey.Assign(note.Secret.ReturnKey)
-	input.AuthorizePubKey.Assign(note.Secret.AuthorizeKey)
-	input.NoteRandom.Assign(note.Secret.NoteRandom)
+	input.NoteHash = note.NoteHash
+	input.Amount = note.Secret.Amount
+	input.ReceiverPubKey = note.Secret.ReceiverKey
+	input.ReturnPubKey = note.Secret.ReturnKey
+	input.AuthorizePubKey = note.Secret.AuthorizeKey
+	input.NoteRandom = note.Secret.NoteRandom
 
-	input.AuthorizePriKey.Assign(privacyKey.Privacy.PaymentKey.SpendKey)
-	input.AuthorizeHash.Assign(mixTy.Byte2Str(mimcHashString([]string{note.Secret.AuthorizeKey, note.Secret.NoteRandom})))
-	input.AuthorizeSpendHash.Assign(mixTy.Byte2Str(mimcHashString([]string{req.AuthorizeToAddr, note.Secret.Amount, note.Secret.NoteRandom})))
+	input.AuthorizePriKey = privacyKey.Privacy.PaymentKey.SpendKey
+	input.AuthorizeHash = mixTy.Byte2Str(mimcHashString([]string{note.Secret.AuthorizeKey, note.Secret.NoteRandom}))
+	input.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{req.AuthorizeToAddr, note.Secret.Amount, note.Secret.NoteRandom}))
 
 	//default auto to receiver
 	if note.Secret.ReturnKey != "0" && note.Secret.ReturnKey == req.AuthorizeToAddr {
 		//auth to returner
-		input.SpendFlag.Assign("0")
+		input.SpendFlag = "0"
 	} else {
-		input.SpendFlag.Assign("1")
+		input.SpendFlag = "1"
 	}
 
 	//get tree path
@@ -65,7 +65,7 @@ func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*mixTy.AuthorizeCircuit,
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	input.TreeRootHash.Assign(treeProof.TreeRootHash)
+	input.TreeRootHash = treeProof.TreeRootHash
 	updateTreePath(&input, treeProof)
 	return &input, nil
 

@@ -29,13 +29,13 @@ var opt_account = &table.Option{
 	Index:   []string{"status", "accountID", "addr"},
 }
 
-//状态数据库中存储具体账户信息
+// 状态数据库中存储具体账户信息
 func calcAccountKey(accountID string) []byte {
 	key := fmt.Sprintf("%s"+"accountID:%s", KeyPrefixStateDB, accountID)
 	return []byte(key)
 }
 
-//NewAccountTable ...
+// NewAccountTable ...
 func NewAccountTable(kvdb db.KV) *table.Table {
 	rowmeta := NewAccountRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_account)
@@ -45,22 +45,22 @@ func NewAccountTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//AccountRow account table meta 结构
+// AccountRow account table meta 结构
 type AccountRow struct {
 	*aty.Account
 }
 
-//NewAccountRow 新建一个meta 结构
+// NewAccountRow 新建一个meta 结构
 func NewAccountRow() *AccountRow {
 	return &AccountRow{Account: &aty.Account{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (m *AccountRow) CreateRow() *table.Row {
 	return &table.Row{Data: &aty.Account{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (m *AccountRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*aty.Account); ok {
 		m.Account = txdata
@@ -69,7 +69,7 @@ func (m *AccountRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (m *AccountRow) Get(key string) ([]byte, error) {
 	if key == "accountID" {
 		return []byte(m.AccountID), nil

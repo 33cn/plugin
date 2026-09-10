@@ -87,12 +87,12 @@ func (ethRelayer *Relayer4Ethereum) getLogProcHeight(key []byte) uint64 {
 	return height.Data
 }
 
-//保存处理过的交易
+// 保存处理过的交易
 func (ethRelayer *Relayer4Ethereum) setTxProcessed(txhash []byte) error {
 	return ethRelayer.db.Set(txhash, []byte("1"))
 }
 
-//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+// 判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
 func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash []byte) bool {
 	_, err := ethRelayer.db.Get(txhash)
 	return nil == err
@@ -158,7 +158,7 @@ func (ethRelayer *Relayer4Ethereum) getLastBridgeBankProcessedHeight() ebTypes.E
 	return logIndex
 }
 
-//构建一个引导查询使用的bridgeBankTx
+// 构建一个引导查询使用的bridgeBankTx
 func (ethRelayer *Relayer4Ethereum) initBridgeBankTx() {
 	log, _ := ethRelayer.getEthTxEvent(0, 0)
 	if nil != log {

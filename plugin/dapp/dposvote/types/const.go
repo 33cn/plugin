@@ -4,7 +4,7 @@
 
 package types
 
-//dpos action ty
+// dpos action ty
 const (
 	DposVoteActionRegist = iota + 1
 	DposVoteActionCancelRegist
@@ -30,7 +30,7 @@ const (
 	TopNCandidatorStatusRegist = iota + 1
 )
 
-//log ty
+// log ty
 const (
 	TyLogCandicatorRegist       = 1001
 	TyLogCandicatorVoted        = 1002
@@ -71,9 +71,9 @@ const (
 	TopNCandidatorsVoteMajorFail int64 = 2
 )
 
-//包的名字可以通过配置文件来配置
-//建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
-//如果发生重名，可以通过配置文件修改这些名字
+// 包的名字可以通过配置文件来配置
+// 建议用github的组织名称，或者用户名字开头, 再加上自己的插件的名字
+// 如果发生重名，可以通过配置文件修改这些名字
 var (
 	DPosX          = "dpos"
 	ExecerDposVote = []byte(DPosX)

@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//ParcCmd paracross cmd register
+// ParcCmd paracross cmd register
 func MixCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mix",
@@ -957,14 +957,14 @@ func CreateDepositRawTxCmd() *cobra.Command {
 }
 
 func depositSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("receiver", "t", "", "receiver addrs,seperated by ','")
+	cmd.Flags().StringP("receiver", "t", "", "receiver addrs,separated by ','")
 	cmd.MarkFlagRequired("receiver")
 
 	cmd.Flags().StringP("return", "r", "", "return addr,optional")
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize addr,optional")
 
-	cmd.Flags().StringP("amount", "m", "", "amounts,seperated by ','")
+	cmd.Flags().StringP("amount", "m", "", "amounts,separated by ','")
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol,like BTY")
@@ -1029,7 +1029,7 @@ func CreateTransferRawTxCmd() *cobra.Command {
 }
 
 func transferSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend, seperate by ',' ")
+	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend, separate by ',' ")
 	cmd.MarkFlagRequired("noteHash")
 
 	cmd.Flags().StringP("toAddr", "t", "", "transfer to addr, only one addr")

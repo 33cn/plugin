@@ -47,6 +47,7 @@ type utxoSpendInfo struct {
 	pendingTxHash      string
 	spendingTxHash     string
 	spendingTx         *wire.MsgTx
+	blockHash          chainhash.Hash
 	timeout            bool
 }
 
@@ -207,12 +208,23 @@ func (r *rgbx) rescanUtxo(info *utxoRescanInfo) (success bool) {
 		return false
 	}
 
+	// 获取 spending tx 所在区块的 block hash
+	var blockHash chainhash.Hash
+	header, err := r.client.neutrinoCS.BlockHeaders.FetchHeaderByHeight(spendReport.SpendingTxHeight)
+	if err != nil {
+		log.Error("rescanUtxo FetchHeaderByHeight", "pendingTxHash", info.pendingTxHash,
+			"height", spendReport.SpendingTxHeight, "err", err)
+		return false
+	}
+	blockHash = header.BlockHash()
+
 	spendInfo := &utxoSpendInfo{
 		spendingTxHash:     spendReport.SpendingTx.TxHash().String(),
 		pendingTxHash:      info.pendingTxHash,
 		spendingTx:         spendReport.SpendingTx,
 		spendingHeight:     spendReport.SpendingTxHeight,
 		spendingInputIndex: spendReport.SpendingInputIndex,
+		blockHash:          blockHash,
 	}
 
 	r.commitChan <- spendInfo
@@ -285,20 +297,40 @@ func (r *rgbx) createConfirmPayload(info *utxoSpendInfo, pendTx *rtypes.PendingT
 		SpendingInputIdx: info.spendingInputIndex,
 		OpRetOutputIdx:   -1,
 	}
-	for idx, out := range info.spendingTx.TxOut {
-		if len(out.PkScript) > 0 && out.PkScript[0] == txscript.OP_RETURN {
-			proof.OpRetOutputIdx = int32(idx)
-			proof.OpRetOutputPkScript = out.PkScript
-		}
-	}
-	buf := bytes.NewBuffer(make([]byte, 0, info.spendingTx.SerializeSizeStripped()))
-	err := info.spendingTx.SerializeNoWitness(buf)
+	expectedCommitment, err := txscript.NullDataScript(pendTx.GetTxHash())
 	if err != nil {
-		log.Error("createConfirmPayload", "pendingTxHash", info.pendingTxHash, "serialize spending tx err", err)
+		log.Error("createConfirmPayload NullDataScript", "pendingTxHash", info.pendingTxHash, "err", err)
 		return nil, err
 	}
-	proof.SpendingTx = buf.Bytes()
+	firstOpRetIdx := int32(-1)
+	for idx, out := range info.spendingTx.TxOut {
+		if len(out.PkScript) > 0 && out.PkScript[0] == txscript.OP_RETURN {
+			if firstOpRetIdx < 0 {
+				firstOpRetIdx = int32(idx)
+			}
+			if bytes.Equal(out.PkScript, expectedCommitment) {
+				proof.OpRetOutputIdx = int32(idx)
+				break
+			}
+		}
+	}
+	if proof.OpRetOutputIdx < 0 {
+		proof.OpRetOutputIdx = firstOpRetIdx
+	}
 	confirm.UtxoProof = proof
+
+	if r.client != nil {
+		btcProof, err := r.client.buildNativeConfirmBtcTxProof(info.spendingTx, info.blockHash, info.spendingHeight)
+		if err != nil {
+			log.Error("createConfirmPayload buildNativeConfirmBtcTxProof", "pendingTxHash", info.pendingTxHash, "err", err)
+			return nil, err
+		}
+		confirm.BtcTxProof = btcProof
+	} else {
+		// client 未初始化时无法构造 BtcTxProof，确认交易将不带 merkle proof，
+		// 记录日志便于排查 nil-client 路径
+		log.Warn("createConfirmPayload client is nil, BtcTxProof omitted", "pendingTxHash", info.pendingTxHash)
+	}
 
 	return confirm, nil
 }

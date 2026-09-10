@@ -10,9 +10,9 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/pkg/errors"
 )
 
@@ -87,7 +87,7 @@ func getInitTreeRoot(cfg *types.Chain33Config, ethAddrDecimal, layer2AddrDecimal
 	} else {
 		feeEth, fee33 = getCfgFeeAddr(cfg)
 	}
-	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 
 	leafs := getInitAccountLeaf(feeEth, fee33)
 	getInitLeafTokenHash(h, leafs)
@@ -344,7 +344,7 @@ func applyL2AccountCreate(accountID, tokenID uint64, amount, ethAddress, chain33
 }
 
 func getNewTree() *merkletree.Tree {
-	return merkletree.New(mimc.NewMiMC(zt.ZkMimcHashSeed))
+	return merkletree.New(legacymimc.NewMiMC(zt.ZkMimcHashSeed))
 }
 
 func getNewTreeWithHash(h hash.Hash) *merkletree.Tree {
@@ -394,7 +394,7 @@ func GetLeafByAccountId(db dbm.KV, accountId uint64) (*zt.Leaf, error) {
 
 func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	accountTable := NewAccountTreeTable(db)
-	rows, err := accountTable.ListIndex("eth_address", []byte(fmt.Sprintf("%s", ethAddress)), nil, 1000, dbm.ListASC)
+	rows, err := accountTable.ListIndex("eth_address", []byte(ethAddress), nil, 1000, dbm.ListASC)
 
 	datas := make([]*zt.Leaf, 0)
 	if err != nil {
@@ -415,7 +415,7 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 
 func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) {
 	accountTable := NewAccountTreeTable(db)
-	rows, err := accountTable.ListIndex("chain33_address", []byte(fmt.Sprintf("%s", chain33Addr)), nil, 1000, dbm.ListASC)
+	rows, err := accountTable.ListIndex("chain33_address", []byte(chain33Addr), nil, 1000, dbm.ListASC)
 
 	datas := make([]*zt.Leaf, 0)
 	if err != nil {
@@ -493,7 +493,7 @@ func GetTokenByAccountIdAndTokenIdInDB(db dbm.KV, accountId uint64, tokenId uint
 }
 
 func getLeafHash(h hash.Hash, leaf *zt.Leaf) []byte {
-	//h := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	//h := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	h.Reset()
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
 	h.Write(accountIdBytes[:])

@@ -53,7 +53,6 @@ func ShowAddr(cmd *cobra.Command, args []string) {
 		return
 	}
 	fmt.Println(common.ToHex(addr.Hash160[:]))
-	return
 }
 
 func SetupCmd() *cobra.Command {

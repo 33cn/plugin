@@ -31,10 +31,13 @@ build: depends
 	@cp chain33.para.toml build/ci/paracross/
 
 
+# Linux CI 强制 CGO_ENABLED=1（历史上 go-ethereum secp256k1 依赖 cgo）；
+# 升级 v1.14.8 后签名已改用跨平台 crypto.Sign，CGO=0 亦可编译（PR #1305 适配），
+# 保留 CGO=1 仅为避免改动 CI 构建行为，非功能依赖。
 build_ci: depends ## Build the binary file for CI (Linux/amd64|arm64 when not on Linux, for Docker)
 	@if [ "$$(uname)" = "Linux" ]; then \
-		go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
-		go build $(BUILD_FLAGS) -v -o $(APP); \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(APP); \
 	else \
 		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
 		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(APP); \
@@ -119,7 +122,8 @@ dep:
 
 linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
-	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086
+	# -S warning：note/info 级（数组下标 $ 冗余 SC2004、间接调用 unreachable SC2317 等）不阻断 CI
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086 -S warning
 
 linter_test: ## Use gometalinter check code, for local test
 	@./golinter.sh "test" "${p}"

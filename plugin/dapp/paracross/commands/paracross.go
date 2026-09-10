@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//ParcCmd paracross cmd register
+// ParcCmd paracross cmd register
 func ParcCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "para",
@@ -162,7 +162,7 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	return hex.EncodeToString(txHex), nil
 }
 
-//CreateRawTransferCmd  create raw transfer tx
+// CreateRawTransferCmd  create raw transfer tx
 func CreateRawTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -190,7 +190,7 @@ func createTransfer(cmd *cobra.Command, args []string) {
 	commands.CreateAssetTransfer(cmd, args, pt.ParaX)
 }
 
-//CreateRawTransferToExecCmd create raw transfer to exec tx
+// CreateRawTransferToExecCmd create raw transfer to exec tx
 func CreateRawTransferToExecCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer_exec",
@@ -218,7 +218,7 @@ func createTransferToExec(cmd *cobra.Command, args []string) {
 	commands.CreateAssetSendToExec(cmd, args, pt.ParaX)
 }
 
-//CreateRawWithdrawCmd create raw withdraw tx
+// CreateRawWithdrawCmd create raw withdraw tx
 func CreateRawWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",

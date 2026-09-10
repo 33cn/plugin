@@ -52,7 +52,7 @@ func (blockID BlockID) String() string {
 	return Fmt("%X", blockID.Hash)
 }
 
-//QbftBlock struct
+// QbftBlock struct
 type QbftBlock struct {
 	*tmtypes.QbftBlock
 }

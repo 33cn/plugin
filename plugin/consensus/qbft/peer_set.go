@@ -227,7 +227,7 @@ func (ps *PeerSet) Remove(peer Peer) {
 	delete(ps.lookup, peer.ID())
 }
 
-//-------------------------peer connection--------------------------------
+// -------------------------peer connection--------------------------------
 func (pc *peerConn) ID() ID {
 	if len(pc.id) != 0 {
 		return pc.id
@@ -519,23 +519,19 @@ func decodeMsg(msg []byte, cmp byte) ([]byte, error) {
 }
 
 func (pc *peerConn) sendRoutine() {
-FOR_LOOP:
-	for {
-		select {
-		case msg := <-pc.sendQueue:
-			raw := encodeMsg(msg.Msg, msg.TypeID)
-			_, err := pc.bufWriter.Write(raw)
-			if err != nil {
-				qbftlog.Error("sendRoutine buffer write fail", "peer", pc, "err", err)
-				pc.stopForError(err)
-				break FOR_LOOP
-			}
-			err = pc.bufWriter.Flush()
-			if err != nil {
-				qbftlog.Error("sendRoutine buffer flush fail", "peer", pc, "err", err)
-				pc.stopForError(err)
-				break FOR_LOOP
-			}
+	for msg := range pc.sendQueue {
+		raw := encodeMsg(msg.Msg, msg.TypeID)
+		_, err := pc.bufWriter.Write(raw)
+		if err != nil {
+			qbftlog.Error("sendRoutine buffer write fail", "peer", pc, "err", err)
+			pc.stopForError(err)
+			break
+		}
+		err = pc.bufWriter.Flush()
+		if err != nil {
+			qbftlog.Error("sendRoutine buffer flush fail", "peer", pc, "err", err)
+			pc.stopForError(err)
+			break
 		}
 	}
 	qbftlog.Info("peerConn stop sendRoutine", "peerIP", pc.ip.String())

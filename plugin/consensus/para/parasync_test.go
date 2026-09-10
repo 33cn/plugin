@@ -40,12 +40,12 @@ var (
 	actionReturnIndexAtom int32
 )
 
-//测试初始化
+// 测试初始化
 func initTestSyncBlock() {
 	//println("initSyncBlock")
 }
 
-//新建一个para测试实例并初始化一些参数
+// 新建一个para测试实例并初始化一些参数
 func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 	para := new(client)
 	para.subCfg = new(subConfig)
@@ -83,7 +83,7 @@ func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 	return para
 }
 
-//生成创世区块测试数据
+// 生成创世区块测试数据
 func makeGenesisBlockInputTestData() *types.Block {
 	newBlock := &types.Block{}
 	newBlock.Height = 0
@@ -95,7 +95,7 @@ func makeGenesisBlockInputTestData() *types.Block {
 	return newBlock
 }
 
-//生成创世区块响应测试数据
+// 生成创世区块响应测试数据
 func makeGenesisBlockReplyTestData(testLoopCount int32) interface{} {
 	switch testLoopCount {
 	case 0:
@@ -105,9 +105,9 @@ func makeGenesisBlockReplyTestData(testLoopCount int32) interface{} {
 	}
 }
 
-//生成getNextAction不同返回情况下的同步测试数据
-//index 对应getNextAction的每一步返回顺序，按return的先后顺序索引
-//testLoopCount 测试轮数
+// 生成getNextAction不同返回情况下的同步测试数据
+// index 对应getNextAction的每一步返回顺序，按return的先后顺序索引
+// testLoopCount 测试轮数
 func makeSyncReplyTestData(index int32, testLoopCount int32) (
 	interface{}, //*types.Block, //GetLastBlock reply
 	interface{}, //*types.LocalReplyValue, //GetLastLocalHeight reply
@@ -181,7 +181,7 @@ func makeSyncReplyTestData(index int32, testLoopCount int32) (
 	}
 }
 
-//生成清理功能Get Reply测试数据
+// 生成清理功能Get Reply测试数据
 func makeCleanDataGetReplyTestData(clearLocalDBCallCount int32, testLoopCount int32) interface{} {
 	switch clearLocalDBCallCount {
 	case 1: //testinitFirstLocalHeightIfNeed会调用到
@@ -213,7 +213,7 @@ func makeCleanDataGetReplyTestData(clearLocalDBCallCount int32, testLoopCount in
 	}
 }
 
-//生成清理功能Set Reply测试数据
+// 生成清理功能Set Reply测试数据
 func makeCleanDataSetReplyTestData(testLoopCount int32) interface{} {
 	reply := &types.Reply{}
 	reply.IsOk = testLoopCount == 0
@@ -221,7 +221,7 @@ func makeCleanDataSetReplyTestData(testLoopCount int32) interface{} {
 	return reply
 }
 
-//mock queue Message 返回
+// mock queue Message 返回
 func mockMessageReply(q queue.Queue) {
 
 	blockChainKey := "blockchain"
@@ -334,7 +334,7 @@ func mockMessageReply(q queue.Queue) {
 	}
 }
 
-//测试创世区块写入
+// 测试创世区块写入
 func testCreateGenesisBlock(t *testing.T, para *client, testLoopCount int32) {
 	genesisBlock := makeGenesisBlockInputTestData()
 	err := para.blockSyncClient.createGenesisBlock(genesisBlock)
@@ -348,7 +348,7 @@ func testCreateGenesisBlock(t *testing.T, para *client, testLoopCount int32) {
 
 }
 
-//测试清理localdb缓存数据
+// 测试清理localdb缓存数据
 func testClearLocalOldBlocks(t *testing.T, para *client, testLoopCount int32) {
 	err := para.blockSyncClient.clearLocalOldBlocks()
 
@@ -362,7 +362,7 @@ func testClearLocalOldBlocks(t *testing.T, para *client, testLoopCount int32) {
 	}
 }
 
-//测试初始化开始高度
+// 测试初始化开始高度
 func testInitFirstLocalHeightIfNeed(t *testing.T, para *client, testLoopCount int32) {
 	err := para.blockSyncClient.initFirstLocalHeightIfNeed()
 
@@ -374,7 +374,7 @@ func testInitFirstLocalHeightIfNeed(t *testing.T, para *client, testLoopCount in
 	}
 }
 
-//测试一次区块同步操作
+// 测试一次区块同步操作
 func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 	errorCount := int32(0)
 	for i := int32(1); i <= 10; i++ {
@@ -396,7 +396,7 @@ func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 	atomic.StoreInt32(&actionReturnIndexAtom, 0)
 }
 
-//测试SyncHasCaughtUp
+// 测试SyncHasCaughtUp
 func testSyncHasCaughtUp(t *testing.T, para *client, testLoopCount int32) {
 	oldValue := para.blockSyncClient.syncHasCaughtUp()
 	para.blockSyncClient.setSyncCaughtUp(true)
@@ -406,7 +406,7 @@ func testSyncHasCaughtUp(t *testing.T, para *client, testLoopCount int32) {
 	assert.Equal(t, true, isSyncHasCaughtUp)
 }
 
-//测试getBlockSyncState
+// 测试getBlockSyncState
 func testGetBlockSyncState(t *testing.T, para *client, testLoopCount int32) {
 	oldValue := para.blockSyncClient.getBlockSyncState()
 	para.blockSyncClient.setBlockSyncState(blockSyncStateFinished)
@@ -416,7 +416,7 @@ func testGetBlockSyncState(t *testing.T, para *client, testLoopCount int32) {
 	assert.Equal(t, true, syncState == blockSyncStateFinished)
 }
 
-//执行所有函数测试
+// 执行所有函数测试
 func execTest(t *testing.T, para *client, testLoopCount int32) {
 	atomic.StoreInt32(&actionReturnIndexAtom, 0)
 	atomic.StoreInt32(&testLoopCountAtom, testLoopCount)
@@ -430,7 +430,7 @@ func execTest(t *testing.T, para *client, testLoopCount int32) {
 	testGetBlockSyncState(t, para, testLoopCount)
 }
 
-//测试入口
+// 测试入口
 func TestSyncBlocks(t *testing.T) {
 	cfg := types.NewChain33Config(testnode.DefaultConfig)
 	q := queue.New("channel")

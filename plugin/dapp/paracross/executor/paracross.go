@@ -29,20 +29,20 @@ type Paracross struct {
 	drivers.DriverBase
 }
 
-//Init paracross exec register
+// Init paracross exec register
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newParacross, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 	setPrefix()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Paracross{}))
 }
 
-//GetName return paracross name
+// GetName return paracross name
 func GetName() string {
 	return newParacross().GetName()
 }
@@ -106,7 +106,7 @@ func (c *Paracross) saveLocalParaTxs(tx *types.Transaction, isDel bool) (*types.
 
 }
 
-//无法获取到commit tx信息，从commitDone 结构里面构建
+// 无法获取到commit tx信息，从commitDone 结构里面构建
 func (c *Paracross) saveLocalParaTxsFork(commitDone *pt.ReceiptParacrossDone, isDel bool) (*types.LocalDBSet, error) {
 	status := &pt.ParacrossNodeStatus{
 		MainBlockHash:   commitDone.MainBlockHash,
@@ -328,7 +328,7 @@ func (c *Paracross) updateLocalAssetTransfer(tx *types.Transaction, paraHeight i
 	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
 }
 
-//IsFriend call exec is same seariase exec
+// IsFriend call exec is same seariase exec
 func (c *Paracross) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
 	//不允许平行链
 	cfg := c.GetAPI().GetConfig()

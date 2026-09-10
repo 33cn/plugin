@@ -37,7 +37,7 @@ import (
 }
 */
 
-//NewTable 创建一个新的表格, 返回handle
+// NewTable 创建一个新的表格, 返回handle
 func (u *js) newTable(name, config, defaultvalue string) (id int64, err error) {
 	u.globalHanldeID++
 	id = u.globalHanldeID
@@ -96,7 +96,7 @@ func (u *js) newTableFunc(vm *otto.Otto, name string) {
 	})
 }
 
-//CloseTable 关闭表格释放内存
+// CloseTable 关闭表格释放内存
 func (u *js) closeTable(id int64) error {
 	_, ok := u.globalTableHandle.Load(id)
 	if !ok {
@@ -410,7 +410,7 @@ handle := new_join_table(left, right, listofjoinindex)
 //join table 的操作(接口完全相同)
 //handle3 := new_table(newcofifg{config1, config2})
 
-//JSONRow meta
+// JSONRow meta
 type JSONRow struct {
 	*jsproto.JsLog
 	config       map[string]string
@@ -421,7 +421,7 @@ type JSONRow struct {
 	defaultvalue string
 }
 
-//NewJSONRow 创建一个row
+// NewJSONRow 创建一个row
 func NewJSONRow(config string, defaultvalue string) (*JSONRow, error) {
 	row := &JSONRow{}
 	row.isint = regexp.MustCompile(`%\d*d`)
@@ -440,7 +440,7 @@ func NewJSONRow(config string, defaultvalue string) (*JSONRow, error) {
 	return row, nil
 }
 
-//CreateRow 创建一行
+// CreateRow 创建一行
 func (row *JSONRow) CreateRow() *table.Row {
 	return &table.Row{Data: &jsproto.JsLog{Data: row.defaultvalue}}
 }
@@ -452,7 +452,7 @@ func (row *JSONRow) parse() error {
 	return d.Decode(&row.data)
 }
 
-//SetPayload 设置行的内容
+// SetPayload 设置行的内容
 func (row *JSONRow) SetPayload(data types.Message) error {
 	if row.lastdata == data {
 		return nil
@@ -465,7 +465,7 @@ func (row *JSONRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get value of row
+// Get value of row
 func (row *JSONRow) Get(key string) ([]byte, error) {
 	v, err := row.get(key)
 	return v, err

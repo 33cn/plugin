@@ -21,7 +21,7 @@ func init() {
 	types.RegExec(TokenX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TokenX, "Enable", 0)
 	cfg.RegisterDappFork(TokenX, ForkTokenBlackListX, 0)
@@ -32,7 +32,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TokenX, ForkTokenEvm, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(TokenX, NewType(cfg))
 }

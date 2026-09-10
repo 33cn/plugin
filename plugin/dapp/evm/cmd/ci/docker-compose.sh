@@ -107,11 +107,7 @@ function testcase_coinsTransfer(){
     fi
     echo "${hash}"
 
-    balance=$(${Chain33_CLI} account balance -a ${testAddr} -e coins | jq -r ".balance")
-    if [ "${balance}" != "12.0000" ]; then
-        echo " balance  not correct, balance=${balance}"
-        exit 1
-    fi
+    waitBalance ${testAddr} "12.0000"
 
     echo "^_^check eth-evm-coins transfer success! ^_^ "
 
@@ -309,20 +305,71 @@ function testcase_evmPrecompile(){
 
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
+# 交易 broadcast 到被打包上链并写入 tx 索引有短暂延迟，单次立即查询会偶发 "tx not exist"
+# （交易已进 mempool 但尚未写入区块索引）。故对"预期存在"的交易先查一次（通常已打包，
+# 直接命中，零等待）；未命中再轮询等待回执出现，覆盖打包/索引延迟。
+# 注意：不用"等待区块高度增长"作信号——solo 不产生空块，交易打包后 mempool 为空，
+# 高度不再增长，等高度只会白白超时。
+# 仅当 expectRes 为空（预期交易不存在，如 nonce 过高滞留在 mempool）时只查询一次。
 function queryTransaction() {
     txHash=$1
     validators=$2
     expectRes=$3
-    res=$(${Chain33_CLI} tx query --hash  "${txHash}" |jq -r .receipt.tyName)
+    local timeout=15
+    local interval=1
+    local elapsed=0
+    local res=""
 
-
-    if [ "${res}" != "${expectRes}" ]; then
+    if [ -z "${expectRes}" ]; then
+        # 预期交易不存在：只查一次
+        res=$(${Chain33_CLI} tx query --hash "${txHash}" 2>/dev/null | jq -r .receipt.tyName 2>/dev/null)
+        if [ "${res}" == "${expectRes}" ]; then
+            echo "check tx status success"
+            return 0
+        fi
         echo "check tx faild"
         return 1
-    else
+    fi
+
+    # 预期交易存在：先查一次（快路径，通常已打包直接命中）
+    res=$(${Chain33_CLI} tx query --hash "${txHash}" 2>/dev/null | jq -r .receipt.tyName 2>/dev/null)
+    if [ "${res}" == "${expectRes}" ]; then
         echo "check tx status success"
         return 0
     fi
+    # 未命中：轮询等待回执出现（打包/索引延迟），超时判失败
+    while [ "${elapsed}" -lt "${timeout}" ]; do
+        sleep "${interval}"
+        elapsed=$((elapsed + interval))
+        res=$(${Chain33_CLI} tx query --hash "${txHash}" 2>/dev/null | jq -r .receipt.tyName 2>/dev/null)
+        if [ "${res}" == "${expectRes}" ]; then
+            echo "check tx status success"
+            return 0
+        fi
+    done
+    echo "check tx faild (tx ${txHash}: expect '${expectRes}', got '${res}' after ${timeout}s)"
+    return 1
+}
+
+# 等待指定 coins 地址余额达到期望值（solo 打包上链有延迟，send 后立即查余额会读到旧状态）
+function waitBalance() {
+    local addr=$1
+    local expect=$2
+    local timeout=15
+    local interval=1
+    local elapsed=0
+    local balance=""
+    while [ "${elapsed}" -lt "${timeout}" ]; do
+        balance=$(${Chain33_CLI} account balance -a "${addr}" -e coins | jq -r ".balance")
+        if [ "${balance}" == "${expect}" ]; then
+            echo "check balance ok ^_^"
+            return 0
+        fi
+        sleep "${interval}"
+        elapsed=$((elapsed + interval))
+    done
+    echo "check balance faild, expect=${expect}, got=${balance}"
+    return 1
 }
 
 

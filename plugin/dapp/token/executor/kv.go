@@ -52,7 +52,7 @@ func calcTokenStatusTokenKeyPrefixLocal(status int32, token string) []byte {
 	return []byte(fmt.Sprintf(tokenPreCreatedSTONewLocal+"%d-%s-", status, token))
 }
 
-//存储地址上收币的信息
+// 存储地址上收币的信息
 func calcAddrKey(token string, addr string) []byte {
 	return []byte(fmt.Sprintf("LODB-token-%s-Addr:%s", token, address.FormatAddrKey(addr)))
 }

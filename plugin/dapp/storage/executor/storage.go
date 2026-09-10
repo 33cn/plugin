@@ -51,7 +51,7 @@ func (s *storage) GetDriverName() string {
 	return driverName
 }
 
-//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+// ExecutorOrder Exec 的时候 同时执行 ExecLocal
 func (s *storage) ExecutorOrder() int64 {
 	cfg := s.GetAPI().GetConfig()
 	if cfg.IsDappFork(s.GetHeight(), storagetypes.StorageX, storagetypes.ForkStorageLocalDB) {

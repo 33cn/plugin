@@ -23,7 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//后面如果有其他数据模型可继续往上面添加
+// 后面如果有其他数据模型可继续往上面添加
 type Storage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -388,7 +388,7 @@ func (x *ContentOnlyNotaryStorage) GetValue() string {
 	return ""
 }
 
-//哈希存证模型，推荐使用sha256哈希，限制256位得摘要值
+// 哈希存证模型，推荐使用sha256哈希，限制256位得摘要值
 type HashOnlyNotaryStorage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -759,7 +759,7 @@ func (x *EncryptNotaryAdd) GetEncryptAdd() []byte {
 	return nil
 }
 
-//根据txhash去状态数据库中查询存储内容
+// 根据txhash去状态数据库中查询存储内容
 type QueryStorage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -807,7 +807,7 @@ func (x *QueryStorage) GetTxHash() string {
 	return ""
 }
 
-//批量查询有可能导致数据库崩溃
+// 批量查询有可能导致数据库崩溃
 type BatchQueryStorage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

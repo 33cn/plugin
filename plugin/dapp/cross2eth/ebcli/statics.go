@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//StaticsCmd ...
+// StaticsCmd ...
 func StaticsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "statics",
@@ -20,7 +20,7 @@ func StaticsCmd() *cobra.Command {
 	return cmd
 }
 
-//ShowLockStaticsFlags ...
+// ShowLockStaticsFlags ...
 func ShowStaticsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol(optional)")
 	cmd.Flags().Int32P("from", "f", 0, "source chain, 0=ethereum, and 1=chain33")
@@ -32,7 +32,7 @@ func ShowStaticsFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("index", "i", 0, "tx index(optional, exclude, default from 0)")
 }
 
-//ShowLockStatics ...
+// ShowLockStatics ...
 func ShowStatics(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	symbol, _ := cmd.Flags().GetString("symbol")

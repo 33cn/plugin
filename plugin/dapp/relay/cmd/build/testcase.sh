@@ -46,8 +46,10 @@ function relay_config() {
 function wait_btcd_up() {
     local count=20
     while [ $count -gt 0 ]; do
-        status=$(docker-compose ps | grep btcd | awk '{print $5}')
-        if [ "${status}" == "Up" ]; then
+        # docker compose ps 列取错(取到 CREATED 列)会导致永远重启 btcd，
+        # 且 ubuntu-22.04 runner 只有 compose v2，这里直接用 docker inspect 判状态
+        status=$(docker inspect -f '{{.State.Status}}' "${BTCD}" 2>/dev/null || true)
+        if [ "${status}" == "running" ]; then
             break
         fi
         docker compose logs btcd
@@ -334,6 +336,10 @@ function relay_test() {
         count=$((count - 1))
         if [ $count -le 0 ]; then
             echo "wrong relay status finish real buy order id"
+            echo "=========== # relayd logs ==========="
+            docker compose logs relayd 2>&1 | tail -80
+            echo "=========== # chain33 relay logs ==========="
+            docker compose logs chain33 2>&1 | grep -iE "verify|relay" | tail -60
             exit 1
         fi
     done

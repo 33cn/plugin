@@ -4,7 +4,7 @@
 
 package types
 
-//norm action
+// norm action
 const (
 	NormActionPut = 1
 )

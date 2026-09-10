@@ -5,9 +5,11 @@
 Package types is a generated protocol buffer package.
 
 It is generated from these files:
+
 	dpos_msg.proto
 
 It has these top-level messages:
+
 	CycleBoundaryInfo
 	SuperNode
 	VoteItem

@@ -130,17 +130,17 @@ const (
 	MinDecimalAllow = 4
 )
 
-//Zksync 执行器名称定义
+// Zksync 执行器名称定义
 const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"
 
-//配置的系统收交易费账户
+// 配置的系统收交易费账户
 const ZkCfgEthFeeAddr = "ethFeeAddr"
 const ZkCfgLayer2FeeAddr = "layer2FeeAddr"
 
-//msg宽度
+// msg宽度
 const (
 	TxTypeBitWidth    = 8  //1byte
 	AccountBitWidth   = 32 //4byte
@@ -169,7 +169,7 @@ const (
 
 )
 
-//不同type chunk数量
+// 不同type chunk数量
 const (
 	DepositChunks          = 3
 	Contract2TreeChunks    = 2
@@ -204,7 +204,7 @@ const (
 
 )
 
-//ERC protocol
+// ERC protocol
 const (
 	ZKERC1155 = 1
 	ZKERC721  = 2
@@ -326,12 +326,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(Zksync, NewType(cfg))
 }
 
-//ZksyncType ...
+// ZksyncType ...
 type ZksyncType struct {
 	types.ExecTypeBase
 }
 
-//NewType ...
+// NewType ...
 func NewType(cfg *types.Chain33Config) *ZksyncType {
 	c := &ZksyncType{}
 	c.SetChild(c)

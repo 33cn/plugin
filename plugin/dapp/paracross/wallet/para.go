@@ -69,7 +69,7 @@ func (policy *ParaPolicy) OnWalletLocked() {
 	bizlog.Info("OnWalletLocked", "IsWalletLock", walletsatus.IsWalletLock)
 }
 
-//解锁超时处理，需要区分整个钱包的解锁或者只挖矿的解锁
+// 解锁超时处理，需要区分整个钱包的解锁或者只挖矿的解锁
 func (policy *ParaPolicy) resetTimeout(Timeout int64) {
 	if policy.minertimeout == nil {
 		policy.minertimeout = time.AfterFunc(time.Second*time.Duration(Timeout), func() {

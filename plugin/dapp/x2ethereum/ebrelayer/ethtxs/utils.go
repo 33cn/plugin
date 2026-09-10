@@ -13,11 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
-//EthTxStatus ...
+// EthTxStatus ...
 type EthTxStatus int32
 
 type nonceMutex struct {
@@ -27,18 +26,18 @@ type nonceMutex struct {
 
 var addr2Nonce = make(map[common.Address]nonceMutex)
 
-//String ...
+// String ...
 func (ethTxStatus EthTxStatus) String() string {
 	return [...]string{"Fail", "Success", "Pending"}[ethTxStatus]
 }
 
-//const
+// const
 const (
 	PendingDuration4TxExeuction = 300
 	EthTxPending                = EthTxStatus(2)
 )
 
-//SignClaim4Eth ...
+// SignClaim4Eth ...
 func SignClaim4Eth(hash common.Hash, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	rawSignature, _ := prefixMessage(hash, privateKey)
 	signature := hexutil.Bytes(rawSignature)
@@ -49,7 +48,7 @@ func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) 
 	//只是为保留代码在此处
 	//prefixed := utils.SoliditySHA3WithPrefix(message[:])
 	var prefixed []byte
-	sig, err := secp256k1.Sign(prefixed, math.PaddedBigBytes(key.D, 32))
+	sig, err := crypto.Sign(prefixed, key)
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +90,7 @@ func revokeNonce(sender common.Address) (*big.Int, error) {
 	return nil, errors.New("address doesn't exist tx")
 }
 
-//PrepareAuth ...
+// PrepareAuth ...
 func PrepareAuth(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address) (*bind.TransactOpts, error) {
 	if nil == privateKey || nil == client {
 		txslog.Error("PrepareAuth", "nil input parameter", "client", client, "privateKey", privateKey)
@@ -137,7 +136,7 @@ func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, tx
 	}
 }
 
-//GetEthTxStatus ...
+// GetEthTxStatus ...
 func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) string {
 	receipt, err := client.TransactionReceipt(context.Background(), txhash)
 	if nil != err {

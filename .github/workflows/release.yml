@@ -13,11 +13,11 @@ jobs:
     steps:
 
       - name: checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false # <--- this
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
       - uses: actions/setup-node@v3
@@ -30,7 +30,6 @@ jobs:
         with:
           branch: master
           extra_plugins: |
-            conventional-changelog/conventional-changelog-jshint
             semantic-release-replace-plugin@1.2.7
             @semantic-release/exec@6
             @semantic-release/changelog@6

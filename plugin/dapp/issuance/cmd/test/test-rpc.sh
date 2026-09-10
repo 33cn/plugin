@@ -33,8 +33,9 @@ issuance_Create() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     ISSU_ID=$RAW_TX_HASH
@@ -71,8 +72,9 @@ issuance_Feed() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv2}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -90,8 +92,9 @@ issuance_Debt() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     DEBT_ID=$RAW_TX_HASH
@@ -114,8 +117,9 @@ issuance_Repay() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -132,8 +136,9 @@ issuance_Close() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -150,8 +155,9 @@ collateralize_Manage() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     ISSU_ID=$RAW_TX_HASH
@@ -170,8 +176,9 @@ collateralize_Create() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     COLL_ID=$RAW_TX_HASH
@@ -194,8 +201,9 @@ collateralize_Feed() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv2}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
@@ -213,8 +221,9 @@ collateralize_Borrow() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
     BORROW_ID=$RAW_TX_HASH
@@ -252,8 +261,9 @@ collateralize_Repay() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -270,8 +280,9 @@ collateralize_Retrieve() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -368,8 +379,9 @@ manage() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" ${SystemManager} ${MAIN_HTTP}
     echo "========== # issuance add issuance-manage end =========="
@@ -381,8 +393,9 @@ manage() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "$tx" ${SystemManager} ${MAIN_HTTP}
     echo "========== # issuance add issuance-fund end =========="
@@ -422,8 +435,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token token-blacklist end =========="
@@ -434,8 +448,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token token-finisher end =========="
@@ -446,8 +461,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token precreate end =========="
@@ -458,8 +474,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token finish end =========="
@@ -470,8 +487,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
 
@@ -479,8 +497,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
 
@@ -488,8 +507,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token transfer end =========="
@@ -500,8 +520,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${IssuancePriv1}" "${MAIN_HTTP}"
 
@@ -509,8 +530,9 @@ token() {
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+    rst=1
+    [ "$ok" == true ] && rst=0
+    echo_rst "$FUNCNAME" "$rst"
 
     chain33_SignAndSendTx "${tx}" "${IssuancePriv3}" "${MAIN_HTTP}"
 

@@ -49,7 +49,7 @@ func addCollateralizeCreateFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("balance")
 }
 
-//CollateralizeCreate ...
+// CollateralizeCreate ...
 func CollateralizeCreate(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
@@ -84,7 +84,7 @@ func addCollateralizeBorrowFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("value")
 }
 
-//CollateralizeBorrow ...
+// CollateralizeBorrow ...
 func CollateralizeBorrow(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
@@ -122,7 +122,7 @@ func addCollateralizeAppendFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("value")
 }
 
-//CollateralizeAppend ...
+// CollateralizeAppend ...
 func CollateralizeAppend(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
@@ -159,7 +159,7 @@ func addCollateralizeRepayFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("recordID")
 }
 
-//CollateralizeRepay ...
+// CollateralizeRepay ...
 func CollateralizeRepay(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
@@ -195,7 +195,7 @@ func addCollateralizePriceFeedFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("volume")
 }
 
-//CollateralizePriceFeed ...
+// CollateralizePriceFeed ...
 func CollateralizePriceFeed(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -231,7 +231,7 @@ func addCollateralizeRetrieveFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("balance")
 }
 
-//CollateralizeRetrieve ...
+// CollateralizeRetrieve ...
 func CollateralizeRetrieve(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -268,7 +268,7 @@ func addCollateralizeManageFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("totalBalance", "t", 0, "totalBalance")
 }
 
-//CollateralizeManage ...
+// CollateralizeManage ...
 func CollateralizeManage(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -290,7 +290,7 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//CollateralizeQueryCfgCmd ...
+// CollateralizeQueryCfgCmd ...
 func CollateralizeQueryCfgCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
@@ -300,7 +300,7 @@ func CollateralizeQueryCfgCmd() *cobra.Command {
 	return cmd
 }
 
-//CollateralizeQueryConfig ...
+// CollateralizeQueryConfig ...
 func CollateralizeQueryConfig(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
@@ -313,7 +313,7 @@ func CollateralizeQueryConfig(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//CollateralizeQueryPriceCmd ...
+// CollateralizeQueryPriceCmd ...
 func CollateralizeQueryPriceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "price",
@@ -323,7 +323,7 @@ func CollateralizeQueryPriceCmd() *cobra.Command {
 	return cmd
 }
 
-//CollateralizeQueryPrice ...
+// CollateralizeQueryPrice ...
 func CollateralizeQueryPrice(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
@@ -336,7 +336,7 @@ func CollateralizeQueryPrice(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//CollateralizeQueryUserBalanceCmd ...
+// CollateralizeQueryUserBalanceCmd ...
 func CollateralizeQueryUserBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance",
@@ -352,7 +352,7 @@ func addCollateralizeQueryBalanceFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("address")
 }
 
-//CollateralizeQueryUserBalance ...
+// CollateralizeQueryUserBalance ...
 func CollateralizeQueryUserBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("address")
@@ -395,7 +395,7 @@ func addCollateralizeQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("borrowID", "b", "", "borrow ID")
 }
 
-//CollateralizeQuery ...
+// CollateralizeQuery ...
 func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")

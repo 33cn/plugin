@@ -41,7 +41,7 @@ func CreateERC20Cmd() *cobra.Command {
 	return cmd
 }
 
-//CreateERC20Flags ...
+// CreateERC20Flags ...
 func CreateERC20Flags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "the deployer private key")
 	_ = cmd.MarkFlagRequired("key")

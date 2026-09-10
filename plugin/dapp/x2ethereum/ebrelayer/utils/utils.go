@@ -37,7 +37,7 @@ func IsZeroAddress(address common.Address) bool {
 	return address == common.HexToAddress(nullAddress)
 }
 
-//IsValidPassWord 密码合法性校验,密码长度在8-30位之间。必须是数字+字母的组合
+// IsValidPassWord 密码合法性校验,密码长度在8-30位之间。必须是数字+字母的组合
 func IsValidPassWord(password string) bool {
 	pwLen := len(password)
 	if pwLen < 8 || pwLen > 30 {
@@ -71,7 +71,7 @@ func decodeInt64(int64bytes []byte) (int64, error) {
 	return value.Data, nil
 }
 
-//LoadInt64FromDB ...
+// LoadInt64FromDB ...
 func LoadInt64FromDB(key []byte, db dbm.DB) (int64, error) {
 	bytes, err := db.Get(key)
 	if bytes == nil || err != nil {
@@ -83,7 +83,7 @@ func LoadInt64FromDB(key []byte, db dbm.DB) (int64, error) {
 	return decodeInt64(bytes)
 }
 
-//QueryTxhashes ...
+// QueryTxhashes ...
 func QueryTxhashes(prefix []byte, db dbm.DB) []string {
 	kvdb := dbm.NewKVDB(db)
 	hashes, err := kvdb.List(prefix, nil, 10, 1)
@@ -98,17 +98,17 @@ func QueryTxhashes(prefix []byte, db dbm.DB) []string {
 	return hashStrs
 }
 
-//Addr2DecimalsKey ...
+// Addr2DecimalsKey ...
 var (
 	Addr2DecimalsKey = []byte("prefix_for_Addr2Decimals")
 )
 
-//CalAddr2DecimalsPrefix ...
+// CalAddr2DecimalsPrefix ...
 func CalAddr2DecimalsPrefix(tokenAddr string) []byte {
 	return []byte(fmt.Sprintf("%s-%s", Addr2DecimalsKey, tokenAddr))
 }
 
-//GetDecimalsFromDB ...
+// GetDecimalsFromDB ...
 func GetDecimalsFromDB(addr string, db dbm.DB) (int64, error) {
 	res, err := db.Get(CalAddr2DecimalsPrefix(addr))
 	if err != nil {
@@ -125,7 +125,7 @@ func GetDecimalsFromDB(addr string, db dbm.DB) (int64, error) {
 	return 0, types.ErrNotFound
 }
 
-//GetDecimalsFromNode ...
+// GetDecimalsFromNode ...
 func GetDecimalsFromNode(addr string, nodeAddr string) (int64, error) {
 	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
 		return 18, nil

@@ -455,7 +455,7 @@ func (x *ZkTokenSymbol) GetDecimal() uint32 {
 	return 0
 }
 
-//某个token的余额
+// 某个token的余额
 type TokenBalance struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1072,7 +1072,7 @@ func (x *ZkWithdraw) GetSignature() *ZkSignature {
 	return nil
 }
 
-//从chain33合约提款到二层
+// 从chain33合约提款到二层
 type ZkContractToTree struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1168,7 +1168,7 @@ func (x *ZkContractToTree) GetFromExec() string {
 	return ""
 }
 
-//从二层铸造到chain33合约
+// 从二层铸造到chain33合约
 type ZkTreeToContract struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2093,7 +2093,7 @@ func (x *ZkNFTTokenStatus) GetBurnedAmount() uint64 {
 	return 0
 }
 
-//电路验证key
+// 电路验证key
 type ZkVerifyKey struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2251,7 +2251,7 @@ func (x *ZkFeeAddrs) GetL2FeeAddr() string {
 	return ""
 }
 
-//commit proof tx data
+// commit proof tx data
 type ZkCommitProof struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2407,7 +2407,7 @@ func (x *ZkCommitProof) GetCommitBlockHeight() int64 {
 	return 0
 }
 
-//commit proof stat, pubdata保存到localdb
+// commit proof stat, pubdata保存到localdb
 type CommitProofState struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2711,7 +2711,7 @@ func (x *QueryProofInfo) GetQueues() *ProofId2QueueIdData {
 	return nil
 }
 
-//电路验证者名单
+// 电路验证者名单
 type ZkVerifier struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2948,7 +2948,7 @@ func (x *ReceiptSetFee) GetCurrentAmount() string {
 	return ""
 }
 
-//zk relayer operators
+// zk relayer operators
 type RelayerOperators struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3375,7 +3375,7 @@ func (x *ZkQueryProofResp) GetOperationInfos() []*OperationInfo {
 	return nil
 }
 
-//query committed proof info
+// query committed proof info
 type ZkFetchProofList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3455,7 +3455,7 @@ func (x *ZkFetchProofList) GetEndHeight() uint64 {
 	return 0
 }
 
-//NFT content hash切分成两部分
+// NFT content hash切分成两部分
 type ZkContentHash struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3606,7 +3606,7 @@ func (x *ZkOpNFTData) GetContent() *ZkContentHash {
 	return nil
 }
 
-//swapData: from maker pov
+// swapData: from maker pov
 type ZkOpSwapData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4677,7 +4677,7 @@ func (x *ZkExodusBatchProofReq) GetRootHash() string {
 	return ""
 }
 
-//记录L2 的所有operation 到queue，以和proof校验
+// 记录L2 的所有operation 到queue，以和proof校验
 type ReceiptL2LastQueueID struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

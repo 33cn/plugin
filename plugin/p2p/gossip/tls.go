@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -15,7 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-//Tls defines the specific interface for all the live gRPC wire
+// Tls defines the specific interface for all the live gRPC wire
 // protocols and supported transport security protocols (e.g., TLS, SSL).
 type Tls struct {
 	config *tls.Config
@@ -33,7 +32,7 @@ var (
 	latestSerials sync.Map
 )
 
-//serialNum -->ip
+// serialNum -->ip
 func addCertSerial(serial string, ip string) {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
@@ -146,7 +145,7 @@ func (c *Tls) ClientHandshake(ctx context.Context, authority string, rawConn net
 		//检查证书是否被吊销
 		if isRevoke(peerSerialNum.String()) {
 			conn.Close()
-			return nil, nil, errors.New(fmt.Sprintf("transport: authentication handshake failed: ClientHandshake Certificate SerialNumber %v revoked", peerSerialNum.String()))
+			return nil, nil, fmt.Errorf("transport: authentication handshake failed: ClientHandshake Certificate SerialNumber %v revoked", peerSerialNum.String())
 		}
 
 		if len(addrSplites) > 0 { //服务端证书的序列号，已经其IP地址
@@ -162,7 +161,7 @@ func (c *Tls) ClientHandshake(ctx context.Context, authority string, rawConn net
 	return WrapSyscallConn(rawConn, conn), tlsInfo, nil
 }
 
-//ServerHandshake check cert
+// ServerHandshake check cert
 func (c *Tls) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo, error) {
 	conn := tls.Server(rawConn, c.config)
 	if err := conn.Handshake(); err != nil {
@@ -184,7 +183,7 @@ func (c *Tls) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo,
 
 		if isRevoke(peerSerialNum.String()) {
 			rawConn.Close()
-			return nil, nil, errors.New(fmt.Sprintf("transport: authentication handshake failed: ServerHandshake  %s  revoked", peerSerialNum.String()))
+			return nil, nil, fmt.Errorf("transport: authentication handshake failed: ServerHandshake  %s  revoked", peerSerialNum.String())
 		}
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		if len(addrSplites) > 0 {
@@ -204,7 +203,7 @@ func (c *Tls) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo,
 	return WrapSyscallConn(rawConn, conn), tlsInfo, nil
 }
 
-//  uses c to construct a TransportCredentials based on TLS.
+// uses c to construct a TransportCredentials based on TLS.
 func newTLS(c *tls.Config) credentials.TransportCredentials {
 	tc := &Tls{}
 	tc.config = CloneTLSConfig(c)

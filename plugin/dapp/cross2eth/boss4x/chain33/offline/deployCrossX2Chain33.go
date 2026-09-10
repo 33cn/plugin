@@ -97,7 +97,7 @@ func addCreateCrossBridgeFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
-	cmd.Flags().StringP("valset", "r", "", "contruct parameter for valset, as: 'addr, [addr, addr, addr, addr], [25, 25, 25, 25]'")
+	cmd.Flags().StringP("valset", "r", "", "construct parameter for valset, as: 'addr, [addr, addr, addr, addr], [25, 25, 25, 25]'")
 	_ = cmd.MarkFlagRequired("valset")
 	cmd.Flags().StringP("multisignAddrs", "m", "", "multisign address, as: 'addr, addr, addr, addr'")
 	_ = cmd.MarkFlagRequired("multisignAddrs")
@@ -375,7 +375,7 @@ func multisignSetup(txCreateInfo *utils.TxCreateInfo, multisignAddrs string, mul
 
 	BTYAddrChain33 := ebTypes.BTYAddrChain33
 	parameter := "setup(["
-	parameter += fmt.Sprintf("%s", owners[0])
+	parameter += owners[0]
 	for _, owner := range owners[1:] {
 		parameter += fmt.Sprintf(",%s", owner)
 	}

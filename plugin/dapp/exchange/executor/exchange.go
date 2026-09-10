@@ -35,7 +35,7 @@ type exchange struct {
 	drivers.DriverBase
 }
 
-//NewExchange ...
+// NewExchange ...
 func NewExchange() drivers.Driver {
 	t := &exchange{}
 	t.SetChild(t)
@@ -48,7 +48,7 @@ func GetName() string {
 	return NewExchange().GetName()
 }
 
-//GetDriverName ...
+// GetDriverName ...
 func (e *exchange) GetDriverName() string {
 	return driverName
 }
@@ -85,7 +85,7 @@ func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
-//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+// ExecutorOrder Exec 的时候 同时执行 ExecLocal
 func (e *exchange) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }

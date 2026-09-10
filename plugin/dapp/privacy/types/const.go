@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//Package types ...
+// Package types ...
 package types
 
 const (
@@ -43,7 +43,7 @@ const (
 	PrivacyTxFee = 1
 )
 
-//const ...
+// const ...
 const (
 	// utxo缓存数量
 	UTXOCacheCount = 256

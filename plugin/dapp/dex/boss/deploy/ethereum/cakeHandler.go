@@ -18,12 +18,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-//var TestNodeAddr = "https://data-seed-prebsc-1-s1.binance.org:8545/"
+// var TestNodeAddr = "https://data-seed-prebsc-1-s1.binance.org:8545/"
 var ethClient *ethclient.Client
 var privateKey *ecdsa.PrivateKey
 var deployerAddr common.Address
 
-//const ...
+// const ...
 const (
 	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
 	GasLimit        = uint64(100 * 10000)
@@ -90,7 +90,7 @@ func getNonce(sender common.Address) (*big.Int, error) {
 	return big.NewInt(int64(nonce)), nil
 }
 
-//PrepareAuth ...
+// PrepareAuth ...
 func PrepareAuth(privateKey *ecdsa.PrivateKey, transactor common.Address) (*bind.TransactOpts, error) {
 	//ctx := context.Background()
 	//gasPrice, err := ethClient.SuggestGasPrice(ctx)

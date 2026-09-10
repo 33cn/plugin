@@ -66,7 +66,7 @@ func testTLS(RPCAddr string) string {
 	return "https://" + RPCAddr[7:]
 }
 
-//run :
+// run :
 func run(RPCAddr, NodeAddr string) {
 	//test tls is enable
 	RPCAddr = testTLS(RPCAddr)

@@ -10,8 +10,9 @@ import proto "github.com/golang/protobuf/proto"
 var _ = proto.Marshal
 
 // 以太坊账户信息
-// 	 privkey : 账户地址对应的私钥
-// 	 addr :账户地址
+//
+//	privkey : 账户地址对应的私钥
+//	addr :账户地址
 type Account4Relayer struct {
 	Privkey []byte `protobuf:"bytes,1,opt,name=privkey,proto3" json:"privkey,omitempty"`
 	Addr    string `protobuf:"bytes,2,opt,name=addr" json:"addr,omitempty"`

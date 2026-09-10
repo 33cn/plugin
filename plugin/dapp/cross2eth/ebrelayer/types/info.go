@@ -1,6 +1,6 @@
 package types
 
-//Version4Relayer ...
+// Version4Relayer ...
 const Version4Relayer = "0.1.4"
 
 const (

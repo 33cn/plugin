@@ -25,7 +25,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//三种投票选项
+// 三种投票选项
 type AutonomyVoteOption int32
 
 const (

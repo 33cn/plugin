@@ -67,12 +67,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(X2ethereumX, NewType(cfg))
 }
 
-//X2ethereumType ...
+// X2ethereumType ...
 type X2ethereumType struct {
 	types.ExecTypeBase
 }
 
-//NewType ...
+// NewType ...
 func NewType(cfg *types.Chain33Config) *X2ethereumType {
 	c := &X2ethereumType{}
 	c.SetChild(c)
@@ -80,7 +80,7 @@ func NewType(cfg *types.Chain33Config) *X2ethereumType {
 	return c
 }
 
-//GetName ...
+// GetName ...
 func (x *X2ethereumType) GetName() string {
 	return X2ethereumX
 }

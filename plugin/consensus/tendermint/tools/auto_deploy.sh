@@ -81,7 +81,7 @@ GetUserNamePasswdAndPath() {
 
         echo "Does the config of destination right?(yes/no)"
         read input
-        if [ "X${input}" = "Xno" ]; then
+        if [ "${input}" = "no" ]; then
             echo "The config file is wrong. You can config it manually."
             return 1
         fi
@@ -218,10 +218,11 @@ main() {
 
     # Send and decompress the package
     SendFileAndDecompressFile
-    if [ $? -eq 1 ]; then
+    ret=$?
+    if [ $ret -eq 1 ]; then
         echo "Send file err and exit soon..."
         exit
-    elif [ $? -eq 2 ]; then
+    elif [ $ret -eq 2 ]; then
         echo "Decompress file err and exit soon..."
     fi
 }

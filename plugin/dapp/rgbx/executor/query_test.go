@@ -1,12 +1,13 @@
 package executor
 
 import (
+	"testing"
+
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rgbx/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestRgbx_Query_ListPendingTx(t *testing.T) {
@@ -77,6 +78,7 @@ func TestRgbx_Query_GetPendingTx(t *testing.T) {
 	_, err := r.Query(funcName, types.Encode(&rtypes.ReqGetPendingTx{}))
 	require.Equal(t, types.ErrNotFound, err)
 	msg, err := r.Query(funcName, types.Encode(&rtypes.ReqGetPendingTx{Index: 1}))
+	require.Nil(t, err)
 	require.Equal(t, int64(1), msg.(*rtypes.PendingTx).GetTxIndex())
 }
 
@@ -90,6 +92,7 @@ func TestRgbx_Query_GetConfirmedHeight(t *testing.T) {
 	require.Nil(t, err)
 	require.Nil(t, db.Set([]byte(confirmedHeightKey), types.Encode(&types.Int64{Data: 1})))
 	msg, err := r.Query(funcName, nil)
+	require.Nil(t, err)
 	require.Equal(t, int64(1), msg.(*types.Int64).GetData())
 }
 
@@ -108,6 +111,7 @@ func TestRgbx_Query_GetAsset(t *testing.T) {
 	require.Equal(t, types.ErrNotFound, err)
 	require.Nil(t, db.Set(formatAssetKey("test"), types.Encode(&rtypes.RgbxAsset{Symbol: "test"})))
 	msg, err := r.Query(funcName, types.Encode(&types.ReqString{Data: "test"}))
+	require.Nil(t, err)
 	require.Equal(t, "test", msg.(*rtypes.RgbxAsset).Symbol)
 }
 

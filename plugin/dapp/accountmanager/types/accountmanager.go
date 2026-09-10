@@ -44,7 +44,7 @@ const (
 	TyApplyLog
 )
 
-//状态
+// 状态
 const (
 	Normal = int32(iota)
 	Frozen
@@ -52,7 +52,7 @@ const (
 	Expired
 )
 
-//supervior op
+// supervior op
 const (
 	UnknownSupervisorOp = int32(iota)
 	Freeze
@@ -61,14 +61,14 @@ const (
 	Authorize
 )
 
-//apply  op
+// apply  op
 const (
 	UnknownApplyOp = int32(iota)
 	RevokeReset
 	EnforceReset
 )
 
-//list ...
+// list ...
 const (
 	ListDESC = int32(0)
 	ListASC  = int32(1)
@@ -119,12 +119,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(AccountmanagerX, NewType(cfg))
 }
 
-//AccountmanagerType ...
+// AccountmanagerType ...
 type AccountmanagerType struct {
 	types.ExecTypeBase
 }
 
-//NewType ...
+// NewType ...
 func NewType(cfg *types.Chain33Config) *AccountmanagerType {
 	c := &AccountmanagerType{}
 	c.SetChild(c)

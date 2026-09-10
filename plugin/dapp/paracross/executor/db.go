@@ -54,7 +54,7 @@ func saveTitleHeight(db dbm.KV, key []byte, heightStatus types.Message /* height
 	return db.Set(key, val)
 }
 
-//GetBlock get block detail by block hash
+// GetBlock get block detail by block hash
 func GetBlock(api client.QueueProtocolAPI, blockHash []byte) (*types.BlockDetail, error) {
 	blockDetails, err := api.GetBlockByHashes(&types.ReqHashes{Hashes: [][]byte{blockHash}})
 	if err != nil {
@@ -113,7 +113,7 @@ func isNotFound(err error) bool {
 	return false
 }
 
-//GetTx get tx by tx hash
+// GetTx get tx by tx hash
 func GetTx(api client.QueueProtocolAPI, txHash []byte) (*types.TransactionDetail, error) {
 	txs, err := api.GetTransactionByHash(&types.ReqHashes{Hashes: [][]byte{txHash}})
 	if err != nil {

@@ -134,12 +134,12 @@ func (p *mixPolicy) getDepositProof(exec, symbol, receiver, returner, auth, amou
 	}
 
 	var input mixTy.DepositCircuit
-	input.NoteHash.Assign(resp.NoteHash)
-	input.Amount.Assign(resp.Proof.Amount)
-	input.ReceiverPubKey.Assign(resp.Proof.ReceiverKey)
-	input.AuthorizePubKey.Assign(resp.Proof.AuthorizeKey)
-	input.ReturnPubKey.Assign(resp.Proof.ReturnKey)
-	input.NoteRandom.Assign(resp.Proof.NoteRandom)
+	input.NoteHash = resp.NoteHash
+	input.Amount = resp.Proof.Amount
+	input.ReceiverPubKey = resp.Proof.ReceiverKey
+	input.AuthorizePubKey = resp.Proof.AuthorizeKey
+	input.ReturnPubKey = resp.Proof.ReturnKey
+	input.NoteRandom = resp.Proof.NoteRandom
 
 	proofInfo, err := getZkProofKeys(mixTy.VerifyType_DEPOSIT, zkPath, mixTy.DepositPk, &input)
 	if err != nil {

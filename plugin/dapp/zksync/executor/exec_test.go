@@ -18,9 +18,9 @@ import (
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	zksyncTypes "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
@@ -783,7 +783,7 @@ func TestContract2Tree(t *testing.T) {
 	fmt.Println("accountInfo =", accountInfo)
 }
 
-//通过proxyExit模式进行提币时，需要确保未设置公钥，否则提币失败
+// 通过proxyExit模式进行提币时，需要确保未设置公钥，否则提币失败
 func TestProxyExitFaid(t *testing.T) {
 	initSetup()
 	defer util.CloseTestDB(dbDir, dbHanleGlobal)
@@ -1975,7 +1975,7 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 		return
 	}
 
-	privateKey, err := eddsa.GenerateKey(bytes.NewReader(key.Bytes()))
+	privateKey, err := wallet.GenerateKeyCompat(bytes.NewReader(key.Bytes()))
 	if err != nil {
 		return
 	}
@@ -2097,8 +2097,8 @@ func SignTransaction(key chain33Crypto.PrivKey, tx *types.Transaction) (err erro
 	return
 }
 
-func SignTxInEddsa(msg *zksyncTypes.ZkMsg, privateKey eddsa.PrivateKey) (*zksyncTypes.ZkSignature, error) {
-	signInfo, err := privateKey.Sign(wallet.GetMsgHash(msg), mimc.NewMiMC(zksyncTypes.ZkMimcHashSeed))
+func SignTxInEddsa(msg *zksyncTypes.ZkMsg, privateKey *eddsa.PrivateKey) (*zksyncTypes.ZkSignature, error) {
+	signInfo, err := privateKey.Sign(wallet.GetMsgHash(msg), legacymimc.NewMiMC(zksyncTypes.ZkMimcHashSeed))
 	if err != nil {
 		return nil, err
 	}

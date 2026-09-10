@@ -27,14 +27,14 @@ var (
 	mlog = log15.New("relayer manager", "manager")
 )
 
-//status ...
+// status ...
 const (
 	Locked        = int32(1)
 	Unlocked      = int32(99)
 	EncryptEnable = int64(1)
 )
 
-//Manager ...
+// Manager ...
 type Manager struct {
 	chain33Relayer *chain33.Relayer4Chain33
 	ethRelayer     map[string]*ethereum.Relayer4Ethereum
@@ -46,9 +46,9 @@ type Manager struct {
 	decimalLru     *lru.Cache
 }
 
-//NewRelayerManager ...
-//1.验证人的私钥需要通过cli命令行进行导入，且chain33和ethereum两种不同的验证人需要分别导入
-//2.显示或者重新替换原有的私钥首先需要通过passpin进行unlock的操作
+// NewRelayerManager ...
+// 1.验证人的私钥需要通过cli命令行进行导入，且chain33和ethereum两种不同的验证人需要分别导入
+// 2.显示或者重新替换原有的私钥首先需要通过passpin进行unlock的操作
 func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayers map[string]*ethereum.Relayer4Ethereum, db dbm.DB) *Manager {
 	l, _ := lru.New(4096)
 	manager := &Manager{
@@ -65,7 +65,7 @@ func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayers map[
 	return manager
 }
 
-//SetPassphase ...
+// SetPassphase ...
 func (manager *Manager) SetPassphase(setPasswdReq *relayerTypes.ReqSetPasswd, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -109,7 +109,7 @@ func (manager *Manager) SetPassphase(setPasswdReq *relayerTypes.ReqSetPasswd, re
 	return nil
 }
 
-//ChangePassphase ...
+// ChangePassphase ...
 func (manager *Manager) ChangePassphase(setPasswdReq *relayerTypes.ReqChangePasswd, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -187,7 +187,7 @@ func (manager *Manager) ChangePassphase(setPasswdReq *relayerTypes.ReqChangePass
 	return nil
 }
 
-//Unlock 进行unlok操作
+// Unlock 进行unlok操作
 func (manager *Manager) Unlock(passphase string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -225,7 +225,7 @@ func (manager *Manager) Unlock(passphase string, result *interface{}) error {
 	return nil
 }
 
-//Lock 锁定操作，该操作一旦执行，就不能替换验证人的私钥，需要重新unlock之后才能修改
+// Lock 锁定操作，该操作一旦执行，就不能替换验证人的私钥，需要重新unlock之后才能修改
 func (manager *Manager) Lock(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -240,7 +240,7 @@ func (manager *Manager) Lock(param interface{}, result *interface{}) error {
 	return nil
 }
 
-//ImportChain33RelayerPrivateKey 导入chain33relayer验证人的私钥,该私钥实际用于向ethereum提交验证交易时签名使用
+// ImportChain33RelayerPrivateKey 导入chain33relayer验证人的私钥,该私钥实际用于向ethereum提交验证交易时签名使用
 func (manager *Manager) ImportChain33RelayerPrivateKey(importKeyReq *relayerTypes.ImportKeyReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -261,7 +261,7 @@ func (manager *Manager) ImportChain33RelayerPrivateKey(importKeyReq *relayerType
 	return nil
 }
 
-//GenerateEthereumPrivateKey 生成以太坊私钥
+// GenerateEthereumPrivateKey 生成以太坊私钥
 func (manager *Manager) GenerateEthereumPrivateKey(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -304,7 +304,7 @@ func (manager *Manager) ImportEthereumPrivateKey4EthRelayer(privateKey string, r
 	return nil
 }
 
-//ShowChain33RelayerValidator 显示在chain33中以验证人validator身份进行登录的地址
+// ShowChain33RelayerValidator 显示在chain33中以验证人validator身份进行登录的地址
 func (manager *Manager) ShowChain33RelayerValidator(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -414,7 +414,7 @@ func (manager *Manager) SafeTransfer4Chain33(para *relayerTypes.SafeTransfer, re
 	return nil
 }
 
-//Burn ...
+// Burn ...
 func (manager *Manager) Burn(burn *relayerTypes.Burn, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -436,7 +436,7 @@ func (manager *Manager) Burn(burn *relayerTypes.Burn, result *interface{}) error
 	return nil
 }
 
-//BurnAsync ...
+// BurnAsync ...
 func (manager *Manager) BurnAsync(burn *relayerTypes.Burn, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -534,7 +534,7 @@ func (manager *Manager) LockBTYAssetAsync(lockEthErc20Asset *relayerTypes.LockBT
 	return nil
 }
 
-//LockEthErc20AssetAsync ...
+// LockEthErc20AssetAsync ...
 func (manager *Manager) LockEthErc20AssetAsync(lockEthErc20Asset *relayerTypes.LockEthErc20, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -556,7 +556,7 @@ func (manager *Manager) LockEthErc20AssetAsync(lockEthErc20Asset *relayerTypes.L
 	return nil
 }
 
-//LockEthErc20Asset ...
+// LockEthErc20Asset ...
 func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset *relayerTypes.LockEthErc20, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -597,7 +597,7 @@ func (manager *Manager) ShowBalanceLocked(BalanceLockedReq *relayerTypes.Balance
 	return nil
 }
 
-//GetBalance ...
+// GetBalance ...
 func (manager *Manager) GetBalance(balanceAddr *relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -646,7 +646,7 @@ func (manager *Manager) ShowMultiBalance(balanceAddr *relayerTypes.BalanceAddr, 
 	return nil
 }
 
-//ShowBridgeBankAddr ...
+// ShowBridgeBankAddr ...
 func (manager *Manager) ShowBridgeBankAddr(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -669,7 +669,7 @@ func (manager *Manager) ShowBridgeBankAddr(para interface{}, result *interface{}
 	return nil
 }
 
-//ShowBridgeRegistryAddr ...
+// ShowBridgeRegistryAddr ...
 func (manager *Manager) ShowBridgeRegistryAddr(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -692,7 +692,7 @@ func (manager *Manager) ShowBridgeRegistryAddr(para interface{}, result *interfa
 	return nil
 }
 
-//ShowBridgeRegistryAddr4chain33 ...
+// ShowBridgeRegistryAddr4chain33 ...
 func (manager *Manager) ShowBridgeRegistryAddr4chain33(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -707,7 +707,7 @@ func (manager *Manager) ShowBridgeRegistryAddr4chain33(para interface{}, result 
 	return nil
 }
 
-//ShowTokenAddress ...
+// ShowTokenAddress ...
 func (manager *Manager) ShowTokenAddress(token2show *relayerTypes.TokenAddress, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -757,7 +757,7 @@ func (manager *Manager) ShowETHLockTokenAddress(token2show *relayerTypes.TokenAd
 	return nil
 }
 
-//ShowTxReceipt ...
+// ShowTxReceipt ...
 func (manager *Manager) ShowTxReceipt(txReceiptReq *relayerTypes.TxReceiptReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -824,7 +824,7 @@ func (manager *Manager) ShowTokenStatics(request *relayerTypes.TokenStaticsReque
 	return nil
 }
 
-//TransferToken ...
+// TransferToken ...
 func (manager *Manager) TransferToken(transfer *relayerTypes.TransferToken, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -843,7 +843,7 @@ func (manager *Manager) TransferToken(transfer *relayerTypes.TransferToken, resu
 	return nil
 }
 
-//GetDecimals ...
+// GetDecimals ...
 func (manager *Manager) GetDecimals(chainName, tokenAddr string) (int64, error) {
 	if d, ok := manager.decimalLru.Get(tokenAddr); ok {
 		mlog.Info("GetDecimals", "from cache", d)
@@ -899,7 +899,7 @@ func (manager *Manager) SafeTransfer4Eth(para *relayerTypes.SafeTransfer, result
 	return nil
 }
 
-//TransferEth ...
+// TransferEth ...
 func (manager *Manager) TransferEth(transfer *relayerTypes.TransferToken, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -1085,7 +1085,7 @@ func (manager *Manager) BurnWithIncreaseAsyncFromChain33(burn *relayerTypes.Burn
 	return nil
 }
 
-//ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
+// ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
 func (manager *Manager) ShowEthRelayerValidator(chainName string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()

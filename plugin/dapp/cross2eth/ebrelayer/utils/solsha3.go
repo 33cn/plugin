@@ -188,7 +188,7 @@ func Uint32(input interface{}) []byte {
 	case uint64:
 		binary.Write(b, binary.BigEndian, uint32(v))
 	case uint32:
-		binary.Write(b, binary.BigEndian, uint32(v))
+		binary.Write(b, binary.BigEndian, v)
 	case uint16:
 		binary.Write(b, binary.BigEndian, uint32(v))
 	case uint8:
@@ -359,7 +359,7 @@ func Int256(input interface{}) []byte {
 		bn := big.NewInt(int64(v))
 		return common.LeftPadBytes(bn.Bytes(), 32)
 	case int64:
-		bn := big.NewInt(int64(v))
+		bn := big.NewInt(v)
 		return common.LeftPadBytes(bn.Bytes(), 32)
 	case int32:
 		bn := big.NewInt(int64(v))
@@ -419,7 +419,7 @@ func Int128(input interface{}) []byte {
 		bn := big.NewInt(int64(v))
 		return common.LeftPadBytes(bn.Bytes(), 16)
 	case int64:
-		bn := big.NewInt(int64(v))
+		bn := big.NewInt(v)
 		return common.LeftPadBytes(bn.Bytes(), 16)
 	case int32:
 		bn := big.NewInt(int64(v))

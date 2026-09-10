@@ -22,7 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//kvmvcc statedb not support 0 value
+// kvmvcc statedb not support 0 value
 type TransferFlag int32
 
 const (

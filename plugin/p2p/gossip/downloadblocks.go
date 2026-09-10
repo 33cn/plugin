@@ -20,17 +20,17 @@ import (
 // Invs datastruct
 type Invs []*pb.Inventory
 
-//Len size of the Invs data
+// Len size of the Invs data
 func (i Invs) Len() int {
 	return len(i)
 }
 
-//Less Sort from low to high
+// Less Sort from low to high
 func (i Invs) Less(a, b int) bool {
 	return i[a].GetHeight() < i[b].GetHeight()
 }
 
-//Swap  the param
+// Swap  the param
 func (i Invs) Swap(a, b int) {
 	i[a], i[b] = i[b], i[a]
 }
@@ -145,7 +145,7 @@ func (d *DownloadJob) setFreePeer(pid string) {
 	}
 }
 
-//加入到重试数组
+// 加入到重试数组
 func (d *DownloadJob) appendRetryItem(item *pb.Inventory) {
 	d.mtx.Lock()
 	defer d.mtx.Unlock()

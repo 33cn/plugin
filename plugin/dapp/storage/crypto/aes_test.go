@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//DES 加解密测试
+// DES 加解密测试
 func TestAes(t *testing.T) {
 	aes := NewAES(keys[2], ivs[0])
 	result, err := aes.Encrypt(contents[1])

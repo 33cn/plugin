@@ -6,9 +6,10 @@ package ticket
 
 import (
 	"fmt"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"testing"
 	"time"
+
+	"github.com/btcsuite/btcd/btcec/v2"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"

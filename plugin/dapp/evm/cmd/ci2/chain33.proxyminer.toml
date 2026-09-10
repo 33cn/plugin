@@ -1,4 +1,5 @@
 Title="chain33"
+DisableForkCheck=true
 TestNet=true
 FixTime=false
 version="6.3.0"
@@ -521,10 +522,9 @@ ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
 ForkMaxTxFeeV1=0
-ForkEthAddressFormat=0
-ForkParaFee=-1
-# 账户黑名单启用高度，命中名单的交易在此高度后视为非法交易，所在区块整块拒绝；-1 表示关闭
 ForkAccountBlacklist=-1
+ForkParaFee=-1
+ForkEthAddressFormat=0
 
 [fork.sub.none]
 ForkUseTimeDelay=0
@@ -690,6 +690,7 @@ Enable=0
 
 [fork.sub.relay]
 Enable=570000
+ForkRelayVerifyBtcTx=0
 
 [fork.sub.retrieve]
 Enable=0

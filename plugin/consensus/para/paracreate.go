@@ -70,7 +70,7 @@ func (client *client) getLocalBlockSeq(height int64) (int64, []byte, error) {
 
 }
 
-//根据匹配上的chainblock，设置当前localdb block
+// 根据匹配上的chainblock，设置当前localdb block
 func (client *client) alignLocalBlock2ChainBlock(chainBlock *types.Block) error {
 	localBlock := &pt.ParaLocalDbBlock{
 		Height:     chainBlock.Height,
@@ -83,8 +83,8 @@ func (client *client) alignLocalBlock2ChainBlock(chainBlock *types.Block) error 
 
 }
 
-//如果localBlock被删除了，就从chain block获取，如果block能获取到，但远程seq获取不到，则返回当前块主链hash和错误的seq=0,
-//然后请求交易校验不过会进入循环匹配切换场景
+// 如果localBlock被删除了，就从chain block获取，如果block能获取到，但远程seq获取不到，则返回当前块主链hash和错误的seq=0,
+// 然后请求交易校验不过会进入循环匹配切换场景
 func (client *client) getLastLocalBlockSeq() (int64, []byte, error) {
 	height, err := client.getLastLocalHeight()
 	if err == nil {
@@ -119,7 +119,7 @@ func (client *client) getLastLocalBlock() (*pt.ParaLocalDbBlock, error) {
 	return client.getLocalBlockByHeight(height)
 }
 
-//genesis block scenario
+// genesis block scenario
 func (client *client) syncFromGenesisBlock() (int64, *types.Block, error) {
 	lastSeq, lastBlock, err := client.getLastBlockMainInfo()
 	if err != nil {
@@ -200,7 +200,6 @@ func (client *client) switchHashMatchedBlock() (int64, []byte, error) {
 	return mainSeq, localBlock.MainHash, nil
 }
 
-//
 func (client *client) switchLocalHashMatchedBlock() (int64, *pt.ParaLocalDbBlock, error) {
 	lastBlock, err := client.getLastLocalBlock()
 	if err != nil {
@@ -326,7 +325,7 @@ func validMainBlocks(txs *types.ParaTxDetails) *types.ParaTxDetails {
 	return txs
 }
 
-//主链blockchain支持按过滤平行链交易后，此接口弃用
+// 主链blockchain支持按过滤平行链交易后，此接口弃用
 func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
 	cfg := client.GetAPI().GetConfig()
 	blockSeq, err := client.GetBlockOnMainBySeq(currSeq)
@@ -477,7 +476,7 @@ func (client *client) procLocalAddBlock(mainBlock *types.ParaTxDetail, lastBlock
 
 }
 
-//只同步只有AddType的block，比如在当前高度１w高度前的主链blocks，默认没有分叉，只获取addType类型的，如果有分叉，也会在后面常规同步时候纠正过来
+// 只同步只有AddType的block，比如在当前高度１w高度前的主链blocks，默认没有分叉，只获取addType类型的，如果有分叉，也会在后面常规同步时候纠正过来
 func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error {
 	var blocks []*pt.ParaLocalDbBlock
 	lastBlock, err := client.getLastLocalBlock()

@@ -80,17 +80,17 @@ func (s *suiteRelayLog) TestReceiptLog() {
 	s.Equal(s.log.Id, log.OrderId)
 }
 
-//////////////////////////////////////////////////
+// ////////////////////////////////////////////////
 var (
 	addrFrom = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 	addrTo   = "1Mcx9PczwPQ79tDnYzw62SEQifPwXH84yN"
 	addrBtc  = "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"
 )
 
-//fromaddr 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+// fromaddr 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 var privFrom = getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 
-//to 1Mcx9PczwPQ79tDnYzw62SEQifPwXH84yN
+// to 1Mcx9PczwPQ79tDnYzw62SEQifPwXH84yN
 var privTo = getprivkey("BC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 
 func getprivkey(key string) crypto.PrivKey {
@@ -871,8 +871,9 @@ func (s *suiteVerify) TestVerify() {
 	transaction := &ty.BtcTransaction{
 		Vout:        []*ty.Vout{vout},
 		Time:        2500,
-		BlockHeight: 1000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		BlockHeight: 100000,
+		Hash:        relayRealBtcTxHash,
+		RawTx:       relayRealBtcRawTx,
 	}
 	strMerkleproof := []string{"e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
 		"ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815"}
@@ -887,17 +888,19 @@ func (s *suiteVerify) TestVerify() {
 		TxIndex:     2,
 		BlockHash:   "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
 		Height:      100000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		Hash:        relayRealBtcTxHash,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
-	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
+		Height:     100000,
+		Time:       2500,
 		MerkleRoot: "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
 	}
 	headEnc := types.Encode(head)
 	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
+	heightBytes := types.Encode(&types.Int64{Data: int64(100100)})
+	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 
 	order := &ty.RelayVerify{
 		OrderId: s.orderID,
@@ -1200,7 +1203,7 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_1() {
 	}
 }
 
-//not continuous
+// not continuous
 func (s *suiteSaveBtcHeader) TestSaveBtcHeader_2() {
 	head3 := &ty.BtcHeader{
 		Hash:          "16ad6d588aeca12bf3e7fd6b2263992b4442c9692f4e134ba7cf0d791746328a",
@@ -1236,7 +1239,7 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_2() {
 
 }
 
-//not continuous than previous
+// not continuous than previous
 func (s *suiteSaveBtcHeader) TestSaveBtcHeader_3() {
 	head3 := &ty.BtcHeader{
 		Hash:          "16ad6d588aeca12bf3e7fd6b2263992b4442c9692f4e134ba7cf0d791746328a",
@@ -1279,7 +1282,7 @@ func (s *suiteSaveBtcHeader) TestSaveBtcHeader_3() {
 
 }
 
-//reset
+// reset
 func (s *suiteSaveBtcHeader) TestSaveBtcHeader_4() {
 
 	head4 := &ty.BtcHeader{

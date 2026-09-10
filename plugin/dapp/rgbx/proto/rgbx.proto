@@ -46,8 +46,6 @@ message outPoint {
 message utxoSpendingProof {
     uint32 spendingInputIdx    = 1;
     int32  opRetOutputIdx      = 2;
-    bytes  spendingTx          = 3;
-    bytes  opRetOutputPkScript = 4;
 }
 
 message transferAsset {

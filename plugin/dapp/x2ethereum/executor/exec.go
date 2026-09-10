@@ -29,7 +29,7 @@ func (x *x2ethereum) Exec_Eth2Chain33Lock(payload *x2eTy.Eth2Chain33, tx *types.
 	return action.procEth2Chain33_lock(payload)
 }
 
-//----------------  Chain33(eth/erc20)------> Ethereum -------------------//
+// ----------------  Chain33(eth/erc20)------> Ethereum -------------------//
 // 在chain33端将铸的币销毁，返还给eth
 func (x *x2ethereum) Exec_Chain33ToEthBurn(payload *x2eTy.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))
@@ -39,7 +39,7 @@ func (x *x2ethereum) Exec_Chain33ToEthBurn(payload *x2eTy.Chain33ToEth, tx *type
 	return action.procChain33ToEth_burn(payload)
 }
 
-//---------------- Ethereum (bty) --> Chain33-------------------//
+// ---------------- Ethereum (bty) --> Chain33-------------------//
 // 在eth端将铸的bty币销毁，返还给chain33
 func (x *x2ethereum) Exec_Eth2Chain33Burn(payload *x2eTy.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))
@@ -52,7 +52,7 @@ func (x *x2ethereum) Exec_Eth2Chain33Burn(payload *x2eTy.Eth2Chain33, tx *types.
 	return action.procEth2Chain33_burn(payload)
 }
 
-//---------------- Chain33 --> Ethereum (bty) -------------------//
+// ---------------- Chain33 --> Ethereum (bty) -------------------//
 // 在 ethereum 上为 chain33 铸币
 func (x *x2ethereum) Exec_Chain33ToEthLock(payload *x2eTy.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))

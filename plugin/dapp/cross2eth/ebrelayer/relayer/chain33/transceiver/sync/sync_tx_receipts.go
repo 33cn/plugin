@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//Package sync ...
+// Package sync ...
 package sync
 
 import (
@@ -31,7 +31,7 @@ var (
 	minDuration2KeepAlive = time.Duration(180*1000) * time.Millisecond //三分钟
 )
 
-//StartSyncTxReceipt ...
+// StartSyncTxReceipt ...
 func StartSyncEvmTxLogs(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *EVMTxLogs {
 	log.Debug("StartSyncEvmTxLogs, load config", "para:", cfg)
 	log.Debug("EVMTxLogs started ")
@@ -57,14 +57,11 @@ func keepSubscriptionAlive(cfg *relayerTypes.SyncTxReceiptConfig) {
 	timer2KeepAlive = time.NewTicker(duration2KeepAlive)
 	log.Debug("keepSubscriptionAlive", "duration2KeepAlive", duration2KeepAlive)
 
-	for {
-		select {
-		case <-timer2KeepAlive.C:
-			bindOrResumePush(cfg)
-			now := time.Now()
-			_, month, day := now.Date()
-			log.Debug("keepSubscriptionAlive", "time stamp month", month, "day", day, "hour", now.Hour(), "minute", now.Minute())
-		}
+	for range timer2KeepAlive.C {
+		bindOrResumePush(cfg)
+		now := time.Now()
+		_, month, day := now.Date()
+		log.Debug("keepSubscriptionAlive", "time stamp month", month, "day", day, "hour", now.Hour(), "minute", now.Minute())
 	}
 }
 
@@ -148,9 +145,9 @@ func checkClient(addr string, expectClient string) bool {
 	return addr == expectClient
 }
 
-//向chain33节点的注册推送交易回执，AddSubscribeTxReceipt具有2种功能：
-//首次注册功能，如果没有进行过注册，则进行首次注册
-//如果已经注册，则继续推送
+// 向chain33节点的注册推送交易回执，AddSubscribeTxReceipt具有2种功能：
+// 首次注册功能，如果没有进行过注册，则进行首次注册
+// 如果已经注册，则继续推送
 func bindOrResumePush(cfg *relayerTypes.SyncTxReceiptConfig) {
 	contract := make(map[string]bool)
 	for _, name := range cfg.Contracts {
