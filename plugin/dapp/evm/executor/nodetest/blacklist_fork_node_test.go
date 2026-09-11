@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package executor_test
+package nodetest
 
 import (
 	"errors"
@@ -22,6 +22,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// 独立成包，避免和 executor 包内直接调用 Init()/drivers.Register 的单测
+// 共享同一个 test binary，触发 “Register called twice for driver evm”。
+//
 // 本文件走 testnode 完整节点栈，依赖 plugin/go.mod 中的 github.com/33cn/chain33
 // （当前为 v1.71.0，已含 mver 多版本黑名单）。
 //
