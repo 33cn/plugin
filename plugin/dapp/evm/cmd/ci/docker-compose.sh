@@ -244,7 +244,8 @@ function token_preCreate() {
   token_symbol=${1}
   owner=${2}
   echo "token_preCreate:symbol:${token_symbol}"
-  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 1000000000000 )
+  # total 会被 CLI 乘以 TokenPrecision(1e8), 且需小于 MaxCoin*coinPrecision(1e17), 否则 finish 时 GenesisInit 报 ErrAmount
+  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 10000 )
   if [ "${unsignedTx}" == "" ]; then
      echo "token preCreate create tx"
      return
