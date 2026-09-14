@@ -157,14 +157,21 @@ function checkBalanceOf(){
   local addr=${1}
   local expectBalance=${2}
   local data=${balanceOfSig}${addr:2:40}
-  local balance=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_call","params":[{"to":"'"${evm_contractAddr}"'","data":"'"${data}"'"}]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
-   if [ "${balance}" != "${expectBalance}" ]; then
-          echo "check balance faild "
-          return 1
-      else
+  local timeout=15
+  local interval=1
+  local elapsed=0
+  local balance=""
+  while [ "${elapsed}" -lt "${timeout}" ]; do
+    balance=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_call","params":[{"to":"'"${evm_contractAddr}"'","data":"'"${data}"'"}]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
+    if [ "${balance}" == "${expectBalance}" ]; then
           echo "check balance ok ^_^"
           return 0
-      fi
+    fi
+    sleep "${interval}"
+    elapsed=$((elapsed + interval))
+  done
+  echo "check balance faild, expect=${expectBalance}, got=${balance}"
+  return 1
 }
 
 

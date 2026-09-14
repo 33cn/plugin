@@ -272,19 +272,24 @@ function tx_wait() {
         exit 1
     fi
     local req=\"${2}\"
-    txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
+    local txhash=""
     local count=0
+    # 0.1s * 150 = 15s；CLI 在交易尚未写入索引时 os.Exit(1)，必须吞掉失败码否则进不了循环
+    local timeout=150
     while true; do
-        txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
-        if [ "${txhash}" != "${req}" ]; then
-            count=$((count + 1))
-            echo "${txhash}" "${req}" "${count}"
-            sleep 0.1
-        else
+        txhash=$(${1} tx query -s "${2}" 2>/dev/null | jq ".tx.hash" 2>/dev/null || true)
+        if [ "${txhash}" == "${req}" ]; then
             RAW_TX_HASH=$txhash
             echo "====query tx=$RAW_TX_HASH success"
             break
         fi
+        count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====query tx=${2} failed after ${timeout} tries, got ${txhash}"
+            exit 1
+        fi
+        echo "${txhash}" "${req}" "${count}"
+        sleep 0.1
     done
 }
 function block_wait2height() {
