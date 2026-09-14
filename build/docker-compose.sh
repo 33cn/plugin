@@ -192,9 +192,9 @@ function start() {
     fi
 
     echo "=========== query height ========== "
-    ${CLI} block last_header
-    result=$(${CLI} block last_header | jq ".height")
-    if [ "${result}" -lt 1 ]; then
+    ${CLI} block last_header || true
+    result=$(last_header_height "${CLI}")
+    if ! [[ "${result}" =~ ^[0-9]+$ ]] || [ "${result}" -lt 1 ]; then
         block_wait "${CLI}" 2
     fi
 
@@ -247,20 +247,44 @@ function miner() {
 
 }
 
+# CLI 在 RPC 瞬时失败时 os.Exit(1)。必须吞掉失败码，否则 set -e + pipefail 会退出整个脚本。
+function last_header_height() {
+    ${1} block last_header 2>/dev/null | jq ".height" 2>/dev/null || true
+}
+
 function block_wait() {
     if [ "$#" -lt 2 ]; then
         echo "wrong block_wait params"
         exit 1
     fi
-    cur_height=$(${1} block last_header | jq ".height")
-    expect=$((cur_height + ${2}))
+    local cur_height=""
+    local new_height=""
     local count=0
+    # 0.1s * 300 = 30s；ticket 第一块约 5–7s，余量留给 last_header 瞬时失败重试
+    local timeout=300
     while true; do
-        new_height=$(${1} block last_header | jq ".height")
-        if [ "${new_height}" -ge "${expect}" ]; then
+        cur_height=$(last_header_height "${1}")
+        if [[ "${cur_height}" =~ ^[0-9]+$ ]]; then
             break
         fi
         count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====block_wait last_header failed after ${timeout} tries, got ${cur_height}"
+            exit 1
+        fi
+        sleep 0.1
+    done
+    expect=$((cur_height + ${2}))
+    while true; do
+        new_height=$(last_header_height "${1}")
+        if [[ "${new_height}" =~ ^[0-9]+$ ]] && [ "${new_height}" -ge "${expect}" ]; then
+            break
+        fi
+        count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====block_wait timeout waiting height>=${expect}, last=${new_height}, old=${cur_height}"
+            exit 1
+        fi
         sleep 0.1
     done
     echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
@@ -301,17 +325,26 @@ function block_wait2height() {
     local new_height=0
     local expect=${2}
     local isPara=${3}
+    local timeout=600
+    local para_height=""
 
     while true; do
-        new_height=$(${1} block last_header | jq ".height")
-        if [ "$isPara" == "1" ]; then
-            ${1} para blocks -s "$new_height" -e "$new_height"
-            new_height=$(${1} para blocks -s "$new_height" -e "$new_height" | jq ".items[0].mainHeight")
+        new_height=$(last_header_height "${1}")
+        if [ "$isPara" == "1" ] && [[ "${new_height}" =~ ^[0-9]+$ ]]; then
+            ${1} para blocks -s "$new_height" -e "$new_height" >/dev/null 2>&1 || true
+            para_height=$(${1} para blocks -s "$new_height" -e "$new_height" 2>/dev/null | jq ".items[0].mainHeight" 2>/dev/null || true)
+            if [[ "${para_height}" =~ ^[0-9]+$ ]]; then
+                new_height="${para_height}"
+            fi
         fi
-        if [ "${new_height}" -ge "${expect}" ]; then
+        if [[ "${new_height}" =~ ^[0-9]+$ ]] && [ "${new_height}" -ge "${expect}" ]; then
             break
         fi
         count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====block_wait2height timeout waiting height>=${expect}, last=${new_height}"
+            exit 1
+        fi
         sleep 0.1
     done
     echo "wait new block $count/10 s, cur_height=$new_height,expect=$expect"
