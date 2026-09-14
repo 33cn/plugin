@@ -280,7 +280,7 @@ function query_tx() {
 
     local times=200
     while true; do
-        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
+        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash" || true)
         echo "query hash is ${2}, return ${ret} "
         if [ "${ret}" != "${2}" ]; then
             block_wait "${1}" 1
@@ -408,8 +408,8 @@ function para_cross_transfer_withdraw() {
 
     local times=200
     while true; do
-        acc=$(${CLI} account balance -e paracross -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq -r ".balance")
-        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol coins.bty | jq -r ".balance")
+        acc=$(${CLI} account balance -e paracross -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq -r ".balance" || true)
+        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol coins.bty | jq -r ".balance" || true)
         echo "account balance is ${acc}, expect 9.3, para acct balance is ${acc_para},expect 0.7 "
         if [ "${acc}" != "9.3000" ] || [ "${acc_para}" != "0.7000" ]; then
             block_wait "${CLI}" 2
@@ -428,7 +428,7 @@ function para_cross_transfer_withdraw() {
     done
 
     echo "check asset transfer tx=$hash"
-    res=$(${CLI} para asset_txinfo -s "${hash}")
+    res=$(${CLI} para asset_txinfo -s "${hash}" || true)
     echo "$res"
     succ=$(jq -r ".success" <<<"$res")
     if [ "${succ}" != "true" ]; then
@@ -436,7 +436,7 @@ function para_cross_transfer_withdraw() {
         exit 1
     fi
     echo "check asset withdraw tx=$hash2"
-    res=$(${CLI} para asset_txinfo -s "${hash2}")
+    res=$(${CLI} para asset_txinfo -s "${hash2}" || true)
     echo "$res"
     succ=$(jq -r ".success" <<<"$res")
     if [ "${succ}" != "true" ]; then
@@ -517,8 +517,8 @@ function para_cross_transfer_withdraw_for_token() {
 
     local times=200
     while true; do
-        acc=$(${CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol FZM --asset_exec token -e paracross | jq -r ".balance")
-        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol token.FZM --asset_exec paracross -e paracross | jq -r ".balance")
+        acc=$(${CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol FZM --asset_exec token -e paracross | jq -r ".balance" || true)
+        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol token.FZM --asset_exec paracross -e paracross | jq -r ".balance" || true)
         echo "account balance is ${acc}, expect 224, para acct balance is ${acc_para}, execpt=109 "
         if [ "${acc}" != "224.0000" ] || [ "${acc_para}" != "109.0000" ]; then
             block_wait "${CLI}" 2
@@ -625,9 +625,9 @@ function check_cross_transfer_para_balance() {
     local times=200
     local hash="$3"
     while true; do
-        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
-        acc_para=$(${PARA_CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol paracross.user.p.game.coins.para -e paracross | jq -r ".balance")
-        res=$(${CLI} para asset_txinfo -s "${hash}")
+        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance" || true)
+        acc_para=$(${PARA_CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol paracross.user.p.game.coins.para -e paracross | jq -r ".balance" || true)
+        res=$(${CLI} para asset_txinfo -s "${hash}" || true)
         echo "$res"
         succ=$(jq -r ".success" <<<"$res")
         echo "main account balance is ${acc}, expect $1, para acct balance is ${acc_para},expect $2, cross rst=$succ, expect=true "
@@ -652,9 +652,9 @@ function check_cross_transfer_game_balance() {
     local times=200
     local hash="$3"
     while true; do
-        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
-        acc_para=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.paracross | jq -r ".balance")
-        res=$(${CLI} para asset_txinfo -s "${hash}")
+        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance" || true)
+        acc_para=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.paracross | jq -r ".balance" || true)
+        res=$(${CLI} para asset_txinfo -s "${hash}" || true)
         echo "$res"
         succ=$(jq -r ".success" <<<"$res")
         echo "main account balance is ${acc}, expect $1, para exec acct balance is ${acc_para},expect $2, cross rst=$succ, expect=true "
@@ -800,7 +800,7 @@ function para_create_nodegroup() {
 function check_supervision_node_group_list() {
     local idcount=0
     while true; do
-        newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[$idcount].id")
+        newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[$idcount].id" || true)
         if [ "$newid" == null ]; then
             ${PARA_CLI} para supervision_node id_list -s "$1"
             echo "cancel status error "
@@ -1207,7 +1207,7 @@ function check_privacy_utxo() {
     echo '#check utxo balance, addr='"${2}"', assetExec='"${3}"', token='"${4}"', expect='"${5}"
     local times=10
     while true; do
-        acc=$(${1} privacy showpai -a "${2}" -e "${3}" -s "${4}" | jq -r ".AvailableAmount")
+        acc=$(${1} privacy showpai -a "${2}" -e "${3}" -s "${4}" | jq -r ".AvailableAmount" || true)
         echo "utxo avail balance is ${acc} "
         if [[ ${acc} == "${5}" ]]; then
             break

@@ -169,8 +169,9 @@ function start() {
     ${CLI} block last_header
     local count=1000
     while [ $count -gt 0 ]; do
-        peersCount=$(${CLI} net peer | jq '.[] | length')
-        if [ "${peersCount}" -ge 2 ]; then
+        # CLI 在 RPC 瞬时失败时 os.Exit(1)，必须吞掉失败码否则进不了等待循环
+        peersCount=$(${CLI} net peer 2>/dev/null | jq '.[] | length' 2>/dev/null || true)
+        if [[ "${peersCount}" =~ ^[0-9]+$ ]] && [ "${peersCount}" -ge 2 ]; then
             break
         fi
         sleep 1
@@ -260,8 +261,14 @@ function block_wait() {
     local cur_height=""
     local new_height=""
     local count=0
-    # 0.1s * 300 = 30s；ticket 第一块约 5–7s，余量留给 last_header 瞬时失败重试
-    local timeout=300
+    # 预算按要等的块数算：0.1s 一轮、每块留 5 轮余量，另加 300 轮(30s)固定余量供
+    # last_header 瞬时失败重试。固定 300 轮(30s)在 block_wait 900 这类长等待上会误判超时
+    # （实测约需 108s）；封顶 1800 轮(180s)，避免真卡死时每个调用白等太久。
+    # 注意用 if 而非 `[ ... ] && x=..`：后者条件为假时返回非零，会触发 set -e
+    local timeout=$(( ${2} * 5 + 300 ))
+    if [ "${timeout}" -gt 1800 ]; then
+        timeout=1800
+    fi
     while true; do
         cur_height=$(last_header_height "${1}")
         if [[ "${cur_height}" =~ ^[0-9]+$ ]]; then
@@ -275,6 +282,7 @@ function block_wait() {
         sleep 0.1
     done
     expect=$((cur_height + ${2}))
+    count=0 # 两段各自独立预算，否则第一段(等 last_header 可用)会吃掉第二段的额度
     while true; do
         new_height=$(last_header_height "${1}")
         if [[ "${new_height}" =~ ^[0-9]+$ ]] && [ "${new_height}" -ge "${expect}" ]; then

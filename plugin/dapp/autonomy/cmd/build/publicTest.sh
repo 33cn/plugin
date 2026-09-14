@@ -65,7 +65,7 @@ function check_tx() {
 
     local count=0
     while true; do
-        ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
+        ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty || true)
         if [[ ${ty} != "" ]]; then
             break
         fi
@@ -81,7 +81,7 @@ function check_tx() {
 
     set -x
 
-    ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
+    ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty || true)
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
         hashInfo=$(${CLI} tx query -s "${2}")
