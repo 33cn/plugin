@@ -97,8 +97,9 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 	return mdb
 }
 
-// isBlockedAccount 账户黑名单兜底判定，带 ForkAccountBlacklist 门控。
-// statedb 的转账结果直接进入状态计算，未到分叉高度时不得改变执行结果，否则会与未升级节点分链。
+// isBlockedAccount 账户黑名单兜底判定，按当前区块高度选取名单版本。
+// statedb 的转账结果直接进入状态计算，名单版本必须严格跟随高度，
+// 否则会用新名单判定旧区块，与未升级节点分链。
 //
 // 这一层是资产打出的最后一道闸，覆盖 chain33 与 runtime.Call 都看不见的两条路径
 // （docs/security/evm-account-blacklist.md 场景 B2 / B3，blacklist_gap_test.go 有对应用例）：
@@ -114,11 +115,11 @@ func (mdb *MemoryStateDB) isBlockedAccount(addrs ...string) bool {
 		return false
 	}
 	cfg := mdb.api.GetConfig()
-	if cfg == nil || !cfg.IsFork(mdb.blockHeight, types.ForkAccountBlacklist) {
+	if cfg == nil {
 		return false
 	}
 	for _, addr := range addrs {
-		if types.IsBlockedAccount(addr) {
+		if cfg.IsBlockedAccount(addr, mdb.blockHeight) {
 			return true
 		}
 	}

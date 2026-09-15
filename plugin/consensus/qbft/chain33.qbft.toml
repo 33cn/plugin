@@ -144,6 +144,8 @@ superManager=[
 
 [fork.system]
 ForkExecKey=0
+# 交易chainID严格校验启用高度，启用后交易组内每笔交易及minTxFeeRate=0时的单笔交易都会校验chainID，防止跨链重放；-1 表示关闭
+ForkTxChainIDStrict=-1
 
 [fork.sub.manage]
 Enable=0
