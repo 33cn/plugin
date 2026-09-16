@@ -164,7 +164,10 @@ function run_testcase(){
   chain33_BlockWait 10 ${MCli}
   targeBalance=110000
   local elapsed=0
-  local timeout=180
+  # 票是成批关闭的（每张回 ticketPrice+coinReward=3005），批次间隔可达 2 分钟，
+  # 且这条链启动慢（首块曾耗时 50s）。预算要能容纳启动 + 至少两个完整批次，
+  # 否则会在余额还在上涨时被掐断
+  local timeout=600
   while true; do
   result=$(${CLI} account balance -a "${genesis}" -e ticket | jq -r ".balance")
   balance=$(printf "%.0f\n" $result)
@@ -271,7 +274,8 @@ function queryMinerColdAddrs() {
 function waitMinerColdAddrs() {
     local miner=$1
     local expect=$2
-    local timeout=15
+    # ticket 共识下出块 3~5s，15s 只够 3~5 个块，不足以覆盖 local 索引延迟
+    local timeout=60
     local interval=1
     local elapsed=0
     local addrs=""
@@ -336,7 +340,8 @@ function closeColdAddrTicket() {
       ${CLI} wallet auto_mine -f 0
       sleep 10
       local elapsed=0
-      local timeout=15
+      # 关闭自动挖矿后要等票进入可关闭状态，ticket 共识出块 3~5s，15s 余量不够
+      local timeout=60
       realhash=""
       while [ "${elapsed}" -lt "${timeout}" ]; do
         hash=$(${CLI} ticket close 2>/dev/null | jq ".hashes" 2>/dev/null || true)
