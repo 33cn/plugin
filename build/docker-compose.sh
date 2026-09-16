@@ -261,11 +261,14 @@ function block_wait() {
     local cur_height=""
     local new_height=""
     local count=0
-    # 预算按要等的块数算：0.1s 一轮、每块留 5 轮余量，另加 300 轮(30s)固定余量供
-    # last_header 瞬时失败重试。固定 300 轮(30s)在 block_wait 900 这类长等待上会误判超时
-    # （实测约需 108s）；封顶 1800 轮(180s)，避免真卡死时每个调用白等太久。
+    # 预算按要等的块数算：每块留 5 轮余量，另加固定余量覆盖链启动。
+    # 一轮 = sleep 0.1s + 一次 last_header 调用，实测约 0.16~0.19s，所以轮数不等于 0.1s 倍数。
+    # 固定余量必须能覆盖"开启挖矿后的第一个块"：ticket 共识下实测稳定在 50s 左右
+    # （同一轮 CI 的 unfreeze/bridgevmxgo/zksync 分别用掉 264/252/209 轮），
+    # 原来的 300 轮只有 49~58s，与 50s 几乎重合，autonomy 就是这样在高度 0 上超时的。
+    # 900 轮约 145~170s，留出约 3 倍余量；封顶 1800 轮，避免真卡死时每个调用白等太久。
     # 注意用 if 而非 `[ ... ] && x=..`：后者条件为假时返回非零，会触发 set -e
-    local timeout=$(( ${2} * 5 + 300 ))
+    local timeout=$(( ${2} * 5 + 900 ))
     if [ "${timeout}" -gt 1800 ]; then
         timeout=1800
     fi
@@ -306,8 +309,10 @@ function tx_wait() {
     local req=\"${2}\"
     local txhash=""
     local count=0
-    # 0.1s * 150 = 15s；CLI 在交易尚未写入索引时 os.Exit(1)，必须吞掉失败码否则进不了循环
-    local timeout=150
+    # CLI 在交易尚未写入索引时 os.Exit(1)，必须吞掉失败码否则进不了循环。
+    # 一轮约 0.16~0.19s，原来的 150 轮只有约 25s，交易要等打包+索引，余量偏薄；
+    # 600 轮约 100~115s
+    local timeout=600
     while true; do
         txhash=$(${1} tx query -s "${2}" 2>/dev/null | jq ".tx.hash" 2>/dev/null || true)
         if [ "${txhash}" == "${req}" ]; then
@@ -333,7 +338,9 @@ function block_wait2height() {
     local new_height=0
     local expect=${2}
     local isPara=${3}
-    local timeout=600
+    # 一轮约 0.16~0.19s，600 轮约 100~115s；等的是绝对高度，平行链追主链可能更慢，
+    # 与 block_wait 的固定余量对齐到 1800 轮(约 290~340s)
+    local timeout=1800
     local para_height=""
 
     while true; do
