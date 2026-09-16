@@ -20,7 +20,6 @@ import (
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
 	"github.com/33cn/chain33/mempool"
-	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
@@ -41,8 +40,8 @@ import (
 var (
 	secp crypto.Crypto
 
-	jrpcURL = "127.0.0.1:8803"
-	grpcURL = "127.0.0.1:8804"
+	jrpcURL = "127.0.0.1:8833"
+	grpcURL = "127.0.0.1:8834"
 
 	config = `# Title为local，表示此配置文件为本地单节点的配置。此时本地节点所在的链上只有这一个节点，共识模块一般采用solo模式。
 Title="local"
@@ -94,6 +93,9 @@ isParaChain=false
 enableTxQuickIndex=false
 
 [p2p]
+# 本用例是单节点 solo，不依赖 p2p。enable=true 时 DHT 会扫到 go test ./... 里其它包的节点，
+# IsCaughtUp 变 false 后 solo 停止出块，TransferToExec 进了 mempool 却打不进块。
+enable=false
 types=["dht"]
 msgCacheSize=10240
 driver="leveldb"
@@ -103,10 +105,9 @@ grpcLogFile="grpc33.log"
 
 
 [rpc]
-# jrpc绑定地址
-jrpcBindAddr="localhost:8803"
-# grpc绑定地址
-grpcBindAddr="localhost:8804"
+# 8803/8804 会被 dpos 等测试占用，并行跑时抢端口
+jrpcBindAddr="localhost:8833"
+grpcBindAddr="localhost:8834"
 # 白名单列表，允许访问的IP地址，默认是“*”，允许所有IP访问
 whitelist=["127.0.0.1"]
 # jrpc方法请求白名单，默认是“*”，允许访问所有RPC方法
@@ -344,7 +345,7 @@ func TestGuess(t *testing.T) {
 
 func testGuessImp(t *testing.T) {
 	fmt.Println("=======start guess test!=======")
-	q, chain, s, mem, exec, cs, p2p, cmd := initEnvGuess()
+	q, chain, s, mem, exec, cs, cmd := initEnvGuess()
 	cfg := q.GetConfig()
 	defer chain.Close()
 	defer mem.Close()
@@ -352,7 +353,6 @@ func testGuessImp(t *testing.T) {
 	defer s.Close()
 	defer q.Close()
 	defer cs.Close()
-	defer p2p.Close()
 	err := createConn()
 	for err != nil {
 		err = createConn()
@@ -370,7 +370,6 @@ func testGuessImp(t *testing.T) {
 	sendTransferTx(cfg, adminPriv, userAAddr, 2000000000000)
 	sendTransferTx(cfg, adminPriv, userBAddr, 2000000000000)
 
-	time.Sleep(2 * time.Second)
 	in := &types.ReqBalance{}
 	in.Addresses = append(in.Addresses, userAAddr)
 	acct, err1 := c.GetBalance(context.Background(), in)
@@ -394,7 +393,6 @@ func testGuessImp(t *testing.T) {
 	//从测试地址向dos合约转入代币
 	sendTransferToExecTx(cfg, userAPriv, "guess", 1000000000000)
 	sendTransferToExecTx(cfg, userBPriv, "guess", 1000000000000)
-	time.Sleep(2 * time.Second)
 
 	fmt.Println("=======start GetBalance!=======")
 
@@ -421,7 +419,7 @@ func testGuessImp(t *testing.T) {
 	time.Sleep(2 * time.Second)
 }
 
-func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module, *cobra.Command) {
+func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, *cobra.Command) {
 	flag.Parse()
 
 	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
@@ -444,9 +442,6 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.NewP2PMgr(chain33Cfg)
-
-	network.SetQueueClient(q.Client())
 
 	rpc.InitCfg(cfg.RPC)
 	//监听失败(如端口被并行测试占用)时必须打日志，否则后续 CLI 只会报
@@ -466,7 +461,7 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 	}()
 
 	cmd := GuessCmd()
-	return q, chain, s, mem, exec, cs, network, cmd
+	return q, chain, s, mem, exec, cs, cmd
 }
 
 func createConn() error {
@@ -480,6 +475,43 @@ func createConn() error {
 	}
 	c = types.NewChain33Client(conn)
 	return nil
+}
+
+func waitTx(hash []byte) bool {
+	if len(hash) == 0 {
+		fmt.Println("waitTx hash is empty")
+		return false
+	}
+	req := &types.ReqHash{Hash: hash}
+	var lastErr error
+	for i := 0; i < 50; i++ {
+		res, err := c.QueryTransaction(context.Background(), req)
+		if err == nil && res != nil {
+			return true
+		}
+		lastErr = err
+		time.Sleep(100 * time.Millisecond)
+	}
+	fmt.Println("waitTx timeout, hash:", hex.EncodeToString(hash), "err:", lastErr)
+	return false
+}
+
+func sendAndWait(tx *types.Transaction, name string) bool {
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s SendTransaction failed, err=%v\n", name, err)
+		return false
+	}
+	if !reply.IsOk {
+		fmt.Fprintf(os.Stderr, "%s SendTransaction reply not ok, msg=%s\n", name, string(reply.GetMsg()))
+		return false
+	}
+	if !waitTx(reply.Msg) {
+		fmt.Fprintf(os.Stderr, "%s waitTx timeout, hash=%s\n", name, hex.EncodeToString(reply.Msg))
+		return false
+	}
+	fmt.Println(name, "ok")
+	return true
 }
 
 func generateKey(i, valI int) string {
@@ -562,22 +594,7 @@ func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) 
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendTransferTx SendTransaction failed")
-
-		return false
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendTransferTx SendTransaction failed,reply not ok.")
-
-		return false
-	}
-	fmt.Println("sendTransferTx ok")
-
-	return true
+	return sendAndWait(tx, "sendTransferTx")
 }
 
 func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, amount int64) bool {
@@ -598,23 +615,7 @@ func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, am
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendTransferToExecTx SendTransaction failed")
-
-		return false
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendTransferToExecTx SendTransaction failed,reply not ok.")
-
-		return false
-	}
-
-	fmt.Println("sendTransferToExecTx ok")
-
-	return true
+	return sendAndWait(tx, "sendTransferToExecTx")
 }
 
 func testCmd(cmd *cobra.Command) {
