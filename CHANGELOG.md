@@ -1,5 +1,24 @@
 changelog
 
+# [1.73.0](https://github.com/33cn/plugin/compare/v1.72.0...v1.73.0) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** cap evm token total to avoid int64 overflow on precreate ([d1eb000](https://github.com/33cn/plugin/commit/d1eb00045a9298e8fa410ff836e0a60ec63d3599))
+* **ci:** let evm tx query retry survive CLI exit on missing receipt ([ab50ffa](https://github.com/33cn/plugin/commit/ab50ffa83107110e5de4657a2cd13afdaf1246d3))
+* **ci:** retry CLI queries that exit before tx/ticket state is indexed ([b33e7fd](https://github.com/33cn/plugin/commit/b33e7fdf9a3badef22c84f153b7975a2319a98bb))
+* **ci:** retry last_header when CLI exits on RPC failure ([16c1de6](https://github.com/33cn/plugin/commit/16c1de6788e042675b3d8e6be9dfaf75636f6231))
+* **config:** add ForkTxChainIDStrict to [fork.system] configs ([252e716](https://github.com/33cn/plugin/commit/252e716ea71dc5d3c563e749e2d3521f755ec8be))
+* **cross2eth:** stop retrying the non-idempotent ethereum lock ([37ff268](https://github.com/33cn/plugin/commit/37ff268fe48ef1f10e33daebcc73260f3f4273c8))
+* **mix:** decrypt chain33 v1.71.0 magic+PBKDF2 ciphertext ([9cb470a](https://github.com/33cn/plugin/commit/9cb470a52adb5d985a93e8a5dffee44f0ff6ec1b))
+
+
+### Features
+
+* add mver blacklist config templates and update EVM docs ([91bbf89](https://github.com/33cn/plugin/commit/91bbf89122135a50a57b6d3b9d8e874ec963b0a3))
+* **evm:** select account blacklist by block height ([07369d3](https://github.com/33cn/plugin/commit/07369d3e18cc66bbb59509fcda2fd6120c21d560))
+
 # [1.72.0](https://github.com/33cn/plugin/compare/v1.71.3...v1.72.0) (2026-09-04)
 
 
