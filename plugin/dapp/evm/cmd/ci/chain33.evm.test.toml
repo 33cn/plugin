@@ -154,6 +154,19 @@ genesisBlockTime=1514533394
 genesis="0xd83b69C56834E85e023B1738E69BFA2F0dd52905"
 hotkeyAddr="0xd83b69C56834E85e023B1738E69BFA2F0dd52905"
 waitTxMs=10
+
+# 账户黑名单：命中地址禁止收发任何交易，支持base58与0x两种地址格式
+# 名单按高度分版本演进，每个 [mver.blacklist.<分叉名>] 段是一份全量名单而非增量，
+# 高度 h 生效的是「高度不大于 h 的最大分叉」那一份；下面的基线段在任何分叉生效前使用
+# 启用时须在 [fork.system] 把 ForkAccountBlacklist 配成真实高度，并取消下面 V1 段注释
+[mver.blacklist]
+accountBlacklist=[]
+
+#[mver.blacklist.ForkAccountBlacklist]
+#accountBlacklist=["1xxx", "0xyyy"]
+#[mver.blacklist.ForkAccountBlacklistV2]
+#accountBlacklist=["1xxx", "0xyyy", "0xzzz"]
+
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
 powLimitBits="0x1f00ffff"

@@ -14,8 +14,6 @@ NOC='\033[0m'
 
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
-    exit 1
-
     set -x
     # shellcheck disable=SC2116
     dirNameFa=$(echo ~)
@@ -26,14 +24,15 @@ function exit_cp_file() {
         mkdir -p ${dirName}
     fi
 
+    # 单个容器取不到日志不能中断收集, 否则后面的日志会丢
     for name in a b c d; do
         # shellcheck disable=SC2154
-        docker cp "${dockerNamePrefix}-ebrelayer${name}-1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
-        docker exec "${dockerNamePrefix}-ebrelayer${name}-1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
+        docker cp "${dockerNamePrefix}-ebrelayer${name}-1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log" || true
+        docker exec "${dockerNamePrefix}-ebrelayer${name}-1" tail -n 1000 /root/logs/x2Ethereum_relayer.log || true
     done
 
-    docker cp "${dockerNamePrefix}-chain33-1":/root/logs/chain33.log "${dirName}/chain33.log"
-    docker logs "${dockerNamePrefix}-chain33-1" | tail -n 1000
+    docker cp "${dockerNamePrefix}-chain33-1":/root/logs/chain33.log "${dirName}/chain33.log" || true
+    docker logs "${dockerNamePrefix}-chain33-1" | tail -n 1000 || true
 
     exit 1
 }
@@ -181,7 +180,7 @@ function check_tx() {
 
     local count=0
     while true; do
-        ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
+        ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty || true)
         if [[ ${ty} != "" ]]; then
             break
         fi
@@ -197,7 +196,7 @@ function check_tx() {
 
     set -x
 
-    ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
+    ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty || true)
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
         exit_cp_file

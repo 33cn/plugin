@@ -257,7 +257,7 @@ func TestWBTYOverflowAttackIntegration(t *testing.T) {
 			// 使用 IsBlockedAccount 能识别的 ETH 地址形态（addrFromRole 返回 tx.From()）。
 			attackerAddr := addrFromRole(cfg, roleAttacker)
 			accompliceAddr := addrFromRole(cfg, roleAccomplice)
-			restore := ctypes.SetBlockedAccountsForTest([]string{attackerAddr, accompliceAddr})
+			restore := cfg.SetBlockedAccountsForTest(0, []string{attackerAddr, accompliceAddr})
 			t.Cleanup(restore)
 
 			// 真实节点上的闸门在 chain33 框架层：executor.checkTx 在调用驱动 Exec 之前

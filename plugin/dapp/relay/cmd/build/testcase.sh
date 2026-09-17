@@ -241,12 +241,34 @@ function relay_test() {
     btc_tx_hash=$(${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet --wallet sendfrom default "${btcrcv_addr}" 10)
     echo "${btc_tx_hash}"
     ${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet generate 4
-    blockhash=$(${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet --wallet gettransaction "${btc_tx_hash}" | jq -r ".blockhash")
+    # btcwallet 只在交易已打包时才填 blockhash；generate 后钱包可能还没处理区块通知，
+    # 此时取到空串，用空串查 getblockheader 会被 btcd 判 -5 Block not found，
+    # 并被 set -e + pipefail 直接杀掉脚本。故轮询等钱包确认落块，失败有明确报错。
+    btc_extra_blocks=0
+    blockhash=""
+    btc_tries=0
+    while [ -z "${blockhash}" ]; do
+        blockhash=$(${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet --wallet gettransaction "${btc_tx_hash}" 2>/dev/null | jq -r '.blockhash // empty' 2>/dev/null || true)
+        if [ -n "${blockhash}" ]; then
+            break
+        fi
+        btc_tries=$((btc_tries + 1))
+        if [ "${btc_tries}" -ge 10 ]; then
+            echo "btc tx ${btc_tx_hash} has no blockhash after ${btc_tries} tries"
+            exit 1
+        fi
+        # 先等钱包处理区块通知；多次拿不到再补挖一块，覆盖"交易没进这 4 个块"的情形
+        if [ "${btc_tries}" -ge 5 ]; then
+            ${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet generate 1
+            btc_extra_blocks=$((btc_extra_blocks + 1))
+        fi
+        sleep 1
+    done
     blockheight=$(${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet --wallet getblockheader "${blockhash}" | jq -r ".height")
     echo "blcockheight=${blockheight}"
     ${BTC_CTL} --rpcuser=root --rpcpass=1314 --simnet --wallet getreceivedbyaddress "${btcrcv_addr}"
 
-    wait_btc_height "${1}" $((current + 80 + 4))
+    wait_btc_height "${1}" $((current + 80 + 4 + btc_extra_blocks))
 
     echo "=========== # unlock buy order ==========="
     acceptHeight=$(${1} tx query -s "${acct_buy_hash}" | jq -r ".receipt.logs[2].log.xHeight")
