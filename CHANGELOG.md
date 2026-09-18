@@ -1,5 +1,17 @@
 changelog
 
+# [1.74.0](https://github.com/33cn/plugin/compare/v1.73.0...v1.74.0) (2026-09-18)
+
+
+### Bug Fixes
+
+* **ci:** assert TestTicket genesis balance at height 0 ([1b81b64](https://github.com/33cn/plugin/commit/1b81b64175b7b9b70418fbebf7779e725e766078))
+
+
+### Features
+
+* add ForkAccountBlacklistV2 configs and bump chain33 to v1.72.0 ([ab70562](https://github.com/33cn/plugin/commit/ab70562367e5cba1456edbb587fd8d675abc9e0d))
+
 # [1.73.0](https://github.com/33cn/plugin/compare/v1.72.0...v1.73.0) (2026-09-17)
 
 
