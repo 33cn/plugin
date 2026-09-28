@@ -290,7 +290,17 @@ func (action *Action) RetrievePerform(perfRet *rt.PerformRetrieve) (*types.Recei
 	}
 
 	if cfg.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveAssetX) {
-		return action.RetrievePerformAssets(perfRet, r.RetPara[index].DefaultAddress)
+		receipt, err = action.RetrievePerformAssets(perfRet, r.RetPara[index].DefaultAddress)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetrivePerformRelayX) {
+			//remove the relation, 与分叉前路径语义对齐, 防止找回关系残留导致 perform 重放
+			r.UnRelateDB(index)
+			r.Save(action.db)
+			receipt.KV = append(receipt.KV, r.GetKVSet()...)
+		}
+		return receipt, nil
 	}
 
 	acc = action.coinsAccount.LoadExecAccount(r.RetPara[index].DefaultAddress, action.execaddr)
