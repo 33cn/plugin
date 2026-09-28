@@ -204,7 +204,7 @@ func TestBlacklistBlocksFundOps(t *testing.T) {
 	cfg.SetFork(ctypes.ForkAccountBlacklist, 0)
 
 	blockedAddr := "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	restore := ctypes.SetBlockedAccountsForTest([]string{blockedAddr})
+	restore := cfg.SetBlockedAccountsForTest(0, []string{blockedAddr})
 	t.Cleanup(restore)
 
 	// CanTransfer：黑名单发送方拒绝

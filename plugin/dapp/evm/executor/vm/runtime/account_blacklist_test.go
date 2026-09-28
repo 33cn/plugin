@@ -21,8 +21,8 @@ const blockedRuntimeAddr = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
 func newBlockedEVM(t *testing.T, blockedAddrs []string) *EVM {
 	t.Helper()
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	// local 标题下 SetAllFork(0)，ForkAccountBlacklist 从高度 0 启用
-	restore := types.SetBlockedAccountsForTest(blockedAddrs)
+	// 名单自高度 0 起生效，覆盖下面 Context 的区块高度 1
+	restore := cfg.SetBlockedAccountsForTest(0, blockedAddrs)
 	t.Cleanup(restore)
 	ctx := Context{BlockNumber: big.NewInt(1)}
 	return NewEVM(ctx, &state.MemoryStateDB{}, Config{}, cfg)
@@ -53,10 +53,20 @@ func TestCheckBlockedAccount(t *testing.T) {
 
 	t.Run("empty blocklist pass", func(t *testing.T) {
 		cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-		restore := types.SetBlockedAccountsForTest([]string{})
-		defer restore()
+		defer cfg.SetBlockedAccountsForTest(0, []string{})()
 		evm := NewEVM(Context{BlockNumber: big.NewInt(1)}, &state.MemoryStateDB{}, Config{}, cfg)
 		assert.NoError(t, checkBlockedAccount(evm, blocked, blocked))
+	})
+
+	// 名单自高度 H 起生效时，H 之前的区块必须放行，保证历史回放结果不变
+	t.Run("before fork height pass", func(t *testing.T) {
+		cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+		defer cfg.SetBlockedAccountsForTest(100, []string{blockedRuntimeAddr})()
+		evm := NewEVM(Context{BlockNumber: big.NewInt(99)}, &state.MemoryStateDB{}, Config{}, cfg)
+		assert.NoError(t, checkBlockedAccount(evm, blocked, blocked))
+
+		evm = NewEVM(Context{BlockNumber: big.NewInt(100)}, &state.MemoryStateDB{}, Config{}, cfg)
+		assert.Error(t, checkBlockedAccount(evm, blocked, blocked))
 	})
 }
 

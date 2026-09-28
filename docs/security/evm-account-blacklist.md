@@ -19,13 +19,16 @@ chain33 在框架层引入 `ForkAccountBlacklist` 与 `types.CheckTxBlockedAccou
 
 ## 1. chain33 框架层覆盖了什么
 
-三处入口最终都走 `types.checkTxBlockedAccountCore`（chain33 `types/account_blacklist.go`）：
+三处入口最终都走 `types.checkTxBlockedAccount`（chain33 `types/account_blacklist.go`）。
+启动时按 `[mver.blacklist.*]` 与分叉高度打成只读快照，运行期用 `blacklistAt(height)` 取
+「高度不大于 h 的最大版本」，**调用处不再写 `IsFork(height, ForkAccountBlacklist)`**。
+分叉高度之前取到的是空名单，效果等同未启用。
 
-| 层 | 位置 | fork 门控 |
+| 层 | 位置 | 选版高度 |
 |---|---|---|
-| mempool 入口 | `system/mempool/check.go:76`、`eventprocess.go:216/339` | 无，随升级立即生效 |
-| 出块 / 验块 | `system/consensus/base.go:606` `AddTxsToBlock` | 有 |
-| executor.checkTx | `executor/execenv.go:173` | 有 |
+| mempool 入口 | `CheckTxBlockedAccountImmediate`（`mempool/check.go`、延时交易入口） | 即将打包的下一高度 `last+1` |
+| 出块 / 验块 | `BaseClient.AddTxsToBlock` | 当前块高度 |
+| executor.checkTx | `executor/execenv.go` `checkTx` / `checkTxGroup` | `e.height`（出块/回放=块高度；进池 EventCheckTx 目前仍是 last） |
 
 判定四个维度：`tx.From()`、`tx.GetTo()`、`tx.GetRealToAddr()`、
 EVM payload 中的 `ContractAddr` 与**恰好 20 字节**的 `Para`。
@@ -48,7 +51,7 @@ EVM payload 中的 `ContractAddr` 与**恰好 20 字节**的 `Para`。
 
 框架只解析交易**信封**。合约跑起来之后内部 CALL 了谁、以谁的名义付款，
 只存在于运行时栈和 calldata 里。以下每条路径在 `blacklist_gap_test.go` 都有对应用例，
-用真实 coins 账户断言余额，并以 fork 关闭为对照证明路径确实是活的。
+用真实 coins 账户断言余额，并以名单尚未生效的高度为对照证明路径确实是活的。
 
 ### B1. 黑名单合约被内部 CALL 唤醒后转出自身余额
 
@@ -151,8 +154,14 @@ chain33 的 `Para` 维度看不见，而 `BytesToAddress` 取后 20 字节仍能
 
 在此之前，"纵深防御"只作为评审结论记录在源码注释与本文中，不在本 PR 内删除。
 
-## 6. fork 门控
+## 6. 按高度选版（不再单独 IsFork）
 
-statedb / runtime 两层的检查都以 `cfg.IsFork(height, ForkAccountBlacklist)` 门控。
-未到分叉高度时不得改变执行结果，否则与未升级节点分链（用例 `TestGap_ForkGateBlocksNothingBeforeHeight`）。
-mempool 入口无门控是故意的：它是节点本地行为、不进状态计算，随二进制升级立即止血。
+statedb / runtime / `checkEvmBlockedAccount` 都走 `cfg.IsBlockedAccount(addr, height)`，
+与框架共用同一份快照。未到对应分叉高度时该版本名单为空，不得改变执行结果，
+否则与未升级节点分链（用例 `TestGap_ForkGateBlocksNothingBeforeHeight` 用
+`SetBlockedAccountsForTest(fromHeight, addrs)` 把名单推到未来高度来验证）。
+
+不要在 EVM 侧再加一层 `IsFork(height, ForkAccountBlacklist)`：门控已经固化在快照的版本高度里，
+重复门控会在名单演进（V2 空名单解除、V3 再拦）时和框架选版不一致。
+
+mempool 入口按 `last+1` 选版是为了和下一块打包对齐；真正的网络级拦截点仍是共识在已到达高度上的判定。
