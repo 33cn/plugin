@@ -37,7 +37,7 @@ var (
 	GenAddr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 )
 
-//TestPrivkeyHex ：
+// TestPrivkeyHex ：
 var TestPrivkeyHex = []string{
 	"0x06c0fa653c719275d1baa365c7bc0b9306447287499a715b541b930482eaa504",
 	"0x4c8663cded61093af20339ae038b3c6bfa58a33e65874a655022f82eaf3f2fa0",
@@ -89,7 +89,7 @@ func TestMultiSigAccount(t *testing.T) {
 	testReplaceOwner(t, mocker, jrpcClient, multiSigAccAddr)
 }
 
-//创建多重签名账户
+// 创建多重签名账户
 func testAccCreateTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient) string {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -158,7 +158,7 @@ func testAccCreateTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jso
 	return multiSigAccAddr
 }
 
-//owner add AddrE
+// owner add AddrE
 func testAddOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 
@@ -191,7 +191,7 @@ func testAddOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsoncl
 	assert.Equal(t, res4.Items[0].Weight, uint64(8))
 }
 
-//owner del AddrE
+// owner del AddrE
 func testDelOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 
@@ -221,7 +221,7 @@ func testDelOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsoncl
 	assert.Equal(t, err, types.ErrNotFound)
 }
 
-//ModifyOwnerWeight
+// ModifyOwnerWeight
 func testModifyOwnerWeight(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 
@@ -254,7 +254,7 @@ func testModifyOwnerWeight(t *testing.T, mocker *testnode.Chain33Mock, jrpcClien
 	assert.Equal(t, res4.Items[0].Weight, uint64(30))
 }
 
-//testReplaceOwner owner AddrA replace by  AddrE
+// testReplaceOwner owner AddrA replace by  AddrE
 func testReplaceOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 

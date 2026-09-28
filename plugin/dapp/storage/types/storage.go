@@ -44,13 +44,13 @@ const (
 	TyEncryptAddLog
 )
 
-//storage op
+// storage op
 const (
 	OpCreate = int32(iota)
 	OpAdd
 )
 
-//fork
+// fork
 var (
 	ForkStorageLocalDB = "ForkStorageLocalDB"
 )
@@ -96,12 +96,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(StorageX, NewType(cfg))
 }
 
-//StorageType ...
+// StorageType ...
 type StorageType struct {
 	types.ExecTypeBase
 }
 
-//NewType ...
+// NewType ...
 func NewType(cfg *types.Chain33Config) *StorageType {
 	c := &StorageType{}
 	c.SetChild(c)

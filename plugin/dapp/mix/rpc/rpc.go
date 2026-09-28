@@ -30,8 +30,7 @@ func (g *channelClient) GetRescanStatus(ctx context.Context, in *types.ReqNil) (
 	return data.(*types.ReqString), nil
 }
 
-//
-//// 扫描UTXO以及获取扫描UTXO后的状态
+// // 扫描UTXO以及获取扫描UTXO后的状态
 func (g *channelClient) RescanNotes(ctx context.Context, in *types.ReqNil) (*types.ReqString, error) {
 	data, err := g.ExecWalletFunc(mixTy.MixX, "RescanNotes", in)
 	if err != nil {

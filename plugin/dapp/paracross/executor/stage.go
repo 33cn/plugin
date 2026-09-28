@@ -298,7 +298,7 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 
 }
 
-//SelfConsensStageConfig support self consens stage config
+// SelfConsensStageConfig support self consens stage config
 func (a *action) SelfStageConfig(config *pt.ParaStageConfig) (*types.Receipt, error) {
 	if config.Ty == pt.ParaOpNewApply {
 		return a.stageApply(config.GetStage())

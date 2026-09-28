@@ -24,7 +24,7 @@ var txBoardOpt = &table.Option{
 	Index:   []string{"height", "hash"},
 }
 
-//NewStageTable 新建表
+// NewStageTable 新建表
 func NewMixTxTable(kvdb db.KV) *table.Table {
 	rowmeta := NewMixTxRow()
 	table, err := table.NewTable(rowmeta, kvdb, txBoardOpt)
@@ -34,22 +34,22 @@ func NewMixTxTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//MixRow table meta 结构
+// MixRow table meta 结构
 type MixTxRow struct {
 	*mix.LocalMixTx
 }
 
-//NewMixTxRow 新建一个meta 结构
+// NewMixTxRow 新建一个meta 结构
 func NewMixTxRow() *MixTxRow {
 	return &MixTxRow{LocalMixTx: &mix.LocalMixTx{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
 func (r *MixTxRow) CreateRow() *table.Row {
 	return &table.Row{Data: &mix.LocalMixTx{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (r *MixTxRow) SetPayload(data types.Message) error {
 	if d, ok := data.(*mix.LocalMixTx); ok {
 		r.LocalMixTx = d
@@ -58,7 +58,7 @@ func (r *MixTxRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (r *MixTxRow) Get(key string) ([]byte, error) {
 	switch key {
 	case "txIndex":

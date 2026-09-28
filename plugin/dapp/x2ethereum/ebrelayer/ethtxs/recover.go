@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-//RecoverContractHandler ...
+// RecoverContractHandler ...
 func RecoverContractHandler(client ethinterface.EthClientSpec, sender, registry common.Address) (*X2EthContracts, *X2EthDeployInfo, error) {
 	bridgeBankAddr, err := GetAddressFromBridgeRegistry(client, sender, registry, BridgeBank)
 	if nil != err {
@@ -66,7 +66,7 @@ func RecoverContractHandler(client ethinterface.EthClientSpec, sender, registry 
 	return x2EthContracts, x2EthDeployInfo, nil
 }
 
-//RecoverOracleInstance ...
+// RecoverOracleInstance ...
 func RecoverOracleInstance(client ethinterface.EthClientSpec, sender, registry common.Address) (*generated.Oracle, error) {
 	oracleAddr, err := GetAddressFromBridgeRegistry(client, sender, registry, Oracle)
 	if nil != err {

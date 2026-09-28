@@ -111,7 +111,7 @@ func (a *action) configTransfer(config *coinTy.TransferFlagConfig) (*types.Recei
 
 }
 
-//过滤重复地址
+// 过滤重复地址
 func filterAddrs(addrs []string) []string {
 	f := make(map[string]bool)
 	var newAddrs []string
@@ -144,7 +144,7 @@ func (a *action) addAccounts(addrs []string) (*types.Receipt, error) {
 
 }
 
-//删除掉指定地址
+// 删除掉指定地址
 func filterByAddrs(curr, del []string) []string {
 	f := make(map[string]bool)
 	for _, k := range del {
@@ -214,7 +214,8 @@ func isManager(addr string, managers []string) bool {
 }
 
 /*
-   p2p转账受限规则，to执行器也受限制
+	p2p转账受限规则，to执行器也受限制
+
 1. 超级管理员或者配置了管理员账号 转账不受限
 2. 如果未配置转账使能标志或配置为DISABLE，都受限制
 3. 配置ENABLE,则不受限

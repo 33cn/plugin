@@ -221,47 +221,47 @@ func (d *DPos) execDelLocal(receipt *types.ReceiptData) (*types.LocalDBSet, erro
 	return dbSet, nil
 }
 
-//ExecDelLocal_Regist method
+// ExecDelLocal_Regist method
 func (d *DPos) ExecDelLocal_Regist(payload *dty.DposCandidatorRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_CancelRegist method
+// ExecDelLocal_CancelRegist method
 func (d *DPos) ExecDelLocal_CancelRegist(payload *dty.DposCandidatorCancelRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_ReRegist method
+// ExecDelLocal_ReRegist method
 func (d *DPos) ExecDelLocal_ReRegist(payload *dty.DposCandidatorRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_Vote method
+// ExecDelLocal_Vote method
 func (d *DPos) ExecDelLocal_Vote(payload *dty.DposVote, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_CancelVote method
+// ExecDelLocal_CancelVote method
 func (d *DPos) ExecDelLocal_CancelVote(payload *dty.DposCancelVote, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_VrfMRegist method
+// ExecDelLocal_VrfMRegist method
 func (d *DPos) ExecDelLocal_VrfMRegist(payload *dty.DposVrfMRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_VrfRPRegist method
+// ExecDelLocal_VrfRPRegist method
 func (d *DPos) ExecDelLocal_VrfRPRegist(payload *dty.DposVrfRPRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_RecordCB method
+// ExecDelLocal_RecordCB method
 func (d *DPos) ExecDelLocal_RecordCB(payload *dty.DposCBInfo, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }
 
-//ExecDelLocal_RegistTopN method
+// ExecDelLocal_RegistTopN method
 func (d *DPos) ExecDelLocal_RegistTopN(payload *dty.TopNCandidatorRegist, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return d.execDelLocal(receiptData)
 }

@@ -34,7 +34,7 @@ func addCreateCrossBridgeFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
-	cmd.Flags().StringP("valset", "r", "", "contruct parameter for valset, as: 'addr, [addr, addr, addr, addr], [25, 25, 25, 25]'")
+	cmd.Flags().StringP("valset", "r", "", "construct parameter for valset, as: 'addr, [addr, addr, addr, addr], [25, 25, 25, 25]'")
 	_ = cmd.MarkFlagRequired("valset")
 }
 
@@ -222,8 +222,8 @@ func createOracleTxAndSign(cmd *cobra.Command, from common.Address, valset, ethe
 }
 
 func createValsetTxAndSign(cmd *cobra.Command, from common.Address) (*utils.Chain33OfflineTx, error) {
-	contructParameter, _ := cmd.Flags().GetString("valset")
-	createPara := contructParameter
+	constructParameter, _ := cmd.Flags().GetString("valset")
+	createPara := constructParameter
 	content, txHash, err := utils.CreateContractAndSign(getTxInfo(cmd), generated.ValsetBin, generated.ValsetABI, createPara, "valset")
 	if nil != err {
 		return nil, err

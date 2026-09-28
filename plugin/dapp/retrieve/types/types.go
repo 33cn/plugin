@@ -17,7 +17,7 @@ func init() {
 	types.RegExec(RetrieveX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RetrieveX, "Enable", 0)
 	cfg.RegisterDappFork(RetrieveX, ForkRetriveX, 0)
@@ -25,7 +25,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RetrieveX, ForkRetrivePerformRelayX, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(RetrieveX, NewType(cfg))
 }

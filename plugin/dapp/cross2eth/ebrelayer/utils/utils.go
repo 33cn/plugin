@@ -61,7 +61,7 @@ func IsZeroAddress(address common.Address) bool {
 	return address == common.HexToAddress(nullAddress)
 }
 
-//IsValidPassWord 密码合法性校验,密码长度在8-30位之间。必须是数字+字母的组合
+// IsValidPassWord 密码合法性校验,密码长度在8-30位之间。必须是数字+字母的组合
 func IsValidPassWord(password string) bool {
 	pwLen := len(password)
 	if pwLen < 8 || pwLen > 30 {
@@ -95,7 +95,7 @@ func decodeInt64(int64bytes []byte) (int64, error) {
 	return value.Data, nil
 }
 
-//LoadInt64FromDB ...
+// LoadInt64FromDB ...
 func LoadInt64FromDB(key []byte, db dbm.DB) (int64, error) {
 	bytes, err := db.Get(key)
 	if bytes == nil || err != nil {
@@ -107,7 +107,7 @@ func LoadInt64FromDB(key []byte, db dbm.DB) (int64, error) {
 	return decodeInt64(bytes)
 }
 
-//QueryTxhashes ...
+// QueryTxhashes ...
 func QueryTxhashes(prefix []byte, db dbm.DB) []string {
 	kvdb := dbm.NewKVDB(db)
 	hashes, err := kvdb.List(prefix, nil, 10, 1)
@@ -122,17 +122,17 @@ func QueryTxhashes(prefix []byte, db dbm.DB) []string {
 	return hashStrs
 }
 
-//Addr2DecimalsKey ...
+// Addr2DecimalsKey ...
 var (
 	Addr2DecimalsKey = []byte("prefix_for_Addr2Decimals")
 )
 
-//CalAddr2DecimalsPrefix ...
+// CalAddr2DecimalsPrefix ...
 func CalAddr2DecimalsPrefix(tokenAddr string) []byte {
 	return []byte(fmt.Sprintf("%s-%s", Addr2DecimalsKey, tokenAddr))
 }
 
-//GetDecimalsFromDB ...
+// GetDecimalsFromDB ...
 func GetDecimalsFromDB(addr string, db dbm.DB) (int64, error) {
 	res, err := db.Get(CalAddr2DecimalsPrefix(addr))
 	if err != nil {
@@ -156,7 +156,7 @@ func SimpleGetDecimals(addr string) (int64, error) {
 	return 8, nil
 }
 
-//GetDecimalsFromNode ...
+// GetDecimalsFromNode ...
 func GetDecimalsFromNode(addr, rpcLaddr string) (int64, error) {
 	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
 		return 18, nil
@@ -284,7 +284,7 @@ func SendToServer(url string, req io.Reader) ([]byte, error) {
 
 }
 
-//MultiplySpecifyTimes ...
+// MultiplySpecifyTimes ...
 func MultiplySpecifyTimes(start float64, time int64) float64 {
 	for i := 0; i < int(time); i++ {
 		start *= 10
@@ -292,7 +292,7 @@ func MultiplySpecifyTimes(start float64, time int64) float64 {
 	return start
 }
 
-//Toeth ...
+// Toeth ...
 func Toeth(amount string, decimal int64) float64 {
 
 	bf := big.NewFloat(0)
@@ -306,7 +306,7 @@ func Toeth(amount string, decimal int64) float64 {
 	return f
 }
 
-//ToWei 将eth单位的金额转为wei单位
+// ToWei 将eth单位的金额转为wei单位
 func ToWei(amount float64, decimal int64) *big.Int {
 	var ok bool
 	bn := big.NewInt(1)
@@ -329,7 +329,7 @@ func SmalToBig(amount float64, decimals uint8) *big.Int {
 	return bn
 }
 
-//TrimZeroAndDot ...
+// TrimZeroAndDot ...
 func TrimZeroAndDot(s string) string {
 	if strings.Contains(s, ".") {
 		var trimDotStr string
@@ -341,7 +341,7 @@ func TrimZeroAndDot(s string) string {
 	return s
 }
 
-//CheckPower ...
+// CheckPower ...
 func CheckPower(power int64) bool {
 	if power <= 0 || power > 100 {
 		return false
@@ -349,7 +349,7 @@ func CheckPower(power int64) bool {
 	return true
 }
 
-//DivideDot ...
+// DivideDot ...
 func DivideDot(in string) (left, right string, err error) {
 	if strings.Contains(in, ".") {
 		ss := strings.Split(in, ".")
@@ -358,7 +358,7 @@ func DivideDot(in string) (left, right string, err error) {
 	return "", "", errors.New("Divide error")
 }
 
-//IsExecAddrMatch ...
+// IsExecAddrMatch ...
 func IsExecAddrMatch(name string, to string) bool {
 	toaddr := address.ExecAddress(name)
 	return toaddr == to

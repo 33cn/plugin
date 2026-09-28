@@ -33,7 +33,7 @@ type connectCli struct {
 	timeout   uint32
 }
 
-//invertory 是每次请求的最小单位，每次请求最多MaxBlockCountPerTime
+// invertory 是每次请求的最小单位，每次请求最多MaxBlockCountPerTime
 type inventory struct {
 	start     int64
 	end       int64
@@ -177,7 +177,7 @@ func (m *multiDldClient) getConns(inv *inventory) error {
 	return nil
 }
 
-//缺省不打开，因为有些节点下载时间不稳定，容易超时出错，后面看怎么优化
+// 缺省不打开，因为有些节点下载时间不稳定，容易超时出错，后面看怎么优化
 func (m *multiDldClient) tryMultiServerDownload() {
 	curMainHeight, err := m.paraClient.GetLastHeightOnMainChain()
 	if err != nil {

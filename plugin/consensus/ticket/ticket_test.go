@@ -6,9 +6,10 @@ package ticket
 
 import (
 	"fmt"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"testing"
 	"time"
+
+	"github.com/btcsuite/btcd/btcec/v2"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/crypto"
@@ -45,7 +46,12 @@ func testTicket(t *testing.T) {
 	addr := mock33.GetGenesisAddress()
 	accounts, err := acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "ticket", Addresses: []string{addr}})
 	assert.Nil(t, err)
-	assert.Equal(t, accounts[0].Balance, int64(0))
+	assert.Len(t, accounts, 1)
+	//testnode.New 已经启动挖矿，创世票的 CreateTime 是创世区块时间，
+	//一开始就满足 ticketWithdrawTime，随时可能被挖出并 tclose 把冻结资金转成可用余额，
+	//所以可用余额为 0 只在创世状态成立，必须固定高度断言，否则是竞态
+	genesisAcc := mock33.GetExecAccount(mock33.GetBlock(0).StateHash, "ticket", addr)
+	assert.Equal(t, int64(0), genesisAcc.Balance)
 	hotaddr := mock33.GetHotAddress()
 	_, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "coins", Addresses: []string{hotaddr}})
 	assert.Nil(t, err)

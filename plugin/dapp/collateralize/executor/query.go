@@ -9,7 +9,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/collateralize/types"
 )
 
-//Query_CollateralizeInfoByID ...
+// Query_CollateralizeInfoByID ...
 func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInfo) (types.Message, error) {
 	coll, err := queryCollateralizeByID(c.GetStateDB(), req.CollateralizeId)
 	if err != nil {
@@ -35,7 +35,7 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 	return info, nil
 }
 
-//Query_CollateralizeInfoByIDs ...
+// Query_CollateralizeInfoByIDs ...
 func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeInfos) (types.Message, error) {
 	infos := &pty.RepCollateralizeCurrentInfos{}
 	for _, id := range req.CollateralizeIds {
@@ -66,7 +66,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 	return infos, nil
 }
 
-//Query_CollateralizeByStatus ...
+// Query_CollateralizeByStatus ...
 func (c *Collateralize) Query_CollateralizeByStatus(req *pty.ReqCollateralizeByStatus) (types.Message, error) {
 	ids := &pty.RepCollateralizeIDs{}
 	collIDRecords, err := queryCollateralizeByStatus(c.GetLocalDB(), req.Status, req.CollID)
@@ -79,7 +79,7 @@ func (c *Collateralize) Query_CollateralizeByStatus(req *pty.ReqCollateralizeByS
 	return ids, nil
 }
 
-//Query_CollateralizeByAddr ...
+// Query_CollateralizeByAddr ...
 func (c *Collateralize) Query_CollateralizeByAddr(req *pty.ReqCollateralizeByAddr) (types.Message, error) {
 	ids := &pty.RepCollateralizeIDs{}
 	collIDRecords, err := queryCollateralizeByAddr(c.GetLocalDB(), req.Addr, req.Status, req.CollID)
@@ -92,7 +92,7 @@ func (c *Collateralize) Query_CollateralizeByAddr(req *pty.ReqCollateralizeByAdd
 	return ids, nil
 }
 
-//Query_CollateralizeRecordByID ...
+// Query_CollateralizeRecordByID ...
 func (c *Collateralize) Query_CollateralizeRecordByID(req *pty.ReqCollateralizeRecord) (types.Message, error) {
 	ret := &pty.RepCollateralizeRecord{}
 	issuRecord, err := queryCollateralizeRecordByID(c.GetStateDB(), req.CollateralizeId, req.RecordId)
@@ -105,7 +105,7 @@ func (c *Collateralize) Query_CollateralizeRecordByID(req *pty.ReqCollateralizeR
 	return ret, nil
 }
 
-//Query_CollateralizeRecordByAddr ...
+// Query_CollateralizeRecordByAddr ...
 func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
 	ret := &pty.RepCollateralizeRecords{}
 	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.Status, req.CollateralizeId, req.RecordId)
@@ -126,7 +126,7 @@ func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateraliz
 	return ret, nil
 }
 
-//Query_CollateralizeRecordByStatus ...
+// Query_CollateralizeRecordByStatus ...
 func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateralizeRecordByStatus) (types.Message, error) {
 	ret := &pty.RepCollateralizeRecords{}
 	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status, req.CollateralizeId, req.RecordId)
@@ -139,7 +139,7 @@ func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateral
 	return ret, nil
 }
 
-//Query_CollateralizeConfig ...
+// Query_CollateralizeConfig ...
 func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
 	config, err := getCollateralizeConfig(c.GetStateDB())
 	if err != nil {
@@ -166,7 +166,7 @@ func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecor
 	return ret, nil
 }
 
-//Query_CollateralizePrice ...
+// Query_CollateralizePrice ...
 func (c *Collateralize) Query_CollateralizePrice(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
 	price, err := getLatestPrice(c.GetStateDB())
 	if err != nil {
@@ -177,7 +177,7 @@ func (c *Collateralize) Query_CollateralizePrice(req *pty.ReqCollateralizeRecord
 	return &pty.RepCollateralizePrice{Price: price}, nil
 }
 
-//Query_CollateralizeUserBalance ...
+// Query_CollateralizeUserBalance ...
 func (c *Collateralize) Query_CollateralizeUserBalance(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
 	balance, err := queryCollateralizeUserBalance(c.GetStateDB(), c.GetLocalDB(), req.Addr)
 	if err != nil {

@@ -29,7 +29,7 @@ var P2pComm Comm
 // Comm information
 type Comm struct{}
 
-//CheckNetAddr check addr or ip  format
+// CheckNetAddr check addr or ip  format
 func (Comm) ParaseNetAddr(addr string) (string, int64, error) {
 	//check peerAddr
 	if !strings.Contains(addr, ":") { //only ip
@@ -152,7 +152,7 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 			log.Info("dialPeerWithAddress", "duplicate connect:", prepeer.Addr(), addr.String(), resp.GetUserAgent())
 		}
 		peer.Close()
-		return nil, errors.New(fmt.Sprintf("duplicate connect %v", resp.UserAgent))
+		return nil, fmt.Errorf("duplicate connect %v", resp.UserAgent)
 	}
 	node.peerStore.Store(addr.String(), resp.UserAgent)
 	peer.SetPeerName(resp.UserAgent)

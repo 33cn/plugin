@@ -12,12 +12,12 @@ import (
 	gty "github.com/33cn/plugin/plugin/dapp/guess/types"
 )
 
-//Query_QueryGamesByIDs method
+// Query_QueryGamesByIDs method
 func (g *Guess) Query_QueryGamesByIDs(in *gty.QueryGuessGameInfos) (types.Message, error) {
 	return queryGameInfos(g.GetLocalDB(), in)
 }
 
-//Query_QueryGameByID method
+// Query_QueryGameByID method
 func (g *Guess) Query_QueryGameByID(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	game, err := queryGameInfo(g.GetLocalDB(), []byte(in.GetGameID()))
 	if err != nil {
@@ -27,7 +27,7 @@ func (g *Guess) Query_QueryGameByID(in *gty.QueryGuessGameInfo) (types.Message, 
 	return &gty.ReplyGuessGameInfo{Game: game}, nil
 }
 
-//Query_QueryGamesByAddr method
+// Query_QueryGamesByAddr method
 func (g *Guess) Query_QueryGamesByAddr(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	gameTable := gty.NewGuessUserTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
@@ -35,7 +35,7 @@ func (g *Guess) Query_QueryGamesByAddr(in *gty.QueryGuessGameInfo) (types.Messag
 	return queryUserTableData(query, "addr", []byte(in.Addr), []byte(in.PrimaryKey))
 }
 
-//Query_QueryGamesByStatus method
+// Query_QueryGamesByStatus method
 func (g *Guess) Query_QueryGamesByStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
@@ -43,7 +43,7 @@ func (g *Guess) Query_QueryGamesByStatus(in *gty.QueryGuessGameInfo) (types.Mess
 	return queryGameTableData(query, "status", []byte(fmt.Sprintf("%2d", in.Status)), []byte(in.PrimaryKey))
 }
 
-//Query_QueryGamesByAdminAddr method
+// Query_QueryGamesByAdminAddr method
 func (g *Guess) Query_QueryGamesByAdminAddr(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
@@ -51,7 +51,7 @@ func (g *Guess) Query_QueryGamesByAdminAddr(in *gty.QueryGuessGameInfo) (types.M
 	return queryGameTableData(query, "admin", prefix, []byte(in.PrimaryKey))
 }
 
-//Query_QueryGamesByAddrStatus method
+// Query_QueryGamesByAddrStatus method
 func (g *Guess) Query_QueryGamesByAddrStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	userTable := gty.NewGuessUserTable(g.GetLocalDB())
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
@@ -65,7 +65,7 @@ func (g *Guess) Query_QueryGamesByAddrStatus(in *gty.QueryGuessGameInfo) (types.
 	return queryJoinTableData(tableJoin, "addr#status", prefix, []byte(in.PrimaryKey))
 }
 
-//Query_QueryGamesByAdminStatus method
+// Query_QueryGamesByAdminStatus method
 func (g *Guess) Query_QueryGamesByAdminStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())
@@ -74,7 +74,7 @@ func (g *Guess) Query_QueryGamesByAdminStatus(in *gty.QueryGuessGameInfo) (types
 	return queryGameTableData(query, "admin_status", prefix, []byte(in.PrimaryKey))
 }
 
-//Query_QueryGamesByCategoryStatus method
+// Query_QueryGamesByCategoryStatus method
 func (g *Guess) Query_QueryGamesByCategoryStatus(in *gty.QueryGuessGameInfo) (types.Message, error) {
 	gameTable := gty.NewGuessGameTable(g.GetLocalDB())
 	query := gameTable.GetQuery(g.GetLocalDB())

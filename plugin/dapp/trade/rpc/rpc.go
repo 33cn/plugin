@@ -11,7 +11,7 @@ import (
 	ptypes "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
-//CreateRawTradeSellTx :
+// CreateRawTradeSellTx :
 func (cc *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.TradeForSell) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -29,7 +29,7 @@ func (cc *channelClient) CreateRawTradeSellTx(ctx context.Context, in *ptypes.Tr
 	return &types.UnsignTx{Data: data}, nil
 }
 
-//CreateRawTradeBuyTx :
+// CreateRawTradeBuyTx :
 func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.TradeForBuy) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -47,7 +47,7 @@ func (cc *channelClient) CreateRawTradeBuyTx(ctx context.Context, in *ptypes.Tra
 	return &types.UnsignTx{Data: data}, nil
 }
 
-//CreateRawTradeRevokeTx :
+// CreateRawTradeRevokeTx :
 func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.TradeForRevokeSell) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -65,7 +65,7 @@ func (cc *channelClient) CreateRawTradeRevokeTx(ctx context.Context, in *ptypes.
 	return &types.UnsignTx{Data: data}, nil
 }
 
-//CreateRawTradeBuyLimitTx :
+// CreateRawTradeBuyLimitTx :
 func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptypes.TradeForBuyLimit) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -83,7 +83,7 @@ func (cc *channelClient) CreateRawTradeBuyLimitTx(ctx context.Context, in *ptype
 	return &types.UnsignTx{Data: data}, nil
 }
 
-//CreateRawTradeSellMarketTx :
+// CreateRawTradeSellMarketTx :
 func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *ptypes.TradeForSellMarket) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -101,7 +101,7 @@ func (cc *channelClient) CreateRawTradeSellMarketTx(ctx context.Context, in *pty
 	return &types.UnsignTx{Data: data}, nil
 }
 
-//CreateRawTradeRevokeBuyTx :
+// CreateRawTradeRevokeBuyTx :
 func (cc *channelClient) CreateRawTradeRevokeBuyTx(ctx context.Context, in *ptypes.TradeForRevokeBuy) (*types.UnsignTx, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam

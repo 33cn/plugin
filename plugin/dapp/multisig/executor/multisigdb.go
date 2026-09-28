@@ -46,7 +46,7 @@ func setMultiSigAccToDb(db dbm.KV, multiSigAcc *mty.MultiSig) ([]byte, []byte) {
 	return key, value
 }
 
-//获取db中指定多重签名地址上的txid对应的交易信息
+// 获取db中指定多重签名地址上的txid对应的交易信息
 func getMultiSigAccTxFromDb(db dbm.KV, multiSigAddr string, txid uint64) (*mty.MultiSigTx, error) {
 
 	//首先从statedb中获取MultiSigAccTx的状态信息
@@ -86,7 +86,7 @@ func getMultiSigAccCountKV(count int64) *types.KeyValue {
 	return kv
 }
 
-//获取创建的多重账户的数量
+// 获取创建的多重账户的数量
 func getMultiSigAccCount(db dbm.KVDB) (int64, error) {
 	count := types.Int64{}
 	value, err := db.Get(calcMultiSigAccCountKey())
@@ -106,14 +106,14 @@ func getMultiSigAccCount(db dbm.KVDB) (int64, error) {
 	return count.Data, nil
 }
 
-//设置创建的多重账户的数量
+// 设置创建的多重账户的数量
 func setMultiSigAccCount(db dbm.KVDB, count int64) error {
 	value := &types.Int64{Data: count}
 	valuebytes := types.Encode(value)
 	return db.Set(calcMultiSigAccCountKey(), valuebytes)
 }
 
-//更新多重签名账户计数
+// 更新多重签名账户计数
 func updateMultiSigAccCount(cachedb dbm.KVDB, isadd bool) (*types.KeyValue, error) {
 	count, err := getMultiSigAccCount(cachedb)
 	if err != nil {
@@ -135,7 +135,7 @@ func updateMultiSigAccCount(cachedb dbm.KVDB, isadd bool) (*types.KeyValue, erro
 	return getMultiSigAccCountKV(count), nil
 }
 
-//获取多重账户信息通过key值
+// 获取多重账户信息通过key值
 func getMultiSigAccount(db dbm.KVDB, addr string) (*mty.MultiSig, error) {
 	multiSigAcc := &mty.MultiSig{}
 	value, err := db.Get(calcMultiSigAcc(addr))
@@ -155,7 +155,7 @@ func getMultiSigAccount(db dbm.KVDB, addr string) (*mty.MultiSig, error) {
 	return multiSigAcc, nil
 }
 
-//设置多重签名账户信息到db中通过key值,
+// 设置多重签名账户信息到db中通过key值,
 func setMultiSigAccount(db dbm.KVDB, multiSig *mty.MultiSig, isadd bool) error {
 	valuebytes := types.Encode(multiSig)
 	if isadd {
@@ -164,7 +164,7 @@ func setMultiSigAccount(db dbm.KVDB, multiSig *mty.MultiSig, isadd bool) error {
 	return db.Set(calcMultiSigAcc(multiSig.MultiSigAddr), nil)
 }
 
-//获取多重签名账户的kv对
+// 获取多重签名账户的kv对
 func getMultiSigAccountKV(multiSig *mty.MultiSig, isadd bool) *types.KeyValue {
 	accountbytes := types.Encode(multiSig)
 	var kv *types.KeyValue
@@ -176,7 +176,7 @@ func getMultiSigAccountKV(multiSig *mty.MultiSig, isadd bool) *types.KeyValue {
 	return kv
 }
 
-//更新多重签名账户列表
+// 更新多重签名账户列表
 func updateMultiSigAccList(db dbm.KVDB, addr string, index int64, isadd bool) (*types.KeyValue, error) {
 	oldaddr, err := getMultiSigAccList(db, index)
 	if err != nil {
@@ -219,8 +219,8 @@ func getMultiSigAccList(db dbm.KVDB, index int64) (string, error) {
 	return string(value), nil
 }
 
-//MultiSigTx:
-//获取多重签名账户的交易信息
+// MultiSigTx:
+// 获取多重签名账户的交易信息
 func getMultiSigTx(db dbm.KVDB, addr string, txid uint64) (*mty.MultiSigTx, error) {
 	multiSigTx := &mty.MultiSigTx{}
 	value, err := db.Get(calcMultiSigAccTx(addr, txid))
@@ -240,7 +240,7 @@ func getMultiSigTx(db dbm.KVDB, addr string, txid uint64) (*mty.MultiSigTx, erro
 	return multiSigTx, nil
 }
 
-//设置多重签名账户交易信息到db中通过key值, 交易添加和回滚删除
+// 设置多重签名账户交易信息到db中通过key值, 交易添加和回滚删除
 func setMultiSigTx(db dbm.KVDB, multiSigTx *mty.MultiSigTx, isadd bool) error {
 	valuebytes := types.Encode(multiSigTx)
 	if isadd {
@@ -249,7 +249,7 @@ func setMultiSigTx(db dbm.KVDB, multiSigTx *mty.MultiSigTx, isadd bool) error {
 	return db.Set(calcMultiSigAccTx(multiSigTx.MultiSigAddr, multiSigTx.Txid), nil)
 }
 
-//获取多重签名账户交易的kv对
+// 获取多重签名账户交易的kv对
 func getMultiSigTxKV(multiSigTx *mty.MultiSigTx, isadd bool) *types.KeyValue {
 	accountbytes := types.Encode(multiSigTx)
 	var kv *types.KeyValue
@@ -316,8 +316,8 @@ func setAddrReciver(db dbm.KVDB, addr, execname, symbol string, reciverAmount in
 	return db.Set(kv.Key, kv.Value)
 }
 
-//MultiSigAccAddress:
-//获取指定地址创建的所有MultiSigAddress
+// MultiSigAccAddress:
+// 获取指定地址创建的所有MultiSigAddress
 func getMultiSigAddress(db dbm.KVDB, createAddr string) (*mty.AccAddress, error) {
 	address := &mty.AccAddress{}
 	value, err := db.Get(calcMultiSigAccCreateAddr(createAddr))
@@ -337,7 +337,7 @@ func getMultiSigAddress(db dbm.KVDB, createAddr string) (*mty.AccAddress, error)
 	return address, nil
 }
 
-//需要处理交易添加和回滚删除
+// 需要处理交易添加和回滚删除
 func setMultiSigAddress(db dbm.KVDB, createAddr, multiSigAddr string, isadd bool) *types.KeyValue {
 	accAddress, err := getMultiSigAddress(db, createAddr)
 	if err != nil {
@@ -369,7 +369,7 @@ func setMultiSigAddress(db dbm.KVDB, createAddr, multiSigAddr string, isadd bool
 	return &types.KeyValue{Key: key, Value: value}
 }
 
-//获取指定地址创建的所有MultiSigAddress
+// 获取指定地址创建的所有MultiSigAddress
 func getMultiSigAccAllAddress(db dbm.KVDB, createAddr string) (*mty.AccAddress, error) {
 	address := &mty.AccAddress{}
 	value, err := db.Get(calcMultiSigAccCreateAddr(createAddr))
@@ -389,7 +389,7 @@ func getMultiSigAccAllAddress(db dbm.KVDB, createAddr string) (*mty.AccAddress, 
 	return address, nil
 }
 
-//获取指定账户地址上接受的所有资产
+// 获取指定账户地址上接受的所有资产
 func getMultiSigAccAllAssets(db dbm.KVDB, addr string) ([][]byte, error) {
 	values, err := db.List(calcAddrRecvAmountPrefix(addr), nil, 0, 0)
 	if err != nil && err != types.ErrNotFound {

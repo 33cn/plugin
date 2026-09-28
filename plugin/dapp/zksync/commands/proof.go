@@ -382,49 +382,47 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//
-//func getProofWitnessCmd() *cobra.Command {
-//	cmd := &cobra.Command{
-//		Use:   "witness",
-//		Short: "get account's proof witness at current height for specific token",
-//		Run:   getProofWitness,
-//	}
-//	getProofWitnessFlag(cmd)
-//	return cmd
-//}
-//
-//func getProofWitnessFlag(cmd *cobra.Command) {
-//	cmd.Flags().Uint64P("account", "a", 0, "account id")
-//	cmd.MarkFlagRequired("account")
-//	cmd.Flags().Uint64P("token", "t", 0, "token id")
-//	cmd.MarkFlagRequired("token")
-//	cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id")
-//
-//}
-//
-//func getProofWitness(cmd *cobra.Command, args []string) {
-//	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-//	account, _ := cmd.Flags().GetUint64("account")
-//	token, _ := cmd.Flags().GetUint64("token")
-//	chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
-//
-//	var params rpctypes.Query4Jrpc
-//
-//	params.Execer = zt.Zksync
-//	req := &zt.ZkReqExistenceProof{
-//		AccountId:    account,
-//		TokenId:      token,
-//		ChainTitleId: chainTitleId,
+//	func getProofWitnessCmd() *cobra.Command {
+//		cmd := &cobra.Command{
+//			Use:   "witness",
+//			Short: "get account's proof witness at current height for specific token",
+//			Run:   getProofWitness,
+//		}
+//		getProofWitnessFlag(cmd)
+//		return cmd
 //	}
 //
-//	params.FuncName = "GetCurrentProof"
-//	params.Payload = types.MustPBToJSON(req)
+//	func getProofWitnessFlag(cmd *cobra.Command) {
+//		cmd.Flags().Uint64P("account", "a", 0, "account id")
+//		cmd.MarkFlagRequired("account")
+//		cmd.Flags().Uint64P("token", "t", 0, "token id")
+//		cmd.MarkFlagRequired("token")
+//		cmd.Flags().Uint64P("chainTitleId", "n", 0, "chain title id")
 //
-//	var resp zt.ZkProofWitness
-//	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-//	ctx.Run()
-//}
+// }
 //
+//	func getProofWitness(cmd *cobra.Command, args []string) {
+//		rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+//		account, _ := cmd.Flags().GetUint64("account")
+//		token, _ := cmd.Flags().GetUint64("token")
+//		chainTitleId, _ := cmd.Flags().GetUint64("chainTitleId")
+//
+//		var params rpctypes.Query4Jrpc
+//
+//		params.Execer = zt.Zksync
+//		req := &zt.ZkReqExistenceProof{
+//			AccountId:    account,
+//			TokenId:      token,
+//			ChainTitleId: chainTitleId,
+//		}
+//
+//		params.FuncName = "GetCurrentProof"
+//		params.Payload = types.MustPBToJSON(req)
+//
+//		var resp zt.ZkProofWitness
+//		ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+//		ctx.Run()
+//	}
 func getExistProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "exist",
