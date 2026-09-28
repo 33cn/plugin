@@ -29,6 +29,10 @@ var (
 	addr2Nonce            = make(map[common.Address]NonceMutex)
 	ErrGetSuggestGasPrice = errors.New("ErrGetSuggestGasPrice")
 	ErrNodeNetwork        = errors.New("ErrNodeNetwork")
+	// ErrLockTxFailed 已广播的 lock 交易在链上确认失败（回滚）
+	ErrLockTxFailed = errors.New("lock tx confirmed but reverted")
+	// ErrLockTxPending 已广播的 lock 交易尚未确认
+	ErrLockTxPending = errors.New("lock tx still pending")
 )
 
 // String ...
@@ -39,6 +43,7 @@ func (ethTxStatus EthTxStatus) String() string {
 // const
 const (
 	PendingDuration4TxExeuction = 300
+	EthTxSuccess                = EthTxStatus(1)
 	EthTxPending                = EthTxStatus(2)
 )
 
@@ -274,6 +279,23 @@ func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) strin
 	}
 
 	return status
+}
+
+// WaitLockTxConfirmed 等待已广播的 lock 交易确认成功并返回其 hash。
+// 返回 ErrLockTxFailed 表示交易已确认但执行失败（回滚），调用方可安全地重新执行 lock；
+// 返回 ErrLockTxPending 或其他错误表示交易尚未确认，调用方可稍后重试复用同一笔交易。
+func WaitLockTxConfirmed(client ethinterface.EthClientSpec, txhash common.Hash, providerHttp string) (string, error) {
+	if err := waitEthTxFinished(client, txhash, "WaitLockTxConfirmed", providerHttp); nil != err {
+		return "", err
+	}
+	status := GetEthTxStatus(client, txhash)
+	if status == EthTxSuccess.String() {
+		return txhash.Hex(), nil
+	}
+	if status == EthTxPending.String() {
+		return "", ErrLockTxPending
+	}
+	return "", ErrLockTxFailed
 }
 
 func NewTransferTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int, addr2TxNonce map[common.Address]*NonceMutex, fromChain bool) (*types.Transaction, error) {

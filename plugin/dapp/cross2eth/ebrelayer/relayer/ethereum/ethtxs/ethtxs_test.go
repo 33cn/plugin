@@ -3,6 +3,7 @@ package ethtxs
 import (
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,6 +55,42 @@ func Test_GetAddressFromBridgeRegistry(t *testing.T) {
 	bridgebankTest := ContractRegistry(5)
 	_, err := GetAddressFromBridgeRegistry(sim, genesisAddr, genesisAddr, bridgebankTest)
 	require.NotNil(t, err)
+}
+
+// Test_WaitLockTxConfirmedAndBroadcastError 验证 lock 交易广播后确认失败时，
+// 可通过 LockBroadcastError 携带的 tx hash 复用该交易，防止重试重复锁定。
+func Test_WaitLockTxConfirmedAndBroadcastError(t *testing.T) {
+	genesiskey, _ := crypto.GenerateKey()
+	alloc := make(core.GenesisAlloc)
+	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
+	genesisAccount := core.GenesisAccount{
+		Balance:    big.NewInt(1000000000000 * 10000),
+		PrivateKey: crypto.FromECDSA(genesiskey),
+	}
+	alloc[genesisAddr] = genesisAccount
+	sim := new(ethinterface.SimExtend)
+	sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, uint64(100000000))
+
+	// 广播并确认一笔真实交易，WaitLockTxConfirmed 应返回原 hash，重试可复用
+	auth, err := bind.NewKeyedTransactorWithChainID(genesiskey, big.NewInt(1337))
+	require.NoError(t, err)
+	nonce, err := sim.PendingNonceAt(context.Background(), genesisAddr)
+	require.NoError(t, err)
+	receiver := common.HexToAddress("0x000000000000000000000000000000000000dead")
+	tx := types.NewTransaction(nonce, receiver, big.NewInt(1), 21000, big.NewInt(1e9), nil)
+	signedTx, err := auth.Signer(genesisAddr, tx)
+	require.NoError(t, err)
+	require.NoError(t, sim.SendTransaction(context.Background(), signedTx))
+
+	hash, err := WaitLockTxConfirmed(sim, signedTx.Hash(), "")
+	require.NoError(t, err)
+	assert.Equal(t, signedTx.Hash().Hex(), hash)
+
+	// LockBroadcastError 携带已广播交易的 hash，errors.As 可提取用于去重记录
+	broadcastErr := &LockBroadcastError{TxHash: signedTx.Hash(), Err: errors.New("rpc timeout")}
+	var asErr *LockBroadcastError
+	require.True(t, errors.As(broadcastErr, &asErr))
+	assert.Equal(t, signedTx.Hash().Hex(), asErr.TxHash.Hex())
 }
 
 func Test_RelayOracleClaimToEthereum(t *testing.T) {
