@@ -51,6 +51,8 @@ var (
 	ForkTokenCheckX = "ForkTokenCheck"
 	//ForkTokenEvm  token asset can be transfer by evm
 	ForkTokenEvm = "ForkTokenEvm"
+	// ForkTokenFinishCheckX fork token finish create check global symbol uniqueness
+	ForkTokenFinishCheckX = "ForkTokenFinishCheck"
 )
 
 const (
