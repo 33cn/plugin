@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-//当前miner tx不需要校验上一个区块的衔接性，因为tx就是本节点发出，高度，preHash等都在本区块里面的blockchain做了校验
-//note: 平行链的Miner从Height=1开始， 创世区块不挖矿
-//因为bug原因，支持手动增发一部分coin到执行器地址，这部分coin不会对现有账户产生影响。因为转账到合约下的coin，同时会存到合约子账户下
+// 当前miner tx不需要校验上一个区块的衔接性，因为tx就是本节点发出，高度，preHash等都在本区块里面的blockchain做了校验
+// note: 平行链的Miner从Height=1开始， 创世区块不挖矿
+// 因为bug原因，支持手动增发一部分coin到执行器地址，这部分coin不会对现有账户产生影响。因为转账到合约下的coin，同时会存到合约子账户下
 func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	//增发coin

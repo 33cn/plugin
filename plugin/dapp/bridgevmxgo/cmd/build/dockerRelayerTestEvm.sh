@@ -292,7 +292,6 @@ function get_evm_cli() {
 
         CLIAeth="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
         CLIAbsc="docker exec ${dockerNamePrefix}-ebrelayera-1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
-fix}_ebrelayer${name}
         EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para. --chainID ${chain33ID}"
     }
 }

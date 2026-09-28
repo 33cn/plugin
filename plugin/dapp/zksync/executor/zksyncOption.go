@@ -14,8 +14,8 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
 )
 
@@ -36,7 +36,7 @@ type Action struct {
 	api       client.QueueProtocolAPI
 }
 
-//NewAction ...
+// NewAction ...
 func NewAction(z *zksync, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -53,12 +53,12 @@ func NewAction(z *zksync, tx *types.Transaction, index int) *Action {
 	}
 }
 
-//GetIndex get index
+// GetIndex get index
 func (a *Action) GetIndex() int64 {
 	return a.height*types.MaxTxsPerBlock + int64(a.index)
 }
 
-//TODO:HexAddr2Decimal 地址的转换在确认其必要性，最后在合约内部进行清理，
+// TODO:HexAddr2Decimal 地址的转换在确认其必要性，最后在合约内部进行清理，
 func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -184,7 +184,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//L2 queue id 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
+// L2 queue id 从1开始编号，跟L1 priority 不同，后者为了和eth合约编号保持一致
 func setL2QueueData(db dbm.KV, ops []*zt.ZkOperation) (*types.Receipt, int64, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk}
 	//add deposit queue
@@ -359,9 +359,9 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	return a.contractToTreeNewProc(payload, token)
 }
 
-//合约----> L2账户操作，
-//SystemTree2ContractAcctId ----> 目的账户
-//在合约上销毁等量的余额
+// 合约----> L2账户操作，
+// SystemTree2ContractAcctId ----> 目的账户
+// 在合约上销毁等量的余额
 func (a *Action) contractToTreeAcctIdProc(payload *zt.ZkContractToTree, token *zt.ZkTokenSymbol) (*types.Receipt, error) {
 	tokenIdBigint, _ := new(big.Int).SetString(token.Id, 10)
 	tokenId := tokenIdBigint.Uint64()
@@ -486,9 +486,9 @@ func (a *Action) contractToTreeNewProc(payload *zt.ZkContractToTree, token *zt.Z
 	return receipts, nil
 }
 
-//L2 ---->  合约账户(树)
-//操作１. FromAccountId -----> SystemTree2ContractAcctId，执行ZkTransfer
-//操作2. UpdateContractAccount，在合约内部的铸币操作
+// L2 ---->  合约账户(树)
+// 操作１. FromAccountId -----> SystemTree2ContractAcctId，执行ZkTransfer
+// 操作2. UpdateContractAccount，在合约内部的铸币操作
 func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
 	err := checkParam(payload.Amount)
 	if nil != err {
@@ -587,7 +587,7 @@ func (a *Action) UpdateContractAccount(amount, symbol string, option int32, exec
 	return &execReceipt, nil
 }
 
-//trasfer, tree2contract, contract2tree 本质都是transfer，这里共用一个transferProc
+// trasfer, tree2contract, contract2tree 本质都是transfer，这里共用一个transferProc
 func (a *Action) l2TransferProc(payload *zt.ZkTransfer, actionTy int32, decimal int) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -750,7 +750,7 @@ func (a *Action) transferToNewProcess(accountIdFrom uint64, toChain33Address, to
 	return a.transferToNewInnerProcess(fromLeaf, toChain33Address, toEthAddress, totalAmount, amount, tokenID)
 }
 
-//contract2tree 也支持tree上新创建账户id， 和transfer2new共用
+// contract2tree 也支持tree上新创建账户id， 和transfer2new共用
 func (a *Action) transferToNewInnerProcess(fromLeaf *zt.Leaf, toChain33Address, toEthAddress, totalAmount, amount string, tokenID uint64) (*types.Receipt, uint64, error) {
 	var kvs []*types.KeyValue
 	var logs []*types.ReceiptLog
@@ -1072,7 +1072,7 @@ func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey) ([]*types.KeyValue, []
 	return kvs, localKvs, nil
 }
 
-//设置代理地址的公钥
+// 设置代理地址的公钥
 func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, leaf *zt.Leaf) ([]*types.KeyValue, []*types.KeyValue, error) {
 
 	err := authVerification(payload.Signature.PubKey, leaf.PubKey)
@@ -1161,7 +1161,7 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, leaf *zt.Leaf) ([]*type
 //	return mergeReceipt(receipts, r), nil
 //}
 
-//验证身份
+// 验证身份
 func authVerification(signPubKey *zt.ZkPubKey, leafPubKey *zt.ZkPubKey) error {
 	if signPubKey == nil || leafPubKey == nil {
 		return errors.New("set your pubKey")
@@ -1172,7 +1172,7 @@ func authVerification(signPubKey *zt.ZkPubKey, leafPubKey *zt.ZkPubKey) error {
 	return nil
 }
 
-//检查参数
+// 检查参数
 func checkParam(amount string) error {
 	if amount == "" || strings.HasPrefix(amount, "-") {
 		return types.ErrAmount
@@ -1187,7 +1187,7 @@ func checkParam(amount string) error {
 	return nil
 }
 
-//not NFT token
+// not NFT token
 func checkIsNormalToken(id uint64) bool {
 	return id < zt.SystemNFTTokenId
 }
@@ -1458,7 +1458,7 @@ func getDbFeeData(db dbm.KV, actionTy int32, tokenId uint64) (string, error) {
 	return string(v), nil
 }
 
-//该接口需要被zkrelayer使用
+// 该接口需要被zkrelayer使用
 func GetFeeData(db dbm.KV, actionTy int32, tokenId uint64) (*zt.ZkFee, error) {
 	//缺省输入的tokenId，如果swapFee有输入新tokenId，采用新的，在withdraw等action忽略swapFee tokenId
 	feeInfo := &zt.ZkFee{
@@ -1721,7 +1721,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//计数新NFT Id的balance 参数hash作为其balance，不可变
+// 计数新NFT Id的balance 参数hash作为其balance，不可变
 func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, protocol, amount uint64, contentHashPart1, contentHashPart2 string) (string, error) {
 	hashFn := legacymimc.NewMiMC(zt.ZkMimcHashSeed)
 	hashFn.Reset()
@@ -2018,10 +2018,10 @@ func makeSetExodusModeReceipt(prev, current int64) *types.Receipt {
 	}
 }
 
-//在设置了invalidTx后，平行链从0开始同步到无效交易则设置系统为exodus mode，此模式意味着此链即将停用，资产需要退出到ETH
-//目前此模式限制交易比较多，此模式开启后的后续所有跟L2 资产有关的交易(contract2tree例外)都视为无效交易，其中deposit,withdraw,proxyExit确实应该视为无效
-//但是transfer，transfer2new, tree2contract实际上应该是允许的，因为只是在L2内部流转, 禁掉的影响是跟这几个操作相关连的交易会失败
-//改进的一个方案是允许这几个操作,但是需要重新设一个截止标志，禁止这几个操作，也就是平行链同步完成后，由管理员设置，然后就只允许contract2tree流进资产
+// 在设置了invalidTx后，平行链从0开始同步到无效交易则设置系统为exodus mode，此模式意味着此链即将停用，资产需要退出到ETH
+// 目前此模式限制交易比较多，此模式开启后的后续所有跟L2 资产有关的交易(contract2tree例外)都视为无效交易，其中deposit,withdraw,proxyExit确实应该视为无效
+// 但是transfer，transfer2new, tree2contract实际上应该是允许的，因为只是在L2内部流转, 禁掉的影响是跟这几个操作相关连的交易会失败
+// 改进的一个方案是允许这几个操作,但是需要重新设一个截止标志，禁止这几个操作，也就是平行链同步完成后，由管理员设置，然后就只允许contract2tree流进资产
 func isExodusMode(statedb dbm.KV) error {
 	mode, err := getExodusMode(statedb)
 	if err != nil {
@@ -2050,7 +2050,7 @@ func getExodusMode(db dbm.KV) (int64, error) {
 	return k.Data, nil
 }
 
-//设置逃生舱模式,为保证顺序，管理员只允许在无效交易生效后，也就是逃生舱准备模式后设置清算模式
+// 设置逃生舱模式,为保证顺序，管理员只允许在无效交易生效后，也就是逃生舱准备模式后设置清算模式
 func (a *Action) setExodusMode(payload *zt.ZkExodusMode) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if payload.GetMode() < zt.NormalMode || payload.GetMode() > zt.ExodusFinalMode {
@@ -2169,7 +2169,7 @@ func (a *Action) procExodusRollbackMode(payload *zt.ZkExodusMode) (*types.Receip
 
 }
 
-//获取deposit操作需要回滚的数据，如果余额不够，尝试从systemFeeId扣除，如果fee也不够，记录gap从L1补充
+// 获取deposit操作需要回滚的数据，如果余额不够，尝试从systemFeeId扣除，如果fee也不够，记录gap从L1补充
 func getDepositRollbackData(db dbm.KV, depositAcctIds []uint64, depositAccountMap map[uint64]*zt.HistoryLeaf, knownBalanceGap uint32) ([]*zt.ZkAcctRollbackInfo, error) {
 	var depositRollbackAcctData []*zt.ZkAcctRollbackInfo
 	tokensGap := make(map[uint64]string)
@@ -2261,7 +2261,7 @@ func checkSystemFeeAcctGap(sysFeeTokens, tokensGap map[uint64]string) ([]*zt.ZkA
 	var systemGapResp string
 	var systemGapData []*zt.ZkAcctRollbackInfo
 	var tokenIds []uint64 //记录顺序
-	for id, _ := range tokensGap {
+	for id := range tokensGap {
 		tokenIds = append(tokenIds, id)
 	}
 	sort.Slice(tokenIds, func(i, j int) bool { return tokenIds[i] < tokenIds[j] })
@@ -2404,7 +2404,7 @@ func MakeSetTokenSymbolReceipt(id string, oldVal, newVal *zt.ZkTokenSymbol) *typ
 	}
 }
 
-//tokenId可以对应多个symbol，但一个symbol只能对应一个Id,比如Id=1,symbol=USTC,后改成USTD, USTC仍然会对应Id=1, 新的Id不能使用已存在的名字，防止重复混乱
+// tokenId可以对应多个symbol，但一个symbol只能对应一个Id,比如Id=1,symbol=USTC,后改成USTD, USTC仍然会对应Id=1, 新的Id不能使用已存在的名字，防止重复混乱
 func (a *Action) setTokenSymbol(payload *zt.ZkTokenSymbol) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 

@@ -430,8 +430,8 @@ func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*typ
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-//不同合约之间查询的需求后面要考虑，现在先重复处理一下，原则上不能直接引用其他合约的代码
-//后面可能会有一套查询规则 和 写规则, 合约对其他合约只读
+// 不同合约之间查询的需求后面要考虑，现在先重复处理一下，原则上不能直接引用其他合约的代码
+// 后面可能会有一套查询规则 和 写规则, 合约对其他合约只读
 func calcTokenKey(token string) (key []byte) {
 	tokenCreated := "mavl-token-"
 	return []byte(fmt.Sprintf(tokenCreated+"%s", token))

@@ -1,9 +1,9 @@
 package types
 
-//Version4Relayer ...
+// Version4Relayer ...
 const Version4Relayer = "0.1.0"
 
-//setting
+// setting
 const (
 	StatusPending = iota
 	// Oracle : oracle contract

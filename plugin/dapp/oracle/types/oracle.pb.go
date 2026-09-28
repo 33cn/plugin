@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//事件
+// 事件
 type OracleStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

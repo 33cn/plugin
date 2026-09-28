@@ -8,7 +8,7 @@ import (
 	x2eTy "github.com/33cn/plugin/plugin/dapp/x2ethereum/types"
 )
 
-//NewProphecy ...
+// NewProphecy ...
 func NewProphecy(id string) *x2eTy.ReceiptEthProphecy {
 
 	status := new(x2eTy.ProphecyStatus)
@@ -47,7 +47,7 @@ func AddClaim(prophecy *x2eTy.ReceiptEthProphecy, validator string, claim string
 
 }
 
-//FindHighestClaim 遍历该prophecy所有claim，找出获得最多票数的claim
+// FindHighestClaim 遍历该prophecy所有claim，找出获得最多票数的claim
 func FindHighestClaim(prophecy *x2eTy.ReceiptEthProphecy, validators map[string]int64) (string, int64, int64) {
 	totalClaimsPower := int64(0)
 	highestClaimPower := int64(-1)
@@ -67,7 +67,7 @@ func FindHighestClaim(prophecy *x2eTy.ReceiptEthProphecy, validators map[string]
 	return highestClaim, highestClaimPower, totalClaimsPower
 }
 
-//NewOracleClaimContent ...
+// NewOracleClaimContent ...
 func NewOracleClaimContent(chain33Receiver string, amount string, claimType, decimals int64) x2eTy.OracleClaimContent {
 	return x2eTy.OracleClaimContent{
 		Chain33Receiver: chain33Receiver,
@@ -77,7 +77,7 @@ func NewOracleClaimContent(chain33Receiver string, amount string, claimType, dec
 	}
 }
 
-//NewClaim ...
+// NewClaim ...
 func NewClaim(id string, validatorAddress string, content string) x2eTy.OracleClaim {
 	return x2eTy.OracleClaim{
 		ID:               id,
@@ -86,7 +86,7 @@ func NewClaim(id string, validatorAddress string, content string) x2eTy.OracleCl
 	}
 }
 
-//CreateOracleClaimFromEthClaim 通过ethchain33结构构造一个OracleClaim结构，包括生成唯一的ID
+// CreateOracleClaimFromEthClaim 通过ethchain33结构构造一个OracleClaim结构，包括生成唯一的ID
 func CreateOracleClaimFromEthClaim(ethClaim x2eTy.Eth2Chain33) (x2eTy.OracleClaim, error) {
 	if ethClaim.ClaimType != int64(x2eTy.LockClaimType) && ethClaim.ClaimType != int64(x2eTy.BurnClaimType) {
 		return x2eTy.OracleClaim{}, x2eTy.ErrInvalidClaimType
@@ -105,7 +105,7 @@ func CreateOracleClaimFromEthClaim(ethClaim x2eTy.Eth2Chain33) (x2eTy.OracleClai
 	return claim, nil
 }
 
-//CreateOracleClaimFromOracleString --
+// CreateOracleClaimFromOracleString --
 func CreateOracleClaimFromOracleString(oracleClaimString string) (x2eTy.OracleClaimContent, error) {
 	var oracleClaimContent x2eTy.OracleClaimContent
 

@@ -68,7 +68,7 @@ type raftNode struct {
 	restartC chan struct{}
 }
 
-//Node ...
+// Node ...
 type Node struct {
 	*raftNode
 }
@@ -105,7 +105,7 @@ func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnl
 	return commitC, errorC, rc.snapshotterReady, rc.validatorC
 }
 
-//  启动raft节点
+// 启动raft节点
 func (rc *raftNode) startRaft() {
 	// 有snapshot就打开，没有则创建
 	if !fileutil.Exist(rc.snapdir) {

@@ -8,7 +8,7 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//On_MultiSigAddresList 获取owner对应的多重签名地址列表
+// On_MultiSigAddresList 获取owner对应的多重签名地址列表
 func (policy *multisigPolicy) On_MultiSigAddresList(req *types.ReqString) (types.Message, error) {
 	//获取本钱包中记录的所有多重签名地址
 	if req.Data == "" {

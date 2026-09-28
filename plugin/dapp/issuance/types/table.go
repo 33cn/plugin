@@ -16,7 +16,7 @@ var opt = &table.Option{
 	Index:   []string{"status"},
 }
 
-//NewIssuanceTable 新建表
+// NewIssuanceTable 新建表
 func NewIssuanceTable(kvdb db.KV) *table.Table {
 	rowmeta := NewIssuanceRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt)
@@ -26,22 +26,22 @@ func NewIssuanceTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//IssuanceRow table meta 结构
+// IssuanceRow table meta 结构
 type IssuanceRow struct {
 	*ReceiptIssuanceID
 }
 
-//NewIssuanceRow 新建一个meta 结构
+// NewIssuanceRow 新建一个meta 结构
 func NewIssuanceRow() *IssuanceRow {
 	return &IssuanceRow{ReceiptIssuanceID: &ReceiptIssuanceID{}}
 }
 
-//CreateRow 新建数据行
+// CreateRow 新建数据行
 func (tx *IssuanceRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ReceiptIssuanceID{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (tx *IssuanceRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*ReceiptIssuanceID); ok {
 		tx.ReceiptIssuanceID = txdata
@@ -50,7 +50,7 @@ func (tx *IssuanceRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (tx *IssuanceRow) Get(key string) ([]byte, error) {
 	if key == "issuanceid" {
 		return []byte(tx.IssuanceId), nil
@@ -77,22 +77,22 @@ func NewRecordTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//IssuanceRecordRow table meta 结构
+// IssuanceRecordRow table meta 结构
 type IssuanceRecordRow struct {
 	*ReceiptIssuance
 }
 
-//NewRecordRow 新建一个meta 结构
+// NewRecordRow 新建一个meta 结构
 func NewRecordRow() *IssuanceRecordRow {
 	return &IssuanceRecordRow{ReceiptIssuance: &ReceiptIssuance{}}
 }
 
-//CreateRow 新建数据行
+// CreateRow 新建数据行
 func (tx *IssuanceRecordRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ReceiptIssuance{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (tx *IssuanceRecordRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*ReceiptIssuance); ok {
 		tx.ReceiptIssuance = txdata
@@ -101,7 +101,7 @@ func (tx *IssuanceRecordRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (tx *IssuanceRecordRow) Get(key string) ([]byte, error) {
 	if key == "debtid" {
 		return []byte(tx.DebtId), nil

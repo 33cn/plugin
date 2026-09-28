@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//MultiSigCmd :
+// MultiSigCmd :
 func MultiSigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "multisig",
@@ -36,7 +36,7 @@ func MultiSigCmd() *cobra.Command {
 	return cmd
 }
 
-//MultiSigAccountCmd :account相关的命令
+// MultiSigAccountCmd :account相关的命令
 func MultiSigAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "account",
@@ -58,7 +58,7 @@ func MultiSigAccountCmd() *cobra.Command {
 	return cmd
 }
 
-//MultiSigOwnerCmd : owner相关的命令
+// MultiSigOwnerCmd : owner相关的命令
 func MultiSigOwnerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "owner",
@@ -74,7 +74,7 @@ func MultiSigOwnerCmd() *cobra.Command {
 	return cmd
 }
 
-//MultiSigTxCmd : tx交易相关的命令
+// MultiSigTxCmd : tx交易相关的命令
 func MultiSigTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tx",
@@ -630,7 +630,7 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//GetMultiSigAccCountCmd 获取已经创建的多重签名账户数量
+// GetMultiSigAccCountCmd 获取已经创建的多重签名账户数量
 func GetMultiSigAccCountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
@@ -655,7 +655,7 @@ func getMultiSigAccCount(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//GetMultiSigAccountsCmd 获取已经创建的多重签名账户地址，通过转入的index
+// GetMultiSigAccountsCmd 获取已经创建的多重签名账户地址，通过转入的index
 func GetMultiSigAccountsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "address",
@@ -701,7 +701,7 @@ func getMultiSigAccounts(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//GetMultiSigAccountInfoCmd 获取已经创建的多重签名账户信息
+// GetMultiSigAccountInfoCmd 获取已经创建的多重签名账户信息
 func GetMultiSigAccountInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info",
@@ -772,7 +772,7 @@ func parseAccInfo(view ...interface{}) (interface{}, error) {
 	return result, nil
 }
 
-//GetMultiSigAccTxCountCmd 获取多重签名账户上的tx交易数量
+// GetMultiSigAccTxCountCmd 获取多重签名账户上的tx交易数量
 func GetMultiSigAccTxCountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
@@ -807,7 +807,7 @@ func getMultiSigAccTxCount(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//GetMultiSigTxidsCmd 获取多重签名账户上的tx交易数量
+// GetMultiSigTxidsCmd 获取多重签名账户上的tx交易数量
 func GetMultiSigTxidsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "txids",
@@ -878,7 +878,7 @@ func getMultiSigTxids(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//GetMultiSigTxInfoCmd 获取已经创建的多重签名账户的交易信息
+// GetMultiSigTxInfoCmd 获取已经创建的多重签名账户的交易信息
 func GetMultiSigTxInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info",
@@ -918,7 +918,7 @@ func getMultiSigTxInfo(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//GetMultiSigTxConfirmedWeightCmd 获取交易已经被确认的总权重
+// GetMultiSigTxConfirmedWeightCmd 获取交易已经被确认的总权重
 func GetMultiSigTxConfirmedWeightCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "confirmed_weight",
@@ -958,7 +958,7 @@ func getGetMultiSigTxConfirmedWeight(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//GetMultiSigAccUnSpentTodayCmd 获取多重签名账户今日免多重签名的余额
+// GetMultiSigAccUnSpentTodayCmd 获取多重签名账户今日免多重签名的余额
 func GetMultiSigAccUnSpentTodayCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unspent",
@@ -1037,7 +1037,7 @@ func parseUnSpentToday(view ...interface{}) (interface{}, error) {
 	return result, nil
 }
 
-//GetMultiSigAccAssetsCmd 获取多重签名账户上的资产信息
+// GetMultiSigAccAssetsCmd 获取多重签名账户上的资产信息
 func GetMultiSigAccAssetsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "assets",
@@ -1122,7 +1122,7 @@ func parseAccAssets(view ...interface{}) (interface{}, error) {
 	return result, nil
 }
 
-//GetMultiSigAccAllAddressCmd 获取指定地址创建的所有多重签名账户
+// GetMultiSigAccAllAddressCmd 获取指定地址创建的所有多重签名账户
 func GetMultiSigAccAllAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "creator",
@@ -1162,7 +1162,7 @@ func isValidDailylimit(dailylimit float64) error {
 	return nil
 }
 
-//GetMultiSigAccByOwnerCmd 获取指定地址拥有的所有多重签名账户
+// GetMultiSigAccByOwnerCmd 获取指定地址拥有的所有多重签名账户
 func GetMultiSigAccByOwnerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "owner",

@@ -52,13 +52,13 @@ func init() {
 	types.RegExec(PrivacyX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(PrivacyX, "Enable", 0)
 	cfg.RegisterDappFork(PrivacyX, ForkPrivacyAmountCheck, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(PrivacyX, NewType(cfg))
 }

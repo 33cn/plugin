@@ -146,7 +146,7 @@ func AddPool2FarmHandle(masterChefAddrStr, key string, allocPoint int64, lpToken
 		return err
 	}
 	auth.GasLimit = gasLimit
-	AddPool2FarmTx, err := masterChefInt.Add(auth, big.NewInt(int64(allocPoint)), common.HexToAddress(lpToken), withUpdate)
+	AddPool2FarmTx, err := masterChefInt.Add(auth, big.NewInt(allocPoint), common.HexToAddress(lpToken), withUpdate)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to AddPool2FarmTx with err:%s", err.Error()))
 	}

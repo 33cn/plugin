@@ -14,7 +14,7 @@ const (
 	jsActionCall   = 1
 )
 
-//日志类型
+// 日志类型
 const (
 	TyLogJs = 10000
 )
@@ -32,10 +32,10 @@ var (
 	}
 )
 
-//JsX 插件名字
+// JsX 插件名字
 var JsX = "jsvm"
 
-//错误常量
+// 错误常量
 var (
 	ErrDupName            = errors.New("ErrDupName")
 	ErrJsReturnNotObject  = errors.New("ErrJsReturnNotObject")
@@ -60,22 +60,22 @@ func init() {
 	types.RegExec(JsX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(JsX, "Enable", 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(JsX, NewType(cfg))
 }
 
-//JsType 类型
+// JsType 类型
 type JsType struct {
 	types.ExecTypeBase
 }
 
-//NewType 新建一个plugin 类型
+// NewType 新建一个plugin 类型
 func NewType(cfg *types.Chain33Config) *JsType {
 	c := &JsType{}
 	c.SetChild(c)
@@ -83,17 +83,17 @@ func NewType(cfg *types.Chain33Config) *JsType {
 	return c
 }
 
-//GetPayload 获取 交易构造
+// GetPayload 获取 交易构造
 func (t *JsType) GetPayload() types.Message {
 	return &jsproto.JsAction{}
 }
 
-//GetTypeMap 获取类型映射
+// GetTypeMap 获取类型映射
 func (t *JsType) GetTypeMap() map[string]int32 {
 	return typeMap
 }
 
-//GetLogMap 获取日志映射
+// GetLogMap 获取日志映射
 func (t *JsType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }

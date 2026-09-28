@@ -11,7 +11,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 )
 
-//Exec_Commit consensus commit tx exec process
+// Exec_Commit consensus commit tx exec process
 func (m *Mix) Exec_Config(payload *mixTy.MixConfigAction, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(m, tx)
 	receipt, err := a.Config(payload)
@@ -22,7 +22,7 @@ func (m *Mix) Exec_Config(payload *mixTy.MixConfigAction, tx *types.Transaction,
 	return receipt, nil
 }
 
-//Exec_Deposit ...
+// Exec_Deposit ...
 func (m *Mix) Exec_Deposit(payload *mixTy.MixDepositAction, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(m, tx)
 	receipt, err := a.Deposit(payload)
@@ -33,7 +33,7 @@ func (m *Mix) Exec_Deposit(payload *mixTy.MixDepositAction, tx *types.Transactio
 	return receipt, nil
 }
 
-//Exec_Withdraw ...
+// Exec_Withdraw ...
 func (m *Mix) Exec_Withdraw(payload *mixTy.MixWithdrawAction, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(m, tx)
 	receipt, err := a.Withdraw(payload)

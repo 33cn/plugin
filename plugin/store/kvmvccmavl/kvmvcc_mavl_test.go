@@ -1417,7 +1417,7 @@ func benchmarkSet(b *testing.B, isResetForkHeight bool) {
 	fmt.Println("mpt BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-//上一个用例，一次性插入多对kv；本用例每次插入30对kv，分多次插入，测试性能表现。
+// 上一个用例，一次性插入多对kv；本用例每次插入30对kv，分多次插入，测试性能表现。
 func BenchmarkStoreSetkmvccMavl(b *testing.B) { benchmarkStoreSet(b, false) }
 func BenchmarkStoreSetkmvcc(b *testing.B)     { benchmarkStoreSet(b, true) }
 
@@ -1509,7 +1509,7 @@ func benchmarkSetIter(b *testing.B, isResetForkHeight bool) {
 	fmt.Println("kvmvcc BenchmarkSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-//一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
+// 一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
 func BenchmarkMemSetkmvccMavl(b *testing.B) { benchmarkMemSet(b, false) }
 func BenchmarkMemSetkmvcc(b *testing.B)     { benchmarkMemSet(b, true) }
 
@@ -1553,7 +1553,7 @@ func benchmarkMemSet(b *testing.B, isResetForkHeight bool) {
 	fmt.Println("kvmvcc BenchmarkMemSet cost time is", end.Sub(start), "num is", b.N)
 }
 
-//一次设定30对kv，设定N次，计算每次设定30对kv的耗时。
+// 一次设定30对kv，设定N次，计算每次设定30对kv的耗时。
 func BenchmarkStoreMemSetkmvccMavl(b *testing.B) { benchmarkStoreMemSet(b, false) }
 func BenchmarkStoreMemSetkmvcc(b *testing.B)     { benchmarkStoreMemSet(b, true) }
 
@@ -1708,7 +1708,7 @@ func benchmarkStoreCommit(b *testing.B, isResetForkHeight bool) {
 func BenchmarkIterMemSetkmvccMavl(b *testing.B) { benchmarkIterMemSet(b, false) }
 func BenchmarkIterMemSetkmvcc(b *testing.B)     { benchmarkIterMemSet(b, true) }
 
-//一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
+// 一次设定多对kv，测试一次的时间/多少对kv，来算平均一对kv的耗时。
 func benchmarkIterMemSet(b *testing.B, isResetForkHeight bool) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)

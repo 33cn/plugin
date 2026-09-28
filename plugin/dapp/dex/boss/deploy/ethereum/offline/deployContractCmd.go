@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//SignFactoryCmd 构造部署factory 合约的交易，并对其签名输出到文件中
+// SignFactoryCmd 构造部署factory 合约的交易，并对其签名输出到文件中
 type SignCmd struct {
 	From        string
 	Nonce       uint64
@@ -217,7 +217,7 @@ func (s *SignCmd) signContractTx(fee2setter string, key *ecdsa.PrivateKey, gasPr
 	return nil
 }
 
-//构造交易，签名交易 factory
+// 构造交易，签名交易 factory
 func (s *SignCmd) reWriteDeplopyPancakeFactory(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey, fee2addr common.Address, param ...interface{}) (signedTx, hash string, err error) {
 	parsed, err := abi.JSON(strings.NewReader(pancakeFactory.PancakeFactoryABI))
 	if err != nil {
@@ -238,13 +238,13 @@ func (s *SignCmd) reWriteDeplopyPancakeFactory(nonce uint64, gasPrice *big.Int, 
 type SignWeth9Cmd struct {
 }
 
-//only sign Weth9
+// only sign Weth9
 func (s *SignWeth9Cmd) reWriteDeployWETH9(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey, param ...interface{}) (signedTx, hash string, err error) {
 	parsed, err := abi.JSON(strings.NewReader(pancakeRouter.WETH9ABI))
 	if err != nil {
 		return "", "", err
 	}
-	input, err := parsed.Pack("", param...)
+	input, _ := parsed.Pack("", param...)
 	abiBin := pancakeRouter.WETH9Bin
 	data := append(common.FromHex(abiBin), input...)
 	var amount = new(big.Int)

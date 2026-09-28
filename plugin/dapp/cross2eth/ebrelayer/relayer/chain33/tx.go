@@ -191,8 +191,7 @@ func deploySingleContract(code []byte, abi, constructorPara, contractName, paraC
 	exector := paraChainName + "evm"
 	to := address.ExecAddress(exector)
 
-	var action evmtypes.EVMContractAction
-	action = evmtypes.EVMContractAction{Amount: 0, Code: code, GasLimit: 0, GasPrice: 0, Note: note, Alias: contractName, ContractAddr: to}
+	action := evmtypes.EVMContractAction{Amount: 0, Code: code, GasLimit: 0, GasPrice: 0, Note: note, Alias: contractName, ContractAddr: to}
 	if constructorPara != "" {
 		packData, err := evmAbi.PackContructorPara(constructorPara, abi)
 		if err != nil {
@@ -418,7 +417,7 @@ func setupMultiSign(ownerPrivateKeyStr, contractAddr, chainName, rpcURL string, 
 	//	address payable paymentReceiver
 	//)
 	parameter := "setup(["
-	parameter += fmt.Sprintf("%s", owners[0])
+	parameter += owners[0]
 	for _, owner := range owners[1:] {
 		parameter += fmt.Sprintf(",%s", owner)
 	}
@@ -549,7 +548,7 @@ func safeTransfer(ownerPrivateKeyStr, mulSign, chainName, rpcURL, receiver, toke
 }
 
 func recoverContractAddrFromRegistry(bridgeRegistry, rpcLaddr string) (oracle, bridgeBank string) {
-	parameter := fmt.Sprint("oracle()")
+	parameter := "oracle()"
 
 	result := query(bridgeRegistry, parameter, bridgeRegistry, rpcLaddr, generated.BridgeRegistryABI)
 	if nil == result {
@@ -557,7 +556,7 @@ func recoverContractAddrFromRegistry(bridgeRegistry, rpcLaddr string) (oracle, b
 	}
 	oracle = result.(string)
 
-	parameter = fmt.Sprint("bridgeBank()")
+	parameter = "bridgeBank()"
 	result = query(bridgeRegistry, parameter, bridgeRegistry, rpcLaddr, generated.BridgeRegistryABI)
 	if nil == result {
 		return "", ""
@@ -587,7 +586,7 @@ func getBridgeToken2address(bridgeBank, symbol, rpcLaddr string) string {
 }
 
 func getMulSignNonce(mulsign, rpcLaddr string) int64 {
-	parameter := fmt.Sprintf("nonce()")
+	parameter := "nonce()"
 
 	result := query(mulsign, parameter, mulsign, rpcLaddr, generated.GnosisSafeABI)
 	if nil == result {

@@ -18,7 +18,7 @@ func (r *rollup) ExecLocal_CommitBatch(payload *rolluptypes.CheckPoint, tx *type
 	return r.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-//当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
+// 当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
 func (r *rollup) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 
 	dbSet := &types.LocalDBSet{}

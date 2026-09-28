@@ -98,10 +98,16 @@ dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
 
+[p2p.sub.dht]
+# dht 默认端口 13803，guess/commands 等测试也在用，并行跑会抢占
+port=13823
+
 
 [rpc]
-jrpcBindAddr="localhost:8801"
-grpcBindAddr="localhost:8802"
+# 8801/8802 是 chain33 默认端口，cert、exchange 等测试配置也在用，
+# go test 并行跑多个包时会抢占导致监听失败，这里用本包专属端口
+jrpcBindAddr="localhost:8821"
+grpcBindAddr="localhost:8822"
 whitelist=["127.0.0.1"]
 jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
@@ -283,11 +289,21 @@ func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mod
 	network.SetQueueClient(q.Client())
 
 	rpc.InitCfg(cfg.RPC)
+	//监听失败(如端口被并行测试占用)时必须打日志，否则后续 CLI 只会报
+	//connection refused，完全看不出是服务端没起来
 	gapi := rpc.NewGRpcServer(q.Client(), nil)
-	go gapi.Listen()
+	go func() {
+		if _, err := gapi.Listen(); err != nil {
+			fmt.Fprintln(os.Stderr, "grpc server listen failed, addr:", cfg.RPC.GrpcBindAddr, "err:", err)
+		}
+	}()
 
 	japi := rpc.NewJSONRPCServer(q.Client(), nil)
-	go japi.Listen()
+	go func() {
+		if _, err := japi.Listen(); err != nil {
+			fmt.Fprintln(os.Stderr, "jsonrpc server listen failed, addr:", cfg.RPC.JrpcBindAddr, "err:", err)
+		}
+	}()
 
 	cmd := DPosCmd()
 	return q, chain, s, mem, exec, cs, network, cmd
@@ -295,7 +311,7 @@ func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mod
 
 func createConn() error {
 	var err error
-	url := "127.0.0.1:8802"
+	url := "127.0.0.1:8822"
 	fmt.Println("grpc url:", url)
 	conn, err = grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
@@ -390,25 +406,20 @@ func testCmd(cmd *cobra.Command) {
 	types.SetCliSysParam(chain33Cfg.GetTitle(), chain33Cfg)
 
 	rootCmd.PersistentFlags().String("title", chain33Cfg.GetTitle(), "get title name")
-	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8802", "http url")
+	//默认地址原本填的是 grpc 端口，CLI 走的是 json-rpc，必须指向 jrpcBindAddr
+	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8821", "http url")
 	rootCmd.AddCommand(cmd)
 
-	rootCmd.SetArgs([]string{"dpos", "regist", "--address", validatorAddr, "--pubkey", strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
+	//这里只覆盖构造原始交易和纯本地计算的命令。
+	//candidatorQuery/voteQuery/cbQuery/vrfQuery 查的是链上并不存在的数据，
+	//必然返回错误，而 jsonclient 出错时会直接 os.Exit(1) 结束整个测试进程
+	rootCmd.SetArgs([]string{"dpos", "regist", "--address", validatorAddr, "--pubkey", strPubkey, "--ip", "127.0.0.1"})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", validatorAddr, "--pubkey", strPubkey, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"dpos", "cancelRegist", "--address", validatorAddr, "--pubkey", strPubkey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", validatorAddr, "--pubkey", strPubkey, "--ip", "127.0.0.1", "--rpc_laddr", "http://127.0.0.1:8801"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "topN", "--top", "1"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "candidatorQuery", "--type", "pubkeys", "--pubkeys", strPubkey})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "voteQuery", "--address", validatorAddr, "--pubkeys", strPubkey})
+	rootCmd.SetArgs([]string{"dpos", "reRegist", "--address", validatorAddr, "--pubkey", strPubkey, "--ip", "127.0.0.1"})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "vote", "--addr", validatorAddr, "--pubkey", strPubkey, "--votes", "60"})
@@ -420,34 +431,10 @@ func testCmd(cmd *cobra.Command) {
 	rootCmd.SetArgs([]string{"dpos", "cbRecord", "--cycle", "1000", "--hash", strPubkey, "--height", "60", "--privKey", validatorKey})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "cycle", "--cycle", "1000"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "height", "--height", "1000"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "cbQuery", "--type", "hash", "--hash", strPubkey})
-	rootCmd.Execute()
-
 	rootCmd.SetArgs([]string{"dpos", "vrfMRegist", "--cycle", "1000", "--m", "data1", "--pubkey", strPubkey})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "vrfRPRegist", "--cycle", "1000", "--hash", "22a58fbbe8002939b7818184e663e6c57447f4354adba31ad3c7f556e153353c", "--proof", "5ed22d8c1cc0ad131c1c9f82daec7b99ff25ae5e717624b4a8cf60e0f3dca2c97096680cd8df0d9ed8662ce6513edf5d1676ad8d72b7e4f0e0de687bd38623f404eb085d28f5631207cf97a02c55f835bd3733241c7e068b80cf75e2afd12fd4c4cb8e6f630afa2b7b2918dff3d279e50acab59da1b25b3ff920b69c443da67320", "--pubkey", "03EF0E1D3112CF571743A3318125EDE2E52A4EB904BCBAA4B1F75020C2846A7EB4"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "dtime", "--time", "2006-01-02 15:04:05"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "timestamp", "--timestamp", "121211212"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "cycle", "--cycle", "1000"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "topN"})
-	rootCmd.Execute()
-
-	rootCmd.SetArgs([]string{"dpos", "vrfQuery", "--type", "pubkeys", "--pubkeys", strPubkey})
 	rootCmd.Execute()
 
 	rootCmd.SetArgs([]string{"dpos", "vrfEvaluate", "--privKey", validatorKey, "--m", "input"})

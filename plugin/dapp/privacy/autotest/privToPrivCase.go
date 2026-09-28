@@ -10,7 +10,7 @@ import (
 	"github.com/33cn/chain33/cmd/autotest/types"
 )
 
-//PrivToPrivCase pub2priv case
+// PrivToPrivCase pub2priv case
 type PrivToPrivCase struct {
 	types.BaseCase
 	From   string `toml:"from"`

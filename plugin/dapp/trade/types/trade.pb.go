@@ -27,7 +27,6 @@ const (
 )
 
 // trade 交易部分
-//
 type Trade struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1655,7 +1654,9 @@ func (x *ReqAddrAssets) GetFromKey() string {
 }
 
 // 获取Token未完成卖单的交易列表
-// 	 fromKey : 第一次传参为空，获取卖单单价最低的列表。 当要获得下一页时，
+//
+//	fromKey : 第一次传参为空，获取卖单单价最低的列表。 当要获得下一页时，
+//
 // 传当前页最后一个；当要获得上一页时， 传当前页第一个。 	 count
 // :获取交易列表的个数。 	 direction :查找方式；0，上一页；1，下一页。
 // 越靠后的也单价越贵

@@ -39,7 +39,7 @@ func (a *action) rewardDeposit(rewards []*pt.ParaMinerReward, statusHeight int64
 	return receipt, nil
 }
 
-//奖励委托挖矿账户
+// 奖励委托挖矿账户
 func (a *action) rewardBindAddr(coinReward int64, nodes []string, bindNodeList map[string][]*pt.ParaBindMinerInfo, statusHeight int64) (*types.Receipt, int64, error) {
 	if coinReward <= 0 || len(bindNodeList) <= 0 {
 		return nil, 0, nil
@@ -151,9 +151,7 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
 	miners := nodeAddrs
-	for _, addr := range supervisionAddrs {
-		miners = append(miners, addr)
-	}
+	miners = append(miners, supervisionAddrs...)
 	r, change, err := a.rewardSuperNode(superNodeRewards, miners, nodeStatus.Height)
 	if err != nil {
 		return nil, err
