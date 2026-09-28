@@ -4,7 +4,7 @@
 
 package types
 
-//Collateralize op
+// Collateralize op
 const (
 	CollateralizeActionCreate = 1 + iota
 	CollateralizeActionBorrow
@@ -30,7 +30,7 @@ const (
 	CollateralizePreLiquidationRatio = 1.1 * 1e4 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 
-//Collateralize status
+// Collateralize status
 const (
 	CollateralizeStatusCreated = 1 + iota
 	CollateralizeStatusClose
@@ -43,7 +43,7 @@ const (
 //	CollateralizeAssetTypeEth
 //)
 
-//collater ...
+// collater ...
 const (
 	CollateralizeUserStatusCreate = 1 + iota
 	CollateralizeUserStatusWarning
@@ -53,7 +53,7 @@ const (
 	CollateralizeUserStatusClose
 )
 
-//fork ...
+// fork ...
 var (
 	ForkCollateralizeTableUpdate = "ForkCollateralizeTableUpdate"
 	ForkCollateralizePrecision   = "ForkCollateralizePrecision"

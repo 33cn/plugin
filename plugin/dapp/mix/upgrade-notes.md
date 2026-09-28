@@ -38,11 +38,17 @@ mix 全部切换到旧实现：
 
 > 待办：可通过 dapp fork（`ForkMiMCHash`）在分叉高度后切换到新哈希。
 
-### 4. CBC 随机 IV 适配
+### 4. CBC 密文三代适配
 
-chain33 的 `CBCEncrypterPrivkey` 改为随机 IV，返回 `IV(16)+ciphertext` 格式。但其 `CBCDecrypterPrivkey` 新格式仅支持 32 字节明文（钱包私钥场景），mix 加密数据更大。
+chain33 钱包 CBC 密文经历三代，`CBCEncrypterPrivkey` 在 v1.71.0 起只写第 3 代。mix 明文按 32 字节 PKCS5 填充，长度可为 32/64/96/160，不能整段交给 chain33 解密（其第 2 代只认 32/64 字节私钥）。
 
-`wallet/cryptokey.go:decryptDataWithPading` 自行按新格式解密，并回退兼容旧格式。
+`wallet/cryptokey.go:decryptDataWithPading` 按内容分流：
+
+1. 魔数 `C33K` + version：v1.71.0+（`Magic+salt+IV+ciphertext`，PBKDF2），走 `CBCDecrypterPrivkey` 再 unpad
+2. 总长 `%32==16`：v0.69.1~v1.70（`IV+ciphertext`），mix 自行用口令零填充解密（覆盖 96/160）
+3. 其余 16 字节对齐：最初 ciphertext-only
+
+加密仍调用 `CBCEncrypterPrivkey`，新数据为第 3 代。存量第 1/2 代可解；旧钱包解不了新密文。
 
 ### 5. groth16 序列化格式（密钥重新生成）
 

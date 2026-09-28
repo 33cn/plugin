@@ -41,7 +41,7 @@ func SetupOwner(cmd *cobra.Command, _ []string) {
 
 	BTYAddrChain33 := ebTypes.BTYAddrChain33
 	parameter := "setup(["
-	parameter += fmt.Sprintf("%s", owners[0])
+	parameter += owners[0]
 	for _, owner := range owners[1:] {
 		parameter += fmt.Sprintf(",%s", owner)
 	}

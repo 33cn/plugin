@@ -50,7 +50,7 @@ const (
 	fee = 1e6
 )
 
-//for token
+// for token
 var (
 	tokenName   = "NEW"
 	tokenSym    = "NEW"

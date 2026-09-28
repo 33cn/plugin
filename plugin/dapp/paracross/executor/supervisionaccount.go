@@ -173,7 +173,7 @@ func (a *action) supervisionNodeGroupCreate(title, targetAddrs string) (*types.R
 	return receipt, nil
 }
 
-//由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
+// 由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
 func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddrs)
 	if err != nil {

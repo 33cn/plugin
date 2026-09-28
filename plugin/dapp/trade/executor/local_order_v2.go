@@ -36,7 +36,6 @@ import (
  7. 根据状态分页列出某地址的订单（包括买单卖单） owner_status
 */
 
-//
 var optV2 = &table.Option{
 	Prefix:  "LODB-trade",
 	Name:    "order_v2",
@@ -109,7 +108,7 @@ func (r *OrderV2Row) Get(key string) ([]byte, error) {
 	case "asset_isSell_status":
 		return []byte(fmt.Sprintf("%s_%d_%s", r.asset(), r.isSell(), r.status())), nil
 	case "owner":
-		return []byte(address.FormatAddrKey(r.Owner)), nil
+		return address.FormatAddrKey(r.Owner), nil
 	case "owner_asset":
 		return []byte(fmt.Sprintf("%s_%s", address.FormatAddrKey(r.Owner), r.asset())), nil
 	case "owner_asset_isSell":
@@ -166,8 +165,9 @@ func (r *OrderV2Row) price() string {
 }
 
 // status: 设计为可以同时查询几种的并集 , 存储为前缀， 需要提前设计需要合并的， 用前缀表示
-//    进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
-//      01     10     11          12        19 -> 1*
+//
+//	进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
+//	  01     10     11          12        19 -> 1*
 func (r *OrderV2Row) status() string {
 	if r.Status == pty.TradeOrderStatusOnBuy || r.Status == pty.TradeOrderStatusOnSale {
 		return "01" // 试图用1 可以匹配所有完成的

@@ -182,7 +182,7 @@ func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
 			return
 		}
 		if hex.EncodeToString(res) != test.Expected {
-			bench.Error(fmt.Sprintf("Expected %v, got %v", test.Expected, hex.EncodeToString(res)))
+			bench.Errorf("Expected %v, got %v", test.Expected, hex.EncodeToString(res))
 			return
 		}
 	})

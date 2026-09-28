@@ -165,7 +165,6 @@ func (ps *PeerSet) hasIP(peerIP net.IP) bool {
 	return false
 }
 
-//
 func (ps *PeerSet) GetIP(peerKey ID) net.IP {
 	ps.mtx.Lock()
 	ps.mtx.Unlock()
@@ -225,7 +224,7 @@ func (ps *PeerSet) Remove(peer Peer) {
 	delete(ps.lookup, peer.ID())
 }
 
-//-------------------------peer connection--------------------------------
+// -------------------------peer connection--------------------------------
 func (pc *peerConn) ID() ID {
 	if len(pc.id) != 0 {
 		return pc.id

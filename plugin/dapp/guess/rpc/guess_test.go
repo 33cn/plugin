@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -21,7 +20,6 @@ import (
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
 	"github.com/33cn/chain33/mempool"
-	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
@@ -29,9 +27,12 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	_ "github.com/33cn/chain33/system"
+	_ "github.com/33cn/plugin/plugin/dapp/guess"
+	_ "github.com/33cn/plugin/plugin/dapp/norm"
 	_ "github.com/33cn/plugin/plugin/store/init"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
@@ -94,7 +95,7 @@ isParaChain=false
 enableTxQuickIndex=false
 [p2p]
 types=["dht"]
-enable=true
+enable=false
 # 使用的数据库类型
 driver="leveldb"
 # 数据库文件目录
@@ -340,14 +341,20 @@ func clearTestData() {
 
 func TestGuess(t *testing.T) {
 	Init()
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+			conn = nil
+			c = nil
+		}
+		clearTestData()
+	})
 	testGuessImp(t)
-	fmt.Println("=======start clear test data!=======")
-	clearTestData()
 }
 
 func testGuessImp(t *testing.T) {
 	fmt.Println("=======start guess test!=======")
-	q, chain, s, mem, exec, cs, p2p := initEnvGuess()
+	q, chain, s, mem, exec, cs := initEnvGuess()
 	cfg := q.GetConfig()
 	defer chain.Close()
 	defer mem.Close()
@@ -355,17 +362,12 @@ func testGuessImp(t *testing.T) {
 	defer s.Close()
 	defer q.Close()
 	defer cs.Close()
-	defer p2p.Close()
-	err := createConn()
-	for err != nil {
-		err = createConn()
-	}
-	time.Sleep(2 * time.Second)
+	err := waitNodeReady()
+	require.NoError(t, err, "wait node ready failed")
 	fmt.Println("=======start NormPut!=======")
 
 	for i := 0; i < loopCount; i++ {
 		NormPut(cfg)
-		time.Sleep(time.Second)
 	}
 
 	fmt.Println("=======start sendTransferTx!=======")
@@ -373,54 +375,28 @@ func testGuessImp(t *testing.T) {
 	sendTransferTx(cfg, adminPriv, userAAddr, 2000000000000)
 	sendTransferTx(cfg, adminPriv, userBAddr, 2000000000000)
 
-	time.Sleep(2 * time.Second)
-	in := &types.ReqBalance{}
-	in.Addresses = append(in.Addresses, userAAddr)
-	acct, err1 := c.GetBalance(context.Background(), in)
-	if err1 != nil || len(acct.Acc) == 0 {
-		fmt.Println("no balance for ", userAAddr)
-	} else {
-		fmt.Println(userAAddr, " balance:", acct.Acc[0].Balance, "frozen:", acct.Acc[0].Frozen)
-	}
-	assert.Equal(t, true, acct.Acc[0].Balance == 2000000000000)
+	acct := mustGetBalance(t, userAAddr)
+	fmt.Println(userAAddr, " balance:", acct.Acc[0].Balance, "frozen:", acct.Acc[0].Frozen)
+	assert.Equal(t, int64(2000000000000), acct.Acc[0].Balance)
 
-	in2 := &types.ReqBalance{}
-	in2.Addresses = append(in.Addresses, userBAddr)
-	acct2, err2 := c.GetBalance(context.Background(), in2)
-	if err2 != nil || len(acct2.Acc) == 0 {
-		fmt.Println("no balance for ", userBAddr)
-	} else {
-		fmt.Println(userBAddr, " balance:", acct2.Acc[0].Balance, "frozen:", acct2.Acc[0].Frozen)
-	}
-	assert.Equal(t, true, acct2.Acc[0].Balance == 2000000000000)
+	acct2 := mustGetBalance(t, userBAddr)
+	fmt.Println(userBAddr, " balance:", acct2.Acc[0].Balance, "frozen:", acct2.Acc[0].Frozen)
+	assert.Equal(t, int64(2000000000000), acct2.Acc[0].Balance)
 
 	fmt.Println("=======start sendTransferToExecTx!=======")
 	//从测试地址向dos合约转入代币
 	sendTransferToExecTx(cfg, userAPriv, "guess", 1000000000000)
 	sendTransferToExecTx(cfg, userBPriv, "guess", 1000000000000)
-	time.Sleep(2 * time.Second)
 
 	fmt.Println("=======start GetBalance!=======")
 
-	in3 := &types.ReqBalance{}
-	in3.Addresses = append(in3.Addresses, userAAddr)
-	acct3, err3 := c.GetBalance(context.Background(), in3)
-	if err3 != nil || len(acct3.Acc) == 0 {
-		fmt.Println("no balance for ", userAAddr)
-	} else {
-		fmt.Println(userAAddr, " balance:", acct3.Acc[0].Balance, "frozen:", acct3.Acc[0].Frozen)
-	}
-	assert.Equal(t, true, acct3.Acc[0].Balance == 1000000000000)
+	acct3 := mustGetBalance(t, userAAddr)
+	fmt.Println(userAAddr, " balance:", acct3.Acc[0].Balance, "frozen:", acct3.Acc[0].Frozen)
+	assert.Equal(t, int64(1000000000000), acct3.Acc[0].Balance)
 
-	in4 := &types.ReqBalance{}
-	in4.Addresses = append(in4.Addresses, userBAddr)
-	acct4, err4 := c.GetBalance(context.Background(), in4)
-	if err4 != nil || len(acct4.Acc) == 0 {
-		fmt.Println("no balance for ", userBAddr)
-	} else {
-		fmt.Println(userBAddr, " balance:", acct4.Acc[0].Balance, "frozen:", acct4.Acc[0].Frozen)
-	}
-	assert.Equal(t, true, acct4.Acc[0].Balance == 1000000000000)
+	acct4 := mustGetBalance(t, userBAddr)
+	fmt.Println(userBAddr, " balance:", acct4.Acc[0].Balance, "frozen:", acct4.Acc[0].Frozen)
+	assert.Equal(t, int64(1000000000000), acct4.Acc[0].Balance)
 
 	fmt.Println("=======start sendGuessStartTx!=======")
 	ok, gameid := sendGuessStartTx(cfg, "WorldCup Final", "A:France;B:Claodia", "football", adminPriv)
@@ -429,11 +405,11 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("txid: ", hex.EncodeToString(gameid))
 	}
-	time.Sleep(2 * time.Second)
 
 	strGameID1 := "0x" + hex.EncodeToString(gameid)
 
-	reply := queryGuessByIds(strGameID1)
+	reply := queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessBetTx!=======")
@@ -443,8 +419,8 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("Guess A bet txid: ", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 1)
 
 	ok, txid = sendGuessBetTx(cfg, strGameID1, "B", 5e8, userBPriv)
@@ -453,8 +429,8 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("Guess B bet txid: ", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessStopTx failed!=======")
@@ -464,8 +440,8 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("Guess stop txid: ", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessStopTx!=======")
@@ -475,8 +451,8 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("Guess stop txid: ", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessBetTx failed!=======")
@@ -484,10 +460,10 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess stopped, bet failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess A bet txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess A bet txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessPublishTx failed!=======")
@@ -495,10 +471,10 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("sendGuessPublishTx failed,only admin can publish.")
 	} else {
-		fmt.Println(fmt.Sprintf("publish ok, but it's not correct, txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("publish ok, but it's not correct, txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessPublishTx!=======")
@@ -506,10 +482,10 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("sendGuessPublishTx failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("publish ok, txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("publish ok, txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusPublish && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
@@ -517,10 +493,10 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess abort failed, already published.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess abort txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID1)
+	reply = queryGuessByIds(t, strGameID1)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusPublish && reply.Games[0].BetStat.TotalBetTimes == 2)
 
 	//再来一次，测试异常流程:start->abort->stop
@@ -531,11 +507,11 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("txid: ", hex.EncodeToString(gameid))
 	}
-	time.Sleep(2 * time.Second)
 
 	strGameID2 := "0x" + hex.EncodeToString(gameid)
 
-	reply = queryGuessByIds(strGameID2)
+	reply = queryGuessByIds(t, strGameID2)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
@@ -543,10 +519,10 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess abort failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess abort txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID2)
+	reply = queryGuessByIds(t, strGameID2)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	fmt.Println("=======start sendGuessStopTx failed!=======")
@@ -554,10 +530,10 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess stop failed,it's already aborted.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess stop txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess stop txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID2)
+	reply = queryGuessByIds(t, strGameID2)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	//再来一次，测试流程:start->stop->abort
@@ -568,10 +544,10 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("txid: ", hex.EncodeToString(gameid))
 	}
-	time.Sleep(2 * time.Second)
 
 	strGameID3 := "0x" + hex.EncodeToString(gameid)
-	reply = queryGuessByIds(strGameID3)
+	reply = queryGuessByIds(t, strGameID3)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStart)
 
 	fmt.Println("=======start sendGuessStopTx!=======")
@@ -581,8 +557,8 @@ func testGuessImp(t *testing.T) {
 	} else {
 		fmt.Println("Guess stop txid: ", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
-	reply = queryGuessByIds(strGameID3)
+	reply = queryGuessByIds(t, strGameID3)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusStopBet)
 
 	fmt.Println("=======start sendGuessAbortTx!=======")
@@ -590,59 +566,60 @@ func testGuessImp(t *testing.T) {
 	if !ok {
 		fmt.Println("Guess abort failed.")
 	} else {
-		fmt.Println(fmt.Sprintf("Guess abort txid: %s", hex.EncodeToString(txid)))
+		fmt.Printf("Guess abort txid: %s\n", hex.EncodeToString(txid))
 	}
-	time.Sleep(2 * time.Second)
 
 	//以下测试查询接口
 	fmt.Println("=======start queryGuessByIds!=======")
-	reply = queryGuessByIds(strGameID3)
+	reply = queryGuessByIds(t, strGameID3)
+	require.NotEmpty(t, reply.Games)
 	assert.Equal(t, true, reply.Games[0].Status == gty.GuessGameStatusAbort)
 
 	fmt.Println("=======start queryGuessByID!=======")
-	reply2 := queryGuessByID(strGameID1)
+	reply2 := queryGuessByID(t, strGameID1)
+	require.NotNil(t, reply2.Game)
 	assert.Equal(t, true, reply2.Game.Status == gty.GuessGameStatusPublish && reply2.Game.BetStat.TotalBetTimes == 2)
 
 	fmt.Println("=======start queryGuessByAddr!=======")
-	record := queryGuessByAddr(userAAddr)
+	record := queryGuessByAddr(t, userAAddr)
+	require.NotEmpty(t, record.Records)
 	assert.Equal(t, true, record.Records[0].GameID == strGameID1)
 
 	fmt.Println("=======start queryGuessByStatus!=======")
 
-	record = queryGuessByStatus(gty.GuessGameStatusPublish)
+	record = queryGuessByStatus(t, gty.GuessGameStatusPublish)
+	require.NotEmpty(t, record.Records)
 	assert.Equal(t, true, record.Records[0].GameID == strGameID1)
 
-	record = queryGuessByStatus(gty.GuessGameStatusAbort)
+	record = queryGuessByStatus(t, gty.GuessGameStatusAbort)
 	assert.Equal(t, true, len(record.Records) == 2)
 
 	fmt.Println("=======start queryGuessByAdminAddr!=======")
-	record = queryGuessByAdminAddr(adminAddr)
+	record = queryGuessByAdminAddr(t, adminAddr)
 	assert.Equal(t, true, len(record.Records) == 3)
 
 	fmt.Println("=======start queryGuessByAddrStatus!=======")
-	record = queryGuessByAddrStatus(userBAddr, gty.GuessGameStatusPublish)
+	record = queryGuessByAddrStatus(t, userBAddr, gty.GuessGameStatusPublish)
 	assert.Equal(t, true, len(record.Records) == 1 && record.Records[0].GameID == strGameID1)
-	record = queryGuessByAddrStatus(userBAddr, 10)
+	record = queryGuessByAddrStatus(t, userBAddr, 10)
 	assert.Equal(t, true, len(record.Records) == 0)
 
 	fmt.Println("=======start queryGuessByAdminAddrStatus!=======")
-	record = queryGuessByAdminAddrStatus(adminAddr, gty.GuessGameStatusAbort)
+	record = queryGuessByAdminAddrStatus(t, adminAddr, gty.GuessGameStatusAbort)
 	assert.Equal(t, true, len(record.Records) == 2)
 
-	record = queryGuessByAdminAddrStatus(adminAddr, gty.GuessGameStatusPublish)
+	record = queryGuessByAdminAddrStatus(t, adminAddr, gty.GuessGameStatusPublish)
 	assert.Equal(t, true, len(record.Records) == 1)
 
 	fmt.Println("=======start queryGuessByCategoryStatus!=======")
-	record = queryGuessByCategoryStatus("football", gty.GuessGameStatusPublish)
+	record = queryGuessByCategoryStatus(t, "football", gty.GuessGameStatusPublish)
 	assert.Equal(t, true, len(record.Records) == 1)
 
-	record = queryGuessByCategoryStatus("football", gty.GuessGameStatusAbort)
+	record = queryGuessByCategoryStatus(t, "football", gty.GuessGameStatusAbort)
 	assert.Equal(t, true, len(record.Records) == 2)
-
-	time.Sleep(2 * time.Second)
 }
 
-func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
+func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module) {
 	flag.Parse()
 	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
 	var q = queue.New("channel")
@@ -664,9 +641,6 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.NewP2PMgr(chain33Cfg)
-
-	network.SetQueueClient(q.Client())
 
 	rpc.InitCfg(cfg.RPC)
 	gapi := rpc.NewGRpcServer(q.Client(), nil)
@@ -675,7 +649,27 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 	japi := rpc.NewJSONRPCServer(q.Client(), nil)
 	go japi.Listen()
 
-	return q, chain, s, mem, exec, cs, network
+	return q, chain, s, mem, exec, cs
+}
+
+func waitNodeReady() error {
+	var lastErr error
+	for i := 0; i < 50; i++ {
+		if c == nil {
+			lastErr = createConn()
+			if lastErr != nil {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+		}
+		_, lastErr = c.GetLastHeader(context.Background(), &types.ReqNil{})
+		if lastErr == nil {
+			return nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	fmt.Println("waitNodeReady timeout, err:", lastErr)
+	return lastErr
 }
 
 func createConn() error {
@@ -689,6 +683,63 @@ func createConn() error {
 	}
 	c = types.NewChain33Client(conn)
 	return nil
+}
+
+func waitTx(hash []byte) bool {
+	if len(hash) == 0 {
+		fmt.Println("waitTx hash is empty")
+		return false
+	}
+	req := &types.ReqHash{Hash: hash}
+	var lastErr error
+	for i := 0; i < 50; i++ {
+		res, err := c.QueryTransaction(context.Background(), req)
+		if err == nil && res != nil {
+			return true
+		}
+		lastErr = err
+		time.Sleep(100 * time.Millisecond)
+	}
+	fmt.Println("waitTx timeout, hash:", hex.EncodeToString(hash), "err:", lastErr)
+	return false
+}
+
+func mustGetBalance(t *testing.T, addr string) *types.Accounts {
+	t.Helper()
+	in := &types.ReqBalance{Addresses: []string{addr}}
+	var last *types.Accounts
+	var lastErr error
+	for i := 0; i < 50; i++ {
+		acct, err := c.GetBalance(context.Background(), in)
+		if err == nil && acct != nil && len(acct.Acc) > 0 {
+			return acct
+		}
+		last = acct
+		lastErr = err
+		time.Sleep(100 * time.Millisecond)
+	}
+	require.NoError(t, lastErr, "GetBalance timeout, addr=%s", addr)
+	require.NotNil(t, last, "GetBalance timeout, addr=%s", addr)
+	require.NotEmpty(t, last.Acc, "no balance for %s", addr)
+	return last
+}
+
+func sendAndWait(tx *types.Transaction, name string) (bool, []byte) {
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s SendTransaction failed, err=%v\n", name, err)
+		return false, nil
+	}
+	if !reply.IsOk {
+		fmt.Fprintf(os.Stderr, "%s SendTransaction reply not ok, msg=%s\n", name, string(reply.GetMsg()))
+		return false, nil
+	}
+	if !waitTx(reply.Msg) {
+		fmt.Fprintf(os.Stderr, "%s waitTx timeout, hash=%s\n", name, hex.EncodeToString(reply.Msg))
+		return false, reply.Msg
+	}
+	fmt.Println(name, "ok")
+	return true, reply.Msg
 }
 
 func generateKey(i, valI int) string {
@@ -743,16 +794,7 @@ func prepareTxList(cfg *types.Chain33Config) *types.Transaction {
 
 func NormPut(cfg *types.Chain33Config) {
 	tx := prepareTxList(cfg)
-
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		return
-	}
+	sendAndWait(tx, "NormPut")
 }
 
 func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) bool {
@@ -771,22 +813,8 @@ func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) 
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendTransferTx SendTransaction failed")
-
-		return false
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendTransferTx SendTransaction failed,reply not ok.")
-
-		return false
-	}
-	fmt.Println("sendTransferTx ok")
-
-	return true
+	ok, _ := sendAndWait(tx, "sendTransferTx")
+	return ok
 }
 
 func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, amount int64) bool {
@@ -807,23 +835,8 @@ func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, am
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendTransferToExecTx SendTransaction failed")
-
-		return false
-	}
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendTransferToExecTx SendTransaction failed,reply not ok.")
-
-		return false
-	}
-
-	fmt.Println("sendTransferToExecTx ok")
-
-	return true
+	ok, _ := sendAndWait(tx, "sendTransferToExecTx")
+	return ok
 }
 
 func sendGuessStartTx(cfg *types.Chain33Config, topic, option, category, privKey string) (bool, []byte) {
@@ -857,24 +870,7 @@ func sendGuessStartTx(cfg *types.Chain33Config, topic, option, category, privKey
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendGuessStartTx SendTransaction failed")
-
-		return false, nil
-	}
-
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendGuessStartTx SendTransaction failed,reply not ok.")
-
-		return false, nil
-	}
-
-	fmt.Println("sendGuessStartTx ok")
-
-	return true, reply.Msg
+	return sendAndWait(tx, "sendGuessStartTx")
 }
 
 func sendGuessBetTx(cfg *types.Chain33Config, gameID, option string, betsNum int64, privKey string) (bool, []byte) {
@@ -902,24 +898,7 @@ func sendGuessBetTx(cfg *types.Chain33Config, gameID, option string, betsNum int
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendGuessBetTx SendTransaction failed")
-
-		return false, nil
-	}
-
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendGuessBetTx SendTransaction failed,reply not ok.")
-
-		return false, nil
-	}
-
-	fmt.Println("sendGuessBetTx ok")
-
-	return true, reply.Msg
+	return sendAndWait(tx, "sendGuessBetTx")
 }
 
 func sendGuessStopTx(cfg *types.Chain33Config, gameID, privKey string) (bool, []byte) {
@@ -945,24 +924,7 @@ func sendGuessStopTx(cfg *types.Chain33Config, gameID, privKey string) (bool, []
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendGuessStopTx SendTransaction failed")
-
-		return false, nil
-	}
-
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendGuessStopTx SendTransaction failed,reply not ok.")
-
-		return false, nil
-	}
-
-	fmt.Println("sendGuessStopTx ok")
-
-	return true, reply.Msg
+	return sendAndWait(tx, "sendGuessStopTx")
 }
 
 func sendGuessAbortTx(cfg *types.Chain33Config, gameID, privKey string) (bool, []byte) {
@@ -988,24 +950,7 @@ func sendGuessAbortTx(cfg *types.Chain33Config, gameID, privKey string) (bool, [
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendGuessAbortTx SendTransaction failed")
-
-		return false, nil
-	}
-
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendGuessAbortTx SendTransaction failed,reply not ok.")
-
-		return false, nil
-	}
-
-	fmt.Println("sendGuessAbortTx ok")
-
-	return true, reply.Msg
+	return sendAndWait(tx, "sendGuessAbortTx")
 }
 
 func sendGuessPublishTx(cfg *types.Chain33Config, gameID, result, privKey string) (bool, []byte) {
@@ -1032,154 +977,101 @@ func sendGuessPublishTx(cfg *types.Chain33Config, gameID, result, privKey string
 	}
 
 	tx.Sign(types.SECP256K1, signer)
-	reply, err := c.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("in sendGuessPublishTx SendTransaction failed")
-
-		return false, nil
-	}
-
-	if !reply.IsOk {
-		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
-		fmt.Println("in sendGuessPublishTx SendTransaction failed,reply not ok.")
-
-		return false, nil
-	}
-
-	fmt.Println("sendGuessPublishTx ok")
-
-	return true, reply.Msg
+	return sendAndWait(tx, "sendGuessPublishTx")
 }
 
-func queryGuessByIds(gameIDs string) *gty.ReplyGuessGameInfos {
+func queryJrpc(t *testing.T, funcName string, payload types.Message, res interface{}) {
+	t.Helper()
 	var params rpctypes.Query4Jrpc
 	params.Execer = gty.GuessX
-
-	gameIds := strings.Split(gameIDs, ";")
-	req := &gty.QueryGuessGameInfos{
-		GameIDs: gameIds,
+	params.FuncName = funcName
+	params.Payload = types.MustPBToJSON(payload)
+	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, res)
+	_, err := ctx.RunResult()
+	if err != nil {
+		fmt.Printf("queryJrpc func=%s payload=%v err=%v\n", funcName, payload, err)
 	}
-	params.FuncName = gty.FuncNameQueryGamesByIDs
-	params.Payload = types.MustPBToJSON(req)
+}
+
+func queryGuessByIds(t *testing.T, gameIDs string) *gty.ReplyGuessGameInfos {
+	t.Helper()
+	req := &gty.QueryGuessGameInfos{
+		GameIDs: strings.Split(gameIDs, ";"),
+	}
 	var res gty.ReplyGuessGameInfos
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGamesByIDs, req, &res)
 	return &res
 }
 
-func queryGuessByID(gameID string) *gty.ReplyGuessGameInfo {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByID(t *testing.T, gameID string) *gty.ReplyGuessGameInfo {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		GameID: gameID,
 	}
-	params.FuncName = gty.FuncNameQueryGameByID
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.ReplyGuessGameInfo
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByID, req, &res)
 	return &res
 }
 
-func queryGuessByAddr(addr string) *gty.GuessGameRecords {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByAddr(t *testing.T, addr string) *gty.GuessGameRecords {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		Addr: addr,
 	}
-	params.FuncName = gty.FuncNameQueryGameByAddr
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByAddr, req, &res)
 	return &res
 }
 
-func queryGuessByStatus(status int32) *gty.GuessGameRecords {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByStatus(t *testing.T, status int32) *gty.GuessGameRecords {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		Status: status,
 	}
-	params.FuncName = gty.FuncNameQueryGameByStatus
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByStatus, req, &res)
 	return &res
 }
 
-func queryGuessByAdminAddr(addr string) *gty.GuessGameRecords {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByAdminAddr(t *testing.T, addr string) *gty.GuessGameRecords {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		AdminAddr: addr,
 	}
-	params.FuncName = gty.FuncNameQueryGameByAdminAddr
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByAdminAddr, req, &res)
 	return &res
 }
 
-func queryGuessByAddrStatus(addr string, status int32) *gty.GuessGameRecords {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByAddrStatus(t *testing.T, addr string, status int32) *gty.GuessGameRecords {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		Addr:   addr,
 		Status: status,
 	}
-	params.FuncName = gty.FuncNameQueryGameByAddrStatus
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByAddrStatus, req, &res)
 	return &res
 }
 
-func queryGuessByAdminAddrStatus(addr string, status int32) *gty.GuessGameRecords {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByAdminAddrStatus(t *testing.T, addr string, status int32) *gty.GuessGameRecords {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		AdminAddr: addr,
 		Status:    status,
 	}
-	params.FuncName = gty.FuncNameQueryGameByAdminStatus
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByAdminStatus, req, &res)
 	return &res
 }
 
-func queryGuessByCategoryStatus(category string, status int32) *gty.GuessGameRecords {
-	var params rpctypes.Query4Jrpc
-	params.Execer = gty.GuessX
-
+func queryGuessByCategoryStatus(t *testing.T, category string, status int32) *gty.GuessGameRecords {
+	t.Helper()
 	req := &gty.QueryGuessGameInfo{
 		Category: category,
 		Status:   status,
 	}
-	params.FuncName = gty.FuncNameQueryGameByCategoryStatus
-	params.Payload = types.MustPBToJSON(req)
 	var res gty.GuessGameRecords
-	//ctx := jsonrpc.NewRPCCtx("http://"+types.Conf("config.rpc").GStr("jrpcBindAddr"), "Chain33.Query", params, &res)
-	ctx := jsonrpc.NewRPCCtx("http://127.0.0.1:9801", "Chain33.Query", params, &res)
-	ctx.Run()
+	queryJrpc(t, gty.FuncNameQueryGameByCategoryStatus, req, &res)
 	return &res
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
-//authbls register
+// authbls register
 const (
 	AuthBLS = 259
 )

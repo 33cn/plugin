@@ -9,15 +9,16 @@ import (
 
 /*
 //chain33 相关的账户操作函数 （操作某个execer 下面的 symbol）
-function Account(execer, symbol) {
-	this.execer = execer
-	this.symbol = symbol
-}
 
-func Receipt(kvs, logs) {
-	this.kvs = kvs
-	this.logs = logs
-}
+	function Account(execer, symbol) {
+		this.execer = execer
+		this.symbol = symbol
+	}
+
+	func Receipt(kvs, logs) {
+		this.kvs = kvs
+		this.logs = logs
+	}
 
 var obj = new Account(execer, symbol)
 //init 函数才能使用的两个函数(或者增发)

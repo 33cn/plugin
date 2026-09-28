@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//DH one time pubkey with secret
+// DH one time pubkey with secret
 type DHSecret struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -77,7 +77,7 @@ func (x *DHSecret) GetSecret() string {
 	return ""
 }
 
-//Diff-Helman 加密group, for spender, returner, authorizer to decrypt
+// Diff-Helman 加密group, for spender, returner, authorizer to decrypt
 type DHSecretGroup struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -256,8 +256,8 @@ func (x *EncryptSecretKeyPair) GetSecretPubKey() string {
 	return ""
 }
 
-//spend pair for note proof
-//crypt pair for DH crypt/decrypt
+// spend pair for note proof
+// crypt pair for DH crypt/decrypt
 type AccountPrivacyKey struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

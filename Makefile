@@ -122,7 +122,8 @@ dep:
 
 linter: vet ineffassign ## Use gometalinter check code, ignore some unserious warning
 	@./golinter.sh "filter"
-	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086
+	# -S warning：note/info 级（数组下标 $ 冗余 SC2004、间接调用 unreachable SC2317 等）不阻断 CI
+	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck -e SC2086 -S warning
 
 linter_test: ## Use gometalinter check code, for local test
 	@./golinter.sh "test" "${p}"

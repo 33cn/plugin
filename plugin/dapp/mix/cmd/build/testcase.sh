@@ -95,12 +95,12 @@ function mix_transfer() {
     ${CLI} send mix config register -r 18437326986701045682163784849869247633492934399146571227371858493337922483431 -e a97592e700eb0f87c5738b35c8d460ce33a4a59bde6128081ddd042c3c262f76 -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71
 
     ##config deposit circuit vk
-    ${CLI} send mix config vk -c 0 -z $(cat ./gnark/circuit_deposit.vk) -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    ${CLI} send mix config vk -c 0 -z "$(cat ./gnark/circuit_deposit.vk)" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
     ##config withdraw vk
-    ${CLI} send mix config vk -c 1 -z $(cat ./gnark/circuit_withdraw.vk) -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01    #transferInput
-    ${CLI} send mix config vk -c 2 -z $(cat ./gnark/circuit_transfer_input.vk) -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01    #transferOutput
-    ${CLI} send mix config vk -c 3 -z $(cat ./gnark/circuit_transfer_output.vk) -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01    #auth
-    ${CLI} send mix config vk -c 4 -z $(cat ./gnark/circuit_auth.vk) -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    ${CLI} send mix config vk -c 1 -z "$(cat ./gnark/circuit_withdraw.vk)" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01    #transferInput
+    ${CLI} send mix config vk -c 2 -z "$(cat ./gnark/circuit_transfer_input.vk)" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01    #transferOutput
+    ${CLI} send mix config vk -c 3 -z "$(cat ./gnark/circuit_transfer_output.vk)" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01    #auth
+    ${CLI} send mix config vk -c 4 -z "$(cat ./gnark/circuit_auth.vk)" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
 }
 
 function mix_deposit() {

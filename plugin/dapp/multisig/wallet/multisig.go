@@ -187,7 +187,7 @@ func (policy *multisigPolicy) filterMultisigTxsFromBlock(tx *types.Transaction, 
 	}
 }
 
-//需要区分执行的是add/Rollback
+// 需要区分执行的是add/Rollback
 func (policy *multisigPolicy) saveMultiSigAccCreate(multiSig *mtypes.MultiSig, newbatch db.Batch, addOrRollback bool) {
 	wallet := policy.getWalletOperate()
 
@@ -218,7 +218,7 @@ func (policy *multisigPolicy) saveMultiSigAccCreate(multiSig *mtypes.MultiSig, n
 	}
 }
 
-//账户owner的add/del操作.需要区分add/del 交易
+// 账户owner的add/del操作.需要区分add/del 交易
 func (policy *multisigPolicy) saveMultiSigOwnerAddOrDel(ownerOp *mtypes.ReceiptOwnerAddOrDel, newbatch db.Batch, addOrRollback bool) {
 	wallet := policy.getWalletOperate()
 	owner := ownerOp.Owner
@@ -260,7 +260,7 @@ func (policy *multisigPolicy) saveMultiSigOwnerAddOrDel(ownerOp *mtypes.ReceiptO
 	}
 }
 
-//账户owner的mod/replace操作
+// 账户owner的mod/replace操作
 func (policy *multisigPolicy) saveMultiSigOwnerModOrRep(ownerOp *mtypes.ReceiptOwnerModOrRep, newbatch db.Batch, addOrRollback bool) {
 	wallet := policy.getWalletOperate()
 	prevOwner := ownerOp.PrevOwner
@@ -322,7 +322,7 @@ func (policy *multisigPolicy) saveMultiSigOwnerModOrRep(ownerOp *mtypes.ReceiptO
 	}
 }
 
-//AddOwnerAttr : 添加owmer属性
+// AddOwnerAttr : 添加owmer属性
 func AddOwnerAttr(firstAdd bool, ownerAttrs *mtypes.OwnerAttrs, ownerAttr *mtypes.OwnerAttr, newbatch db.Batch) {
 	if firstAdd {
 		var firstownerAttrs mtypes.OwnerAttrs
@@ -334,7 +334,7 @@ func AddOwnerAttr(firstAdd bool, ownerAttrs *mtypes.OwnerAttrs, ownerAttr *mtype
 	batchSet(ownerAttrs, ownerAttr.OwnerAddr, newbatch)
 }
 
-//DelOwnerAttr ：删除owner属性
+// DelOwnerAttr ：删除owner属性
 func DelOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, ownerAddr string, multiSigAddr string, newbatch db.Batch) {
 	index, find := getOwnerAttr(ownerAttrs, multiSigAddr)
 	if find {
@@ -348,7 +348,7 @@ func DelOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, ownerAddr string, multiSigAddr 
 	}
 }
 
-//ModOwnerAttr ：修改owner weight属性
+// ModOwnerAttr ：修改owner weight属性
 func ModOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, ownerAddr string, multiSigAddr string, weight uint64, newbatch db.Batch) {
 	index, find := getOwnerAttr(ownerAttrs, multiSigAddr)
 	if find {
@@ -357,14 +357,14 @@ func ModOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, ownerAddr string, multiSigAddr 
 	}
 }
 
-//batchSet :
+// batchSet :
 func batchSet(ownerAttrs *mtypes.OwnerAttrs, addr string, newbatch db.Batch) {
 	v := *ownerAttrs
 	ownerAttrsbyte := types.Encode(&v)
 	newbatch.Set(calcMultisigAddr(addr), ownerAttrsbyte)
 }
 
-//delOwnerAttr :
+// delOwnerAttr :
 func delOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, index int) *mtypes.OwnerAttrs {
 	ownerSize := len(ownerAttrs.Items)
 	//删除第一个owner
@@ -378,7 +378,7 @@ func delOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, index int) *mtypes.OwnerAttrs {
 	return ownerAttrs
 }
 
-//addOwnerAttr ：
+// addOwnerAttr ：
 func addOwnerAttr(ownerAttrs *mtypes.OwnerAttrs, ownerAttr *mtypes.OwnerAttr) *mtypes.OwnerAttrs {
 	ownerAttrs.Items = append(ownerAttrs.Items, ownerAttr)
 	return ownerAttrs

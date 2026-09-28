@@ -17,7 +17,7 @@ var (
 	stateKey = []byte("stateKey")
 )
 
-//ConsensusStore ...
+// ConsensusStore ...
 type ConsensusStore struct {
 	db dbm.DB
 }

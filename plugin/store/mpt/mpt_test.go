@@ -172,7 +172,7 @@ func GetRandomString(length int) string {
 	return common.GetRandPrintString(20, length)
 }
 
-//目前正常情况下get 都是一个一个获取的
+// 目前正常情况下get 都是一个一个获取的
 func BenchmarkGet(b *testing.B) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(b, err)

@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/consensys/gnark/frontend"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
+	"github.com/consensys/gnark/frontend"
 )
 
 type WithdrawCircuit struct {

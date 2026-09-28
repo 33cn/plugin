@@ -10,9 +10,9 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/pkg/errors"
 )
 
@@ -394,7 +394,7 @@ func GetLeafByAccountId(db dbm.KV, accountId uint64) (*zt.Leaf, error) {
 
 func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	accountTable := NewAccountTreeTable(db)
-	rows, err := accountTable.ListIndex("eth_address", []byte(fmt.Sprintf("%s", ethAddress)), nil, 1000, dbm.ListASC)
+	rows, err := accountTable.ListIndex("eth_address", []byte(ethAddress), nil, 1000, dbm.ListASC)
 
 	datas := make([]*zt.Leaf, 0)
 	if err != nil {
@@ -415,7 +415,7 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 
 func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) {
 	accountTable := NewAccountTreeTable(db)
-	rows, err := accountTable.ListIndex("chain33_address", []byte(fmt.Sprintf("%s", chain33Addr)), nil, 1000, dbm.ListASC)
+	rows, err := accountTable.ListIndex("chain33_address", []byte(chain33Addr), nil, 1000, dbm.ListASC)
 
 	datas := make([]*zt.Leaf, 0)
 	if err != nil {

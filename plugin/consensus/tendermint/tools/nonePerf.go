@@ -510,7 +510,7 @@ func Get(ip string, hash string) {
 
 func setTxHeight(ip string) {
 	url := "http://" + ip + ":8801"
-	poststr := fmt.Sprintf(`{"jsonrpc":"2.0","id":2,"method":"Chain33.GetLastHeader","params":[]}`)
+	poststr := `{"jsonrpc":"2.0","id":2,"method":"Chain33.GetLastHeader","params":[]}`
 	resp, err := http.Post(url, "application/json", bytes.NewBufferString(poststr))
 	if err != nil {
 		fmt.Println(err)

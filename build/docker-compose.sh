@@ -169,8 +169,9 @@ function start() {
     ${CLI} block last_header
     local count=1000
     while [ $count -gt 0 ]; do
-        peersCount=$(${CLI} net peer | jq '.[] | length')
-        if [ "${peersCount}" -ge 2 ]; then
+        # CLI 在 RPC 瞬时失败时 os.Exit(1)，必须吞掉失败码否则进不了等待循环
+        peersCount=$(${CLI} net peer 2>/dev/null | jq '.[] | length' 2>/dev/null || true)
+        if [[ "${peersCount}" =~ ^[0-9]+$ ]] && [ "${peersCount}" -ge 2 ]; then
             break
         fi
         sleep 1
@@ -192,9 +193,9 @@ function start() {
     fi
 
     echo "=========== query height ========== "
-    ${CLI} block last_header
-    result=$(${CLI} block last_header | jq ".height")
-    if [ "${result}" -lt 1 ]; then
+    ${CLI} block last_header || true
+    result=$(last_header_height "${CLI}")
+    if ! [[ "${result}" =~ ^[0-9]+$ ]] || [ "${result}" -lt 1 ]; then
         block_wait "${CLI}" 2
     fi
 
@@ -247,20 +248,54 @@ function miner() {
 
 }
 
+# CLI 在 RPC 瞬时失败时 os.Exit(1)。必须吞掉失败码，否则 set -e + pipefail 会退出整个脚本。
+function last_header_height() {
+    ${1} block last_header 2>/dev/null | jq ".height" 2>/dev/null || true
+}
+
 function block_wait() {
     if [ "$#" -lt 2 ]; then
         echo "wrong block_wait params"
         exit 1
     fi
-    cur_height=$(${1} block last_header | jq ".height")
-    expect=$((cur_height + ${2}))
+    local cur_height=""
+    local new_height=""
     local count=0
+    # 预算按要等的块数算：每块留 5 轮余量，另加固定余量覆盖链启动。
+    # 一轮 = sleep 0.1s + 一次 last_header 调用，实测约 0.16~0.19s，所以轮数不等于 0.1s 倍数。
+    # 固定余量必须能覆盖"开启挖矿后的第一个块"：ticket 共识下实测稳定在 50s 左右
+    # （同一轮 CI 的 unfreeze/bridgevmxgo/zksync 分别用掉 264/252/209 轮），
+    # 原来的 300 轮只有 49~58s，与 50s 几乎重合，autonomy 就是这样在高度 0 上超时的。
+    # 900 轮约 145~170s，留出约 3 倍余量；封顶 1800 轮，避免真卡死时每个调用白等太久。
+    # 注意用 if 而非 `[ ... ] && x=..`：后者条件为假时返回非零，会触发 set -e
+    local timeout=$(( ${2} * 5 + 900 ))
+    if [ "${timeout}" -gt 1800 ]; then
+        timeout=1800
+    fi
     while true; do
-        new_height=$(${1} block last_header | jq ".height")
-        if [ "${new_height}" -ge "${expect}" ]; then
+        cur_height=$(last_header_height "${1}")
+        if [[ "${cur_height}" =~ ^[0-9]+$ ]]; then
             break
         fi
         count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====block_wait last_header failed after ${timeout} tries, got ${cur_height}"
+            exit 1
+        fi
+        sleep 0.1
+    done
+    expect=$((cur_height + ${2}))
+    count=0 # 两段各自独立预算，否则第一段(等 last_header 可用)会吃掉第二段的额度
+    while true; do
+        new_height=$(last_header_height "${1}")
+        if [[ "${new_height}" =~ ^[0-9]+$ ]] && [ "${new_height}" -ge "${expect}" ]; then
+            break
+        fi
+        count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====block_wait timeout waiting height>=${expect}, last=${new_height}, old=${cur_height}"
+            exit 1
+        fi
         sleep 0.1
     done
     echo "wait new block $count/10 s, cur height=$expect,old=$cur_height"
@@ -272,19 +307,26 @@ function tx_wait() {
         exit 1
     fi
     local req=\"${2}\"
-    txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
+    local txhash=""
     local count=0
+    # CLI 在交易尚未写入索引时 os.Exit(1)，必须吞掉失败码否则进不了循环。
+    # 一轮约 0.16~0.19s，原来的 150 轮只有约 25s，交易要等打包+索引，余量偏薄；
+    # 600 轮约 100~115s
+    local timeout=600
     while true; do
-        txhash=$(${1} tx query -s "${2}" | jq ".tx.hash")
-        if [ "${txhash}" != "${req}" ]; then
-            count=$((count + 1))
-            echo "${txhash}" "${req}" "${count}"
-            sleep 0.1
-        else
+        txhash=$(${1} tx query -s "${2}" 2>/dev/null | jq ".tx.hash" 2>/dev/null || true)
+        if [ "${txhash}" == "${req}" ]; then
             RAW_TX_HASH=$txhash
             echo "====query tx=$RAW_TX_HASH success"
             break
         fi
+        count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====query tx=${2} failed after ${timeout} tries, got ${txhash}"
+            exit 1
+        fi
+        echo "${txhash}" "${req}" "${count}"
+        sleep 0.1
     done
 }
 function block_wait2height() {
@@ -296,17 +338,28 @@ function block_wait2height() {
     local new_height=0
     local expect=${2}
     local isPara=${3}
+    # 一轮约 0.16~0.19s，600 轮约 100~115s；等的是绝对高度，平行链追主链可能更慢，
+    # 与 block_wait 的固定余量对齐到 1800 轮(约 290~340s)
+    local timeout=1800
+    local para_height=""
 
     while true; do
-        new_height=$(${1} block last_header | jq ".height")
-        if [ "$isPara" == "1" ]; then
-            ${1} para blocks -s "$new_height" -e "$new_height"
-            new_height=$(${1} para blocks -s "$new_height" -e "$new_height" | jq ".items[0].mainHeight")
+        new_height=$(last_header_height "${1}")
+        if [ "$isPara" == "1" ] && [[ "${new_height}" =~ ^[0-9]+$ ]]; then
+            ${1} para blocks -s "$new_height" -e "$new_height" >/dev/null 2>&1 || true
+            para_height=$(${1} para blocks -s "$new_height" -e "$new_height" 2>/dev/null | jq ".items[0].mainHeight" 2>/dev/null || true)
+            if [[ "${para_height}" =~ ^[0-9]+$ ]]; then
+                new_height="${para_height}"
+            fi
         fi
-        if [ "${new_height}" -ge "${expect}" ]; then
+        if [[ "${new_height}" =~ ^[0-9]+$ ]] && [ "${new_height}" -ge "${expect}" ]; then
             break
         fi
         count=$((count + 1))
+        if [ "${count}" -ge "${timeout}" ]; then
+            echo "====block_wait2height timeout waiting height>=${expect}, last=${new_height}"
+            exit 1
+        fi
         sleep 0.1
     done
     echo "wait new block $count/10 s, cur_height=$new_height,expect=$expect"

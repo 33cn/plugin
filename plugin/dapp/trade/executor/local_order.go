@@ -18,11 +18,11 @@ import (
 
 /*
 现有接口
- 1.  查询地址对应的买单 （无分页）
-   1.1 只指定地址   -> owner
-   1.2 同时指定地址和token  -> owner_asset
-   1.3 显示一个用户成交的所有买单 -> owner
-   1.4 显示一个用户成交的指定一个或者多个token所有买单 -> owner_asset 不支持多个
+ 1. 查询地址对应的买单 （无分页）
+    1.1 只指定地址   -> owner
+    1.2 同时指定地址和token  -> owner_asset
+    1.3 显示一个用户成交的所有买单 -> owner
+    1.4 显示一个用户成交的指定一个或者多个token所有买单 -> owner_asset 不支持多个
  2. 分状态查询地址的买单： 状态 地址 （无分页） -> owner_status
  3. 显示一个token 指定数量的买单 GetTokenBuyOrderByStatus  -> asset_inBuy_status
  4. 显示指定token出售者的一个或多个token 或 不指定token 的卖单 （无分页） -> owner_asset/owner_asset_isSell 不支持多个
@@ -142,8 +142,9 @@ func (r *OrderRow) isFinished() int {
 }
 
 // status: 设计为可以同时查询几种的并集 , 存储为前缀， 需要提前设计需要合并的， 用前缀表示
-//    进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
-//      01     10     11          12        19 -> 1*
+//
+//	进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
+//	  01     10     11          12        19 -> 1*
 func (r *OrderRow) status() string {
 	if r.Status == pty.TradeOrderStatusOnBuy || r.Status == pty.TradeOrderStatusOnSale {
 		return "01" // 试图用1 可以匹配所有完成的

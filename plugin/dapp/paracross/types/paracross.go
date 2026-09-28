@@ -89,9 +89,9 @@ const (
 	//paraCrossTransferActionTypeEnd   = 10100
 )
 
-//跨链转移类型是特别执行跨链资产转移的处理，在共识通过后，会做相应处理，其他类型都认为是普通paracross类型
-//跨链资产转移的类型都放到paraCrossTransferActionTypeStart之后，方便管理
-//这里NodeConfig,NodeGroupApply和SelfStageConfig虽然都是跨链类型，但是不算跨链资产转移，实际上不应该放这一类，历史版本就不修改了。
+// 跨链转移类型是特别执行跨链资产转移的处理，在共识通过后，会做相应处理，其他类型都认为是普通paracross类型
+// 跨链资产转移的类型都放到paraCrossTransferActionTypeStart之后，方便管理
+// 这里NodeConfig,NodeGroupApply和SelfStageConfig虽然都是跨链类型，但是不算跨链资产转移，实际上不应该放这一类，历史版本就不修改了。
 const (
 	// ParacrossActionAssetTransfer mainchain paracross asset transfer key
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
@@ -110,7 +110,7 @@ const (
 	ParacrossActionCrossAssetTransfer
 )
 
-//跨链共识交易crossResult bitmap版本，支持多版本的bitmap管理
+// 跨链共识交易crossResult bitmap版本，支持多版本的bitmap管理
 const (
 	ParaCrossStatusBitMapVerLen = 4
 	ParaCrossStatusBitMapVer1   = "0001"
@@ -118,13 +118,13 @@ const (
 
 const ParaPrefix = "user.p."
 
-//配置跨链交易高度列表的prefix 比如hit.para.100.200,ignore.para.100-300
+// 配置跨链交易高度列表的prefix 比如hit.para.100.200,ignore.para.100-300
 const (
 	ParaCrossAssetTxHitKey    = "hit"
 	ParaCrossAssetTxIgnoreKey = "ignore"
 )
 
-//paracross asset porcess
+// paracross asset porcess
 const (
 	ParacrossNoneTransfer = iota
 	ParacrossMainAssetTransfer
@@ -158,7 +158,7 @@ const (
 	ParaVoteEnd
 )
 
-//config yes or no
+// config yes or no
 const (
 	ParaConfigInvalid = iota
 	ParaConfigYes
@@ -168,7 +168,7 @@ const (
 // ParaNodeVoteStr ...
 var ParaNodeVoteStr = []string{"invalid", "yes", "no"}
 
-//针对addr申请的id的生命周期
+// 针对addr申请的id的生命周期
 const (
 	// ParaApplyJoining apply for join group
 	ParaApplyJoining = iota + 1
@@ -182,7 +182,7 @@ const (
 	ParaApplyVoting
 )
 
-//针对addr本身的生命周期，addr维护了申请id和quit id，方便查询如coinfrozen等额外信息
+// 针对addr本身的生命周期，addr维护了申请id和quit id，方便查询如coinfrozen等额外信息
 const (
 	// ParaApplyJoined pass to add by votes
 	ParaApplyJoined = iota + 10
@@ -354,7 +354,7 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 	return tx, nil
 }
 
-//GetDappForkHeight get paracross dapp fork height
+// GetDappForkHeight get paracross dapp fork height
 func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 	var forkHeight int64
 	if cfg.IsPara() {

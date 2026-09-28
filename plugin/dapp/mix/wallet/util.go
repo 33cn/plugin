@@ -28,7 +28,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 )
 
-//产生随机秘钥和receivingPk对data DH加密，返回随机秘钥的公钥
+// 产生随机秘钥和receivingPk对data DH加密，返回随机秘钥的公钥
 func encryptSecretData(req *mixTy.EncryptSecretData) (*mixTy.DHSecret, error) {
 	secret, err := common.FromHex(req.Secret)
 	if err != nil {
@@ -172,7 +172,7 @@ func getCircuitKeyFileName(circuitTy mixTy.VerifyType) (string, string, error) {
 	}
 }
 
-//文件内容存储的是hex string，读的时候直接转换为string即可
+// 文件内容存储的是hex string，读的时候直接转换为string即可
 func readZkKeyFile(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {

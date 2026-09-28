@@ -382,7 +382,7 @@ func parseShowPrivacyAccountSpendRes(arg ...interface{}) (interface{}, error) {
 		}
 	}
 
-	fmt.Println(fmt.Sprintf("Total Privacy spend amount is %s", types.FormatAmount2FloatDisplay(total, cfg.CoinPrecision, true)))
+	fmt.Printf("Total Privacy spend amount is %s\n", types.FormatAmount2FloatDisplay(total, cfg.CoinPrecision, true))
 
 	return rets, nil
 }

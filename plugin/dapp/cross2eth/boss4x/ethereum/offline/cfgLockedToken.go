@@ -29,7 +29,7 @@ func ConfigLockedTokenOfflineSaveCmd() *cobra.Command {
 	return cmd
 }
 
-//ConfigLockedTokenOfflineSaveFlags ...
+// ConfigLockedTokenOfflineSaveFlags ...
 func ConfigLockedTokenOfflineSaveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("token", "t", "", "token addr")
 	//_ = cmd.MarkFlagRequired("token")

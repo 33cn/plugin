@@ -7,7 +7,6 @@ package wallet
 import (
 	"encoding/hex"
 
-
 	"github.com/33cn/chain33/common"
 
 	commondb "github.com/33cn/chain33/common/db"
@@ -18,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//空的公钥字符为“0”，不是空，这里多设置了长度
+// 空的公钥字符为“0”，不是空，这里多设置了长度
 const LENNULLKEY = 10
 
 func (p *mixPolicy) execAutoLocalMix(tx *types.Transaction, receiptData *types.ReceiptData, index int, height int64) (*types.LocalDBSet, error) {

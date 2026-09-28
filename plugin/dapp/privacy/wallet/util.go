@@ -32,7 +32,7 @@ func makeViewSpendPubKeyPairToString(viewPubKey, spendPubKey []byte) string {
 	return hex.EncodeToString(pair)
 }
 
-//将amount切分为1,2,5的组合，这样在进行amount混淆的时候就能够方便获取相同额度的utxo
+// 将amount切分为1,2,5的组合，这样在进行amount混淆的时候就能够方便获取相同额度的utxo
 func decomAmount2Nature(amount int64, order int64) []int64 {
 	res := make([]int64, 0)
 	if order == 0 {
@@ -68,7 +68,7 @@ func decomAmount2Nature(amount int64, order int64) []int64 {
 }
 
 // 62387455827 -> 455827 + 7000000 + 80000000 + 300000000 + 2000000000 + 60000000000, where 455827 <= dustThreshold
-//res:[455827, 7000000, 80000000, 300000000, 2000000000, 60000000000]
+// res:[455827, 7000000, 80000000, 300000000, 2000000000, 60000000000]
 func decomposeAmount2digits(amount, dustThreshold int64) []int64 {
 	res := make([]int64, 0)
 	if 0 >= amount {
@@ -157,9 +157,9 @@ func parseViewSpendPubKeyPair(in string) (viewPubKey, spendPubKey []byte, err er
 //	return &privacyOutput, nil
 //}
 
-//最后构造完成的utxo依次是2种类型，不构造交易费utxo，使其直接燃烧消失
-//1.进行实际转账utxo
-//2.进行找零转账utxo
+// 最后构造完成的utxo依次是2种类型，不构造交易费utxo，使其直接燃烧消失
+// 1.进行实际转账utxo
+// 2.进行找零转账utxo
 func generateOuts(viewpubTo, spendpubto, viewpubChangeto, spendpubChangeto *[32]byte, transAmount, selectedAmount, fee, coinPrecision int64) (*privacytypes.PrivacyOutput, error) {
 	decomDigit := decomposeAmount2digits(transAmount, privacytypes.BTYDustThreshold*coinPrecision)
 	//计算找零

@@ -206,9 +206,7 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 			if ch.Cancel {
 				mpBd[ch.Addr] = struct{}{}
 			} else {
-				if _, ok := mpBd[ch.Addr]; ok {
-					delete(mpBd, ch.Addr)
-				}
+				delete(mpBd, ch.Addr)
 			}
 		}
 	}
@@ -383,7 +381,7 @@ func (a *action) getProposalChange(ID string) (*auty.AutonomyProposalChange, err
 	return cur, nil
 }
 
-//新的方案只允许替换board里面的成员，而且是本用户申请，不允许从revBoard恢复
+// 新的方案只允许替换board里面的成员，而且是本用户申请，不允许从revBoard恢复
 func (a *action) replaceBoard(act *auty.ActiveBoard, change []*auty.Change) (*auty.ActiveBoard, error) {
 	//一个成员只允许替换一个新的
 	if len(change) > 1 {

@@ -205,7 +205,7 @@ func (*ExchangeAction_EntrustOrder) isExchangeAction_Value() {}
 
 func (*ExchangeAction_EntrustRevokeOrder) isExchangeAction_Value() {}
 
-//限价订单
+// 限价订单
 type LimitOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -290,7 +290,7 @@ func (x *LimitOrder) GetOp() int32 {
 	return 0
 }
 
-//市价委托
+// 市价委托
 type MarketOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -423,7 +423,7 @@ func (x *ExchangeBind) GetEntrustAddress() string {
 	return ""
 }
 
-//委托限价订单
+// 委托限价订单
 type EntrustOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -517,7 +517,7 @@ func (x *EntrustOrder) GetAddr() string {
 	return ""
 }
 
-//委托撤回订单
+// 委托撤回订单
 type EntrustRevokeOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -575,7 +575,7 @@ func (x *EntrustRevokeOrder) GetAddr() string {
 	return ""
 }
 
-//撤回订单
+// 撤回订单
 type RevokeOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -624,7 +624,7 @@ func (x *RevokeOrder) GetOrderID() int64 {
 	return 0
 }
 
-//资产类型
+// 资产类型
 type Asset struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -680,7 +680,7 @@ func (x *Asset) GetSymbol() string {
 	return ""
 }
 
-//订单信息
+// 订单信息
 type Order struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -904,7 +904,7 @@ func (*Order_LimitOrder) isOrder_Value() {}
 
 func (*Order_MarketOrder) isOrder_Value() {}
 
-//查询接口
+// 查询接口
 type QueryMarketDepth struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -998,7 +998,7 @@ func (x *QueryMarketDepth) GetDepth() int32 {
 	return 0
 }
 
-//市场深度
+// 市场深度
 type MarketDepth struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1083,7 +1083,7 @@ func (x *MarketDepth) GetOp() int32 {
 	return 0
 }
 
-//查询接口返回的市场深度列表
+// 查询接口返回的市场深度列表
 type MarketDepthList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1139,7 +1139,7 @@ func (x *MarketDepthList) GetPrimaryKey() string {
 	return ""
 }
 
-//查询接口返回的市场买卖深度
+// 查询接口返回的市场买卖深度
 type MarketAllDepth struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1197,7 +1197,7 @@ func (x *MarketAllDepth) GetAsks() []*MarketDepth {
 	return nil
 }
 
-//查询最新得成交信息,外部接口
+// 查询最新得成交信息,外部接口
 type QueryHistoryOrderList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1282,7 +1282,7 @@ func (x *QueryHistoryOrderList) GetDirection() int32 {
 	return 0
 }
 
-//根据orderID去查询订单信息
+// 根据orderID去查询订单信息
 type QueryOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1330,7 +1330,7 @@ func (x *QueryOrder) GetOrderID() int64 {
 	return 0
 }
 
-//根据地址，状态查询用户自己的挂单信息
+// 根据地址，状态查询用户自己的挂单信息
 type QueryOrderList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1415,7 +1415,7 @@ func (x *QueryOrderList) GetDirection() int32 {
 	return 0
 }
 
-//订单列表
+// 订单列表
 type OrderList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

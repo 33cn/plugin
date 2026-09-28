@@ -1,5 +1,87 @@
 changelog
 
+# [1.74.0](https://github.com/33cn/plugin/compare/v1.73.0...v1.74.0) (2026-09-18)
+
+
+### Bug Fixes
+
+* **ci:** assert TestTicket genesis balance at height 0 ([1b81b64](https://github.com/33cn/plugin/commit/1b81b64175b7b9b70418fbebf7779e725e766078))
+
+
+### Features
+
+* add ForkAccountBlacklistV2 configs and bump chain33 to v1.72.0 ([ab70562](https://github.com/33cn/plugin/commit/ab70562367e5cba1456edbb587fd8d675abc9e0d))
+
+# [1.73.0](https://github.com/33cn/plugin/compare/v1.72.0...v1.73.0) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** cap evm token total to avoid int64 overflow on precreate ([d1eb000](https://github.com/33cn/plugin/commit/d1eb00045a9298e8fa410ff836e0a60ec63d3599))
+* **ci:** let evm tx query retry survive CLI exit on missing receipt ([ab50ffa](https://github.com/33cn/plugin/commit/ab50ffa83107110e5de4657a2cd13afdaf1246d3))
+* **ci:** retry CLI queries that exit before tx/ticket state is indexed ([b33e7fd](https://github.com/33cn/plugin/commit/b33e7fdf9a3badef22c84f153b7975a2319a98bb))
+* **ci:** retry last_header when CLI exits on RPC failure ([16c1de6](https://github.com/33cn/plugin/commit/16c1de6788e042675b3d8e6be9dfaf75636f6231))
+* **config:** add ForkTxChainIDStrict to [fork.system] configs ([252e716](https://github.com/33cn/plugin/commit/252e716ea71dc5d3c563e749e2d3521f755ec8be))
+* **cross2eth:** stop retrying the non-idempotent ethereum lock ([37ff268](https://github.com/33cn/plugin/commit/37ff268fe48ef1f10e33daebcc73260f3f4273c8))
+* **mix:** decrypt chain33 v1.71.0 magic+PBKDF2 ciphertext ([9cb470a](https://github.com/33cn/plugin/commit/9cb470a52adb5d985a93e8a5dffee44f0ff6ec1b))
+
+
+### Features
+
+* add mver blacklist config templates and update EVM docs ([91bbf89](https://github.com/33cn/plugin/commit/91bbf89122135a50a57b6d3b9d8e874ec963b0a3))
+* **evm:** select account blacklist by block height ([07369d3](https://github.com/33cn/plugin/commit/07369d3e18cc66bbb59509fcda2fd6120c21d560))
+
+# [1.72.0](https://github.com/33cn/plugin/compare/v1.71.3...v1.72.0) (2026-09-04)
+
+
+### Bug Fixes
+
+* **fork:** remove duplicated ForkAccountBlacklist/ForkParaFee configs ([9e5ba9e](https://github.com/33cn/plugin/commit/9e5ba9e74d15e1328cd73c58684e4f9d7c933ca2))
+
+
+### Features
+
+* add EVM account blacklist and bump chain33 to aa71469 ([80d3dfa](https://github.com/33cn/plugin/commit/80d3dfa19c724b9e536a5dbc671cec0b8b9ec2a2))
+
+## [1.71.3](https://github.com/33cn/plugin/compare/v1.71.2...v1.71.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **relay:** decode verify order addr with its own btc network params ([3b2dd17](https://github.com/33cn/plugin/commit/3b2dd177d7d2d7c91db9ffac110b5dddf328b03f))
+
+## [1.71.2](https://github.com/33cn/plugin/compare/v1.71.1...v1.71.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* resolve shellcheck warnings and UNKOWN typo in RPC placeholders ([d48f7e3](https://github.com/33cn/plugin/commit/d48f7e319a9eb70911d7c541a823797da7ba46b4))
+
+## [1.71.1](https://github.com/33cn/plugin/compare/v1.71.0...v1.71.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **relay:** bind verifyBtcTx to txid and header time ([949da7f](https://github.com/33cn/plugin/commit/949da7f19cbdc48e97c257cdbb6a25a2f35a07ac))
+* **relay:** recompute btc tx hash from rawtx in verifyBtcTx with fork ForkRelayVerifyBtcTx ([5281dad](https://github.com/33cn/plugin/commit/5281dadf4a0cf1cfbe1a293a050c5876b6336517))
+
+# [1.71.0](https://github.com/33cn/plugin/compare/v1.70.0...v1.71.0) (2026-09-01)
+
+
+### Bug Fixes
+
+* move native asset test before restart, remove redundant block_wait, add mint send error handling ([88b9b20](https://github.com/33cn/plugin/commit/88b9b20b7fa24294b828471d142f7fc456eb15a4))
+* **rgbx:** add native asset mint CI scenario with btcMintSpend command ([fb08b30](https://github.com/33cn/plugin/commit/fb08b30b9f2fe1a25bb7908bfbd4d9caf6d24e82))
+* **rgbx:** address PR [#1299](https://github.com/33cn/plugin/issues/1299) review - nil-client log, dead code, merkle proof tests ([801a7da](https://github.com/33cn/plugin/commit/801a7da338a22cd12db56fd5b8c760be7cfb7821))
+* **rgbx:** derive spendHash from merkle-certified txid, reject trailing tx bytes ([b34b6b6](https://github.com/33cn/plugin/commit/b34b6b6463c9816cb5342df1f2c15581687007cf))
+* **rgbx:** improve OP_RETURN matching in createConfirmPayload, prefer matching commitment ([600f885](https://github.com/33cn/plugin/commit/600f885a6d7603ce7b1f37c4bc38a7122fea0705))
+* update exec_test.go to compute expected spendHash from BtcTxProof.TxData ([d3dcd6c](https://github.com/33cn/plugin/commit/d3dcd6cc88c330cec577d25583a897116d448760))
+
+
+### Features
+
+* **rgbx:** add BTC Merkle proof verification to native asset confirm ([92fe0d4](https://github.com/33cn/plugin/commit/92fe0d40145f7f002f7628408d53e3c02f1770fc))
+
 # [1.70.0](https://github.com/33cn/plugin/compare/v1.69.0...v1.70.0) (2026-08-27)
 
 
