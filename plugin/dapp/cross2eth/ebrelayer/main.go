@@ -162,11 +162,9 @@ func procSig(cancel context.CancelFunc) {
 	sigChannle := make(chan os.Signal, 1)
 	signal.Notify(sigChannle, syscall.SIGTERM)
 
-	select {
-	case <-sigChannle:
-		cancel()
-		os.Exit(0)
-	}
+	<-sigChannle
+	cancel()
+	os.Exit(0)
 }
 
 func convertLogCfg(log *relayerTypes.Log) *chain33Types.Log {
@@ -202,12 +200,12 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 	return &cfg
 }
 
-//IsIPWhiteListEmpty ...
+// IsIPWhiteListEmpty ...
 func IsIPWhiteListEmpty() bool {
 	return len(IPWhiteListMap) == 0
 }
 
-//IsInIPWhitelist 判断ipAddr是否在ip地址白名单中
+// IsInIPWhitelist 判断ipAddr是否在ip地址白名单中
 func IsInIPWhitelist(ipAddrPort string) bool {
 	ipAddr, _, err := net.SplitHostPort(ipAddrPort)
 	if err != nil {
@@ -223,12 +221,12 @@ func IsInIPWhitelist(ipAddrPort string) bool {
 	return false
 }
 
-//RPCServer ...
+// RPCServer ...
 type RPCServer struct {
 	*rpc.Server
 }
 
-//ServeHTTP ...
+// ServeHTTP ...
 func (r *RPCServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	mainlog.Info("ServeHTTP", "request address", req.RemoteAddr)
 	if !IsIPWhiteListEmpty() {
@@ -241,24 +239,24 @@ func (r *RPCServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.Server.ServeHTTP(w, req)
 }
 
-//HandleHTTP ...
+// HandleHTTP ...
 func (r *RPCServer) HandleHTTP(rpcPath, debugPath string) {
 	http.Handle(rpcPath, r)
 }
 
-//HTTPConn ...
+// HTTPConn ...
 type HTTPConn struct {
 	in  io.Reader
 	out io.Writer
 }
 
-//Read ...
+// Read ...
 func (c *HTTPConn) Read(p []byte) (n int, err error) { return c.in.Read(p) }
 
-//Write ...
+// Write ...
 func (c *HTTPConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
 
-//Close ...
+// Close ...
 func (c *HTTPConn) Close() error { return nil }
 
 func startRPCServer(address string, api interface{}) {

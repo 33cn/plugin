@@ -13,7 +13,7 @@ package gossip
 
 //p2p版本区间 10020, 11000
 
-//历史版本
+// 历史版本
 const (
 	//p2p广播交易哈希而非完整区块数据
 	lightBroadCastVersion = 10030

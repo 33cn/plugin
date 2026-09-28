@@ -426,7 +426,7 @@ func (t *tssService) validateWithdrawTx(tx *wire.MsgTx, inputAmounts []int64, re
 		totalOutput += out.Value
 	}
 	fee := totalInput - totalOutput
-	expectedFee := int64(estimateBtcFee(tx, btcutil.Amount(req.feeRate)))
+	expectedFee := int64(estimateBtcFee(tx, req.feeRate))
 	// 控制手续费在合理范围内
 	if fee > 2*expectedFee || fee < 0 {
 		log.Error("validateWithdrawSignNotify invalid fee", "fee", fee, "expected", expectedFee,

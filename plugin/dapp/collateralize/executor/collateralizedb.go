@@ -28,7 +28,7 @@ const (
 	MaxCount     = int32(100) // 最多取100条
 )
 
-//setting
+// setting
 const (
 	DefaultDebtCeiling        = 10000           // 默认借贷限额
 	DefaultLiquidationRatio   = 0.4 * 1e4       // 默认质押比
@@ -66,19 +66,19 @@ func Key(id string) (key []byte) {
 	return key
 }
 
-//ConfigKey Key for CollateralizeConfig
+// ConfigKey Key for CollateralizeConfig
 func ConfigKey() (key []byte) {
 	key = append(key, []byte("mavl-"+pty.CollateralizeX+"-config")...)
 	return key
 }
 
-//AddrKey Key for CollateralizeAddrConfig
+// AddrKey Key for CollateralizeAddrConfig
 func AddrKey() (key []byte) {
 	key = append(key, []byte("mavl-"+issuanceE.IssuanceX+"-addr")...)
 	return key
 }
 
-//PriceKey Key for IssuancePriceFeed
+// PriceKey Key for IssuancePriceFeed
 func PriceKey() (key []byte) {
 	key = append(key, []byte("mavl-"+pty.CollateralizeX+"-price")...)
 	return key

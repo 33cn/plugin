@@ -4,7 +4,7 @@
 
 package types
 
-//Lottery op
+// Lottery op
 const (
 	LotteryActionCreate = 1 + iota
 	LotteryActionBuy
@@ -24,7 +24,7 @@ const (
 	LotteryX = "lottery"
 )
 
-//Lottery status
+// Lottery status
 const (
 	LotteryCreated = 1 + iota
 	LotteryPurchase

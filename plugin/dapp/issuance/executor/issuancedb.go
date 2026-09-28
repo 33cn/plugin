@@ -26,7 +26,7 @@ const (
 	MaxCount     = int32(100) // 最多取100条
 )
 
-//setting
+// setting
 const (
 	DefaultDebtCeiling      = 100000          // 默认借贷限额
 	DefaultLiquidationRatio = 0.25 * 1e4      // 默认质押比

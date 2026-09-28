@@ -26,7 +26,7 @@ func init() {
 	types.RegExec(IssuanceX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(IssuanceX, "Enable", 0)
 	cfg.RegisterDappFork(IssuanceX, ForkIssuanceTableUpdate, 0)
@@ -34,7 +34,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(IssuanceX, ForkIssuanceRepayOwner, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(IssuanceX, NewType(cfg))
 }

@@ -10,9 +10,9 @@ import (
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 )
@@ -93,7 +93,7 @@ func getArchiveRoots(db dbm.KV, exec, symbol string, seq uint64) (*mixTy.CommitT
 	return getCommitTreeRoots(db, calcArchiveRootsKey(exec, symbol, seq))
 }
 
-//TODO seed config
+// TODO seed config
 func getNewTree() *merkletree.Tree {
 	return merkletree.New(legacymimc.NewMiMC(mixTy.MimcHashSeed))
 }
@@ -238,9 +238,9 @@ func restoreSubTrees(subTrees *mixTy.CommitSubTrees) (*merkletree.Tree, error) {
 
 }
 
-//merkle树由子树构成，任何一个节点都是一个子树，如果一个子树高度不为0，则是一个高阶子树，高阶子树可以直接参与root计算，不需要再统计其叶子节点
-//高阶子树一定是一个完全子树，即左右叶子节点都存在，只有0阶子树不是完全子树，只有一个叶子
-//为了计算1024个叶子节点任何一个新节点n的roothash，需要累计前n-1个叶子节点，由于1024个叶子存取耗时，这里只保存最多10个高阶子树即可计算roothash
+// merkle树由子树构成，任何一个节点都是一个子树，如果一个子树高度不为0，则是一个高阶子树，高阶子树可以直接参与root计算，不需要再统计其叶子节点
+// 高阶子树一定是一个完全子树，即左右叶子节点都存在，只有0阶子树不是完全子树，只有一个叶子
+// 为了计算1024个叶子节点任何一个新节点n的roothash，需要累计前n-1个叶子节点，由于1024个叶子存取耗时，这里只保存最多10个高阶子树即可计算roothash
 func joinSubTrees(status *mixTy.CommitTreeStatus, leaf []byte) ([]byte, error) {
 	tree, err := restoreSubTrees(status.SubTrees)
 	if err != nil {
@@ -418,8 +418,8 @@ func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, e
 
 }
 
-//1. 首先在当前tree查找
-//2. 如果提供了rootHash,则根据roothash+leaf查找，否则全局遍历查找
+// 1. 首先在当前tree查找
+// 2. 如果提供了rootHash,则根据roothash+leaf查找，否则全局遍历查找
 func CalcTreeProve(db dbm.KV, exec, symbol, rootHash, leaf string) (*mixTy.CommitTreeProve, error) {
 	if len(leaf) <= 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "leaf is null")

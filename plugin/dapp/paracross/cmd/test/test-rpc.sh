@@ -29,8 +29,9 @@ function paracross_QueryParaBalance() {
     req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "'"${exec}"'","asset_exec":"paracross","asset_symbol":"'"${symbol}"'"}]}'
     resp=$(curl -ksd "$req" "${para_http}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
+    rst=$?
     echo "$balance"
-    return $?
+    return $rst
 }
 
 function paracross_QueryMainBalance() {
@@ -46,8 +47,9 @@ function paracross_QueryMainBalance() {
     req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "paracross"}]}'
     resp=$(curl -ksd "$req" "${main_http}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
+    rst=$?
     echo "$balance"
-    return $?
+    return $rst
 }
 
 function paracross_QueryMainAssetBalance() {
@@ -68,8 +70,9 @@ function paracross_QueryMainAssetBalance() {
     req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "'"${exec}"'","asset_exec":"paracross","asset_symbol":"'"${symbol}"'"}]}'
     resp=$(curl -ksd "$req" "${main_http}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
+    rst=$?
     echo "$balance"
-    return $?
+    return $rst
 }
 
 function paracross_Transfer_Withdraw_Inner() {

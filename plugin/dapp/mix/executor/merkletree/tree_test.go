@@ -16,8 +16,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/33cn/plugin/plugin/crypto/legacymimc"
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 )
 
 var h = legacymimc.NewMiMC("seed")

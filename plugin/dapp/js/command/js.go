@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//JavaScriptCmd :
+// JavaScriptCmd :
 func JavaScriptCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "jsvm",
@@ -120,7 +120,7 @@ func callJavaScript(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//JavaScriptQueryCmd :
+// JavaScriptQueryCmd :
 func JavaScriptQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",

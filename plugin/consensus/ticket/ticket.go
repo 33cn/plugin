@@ -607,9 +607,7 @@ func (client *Client) delTicket(ticketID string) {
 	if client.ticketsMap == nil || len(ticketID) == 0 {
 		return
 	}
-	if _, ok := client.ticketsMap[ticketID]; ok {
-		delete(client.ticketsMap, ticketID)
-	}
+	delete(client.ticketsMap, ticketID)
 }
 
 // Miner ticket miner function

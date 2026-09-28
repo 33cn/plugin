@@ -307,7 +307,7 @@ func CreateApply(apply *et.Apply, privKey string) (tx *types.Transaction, err er
 	return tx, nil
 }
 
-//模拟区块中交易得执行过程
+// 模拟区块中交易得执行过程
 func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...*types.Transaction) error {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")

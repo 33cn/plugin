@@ -176,7 +176,7 @@ out:
 	}
 }
 
-//处理leader sync tx, 需接受同步的数据，两个节点基本的共识高度相同, 两个共同leader需相同
+// 处理leader sync tx, 需接受同步的数据，两个节点基本的共识高度相同, 两个共同leader需相同
 func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 	nodes, _, base, off, isLeader, _ := b.getLeaderInfo()
 	if len(nodes) <= 0 {
@@ -281,7 +281,7 @@ func (b *blsClient) clearDonePool(consensHeight int64) {
 	}
 }
 
-//1. 要等到达成共识了才发送，不然处理未达成共识的各种场景会比较复杂，而且浪费手续费
+// 1. 要等到达成共识了才发送，不然处理未达成共识的各种场景会比较复杂，而且浪费手续费
 func (b *blsClient) procAggregateTxs() {
 	defer b.paraClient.wg.Done()
 	if len(b.selfID) <= 0 || !b.blsSignOn {
@@ -402,7 +402,7 @@ func hasCommited(addrs []string, addr string) (bool, int) {
 	return false, 0
 }
 
-//整合相同高度commits
+// 整合相同高度commits
 func integrateCommits(pool map[int64]*pt.ParaBlsSignSumDetails, commits []*pt.ParacrossCommitAction) {
 	for _, cmt := range commits {
 		if _, ok := pool[cmt.Status.Height]; !ok {
@@ -422,7 +422,7 @@ func integrateCommits(pool map[int64]*pt.ParaBlsSignSumDetails, commits []*pt.Pa
 	}
 }
 
-//txBuff中任一高度满足done则认为ok，有可能某些未达成的高度是冗余的，达成共识的高度发给链最终判决
+// txBuff中任一高度满足done则认为ok，有可能某些未达成的高度是冗余的，达成共识的高度发给链最终判决
 func isMostCommitDone(nodes int, txsBuff map[int64]*pt.ParaBlsSignSumDetails, isLeader bool, leader string) bool {
 	if nodes <= 0 {
 		return false
@@ -439,7 +439,7 @@ func isMostCommitDone(nodes int, txsBuff map[int64]*pt.ParaBlsSignSumDetails, is
 	return false
 }
 
-//找出共识并达到2/3的commits， 并去除与共识不同的commits,为后面聚合签名做准备
+// 找出共识并达到2/3的commits， 并去除与共识不同的commits,为后面聚合签名做准备
 func filterDoneCommits(nodes int, pool map[int64]*pt.ParaBlsSignSumDetails) []*pt.ParaBlsSignSumDetails {
 	var seq []int64
 	for i, v := range pool {
@@ -481,7 +481,7 @@ func filterDoneCommits(nodes int, pool map[int64]*pt.ParaBlsSignSumDetails) []*p
 
 }
 
-//聚合多个签名为一个签名，并设置地址bitmap
+// 聚合多个签名为一个签名，并设置地址bitmap
 func (b *blsClient) aggregateCommit2Action(nodes []string, commits []*pt.ParaBlsSignSumDetails) ([]*pt.ParacrossCommitAction, error) {
 	var notify []*pt.ParacrossCommitAction
 	for _, v := range commits {
@@ -543,7 +543,7 @@ func (b *blsClient) getBlsPriKey(key []byte) crypto.PrivKey {
 	}
 }
 
-//transfer secp256 Private key to bls pub key
+// transfer secp256 Private key to bls pub key
 func (b *blsClient) secp256Prikey2BlsPub(key string) (string, error) {
 	secpPrkKey, err := getSecpPriKey(key)
 	if err != nil {

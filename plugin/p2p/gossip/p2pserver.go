@@ -632,7 +632,7 @@ func (s *P2pserver) addStreamHandler(peerName string) chan interface{} {
 	return s.streams[peerName]
 }
 
-//发布数据到所有服务流
+// 发布数据到所有服务流
 func (s *P2pserver) pubToAllStream(data interface{}) {
 	s.smtx.Lock()
 	defer s.smtx.Unlock()
@@ -648,7 +648,7 @@ func (s *P2pserver) pubToAllStream(data interface{}) {
 	}
 }
 
-//发布数据到指定流
+// 发布数据到指定流
 func (s *P2pserver) pubToStream(data interface{}, peerName string) {
 	s.smtx.Lock()
 	defer s.smtx.Unlock()

@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"strconv"
 	"strings"
+
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 // ToString encode to string

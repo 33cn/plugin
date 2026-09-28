@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//Chain33RelayerCmd RelayerCmd command func
+// Chain33RelayerCmd RelayerCmd command func
 func Chain33RelayerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chain33 ",
@@ -26,7 +26,7 @@ func Chain33RelayerCmd() *cobra.Command {
 	return cmd
 }
 
-//ImportPrivateKeyCmd SetPwdCmd set password
+// ImportPrivateKeyCmd SetPwdCmd set password
 func ImportPrivateKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import_privatekey",
@@ -54,7 +54,7 @@ func importPrivatekey(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ShowValidatorAddrCmd ...
+// ShowValidatorAddrCmd ...
 func ShowValidatorAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_validator",
@@ -71,7 +71,7 @@ func showValidatorAddr(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ShowTxsHashCmd ...
+// ShowTxsHashCmd ...
 func ShowTxsHashCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_txhashes",

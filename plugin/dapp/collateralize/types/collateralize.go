@@ -26,7 +26,7 @@ func init() {
 	types.RegExec(CollateralizeX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(CollateralizeX, "Enable", 0)
 	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizeTableUpdate, 0)
@@ -34,7 +34,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizeRepayOwner, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(CollateralizeX, NewType(cfg))
 }

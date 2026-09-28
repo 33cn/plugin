@@ -64,6 +64,6 @@ func TestGetProveData(t *testing.T) {
 	for i, k := range proves {
 		assert.Equal(t, k, ret.ProofSet[i])
 	}
-	assert.Equal(t, []uint32([]uint32{0, 1, 1}), ret.Helpers)
+	assert.Equal(t, []uint32{0, 1, 1}, ret.Helpers)
 
 }

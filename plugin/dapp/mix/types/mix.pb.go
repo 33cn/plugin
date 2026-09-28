@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//区分不同的验证电路
+// 区分不同的验证电路
 type VerifyType int32
 
 const (
@@ -445,8 +445,8 @@ func (x *TokenTxFeeAddrReq) GetAssetSymbol() string {
 	return ""
 }
 
-//config verify parameter for proof
-//当前authPk=mimc_hash(prikey),没有X,Y值
+// config verify parameter for proof
+// 当前authPk=mimc_hash(prikey),没有X,Y值
 type MixConfigAction struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1081,7 +1081,7 @@ func (x *VerifyProofInfo) GetProof() *ZkProofInfo {
 	return nil
 }
 
-//nullifer 存在value
+// nullifer 存在value
 type ExistValue struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
