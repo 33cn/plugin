@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/33cn/chain33/common"
 	chain33Common "github.com/33cn/chain33/common"
@@ -561,21 +559,9 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.LockEthErc20Asset", para, &res)
-	//ctx.Run
-	for try := 0; try < 3; try++ {
-		result, err := ctx.RunResult()
-		if err != nil {
-			time.Sleep(time.Millisecond * 500)
-			continue
-		}
-		data, err := json.MarshalIndent(result, "", "    ")
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return
-		}
-		fmt.Println(string(data))
-		return
-	}
+	//lock 不可重试: 该调用返回前 approve 和 lock 已经发到链上, 重试会再转一次
+	//(USDT 的 lock 会把 allowance 扣回 0, 第二次 approve 不会被拦), 失败必须直接报错
+	ctx.Run()
 }
 
 // LockEthErc20AssetAsync ...

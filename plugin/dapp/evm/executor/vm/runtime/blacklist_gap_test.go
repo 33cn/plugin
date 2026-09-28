@@ -8,7 +8,7 @@ package runtime
 // 只能由 EVM 内部检查拦截的资产打出路径。每个用例都：
 //   1. 用真实 MemoryStateDB + coins 账户，断言余额而不是只断言 error；
 //   2. 先证明交易信封上的地址全部干净（chain33 放行），再证明 EVM 层拦下；
-//   3. 以 fork 关闭作为对照，证明放行时资产确实会被打出，测试不是空转。
+//   3. 以清空名单作为对照，证明放行时资产确实会被打出，测试不是空转。
 //
 // 场景编号对应 docs/security/evm-account-blacklist.md 的 B1-B4。
 
@@ -60,7 +60,7 @@ func newGapEnv(t *testing.T, blocked []string) *gapEnv {
 	mdb := state.NewMemoryStateDB(stateDB, localDB, coins, gapTestHeight, api)
 	mdb.Prepare(vmcommon.BytesToHash([]byte("blacklist-gap")), 0)
 
-	restore := ctypes.SetBlockedAccountsForTest(blocked)
+	restore := cfg.SetBlockedAccountsForTest(0, blocked)
 	t.Cleanup(restore)
 
 	env := &gapEnv{t: t, cfg: cfg, mdb: mdb, coins: coins}
@@ -95,7 +95,7 @@ func (e *gapEnv) deploy(addr, creator vmcommon.Address, code []byte) {
 func (e *gapEnv) assertEnvelopeClean(addrs ...vmcommon.Address) {
 	e.t.Helper()
 	for _, a := range addrs {
-		require.False(e.t, ctypes.IsBlockedAccount(a.String()), "envelope address %s must be clean", a)
+		require.False(e.t, e.cfg.IsBlockedAccount(a.String(), gapTestHeight), "envelope address %s must be clean", a)
 	}
 }
 
@@ -174,8 +174,8 @@ func TestGapB1_BlockedContractWokenByInnerCall(t *testing.T) {
 	require.Equal(t, stash, env.balance(blockedC), "blocked contract must keep its balance")
 	require.Zero(t, env.balance(user), "user must not receive blocked funds")
 
-	// 对照：fork 关闭时同一条链路会把钱打出去，证明上面的断言不是空转。
-	env.cfg.SetFork(ctypes.ForkAccountBlacklist, ctypes.MaxHeight)
+	// 对照：名单清空后同一条链路会把钱打出去，证明上面的断言不是空转。
+	env.cfg.SetBlockedAccountsForTest(0, []string{})
 	_, _, _, err = env.evm.Call(AccountRef(user), relay, nil, 5_000_000, 0)
 	require.NoError(t, err)
 	require.Zero(t, env.balance(blockedC), "with fork off the funds must leave (proves the path is live)")
@@ -211,14 +211,14 @@ func TestGapB2_TokenPrecompileThirdPartyFrom(t *testing.T) {
 	copy(calldata[4+12:], victim.Bytes())
 	copy(calldata[36+12:], receiver.Bytes())
 	calldata[len(calldata)-1] = 100
-	require.False(t, ctypes.IsBlockedAccountRaw(calldata), "chain33 Para check must be blind to 100-byte calldata")
+	require.False(t, env.cfg.IsBlockedAccountRaw(calldata, gapTestHeight), "chain33 Para check must be blind to 100-byte calldata")
 
 	ret, _, err := RunStateFulPrecompiledContract(env.evm, AccountRef(caller), CustomizePrecompiledContracts[precompile.ToHash160()], calldata, 100000)
 	require.ErrorIs(t, err, ctypes.ErrBlockedAccount, "ret=%s", ret)
 
 	// 检查一旦被移除，同一调用会落到 tokenStatus 的 ErrNotFound（本测试不注册 token），
 	// 不再是 ErrBlockedAccount —— 用它区分"被黑名单拦下"和"因别的原因失败"。
-	env.cfg.SetFork(ctypes.ForkAccountBlacklist, ctypes.MaxHeight)
+	env.cfg.SetBlockedAccountsForTest(0, []string{})
 	_, _, err = RunStateFulPrecompiledContract(env.evm, AccountRef(caller), CustomizePrecompiledContracts[precompile.ToHash160()], calldata, 100000)
 	require.Error(t, err)
 	require.NotErrorIs(t, err, ctypes.ErrBlockedAccount)
@@ -247,7 +247,7 @@ func TestGapB3_SelfdestructBeneficiary(t *testing.T) {
 	require.Equal(t, stash, env.balance(blockedC))
 	require.Zero(t, env.balance(user))
 
-	env.cfg.SetFork(ctypes.ForkAccountBlacklist, ctypes.MaxHeight)
+	env.cfg.SetBlockedAccountsForTest(0, []string{})
 	_, _, _, err = env.evm.Call(AccountRef(user), relay2, nil, 5_000_000, 0)
 	require.NoError(t, err)
 	require.Zero(t, env.balance(blockedC), "with fork off SELFDESTRUCT pays the beneficiary")
@@ -281,8 +281,8 @@ func TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr(t *testing.T) {
 	require.Equal(t, stash, env.balance(blockedC), "delegatecall+selfdestruct must not drain the blocked code address")
 	require.Zero(t, env.balance(user))
 
-	// 对照：fork 关闭时 A 的余额确实经由 CodeAddr 被打出（proxy 已自毁，换 proxy2 触发）。
-	env.cfg.SetFork(ctypes.ForkAccountBlacklist, ctypes.MaxHeight)
+	// 对照：名单清空后 A 的余额确实经由 CodeAddr 被打出（proxy 已自毁，换 proxy2 触发）。
+	env.cfg.SetBlockedAccountsForTest(0, []string{})
 	_, _, _, err = env.evm.Call(AccountRef(user), proxy2, nil, 5_000_000, 0)
 	require.NoError(t, err)
 	require.Zero(t, env.balance(blockedC), "with fork off, opSuicide pays from CodeAddr (=A)")
@@ -317,7 +317,7 @@ func TestGapB4_BlockedContractInnerValueCall(t *testing.T) {
 func TestGap_ForkGateBlocksNothingBeforeHeight(t *testing.T) {
 	user, blockedC := addr(0x16), addr(0xa6)
 	env := newGapEnv(t, []string{blockedC.String()})
-	env.cfg.SetFork(ctypes.ForkAccountBlacklist, gapTestHeight+1)
+	env.cfg.SetBlockedAccountsForTest(gapTestHeight+1, []string{blockedC.String()})
 
 	const stash = int64(100_000)
 	env.fund(blockedC, stash)
@@ -334,14 +334,15 @@ func TestGap_ForkGateBlocksNothingBeforeHeight(t *testing.T) {
 // 由 innerExec 的 receiver 检查兜底。此处固定该行为，防止两侧被无意改成不一致。
 func TestGap_ParaLengthAsymmetry(t *testing.T) {
 	blockedC := addr(0xa7)
-	restore := ctypes.SetBlockedAccountsForTest([]string{blockedC.String()})
+	cfg := ctypes.NewChain33Config(ctypes.GetDefaultCfgstring())
+	restore := cfg.SetBlockedAccountsForTest(0, []string{blockedC.String()})
 	t.Cleanup(restore)
 
 	padded := make([]byte, 32)
 	copy(padded[12:], blockedC.Bytes())
 
-	require.False(t, ctypes.IsBlockedAccountRaw(padded), "chain33 is blind to 32-byte padded Para")
+	require.False(t, cfg.IsBlockedAccountRaw(padded, 0), "chain33 is blind to 32-byte padded Para")
 	require.Equal(t, blockedC, vmcommon.BytesToAddress(padded), "EVM resolves the same bytes to the blocked address")
-	require.True(t, ctypes.IsBlockedAccount(vmcommon.BytesToAddress(padded).String()),
+	require.True(t, cfg.IsBlockedAccount(vmcommon.BytesToAddress(padded).String(), 0),
 		"so the EVM-side receiver check catches what chain33 misses")
 }
