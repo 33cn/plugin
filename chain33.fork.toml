@@ -172,6 +172,7 @@ Enable=0
 
 [fork.sub.paracross]
 Enable=1600000
+ForkParaTitleExecMatch=48000000
 ForkParacrossWithdrawFromParachain=1298600
 ForkParacrossCommitTx=1850000
 ForkLoopCheckCommitTxDone=3230000

@@ -94,6 +94,71 @@ func validTitle(cfg *types.Chain33Config, title string) bool {
 	return len(title) > 0
 }
 
+// checkParaTitleExecMatch 分叉后校验入口交易携带的title与交易execer精确对应，
+// 即title必须是user.p.<name>.且execer为title+paracross。防止用真实平行链的execer
+// (user.p.superx.paracross)携带伪造的前缀title(user.p.super)创建节点组/节点，
+// 再借助跨链交易的前缀匹配接管真实平行链资产。
+func (a *action) checkParaTitleExecMatch(title string) error {
+	cfg := a.api.GetConfig()
+	if !cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return nil
+	}
+
+	normalized := pt.NormalizeParaTitle(title)
+	//title必须为规范形式(user.p.<name>.)，避免以非规范形式写入mavl key导致后续commit无法对应
+	if title != normalized {
+		return errors.Wrapf(pt.ErrInvalidTitle, "para title should end with '.', title=%s", title)
+	}
+	if !pt.IsValidParaTitle(normalized) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "invalid para title=%s", title)
+	}
+
+	exec := string(a.tx.Execer)
+	if !types.IsParaExecName(exec) {
+		//分叉前主链上存在直接使用paracross执行器的历史交易，保持兼容
+		if !cfg.IsPara() && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
+			return errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", exec)
+		}
+		return nil
+	}
+
+	if !pt.IsExactParaTitleExec(normalized, exec) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "title=%s not match exec=%s", title, exec)
+	}
+	return nil
+}
+
+// checkCrossTxTitleMatch 分叉后执行的跨链交易必须精确属于该title的平行链：title必须是规范形式
+// user.p.<name>.且execer精确等于title+paracross。防止伪造的前缀title(如user.p.super)或
+// "真实链title去掉结尾'.'"的非规范title(如user.p.superx，与真实链user.p.superx.是两个不同的状态key)
+// 执行真实平行链的跨链交易。该检查在跨链交易执行入口，同时覆盖paracross commit和rollup两条路径，
+// 即使某个伪造title的节点组在分叉前已经存在，也无法再通过rollup等其他入口执行真实平行链的跨链交易。
+func (a *action) checkCrossTxTitleMatch(title string, tx *types.Transaction) error {
+	cfg := a.api.GetConfig()
+	if !cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return nil
+	}
+	if tx == nil || !pt.IsExactParaTitleExec(title, string(tx.Execer)) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "cross tx exec=%s not match para title=%s",
+			common.ToHex(tx.GetExecer()), title)
+	}
+	return nil
+}
+
+// checkCommitParaTitle 分叉后commit交易携带的title必须是规范的平行链title(user.p.<name>.),
+// 防止用伪造的前缀title(如user.p.super)建立节点组后提交commit，触发真实平行链的跨链交易
+func (a *action) checkCommitParaTitle(title string) error {
+	cfg := a.api.GetConfig()
+	if !cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return nil
+	}
+	//必须是规范形式，user.p.super 这类缺少结尾'.'的title是真实平行链user.p.superx.的前缀
+	if !pt.IsValidParaTitle(title) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "invalid commit para title=%s", title)
+	}
+	return nil
+}
+
 func validNode(addr string, nodes map[string]struct{}) bool {
 	if _, exist := nodes[addr]; exist {
 		return exist
@@ -393,6 +458,10 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddrs 
 	cfg := a.api.GetConfig()
 	err := checkCommitInfo(cfg, commit)
 	if err != nil {
+		return err
+	}
+
+	if err := a.checkCommitParaTitle(commit.Title); err != nil {
 		return err
 	}
 
@@ -1414,7 +1483,8 @@ func getCrossTxsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatu
 	for _, tx := range paraAllTxs {
 		baseHashs = append(baseHashs, tx.Hash())
 	}
-	paraCrossTxs := FilterParaCrossTxs(paraAllTxs)
+	//分叉后仅保留execer精确对应title的跨链交易，避免前缀title匹配到真实平行链交易
+	paraCrossTxs := filterCrossTxsByExactTitle(cfg, status.MainBlockHeight, status.Title, FilterParaCrossTxs(paraAllTxs))
 	var paraCrossHashs [][]byte
 	for _, tx := range paraCrossTxs {
 		paraCrossHashs = append(paraCrossHashs, tx.Hash())
@@ -1472,7 +1542,8 @@ func getCrossTxs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([
 	}
 	//校验
 	paraBaseTxs := FilterTxsForPara(cfg, blockDetail.FilterParaTxsByTitle(cfg, status.Title))
-	paraCrossTxs := FilterParaCrossTxs(paraBaseTxs)
+	//分叉后仅保留execer精确对应title的跨链交易，避免前缀title匹配到真实平行链交易
+	paraCrossTxs := filterCrossTxsByExactTitle(cfg, status.MainBlockHeight, status.Title, FilterParaCrossTxs(paraBaseTxs))
 	var baseHashs [][]byte
 	for _, tx := range paraBaseTxs {
 		baseHashs = append(baseHashs, tx.Hash())
@@ -1511,6 +1582,12 @@ func (a *action) execCrossTxs(title string, height int64, crossTxs []*types.Tran
 	var receipt types.Receipt
 
 	for i := 0; i < len(crossTxs); i++ {
+		//分叉后跨链交易的execer必须精确对应title，避免前缀title执行其他平行链的跨链交易
+		if err := a.checkCrossTxTitleMatch(title, crossTxs[i]); err != nil {
+			clog.Error("paracross.Commit execCrossTx title not match", "para title", title, "para height", height,
+				"para tx index", i, "error", err)
+			return nil, err
+		}
 		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", common.ToHex(crossTxs[i].Hash()),
 			"res", util.BitMapBit(crossTxResult, uint32(i)))
 		if util.BitMapBit(crossTxResult, uint32(i)) {

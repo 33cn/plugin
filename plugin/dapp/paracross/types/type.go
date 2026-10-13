@@ -36,6 +36,10 @@ var (
 	ForkParaFreeRegister = "ForkParaFreeRegister"
 	//ForkParaCheckTx 分叉之前平行链缺省继承driverBase的checkTx,分叉后自己检查tx，因为transfer2Exec需要忽略tx.to==tx.Exec的限制,只影响主链
 	ForkParaCheckTx = "ForkParaCheckTx"
+	//ForkParaTitleExecMatch 分叉后节点组/节点/监督节点/rollup入口交易的title必须为该交易execer精确对应的
+	//平行链title(规范形式user.p.<name>.，不做归一化)，跨链交易也按title精确匹配(不再前缀匹配)，
+	//防止用伪造的前缀title(如user.p.super)或去掉结尾'.'的真实链title(如user.p.superx)接管真实平行链(user.p.superx.)
+	ForkParaTitleExecMatch = "ForkParaTitleExecMatch"
 
 	//只在平行链开启的分叉
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
@@ -76,6 +80,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 0)
 	cfg.RegisterDappFork(ParaX, ForkParaFreeRegister, 0)
 	cfg.RegisterDappFork(ParaX, ForkParaCheckTx, 0)
+	cfg.RegisterDappFork(ParaX, ForkParaTitleExecMatch, 0)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
