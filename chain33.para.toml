@@ -392,6 +392,7 @@ ForkTradePrice = 0
 
 [fork.sub.paracross]
 Enable=0
+ForkParaTitleExecMatch=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0

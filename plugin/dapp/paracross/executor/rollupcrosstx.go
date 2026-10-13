@@ -43,7 +43,7 @@ func (p *Paracross) ExecLocal_RollupCrossTx(commit *pt.RollupCrossTx, tx *types.
 		return nil, types.ErrDecode
 	}
 
-	crossTxHashes, crossTxs, err := getRollupCrossTxs(p.GetAPI(), commit.GetChainTitle(), commit.GetTxIndices())
+	crossTxHashes, crossTxs, err := getRollupCrossTxs(p.GetAPI(), p.GetMainHeight(), commit.GetChainTitle(), commit.GetTxIndices())
 
 	if err != nil {
 		clog.Error("ExecLocal_RollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
@@ -90,8 +90,17 @@ var (
 func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error) {
 	clog.Debug("rollupCrossTx", "title", commit.GetChainTitle(),
 		"commitRound", commit.GetCommitRound(), "txHash", common.ToHex(a.txhash))
-	if a.api.GetConfig().IsPara() {
+	cfg := a.api.GetConfig()
+	if cfg.IsPara() {
 		return nil, ErrInvalidChain
+	}
+	//分叉后rollup的chainTitle必须是规范平行链title(user.p.<name>.): 非规范title(例如真实链title去掉结尾'.')
+	//会与真实平行链使用不同的节点组状态key，却指向同一个execer，必须拒绝
+	if cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) &&
+		!pt.IsValidParaTitle(commit.GetChainTitle()) {
+		clog.Error("rollupCrossTx invalid chainTitle", "chainTitle", commit.GetChainTitle(),
+			"txHash", common.ToHex(a.txhash))
+		return nil, rexec.ErrChainTitle
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	status, err := rexec.GetRollupStatus(a.db, commit.GetChainTitle())
@@ -109,7 +118,7 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 		return nil, ErrGetRollupCommitRound
 	}
 
-	crossTxHashes, crossTxs, err := getRollupCrossTxs(a.api, commit.GetChainTitle(), commit.GetTxIndices())
+	crossTxHashes, crossTxs, err := getRollupCrossTxs(a.api, a.exec.GetMainHeight(), commit.GetChainTitle(), commit.GetTxIndices())
 
 	if err != nil {
 		clog.Error("rollupCrossTx", "commitRound", commit.GetCommitRound(), "getRollupCrossTxs err", err)
@@ -161,7 +170,7 @@ func getTx(api client.QueueProtocolAPI, hash []byte) (*types.Transaction, error)
 	return detail.GetTx(), err
 }
 
-func getRollupCrossTxs(api client.QueueProtocolAPI, paraTitle string, idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
+func getRollupCrossTxs(api client.QueueProtocolAPI, mainHeight int64, paraTitle string, idxArr []*pt.CrossTxIndex) ([][]byte, []*types.Transaction, error) {
 
 	blkCrossTxCache := make(map[int64][]*types.Transaction, 4)
 	crossTxs := make([]*types.Transaction, 0, len(idxArr))
@@ -180,7 +189,9 @@ func getRollupCrossTxs(api client.QueueProtocolAPI, paraTitle string, idxArr []*
 				return nil, nil, err
 			}
 
-			blkCrossTxs = FilterParaCrossTxs(FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, paraTitle)))
+			//分叉后按title精确匹配，非规范title(如真实链title去掉结尾'.')不能索引到其他平行链的跨链交易
+			blkCrossTxs = filterCrossTxsByExactTitle(cfg, mainHeight, paraTitle,
+				FilterParaCrossTxs(FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, paraTitle))))
 			blkCrossTxCache[txIdx.BlockHeight] = blkCrossTxs
 		}
 		var crossTx *types.Transaction
