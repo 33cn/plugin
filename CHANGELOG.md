@@ -1,5 +1,18 @@
 changelog
 
+# [1.75.0](https://github.com/33cn/plugin/compare/v1.74.0...v1.75.0) (2026-10-14)
+
+
+### Bug Fixes
+
+* **paracross:** bind node group title to its exact para execer ([e399683](https://github.com/33cn/plugin/commit/e39968311684701f6e194d95fb686802fe303d84))
+* **paracross:** guard empty CrossTxHashs in isHaveCrossTxs ([e2f672a](https://github.com/33cn/plugin/commit/e2f672acd3136ec777cfa08fb2ea505f132a45c5)), closes [#1326](https://github.com/33cn/plugin/issues/1326)
+
+
+### Features
+
+* **paracross:** filter invalid titles in node group list queries ([bd102c4](https://github.com/33cn/plugin/commit/bd102c4114ee775b1a6e1d47640a65d7aef22ed9)), closes [#1326](https://github.com/33cn/plugin/issues/1326)
+
 # [1.74.0](https://github.com/33cn/plugin/compare/v1.73.0...v1.74.0) (2026-09-18)
 
 
