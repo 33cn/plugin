@@ -205,6 +205,7 @@ title 必须为规范形式 user.p.<name>.  且  execer 必须精确等于 title
 | `plugin/dapp/paracross/executor/superaccount.go` | `NodeGroupConfig` / `NodeConfig` 增加 title↔execer 校验 |
 | `plugin/dapp/paracross/executor/supervisionaccount.go` | `SupervisionNodeConfig` 增加 title↔execer 校验 |
 | `plugin/dapp/paracross/executor/rollupcrosstx.go` | `rollupCrossTx` 分叉后要求 `chainTitle` 为规范 title；`getRollupCrossTxs` 的索引列表同样按精确 title 过滤 |
+| `plugin/dapp/paracross/executor/query.go` | 分叉后查询接口不再返回非规范 title：`Query_ListTitles`、按状态遍历节点组 `Query_ListNodeGroupStatus` 过滤掉 `IsValidParaTitle` 不通过的记录（仅记日志保留可发现性）；按 title 精确查询保留，便于排查/清理历史数据 |
 
 对各根因的覆盖：
 
@@ -230,7 +231,8 @@ title 必须为规范形式 user.p.<name>.  且  execer 必须精确等于 title
   因此**所有**含 `[fork.sub.paracross]` 的配置文件都必须补上该键，否则节点无法启动。
 - ⚠️ 激活前必须处置/排查两类存量数据：
   1. 链上已存在的**非规范节点组**（`user.p.super`、`user.p.superx`、`user.p.`、`u` 等）。分叉后它们不能再执行任何跨链交易，
-     但建议清理或标记，避免后续 rollup 等路径反复报错；
+     但建议清理或标记，避免后续 rollup 等路径反复报错。分叉后这类 title 不再出现在 `Query_ListTitles`/`Query_ListNodeGroupStatus`
+     的结果里（会打 Error 日志），按 title 精确查询仍可读到，便于定位与清理；
   2. 任何使用**非规范 `chainTitle`**（缺少结尾 `.`）的 rollup 链。分叉后其 `RollupCrossTx` 会被拒绝，
      需在分叉高度前把 rollup 配置的 title 改为规范形式（`user.p.<name>.`，与平行链配置一致）。
 
@@ -261,6 +263,7 @@ title 必须为规范形式 user.p.<name>.  且  execer 必须精确等于 title
 - `plugin/dapp/paracross/executor/title_takeover_test.go`：复现漏洞入口交易
   （`execer=user.p.superx.paracross` + `title=user.p.super`）被拒、非规范 title 被拒、空名称 title 被拒、
   自审批被拒、伪造前缀 title 的 commit 被拒、跨链交易执行入口校验，以及合法自由注册不受影响。
+- 查询侧：`Query_ListTitles` / `Query_ListNodeGroupStatus` 分叉后过滤非规范 title、分叉前保持历史行为，均有对应用例。
 - 覆盖 rollup 变体（安全评审发现）：`execer=user.p.superx.paracross` 的跨链交易在
   `title=user.p.superx`（真实 title 去掉结尾 `.`）或 `title=user.p.super` 下经 `execCrossTxs` 执行时必须失败。
 - 变异验证（两轮，均已实测）：① 把 `ForkParaTitleExecMatch` 临时注册为 `types.MaxHeight`（关闭分叉）后 11 个用例失败；
