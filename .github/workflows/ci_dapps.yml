@@ -50,7 +50,7 @@ jobs:
 
       - name: deploy
         run: |
-          make build_ci
+          make build_ci_dapp dapp=${{ matrix.dapp }}
           make docker-compose dapp=${{ matrix.dapp }}
 
       - name: cleanup

@@ -45,6 +45,25 @@ build_ci: depends ## Build the binary file for CI (Linux/amd64|arm64 when not on
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
+# evm2 的 CI 产物由 plugin/dapp/evm/cmd 生成(build.sh 同时输出 evm 和 evm2)
+DAPP_CMD := $(if $(filter evm2,$(dapp)),evm,$(dapp))
+
+# 只为指定 dapp 准备 build/ci: 编 chain33/chain33-cli + 该 dapp 的 cmd 产物,
+# 跳过 depends 里其他几十个 dapp 的 cmd 编译(CI 每个 job 只跑一个 dapp)
+build_ci_dapp: ## Build chain33 binaries and only $(dapp)'s CI artifacts (usage: make build_ci_dapp dapp=<name>)
+	@if [ -z "$(dapp)" ]; then echo "usage: make build_ci_dapp dapp=<name>"; exit 1; fi
+	@if [ "$$(uname)" = "Linux" ]; then \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(APP); \
+	else \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(APP); \
+	fi
+	@mkdir -p build/ci/paracross
+	@cp chain33.toml build/
+	@cp chain33.para.toml build/ci/paracross/
+	@make -C plugin/dapp/$(DAPP_CMD)/cmd OUT="$(MKDIR)build/ci" FLAG=
+
 
 PLATFORM_LIST = \
 	darwin-amd64 \

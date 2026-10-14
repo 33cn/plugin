@@ -118,12 +118,16 @@ source "./offlinePublic.sh"
     chain33ID=0
     maturityDegree=20
     validatorPwd="123456fzm"
+
+    # 轮询超时预算: 跨链在 relayer 500ms 拉块 + ganache 2s 出块的配置下通常 1~3s 完成,
+    # 这里给足余量覆盖 CI 抖动; 超时后由后续断言失败并抓取容器日志。
+    LOCK_SETTLE_TIMEOUT=60
+    RELAYER_SETTLE_TIMEOUT=90
 }
 
 function start_docker_ebrelayerA() {
     docker cp "./relayer.toml" "${dockerNamePrefix}-ebrelayera-1":/root/relayer.toml
     start_docker_ebrelayer "${dockerNamePrefix}-ebrelayera-1" "/root/ebrelayer" "./ebrelayera.log"
-    sleep 5
 }
 
 # start ebrelayer B C D
@@ -158,9 +162,8 @@ function restart_ebrelayerA() {
     sleep 1
     start_docker_ebrelayerA
 
-    result=$(${CLIA} unlock -p "${validatorPwd}")
+    result=$(wait_cli_ok "${LOCK_SETTLE_TIMEOUT}" "ebrelayera unlock" ${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
-    sleep 20
 }
 
 function restart_ebrelayer_bcd() {
@@ -169,11 +172,9 @@ function restart_ebrelayer_bcd() {
     kill_docker_ebrelayer "${dockerNamePrefix}-ebrelayer${name}-1"
     sleep 1
     start_docker_ebrelayer "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebrelayer" "./ebrelayer${name}.log"
-    sleep 5
 
-    result=$(docker exec "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebcli_A" unlock -p "${validatorPwd}")
+    result=$(wait_cli_ok "${LOCK_SETTLE_TIMEOUT}" "ebrelayer${name} unlock" docker exec "${dockerNamePrefix}-ebrelayer${name}-1" "/root/ebcli_A" unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
-    sleep 20
 }
 
 # chain33 lock BTY, eth burn BTY
@@ -257,19 +258,15 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} ethereum lock -m 0.002 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 10
-
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+    # eth 等待 lock 上账(原来固定 sleep 10)
+    result=$(wait_cli ".balance" "0.002" "${LOCK_SETTLE_TIMEOUT}" "eth lock 上账" ${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
 
     #    restart_ebrelayer_bcd "b"
     #    restart_ebrelayer_bcd "c"
 
-    sleep ${maturityDegree}
-
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(wait_output "200000" "${RELAYER_SETTLE_TIMEOUT}" "chain33 lock 入账" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "200000"
 
     # 原来的数额
@@ -282,28 +279,24 @@ function TestETH2Chain33Assets() {
     #    restart_ebrelayer_bcd "b"
     #    restart_ebrelayer_bcd "c"
 
-    sleep ${maturityDegree}
-
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(wait_output "170000" "${RELAYER_SETTLE_TIMEOUT}" "chain33 burn 扣账" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "170000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+    result=$(wait_cli ".balance" "0.0017" "${RELAYER_SETTLE_TIMEOUT}" "ethereum 端释放" ${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.0017"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
     result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
-    sleep ${maturityDegree}
-
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(wait_output "0" "${RELAYER_SETTLE_TIMEOUT}" "chain33 burn 扣账 2" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "0"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+    result=$(wait_cli ".balance" "0" "${RELAYER_SETTLE_TIMEOUT}" "ethereum 端释放 2" ${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
@@ -322,18 +315,13 @@ function TestETH2Chain33USDT() {
     result=$(${CLIA} ethereum lock -m 12 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 10
-
     # 查询 ETH 这端 bridgeBank 地址 12 USDT
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(wait_cli ".balance" "12" "${LOCK_SETTLE_TIMEOUT}" "eth USDT lock 上账" ${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "12"
 
-    sleep ${maturityDegree}
-
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 12 * le8
+    result=$(wait_output "1200000000" "${RELAYER_SETTLE_TIMEOUT}" "chain33 USDT lock 入账" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "1200000000"
 
     # 原来的数额 0
@@ -344,37 +332,33 @@ function TestETH2Chain33USDT() {
     result=$(${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33USDTBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
-    sleep ${maturityDegree}
-
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 12-5 * le8
+    result=$(wait_output "700000000" "${RELAYER_SETTLE_TIMEOUT}" "chain33 USDT burn 扣账" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "700000000"
 
     # 查询 ETH 这端 bridgeBank 地址 7
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(wait_cli ".balance" "7" "${RELAYER_SETTLE_TIMEOUT}" "ethereum 端 USDT 释放" ${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "7"
 
     # 更新后的金额 5
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(wait_cli ".balance" "5" "${RELAYER_SETTLE_TIMEOUT}" "ethereum 端 USDT 到账" ${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "5"
 
     echo '#5.burn USDT from Chain33 USDT(Chain33)-----> Ethereum'
     result=$(${CLIA} chain33 burn -m 7 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33USDTBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
-    sleep ${maturityDegree}
-
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(wait_output "0" "${RELAYER_SETTLE_TIMEOUT}" "chain33 USDT burn 扣账 2" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "0"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(wait_cli ".balance" "0" "${RELAYER_SETTLE_TIMEOUT}" "ethereum 端 USDT 释放 2" ${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 更新后的金额 12
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(wait_cli ".balance" "12" "${RELAYER_SETTLE_TIMEOUT}" "ethereum 端 USDT 到账 2" ${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "12"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -522,8 +506,11 @@ function lockEthUSDT() {
     lock_ethereum_usdt_multisign 60 72 88
 
     # ethereumMultisignAddr 要有手续费
+    feeBalanceBefore=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}" | jq -r ".balance")
     ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${ethereumMultisignAddr}"
-    sleep 10
+    # 等待手续费到账(原来是固定 sleep 10), 后面的离线多签交易依赖这笔转账的 nonce 顺序
+    result=$(wait_cli ".balance" "$(echo "${feeBalanceBefore}+10" | bc)" "${LOCK_SETTLE_TIMEOUT}" "multisign 手续费到账" ${CLIA} ethereum balance -o "${ethereumMultisignAddr}")
+    cli_ret "${result}" "balance" ".balance" "$(echo "${feeBalanceBefore}+10" | bc)"
 
     # transfer
     offline_transfer_multisign_EthUSDT
