@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"strings"
 	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	rexec "github.com/33cn/plugin/plugin/dapp/rollup/executor"
 )
 
 // 复现并回归 paracross 节点组「标题前缀」接管漏洞(参考 docs/security/paracross-nodegroup-title-takeover-analysis.md):
@@ -315,6 +317,187 @@ func TestFilterParaMainCrossTxHashesExact(t *testing.T) {
 	//分叉后非规范title(前缀title/去掉结尾'.'的真实链title)什么都匹配不到
 	assert.Empty(t, FilterParaMainCrossTxHashesFork(fakeParaTitle, txs))
 	assert.Empty(t, FilterParaMainCrossTxHashesFork("user.p.superx", txs))
+}
+
+// newTitleForkTestCfg 返回一份独立的主链配置，可单独设置 ForkParaTitleExecMatch 高度，
+// 不影响其它用例共享的 chain33TestMainCfg（用于分叉前/分叉后两种行为的对照用例）
+func newTitleForkTestCfg(forkHeight int64) *types.Chain33Config {
+	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
+	cfg.SetDappFork(pt.ParaX, pt.ForkParaTitleExecMatch, forkHeight)
+	return cfg
+}
+
+func createNodeAddrConfigTx(execer string, config *pt.ParaNodeAddrConfig) *types.Transaction {
+	action := &pt.ParacrossAction{
+		Ty:    pt.ParacrossActionNodeConfig,
+		Value: &pt.ParacrossAction_NodeConfig{NodeConfig: config},
+	}
+	return &types.Transaction{Payload: types.Encode(action), Execer: []byte(execer)}
+}
+
+func createSupervisionNodeConfigTx(execer string, config *pt.ParaNodeGroupConfig) *types.Transaction {
+	action := &pt.ParacrossAction{
+		Ty:    pt.ParacrossActionSupervisionNodeConfig,
+		Value: &pt.ParacrossAction_SupervisionNodeConfig{SupervisionNodeConfig: config},
+	}
+	return &types.Transaction{Payload: types.Encode(action), Execer: []byte(execer)}
+}
+
+// newTitleOnlyExec 构造一个只绑定指定配置的执行器(独立stateDB)，用于分叉前后行为对照
+func newTitleOnlyExec(cfg *types.Chain33Config) (*Paracross, dbm.KV, error) {
+	stateDB, err := dbm.NewGoMemDB("state", "state", 1024)
+	if err != nil {
+		return nil, nil, err
+	}
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	exec := newParacross().(*Paracross)
+	exec.SetAPI(api)
+	exec.SetLocalDB(new(dbmock.KVDB))
+	exec.SetStateDB(stateDB)
+	exec.SetEnv(0, 0, 0)
+	exec.SetBlockInfo([]byte(""), []byte(""), 0)
+	return exec, stateDB, nil
+}
+
+// buildCrossTxBlock 构造一个主链区块：一条真实平行链(user.p.superx.)的跨链交易
+// 加一条伪造平行链(user.p.super.)的跨链交易
+func buildCrossTxBlock() *types.BlockDetail {
+	realTx := &types.Transaction{Execer: []byte(realParaExec), Payload: []byte("real-cross-tx")}
+	fakeTx := &types.Transaction{Execer: []byte(fakeParaExec), Payload: []byte("fake-cross-tx")}
+	return &types.BlockDetail{
+		Block: &types.Block{
+			Height: 10,
+			Txs:    []*types.Transaction{realTx, fakeTx},
+		},
+		Receipts: []*types.ReceiptData{{Ty: types.ExecOk}, {Ty: types.ExecOk}},
+	}
+}
+
+func hashsOf(txs []*types.Transaction) [][]byte {
+	hashs := make([][]byte, 0, len(txs))
+	for _, tx := range txs {
+		hashs = append(hashs, tx.Hash())
+	}
+	return hashs
+}
+
+func newCrossTxTestAPI(cfg *types.Chain33Config) *apimock.QueueProtocolAPI {
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	api.On("GetBlockByHashes", mock.Anything).Return(
+		&types.BlockDetails{Items: []*types.BlockDetail{buildCrossTxBlock()}}, nil)
+	return api
+}
+
+// TestGetCrossTxsByRstExactTitle 覆盖本次漏洞的主路径：主链按title抽取跨链交易时的精确过滤。
+// 把 getCrossTxsByRst 中的 filterCrossTxsByExactTitle 退回旧的前缀实现时，该用例必须失败。
+func (suite *TitleTakeoverTestSuite) TestGetCrossTxsByRstExactTitle() {
+	api := newCrossTxTestAPI(chain33TestMainCfg)
+	status := &pt.ParacrossNodeStatus{
+		MainBlockHash:   []byte("main-block-hash-10"),
+		MainBlockHeight: 10,
+		//前缀title：前缀匹配会命中真实链 user.p.superx.paracross
+		Title:    fakeParaTitle,
+		Height:   10,
+		TxResult: []byte("01"),
+	}
+	//分叉后非规范title不能匹配到任何跨链交易
+	crossTxs, _, err := getCrossTxsByRst(api, status)
+	suite.NoError(err)
+	suite.Empty(crossTxs)
+
+	//规范title只返回自身链的跨链交易
+	status.Title = fakeParaTitle + "."
+	crossTxs, _, err = getCrossTxsByRst(api, status)
+	suite.NoError(err)
+	suite.Len(crossTxs, 1)
+	suite.Equal(fakeParaExec, string(crossTxs[0].Execer))
+}
+
+// TestGetCrossTxsLegacyBranchExactTitle 覆盖 getCrossTxs 的另一条分支(ForkLoopCheckCommitTxDone之前)
+func (suite *TitleTakeoverTestSuite) TestGetCrossTxsLegacyBranchExactTitle() {
+	cfg := newTitleForkTestCfg(0)
+	cfg.SetDappFork(pt.ParaX, pt.ForkLoopCheckCommitTxDone, types.MaxHeight)
+	api := newCrossTxTestAPI(cfg)
+
+	//前缀匹配会同时命中真实链与伪造链的交易
+	detail := buildCrossTxBlock()
+	baseTxs := FilterTxsForPara(cfg, detail.FilterParaTxsByTitle(cfg, fakeParaTitle))
+	suite.Len(baseTxs, 2)
+
+	status := &pt.ParacrossNodeStatus{
+		MainBlockHash:   []byte("main-block-hash-10"),
+		MainBlockHeight: 10,
+		Title:           fakeParaTitle,
+		Height:          10,
+		TxResult:        []byte("01"),
+		CrossTxResult:   []byte("01"),
+		TxHashs:         [][]byte{CalcTxHashsHash(hashsOf(baseTxs))},
+		//精确过滤后跨链交易集合为空，因此校验hash为nil
+		CrossTxHashs: [][]byte{nil},
+	}
+	crossTxs, _, err := getCrossTxs(api, status)
+	suite.NoError(err)
+	suite.Empty(crossTxs)
+}
+
+// TestRollupCrossTxRejectsNonCanonicalChainTitle rollup入口的chainTitle必须是规范平行链title：
+// "真实链title去掉结尾'.'"(user.p.superx)与真实链user.p.superx.是两个不同的节点组key，必须拒绝
+func (suite *TitleTakeoverTestSuite) TestRollupCrossTxRejectsNonCanonicalChainTitle() {
+	a := &action{exec: suite.exec, api: suite.api, txhash: []byte("rollup-cross-tx")}
+	_, err := a.rollupCrossTx(&pt.RollupCrossTx{ChainTitle: "user.p.superx", CommitRound: 1})
+	suite.Equal(rexec.ErrChainTitle, errors.Cause(err))
+
+	_, err = a.rollupCrossTx(&pt.RollupCrossTx{ChainTitle: fakeParaTitle, CommitRound: 1})
+	suite.Equal(rexec.ErrChainTitle, errors.Cause(err))
+}
+
+// TestNodeConfigRejectsFakeTitle 节点加入/退出(NodeConfig)同样受title↔execer精确绑定约束
+func (suite *TitleTakeoverTestSuite) TestNodeConfigRejectsFakeTitle() {
+	config := &pt.ParaNodeAddrConfig{Title: fakeParaTitle, Addr: Account14K, Op: pt.ParaOpNewApply}
+	receipt, err := suite.execNodeGroupTx(PrivKey14K, createNodeAddrConfigTx(realParaExec, config))
+	suite.Nil(receipt)
+	suite.Equal(pt.ErrInvalidTitle, errors.Cause(err))
+}
+
+// TestSupervisionNodeConfigRejectsFakeTitle 监督节点配置同样受title↔execer精确绑定约束
+func (suite *TitleTakeoverTestSuite) TestSupervisionNodeConfigRejectsFakeTitle() {
+	config := &pt.ParaNodeGroupConfig{
+		Title: fakeParaTitle,
+		Addrs: Account14K,
+		Op:    pt.ParacrossSupervisionNodeApply,
+	}
+	receipt, err := suite.execNodeGroupTx(PrivKey14K, createSupervisionNodeConfigTx(realParaExec, config))
+	suite.Nil(receipt)
+	suite.Equal(pt.ErrInvalidTitle, errors.Cause(err))
+}
+
+// TestPreForkCompatibility 分叉前必须保持历史行为(不绑定title、保持前缀匹配)，用于历史高度重放
+func (suite *TitleTakeoverTestSuite) TestPreForkCompatibility() {
+	cfg := newTitleForkTestCfg(types.MaxHeight)
+	exec, _, err := newTitleOnlyExec(cfg)
+	suite.Nil(err)
+
+	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(cfg, nil)
+	a := &action{exec: exec, api: api, tx: &types.Transaction{Execer: []byte(realParaExec)}}
+	//分叉前不校验 title 与 execer 的绑定
+	suite.NoError(a.checkParaTitleExecMatch(fakeParaTitle))
+	suite.NoError(a.checkCommitParaTitle(fakeParaTitle))
+
+	//分叉前保持前缀匹配(旧实现)语义
+	txs := []*types.Transaction{{Execer: []byte(realParaExec)}, {Execer: []byte(fakeParaExec)}}
+	suite.Len(filterCrossTxsByExactTitle(cfg, 10, fakeParaTitle, txs), 2)
+
+	//分叉前该入口交易(真实链execer + 伪造前缀title)按历史逻辑仍会成功——这正是漏洞当时可利用的原因
+	config := &pt.ParaNodeGroupConfig{Title: fakeParaTitle, Addrs: Account14K, Op: pt.ParacrossNodeGroupApply}
+	tx, err := signTitleTx(suite.T(), createNodeGroupConfigTx(realParaExec, config), PrivKey14K)
+	suite.Nil(err)
+	receipt, err := exec.Exec(tx, 0)
+	suite.NoError(err)
+	suite.NotNil(receipt)
+	suite.Equal(int32(types.ExecOk), receipt.Ty)
 }
 
 func TestTitleTakeoverTestSuite(t *testing.T) {
