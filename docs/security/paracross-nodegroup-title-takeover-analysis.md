@@ -222,11 +222,16 @@ title 必须为规范形式 user.p.<name>.  且  execer 必须精确等于 title
 
 ### 9.3 分叉与配置
 
-- `chain33.fork.toml`：`ForkParaTitleExecMatch=48000000`（**上线前必须按主链实际高度确认**：需大于漏洞交易高度 47805850，
-  且应大于部署时的主链高度以便全网先完成升级，否则未升级节点会在分叉高度处与升级节点行为不一致）。
+- `chain33.fork.toml`：`ForkParaTitleExecMatch=48100000`。
+  取值依据：主链当前目标出块时间 **5 秒**（`chain33.toml` 的 `[mver.consensus.ticket.ForkChainParamV2] targetTimePerBlock=5`，
+  该参数在 `chain33.fork.toml` 的 `ForkChainParamV2=1692674` 生效，当前高度已远超该分叉）；
+  **2 周 = 14×86400/5 = 241920 个区块**。以 2026-10-14 主链高度约 4783 万为锚（漏洞入口交易高度 47805850，2026-10-13），
+  最小分叉高度 ≈ 47807800，取整并留约 1.5 天余量后定为 **48100000**。
+  公式：`分叉高度 = 公告日主链高度 + 241920`（若上线推迟，按当日实际高度重算；务必大于部署时的主链高度，
+  否则未升级节点会在分叉高度处与升级节点行为不一致）。
 - 平行链/测试/CI 配置同键值：`chain33.para.toml`、`chain33.para.toml.readme`、`build/ci/{cross2eth,bridgevmxgo,rollup,rgbx}/chain33.para.toml`、
   `plugin/dapp/ticket/executor/testdata/chain33.cfg.toml`、`plugin/dapp/ticket/rpc/rpc_test.go` 置 `0`；
-  `plugin/dapp/evm/cmd/ci2/chain33.proxyminer.toml`、`build/ci/evm2/chain33.proxyminer.toml` 置 `48000000`。
+  `plugin/dapp/evm/cmd/ci2/chain33.proxyminer.toml`、`build/ci/evm2/chain33.proxyminer.toml` 置 `48100000`。
 - ⚠️ chain33 的 `initForkConfig` 会对「代码已注册但配置文件中缺失」的 fork 直接 panic，
   因此**所有**含 `[fork.sub.paracross]` 的配置文件都必须补上该键，否则节点无法启动。
 - ⚠️ 激活前必须处置/排查两类存量数据：
