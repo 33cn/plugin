@@ -500,6 +500,24 @@ func (suite *TitleTakeoverTestSuite) TestPreForkCompatibility() {
 	suite.Equal(int32(types.ExecOk), receipt.Ty)
 }
 
+// TestIsHaveCrossTxsEmptyHashs 空的 CrossTxHashs 不能让 isHaveCrossTxs 越界 panic(历史缺陷)
+func TestIsHaveCrossTxsEmptyHashs(t *testing.T) {
+	cfg := newTitleForkTestCfg(0)
+	//关闭 ForkLoopCheckCommitTxDone，走到检查 CrossTxHashs[0] 的分支
+	cfg.SetDappFork(pt.ParaX, pt.ForkLoopCheckCommitTxDone, types.MaxHeight)
+
+	//空切片：修复前这里会 index out of range
+	assert.False(t, isHaveCrossTxs(cfg, &pt.ParacrossNodeStatus{Height: 10, MainBlockHeight: 10}))
+
+	//[0]为nil：ForkCommitTx后视为没有跨链交易
+	status := &pt.ParacrossNodeStatus{Height: 10, MainBlockHeight: 10, CrossTxHashs: [][]byte{nil}}
+	assert.False(t, isHaveCrossTxs(cfg, status))
+
+	//有跨链交易
+	status.CrossTxHashs = [][]byte{[]byte("cross-tx-hash")}
+	assert.True(t, isHaveCrossTxs(cfg, status))
+}
+
 func TestTitleTakeoverTestSuite(t *testing.T) {
 	suite.Run(t, new(TitleTakeoverTestSuite))
 }

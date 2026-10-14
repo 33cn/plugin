@@ -903,7 +903,8 @@ func isHaveCrossTxs(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus) bo
 
 	haveCrossTxs := len(status.CrossTxHashs) > 0
 	//ForkCommitTx后，CrossTxHashs[][] 所有跨链交易做成一个校验hash，如果没有则[0]为nil
-	if status.Height > 0 && pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
+	//注意先判断切片非空，否则CrossTxHashs为空时下面访问[0]会越界panic
+	if haveCrossTxs && status.Height > 0 && pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
 		haveCrossTxs = false
 	}
 	return haveCrossTxs
