@@ -32,6 +32,10 @@ func (h *crossTxHandler) init(r *RollUp, status *rtypes.RollupStatus) {
 	if status.CrossTxSyncedHeight > r.cfg.StartHeight {
 		h.pulledHeight = status.CrossTxSyncedHeight
 	}
+	// 配置了手动高度时以它为准(覆盖链上值), 见 Config.CrossTxSyncedHeight
+	if r.cfg.CrossTxSyncedHeight > 0 {
+		h.pulledHeight = r.cfg.CrossTxSyncedHeight
+	}
 }
 
 func (h *crossTxHandler) addMainChainCrossTx(mainHeight int64, filterTxs []*types.Transaction) {
