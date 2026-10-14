@@ -72,7 +72,8 @@ func sendTxs(cmd *cobra.Command, _ []string) {
 }
 
 func checkTxStatus(client *ethclient.Client, txhash, txName string) bool {
-	var checkticket = time.NewTicker(time.Second * 3)
+	// 原来每 3s 查一次回执, 批量部署多笔交易时累计等待很长; 出块间隔 1~2s, 改成 500ms
+	var checkticket = time.NewTicker(time.Millisecond * 500)
 	var timeout = time.NewTicker(time.Second * 300)
 	for {
 		select {

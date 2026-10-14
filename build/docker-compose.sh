@@ -148,9 +148,17 @@ function start() {
     #docker-compose -f docker-compose.yml -f docker-compose-paracross.yml -f docker-compose-relay.yml up --build -d
     docker compose up --build -d
 
-    local SLEEP=10
-    echo "=========== sleep ${SLEEP}s ============="
-    sleep ${SLEEP}
+    # 等 chain33 RPC 就绪, 而不是固定 sleep 10(通常 3~5s 即可)
+    local waitCount=0
+    while ! docker exec "${NODE3}" /root/chain33-cli block last_header >/dev/null 2>&1; do
+        waitCount=$((waitCount + 1))
+        if [ "${waitCount}" -ge 60 ]; then
+            echo "=========== wait chain33 rpc timeout ============="
+            break
+        fi
+        sleep 1
+    done
+    echo "=========== chain33 rpc ready after ${waitCount}s ============="
 
     docker compose ps
 

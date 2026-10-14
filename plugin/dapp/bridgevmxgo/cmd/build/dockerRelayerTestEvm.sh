@@ -180,18 +180,13 @@ function TestETH2EVMToChain33() {
     result=$(${CLIA} ethereum lock -m 11 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 4
-
     # 查询 ETH 这端 bridgeBank 地址 11
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+    result=$(wait_cli ".balance" "11" "${LOCK_SETTLE_TIMEOUT}" "evm eth lock 上账" ${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "11"
 
-    sleep "${maturityDegree}"
-
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
+    result=$(wait_output "1100000000" "${RELAYER_SETTLE_TIMEOUT}" "evm chain33 lock 入账" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "1100000000"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33MainBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
@@ -229,17 +224,12 @@ function Testethereum2EVMToChain33_usdt() {
     result=$(${CLIA} ethereum lock -m 12 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 4
-
     # 查询 ETH 这端 bridgeBank 地址 12
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(wait_cli ".balance" "12" "${LOCK_SETTLE_TIMEOUT}" "evm eth usdt lock 上账" ${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "12"
 
-    sleep "${maturityDegree}"
-
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(wait_output "1200000000" "${RELAYER_SETTLE_TIMEOUT}" "evm chain33 usdt lock 入账" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "1200000000"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33USDTBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
