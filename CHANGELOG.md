@@ -1,5 +1,17 @@
 changelog
 
+## [1.75.1](https://github.com/33cn/plugin/compare/v1.75.0...v1.75.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **testnode:** set ForkParaFee before the para node starts ([97f20f4](https://github.com/33cn/plugin/commit/97f20f4e613b1b5b16fadad64227500ee344478d))
+
+
+### Performance Improvements
+
+* **ci:** cut cross2eth/bridgevmxgo integration runtime with bounded polling ([a0fd866](https://github.com/33cn/plugin/commit/a0fd8663f5e80f89d33c046b9a9982cc5176ff7f))
+
 # [1.75.0](https://github.com/33cn/plugin/compare/v1.74.0...v1.75.0) (2026-10-14)
 
 
