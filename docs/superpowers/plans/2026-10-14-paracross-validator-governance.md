@@ -30,6 +30,7 @@
 4. **急停期间的挂起提现（ExecPack）** —— 必须不执行也不改状态，且**不能**让 commit 报错停链。
 5. **未升级节点 / 配置文件缺 fork 键** —— 节点启动 panic 或分叉后静默分叉。
 6. **重复 Activate** —— 第二次必须失败，不能重复写集合或回退版本号。
+7. **阈值注入** —— `ParamApply` 必须校验数值随提案交易 hash 绑定（同一 `Id`），否则任何持有已批准 item 的人都能把阈值设成任意值；同时阈值变更不得改变在途提案的档位。
 
 ## File Structure
 
@@ -68,35 +69,40 @@
   - `pt.ParacrossCrossChainDisable=9`、`ParacrossCrossChainEnable=10`
   - `pt.ParacrossSupValidatorSetPropose=11`、`...Approve=12`、`...Cancel=13`、`...Activate=14`
   - `pt.ParaValidatorSetPending=0`、`ParaValidatorSetApproved=1`、`ParaValidatorSetCancelled=2`、`ParaValidatorSetActivated=3`
+  - `pt.ParacrossValidatorSetParamPropose=15`、`pt.ParacrossValidatorSetParamApply=16`（分档阈值治理）
   - `pt.ParaValidatorSetTierLow=0`、`ParaValidatorSetTierHigh=1`
   - `pt.TyLogParaValidatorSetConfig = 684`（新日志类型，并加入 `ParacrossType.GetLogMap`）
   - 错误常量：`pt.ErrValidatorSetNotEffective`、`pt.ErrValidatorSetPendingExists`、`pt.ErrValidatorSetNoActive`、`pt.ErrCrossChainDisabled`（加入 `types/errors.go`）
-  - `executor.validatorSetParams(cfg *types.Chain33Config) (threshold, delayHigh, delayLow int64)`
+  - `executor.validatorSetParams(cfg *types.Chain33Config) (delayHigh, delayLow int64)`（仅延迟；阈值不再来自配置）
+  - `executor.validatorSetThresholdDefault(cfg *types.Chain33Config) int64` = `100000 × cfg.GetCoinPrecision()`（链上无阈值 key 时的默认值）
+  - `calcValidatorSetThresholdKey() []byte` → `mavl-paracross-valset-threshold`
+  - `calcValidatorSetParamChangeKey() []byte` → `mavl-paracross-valset-paramchange`
 
 - [ ] **Step 1: 写失败测试** `plugin/dapp/paracross/executor/valsetparam_test.go`
 
 ```go
 func TestValidatorSetParamsDefault(t *testing.T) {
-    threshold, delayHigh, delayLow := validatorSetParams(chain33TestMainCfg)
-    assert.Equal(t, int64(100000)*chain33TestMainCfg.GetCoinPrecision(), threshold)
+    delayHigh, delayLow := validatorSetParams(chain33TestMainCfg)
     assert.Equal(t, int64(8640), delayHigh)
     assert.Equal(t, int64(60480), delayLow)
+    assert.Equal(t, int64(100000)*chain33TestMainCfg.GetCoinPrecision(), validatorSetThresholdDefault(chain33TestMainCfg))
 }
 
 func TestValidatorSetParamsFromConf(t *testing.T) {
     cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
-    cfg.S("config.exec.sub.paracross.validatorSetHighValueThreshold", int64(500))
     cfg.S("config.exec.sub.paracross.validatorSetDelayBlocksHigh", int64(10))
     cfg.S("config.exec.sub.paracross.validatorSetDelayBlocksLow", int64(20))
-    threshold, delayHigh, delayLow := validatorSetParams(cfg)
-    assert.Equal(t, int64(500), threshold)
+    delayHigh, delayLow := validatorSetParams(cfg)
     assert.Equal(t, int64(10), delayHigh)
     assert.Equal(t, int64(20), delayLow)
 }
 ```
 
+注意：分档阈值**不得**从配置读取，只有延迟参数走配置。
+
 - [ ] **Step 2: 运行确认失败** — `go test ./plugin/dapp/paracross/executor/ -run TestValidatorSetParams -v` → 编译错误 `undefined: validatorSetParams`。
-- [ ] **Step 3: 加常量与实现** — 按上面 Interfaces 加常量；`valsetparam.go` 用 `types.ConfSub(cfg, pt.ParaX).GInt(key)` 读取，key 缺省或 ≤0 时回落到默认值（阈值默认 `100000 * cfg.GetCoinPrecision()`）。
+
+- [ ] **Step 3: 加常量与实现** — 按上面 Interfaces 加常量与 key；`valsetparam.go` 用 `types.ConfSub(cfg, pt.ParaX).GInt(key)` 读取延迟，key 缺省或 ≤0 时回落 8640/60480。
 - [ ] **Step 4: 运行确认通过** — `go test ./plugin/dapp/paracross/executor/ -run TestValidatorSetParams -v` → PASS。
 - [ ] **Step 5: 提交** — `git add -A && git commit -m "feat(paracross): add validator set governance fork, ops and params"`
 
@@ -121,6 +127,8 @@ func TestValidatorSetParamsFromConf(t *testing.T) {
   - `(a *action) getValidatorSetChange(kind, title string) (*paraValidatorSetChange, error)`（不存在返回 `pt.ErrKeyNotExist`）
   - `(a *action) saveValidatorSetChange(kind string, c *paraValidatorSetChange) *types.KeyValue`
   - `(a *action) validatorSetVersion(kind, title string) uint64`（不存在返回 0）
+  - `(a *action) validatorSetThreshold() int64`（读 `mavl-paracross-valset-threshold`，缺失回落 `validatorSetThresholdDefault(cfg)`）
+  - `(a *action) getValidatorSetParamChange() (id string, value int64, ok bool)` / `(a *action) saveValidatorSetParamChange(id string, value int64) *types.KeyValue`
   - 编码格式 v1（全部大端）：`u8 version=1`，随后依次为长度前缀字符串 `Id`、`FromAddr`、`AutonomyItemID`，`u32 count` + 逐项长度前缀 `NewAddrs`，`u32 count` + 逐项长度前缀 `NewBlsPubKeys`，`i64` × 5（`ProposeMainHeight`、`LockedAssets`、`ApprovalMainHeight`、`EffectiveMainHeight`、版本号），`u8 tier`、`u8 status`、`u8 approved`。`Title` 不进编码（由 key 推导，读取时回填）。
 
 - [ ] **Step 1: 写失败测试** — `TestValidatorSetChangeEncodeDecodeRoundTrip`（构造含 2 个 addr/blspub 的完整结构，编码→解码，`assert.Equal` 全字段）、`TestValidatorSetChangeDecodeRejectsBadVersion`（首字节改 9 → 返回 error）、`TestValidatorSetChangeDecodeRejectsTruncated`（截断一半 → error）、`TestValidatorSetChangeKeyLayout`（断言三个 key 的字符串前缀为 `mavl-paracross-valset-super-`）。
@@ -153,7 +161,7 @@ func TestValidatorSetParamsFromConf(t *testing.T) {
   - `TestValidatorSetProposeRejectsWhenNoActiveSet`：该 title 无生效集合 → `errors.Cause(err)==pt.ErrValidatorSetNoActive`。
   - `TestValidatorSetProposeHighTier`：`setExecAccountBalance(Title+pt.ParaX, 100000*precision+1)` → `Tier==ParaValidatorSetTierHigh` 且 `EffectiveMainHeight==0`（未批准前为 0）。
 - [ ] **Step 2: 运行确认失败** — `go test ./plugin/dapp/paracross/executor/ -run TestValidatorSetPropose -v` → FAIL。
-- [ ] **Step 3: 实现** — 前置校验顺序：fork → `checkParaTitleExecMatch` → 已有生效集合（`activeValidatorSet` 非空）→ 无 pending/approved 提案 → addrs/blspubs 数量相等非空 → 去重排序（addr 与 bls 配对后按 addr 排序）→ 与当前集合不同；随后 `lockedAssets` 定档、写提案 KV、发 log `pt.TyLogParaValidatorSetConfig`（log 结构沿用现有 `pt.ReceiptParaNodeGroupConfig`）。
+- [ ] **Step 3: 实现** — 前置校验顺序：fork → `checkParaTitleExecMatch` → 已有生效集合（`activeValidatorSet` 非空）→ 无 pending/approved 提案 → addrs/blspubs 数量相等非空 → 去重排序（addr 与 bls 配对后按 addr 排序）→ 与当前集合不同；随后 `lockedAssets` 与 `a.validatorSetThreshold()` 比较定档（阈值来自链上治理参数，缺失时用代码默认值），写提案 KV、发 log `pt.TyLogParaValidatorSetConfig`（log 结构沿用现有 `pt.ReceiptParaNodeGroupConfig`）。
 - [ ] **Step 4: 运行确认通过** — 同上 → PASS。
 - [ ] **Step 5: 提交** — `git commit -m "feat(paracross): add validator set change proposal"`
 
@@ -254,11 +262,37 @@ func TestValidatorSetParamsFromConf(t *testing.T) {
 
 ---
 
-### Task 8: 急停开关
+### Task 8: 分档阈值治理化（ParamPropose / ParamApply）
+
+**Files:**
+- Modify: `plugin/dapp/paracross/executor/valset.go`、`plugin/dapp/paracross/executor/superaccount.go`（op=15/16 分发）
+- Test: `plugin/dapp/paracross/executor/valset_test.go`
+
+**Interfaces:**
+- Consumes: Task 1（op 15/16、阈值 key）、Task 2（`validatorSetThreshold`、param-change 读写）、Task 4（`checkValidatorSetGovernance`）
+- Produces:
+  - `(a *action) validatorSetParamPropose(config *pt.ParaNodeGroupConfig) (*types.Receipt, error)` —— 新阈值承载于 `config.CoinsFrozen`，写 `{id = 本交易 hash, value}`，**不改**生效阈值
+  - `(a *action) validatorSetParamApply(config *pt.ParaNodeGroupConfig) (*types.Receipt, error)` —— 校验 `IsAutonomyApprovedItem(config.AutonomyItemID, config.Id)` 后写阈值 KV 并删除待应用提案
+
+- [ ] **Step 1: 写失败测试**
+  - `TestValidatorSetParamProposeWritesOnlyPending`：提案后 `validatorSetThreshold()` 仍为默认值，待应用提案已存在。
+  - `TestValidatorSetParamProposeRejectsZeroAndSame`：新阈值 ≤ 0 或等于当前值 → error。
+  - `TestValidatorSetParamProposeRejectsSecondPending` → `pt.ErrValidatorSetPendingExists`。
+  - `TestValidatorSetParamApplyRequiresGovernance`：非治理地址 → `types.ErrNotAllow`。
+  - `TestValidatorSetParamApplyBindsValue`：`Id` 与提案交易 hash 不匹配 → error（Review Focus 7：数值注入）。
+  - `TestValidatorSetParamApplyKeepsPendingProposalTier`：先 Propose 一个集合变更提案（低价值档），再把阈值调低并 Apply → 在途提案的 `Tier` 与 `EffectiveMainHeight` **不变**（Review Focus 7：快照）。
+- [ ] **Step 2: 运行确认失败** → FAIL。
+- [ ] **Step 3: 实现** — 复用 Task 4 的治理校验；`ParamApply` 成功后写阈值并删除待应用提案。
+- [ ] **Step 4: 运行确认通过** → PASS。
+- [ ] **Step 5: 提交** — `git commit -m "feat(paracross): governance voted validator set tier threshold"`
+
+---
+
+### Task 9: 急停开关
 
 **Files:**
 - Create: `plugin/dapp/paracross/executor/circuitbreaker.go`
-- Modify: `plugin/dapp/paracross/executor/query.go`（可选：开关状态并入 Task 7 的 JSON）
+- Modify: `plugin/dapp/paracross/executor/query.go`（可选：开关与阈值状态并入 Task 7 的 JSON）
 - Test: `plugin/dapp/paracross/executor/circuitbreaker_test.go`
 
 **Interfaces:**
@@ -284,7 +318,7 @@ func TestValidatorSetParamsFromConf(t *testing.T) {
 
 ---
 
-### Task 9: 急停生效点（提交 + 挂起执行）
+### Task 10: 急停生效点（提交 + 挂起执行）
 
 **Files:**
 - Modify: `plugin/dapp/paracross/executor/asset.go`（提交入口）、`plugin/dapp/paracross/executor/action.go`（`execCrossTxs`）
@@ -310,7 +344,7 @@ func TestValidatorSetParamsFromConf(t *testing.T) {
 
 ---
 
-### Task 10: 配置文件补分叉键
+### Task 11: 配置文件补分叉键
 
 **Files:**
 - Modify: `chain33.fork.toml`、`chain33.para.toml`、`chain33.para.toml.readme`、`plugin/dapp/evm/cmd/ci2/chain33.proxyminer.toml`、`plugin/dapp/ticket/executor/testdata/chain33.cfg.toml`、`plugin/dapp/ticket/rpc/rpc_test.go`、`build/ci/{cross2eth,bridgevmxgo,rollup,rgbx}/chain33.para.toml`、`build/ci/evm2/chain33.proxyminer.toml`
@@ -335,13 +369,13 @@ Expected: 列出全部文件为 MISSING。
 
 ---
 
-### Task 11: 集成与一致性测试
+### Task 12: 集成与一致性测试
 
 **Files:**
 - Create: `plugin/dapp/paracross/executor/valset_integration_test.go`
 
 **Interfaces:**
-- Consumes: Task 1–9 全部
+- Consumes: Task 1–10 全部（含 Task 8 阈值治理）
 - Produces: 端到端用例，证明主链与平行链执行同一批交易后状态一致
 
 - [ ] **Step 1: 写失败测试**
@@ -355,17 +389,18 @@ Expected: 列出全部文件为 MISSING。
 
 ---
 
-### Task 12: CLI 与运维文档
+### Task 13: CLI 与运维文档
 
 **Files:**
 - Modify: `plugin/dapp/paracross/commands/paracross.go`
 - Modify: `plugin/dapp/paracross/executor/superaccount.md`（或新增 `docs/` 运维章节）
 
 **Interfaces:**
-- Consumes: Task 7/8 的查询与 op
+- Consumes: Task 7/8/9 的查询与 op
 - Produces:
   - `paracross valset propose|approve|cancel|activate`（参数：paraName、addrs、blspubs、id、autonomyItemID）
   - `paracross crosschain disable|enable --paraName --reason`
+  - `paracross valset threshold propose --coins <newThreshold> --autonomyItemID <id>` / `paracross valset threshold apply --id <proposalTxHash> --autonomyItemID <id>`
   - `paracross valset status --paraName`
   - 运维文档：变更生命周期、急停/恢复 SOP、监控项（`valset pending` 年龄、`tier`、紧停开关状态）
 
@@ -379,6 +414,6 @@ Expected: 列出全部文件为 MISSING。
 
 ## 自检记录
 
-- **Spec 覆盖**：第 5 节→Task 3-6；第 6 节→Task 1-2；第 7 节→Task 3-5；第 8 节→Task 6；第 9 节→Task 4；第 10 节→Task 8-9；第 11 节→Task 10-11；第 12 节→不在本期（仅路线）；第 13 节→Task 6（bootstrap 不变）+ Task 11；第 14 节→Task 10-12；第 15 节→各任务测试 + Task 11。
-- **类型一致性**：`paraValidatorSetChange` 字段、`validatorGroupSuper/Supervision`、`validatorSetParams`、`checkValidatorSetGovernance`、`checkCrossChainEnabled` 在 Task 1–12 中命名一致。
-- **Review Focus**：6 项分别落在 Task 4（治理缺失）、Task 5（生效边界/幂等）、Task 3（重复提案）、Task 9（挂起提现与 commit 不停链）、Task 10（配置缺键）、Task 5（重复 Activate）的测试步骤中。
+- **Spec 覆盖**：第 5 节→Task 3-6；第 6 节→Task 1-2、Task 8（阈值治理化 6.5）；第 7 节→Task 3-5、Task 8（阈值状态机）；第 8 节→Task 6；第 9 节→Task 4、Task 8；第 10 节→Task 9-10；第 11 节→Task 11-12；第 12 节→不在本期（仅路线）；第 13 节→Task 6（bootstrap 不变）+ Task 12；第 14 节→Task 11-13；第 15 节→各任务测试 + Task 12。
+- **类型一致性**：`paraValidatorSetChange` 字段、`validatorGroupSuper/Supervision`、`validatorSetParams`、`validatorSetThreshold`、`validatorSetThresholdDefault`、`checkValidatorSetGovernance`、`checkCrossChainEnabled` 在 Task 1–13 中命名一致。
+- **Review Focus**：7 项分别落在 Task 4（治理缺失）、Task 5（生效边界/幂等）、Task 3（重复提案）、Task 10（挂起提现与 commit 不停链）、Task 11（配置缺键）、Task 5（重复 Activate）、Task 8（阈值注入与在途提案快照）的测试步骤中。

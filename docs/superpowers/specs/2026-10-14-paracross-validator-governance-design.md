@@ -111,6 +111,10 @@ ParacrossValidatorSetCancel   = 7
 ParacrossValidatorSetActivate = 8
 ParacrossCrossChainDisable    = 9
 ParacrossCrossChainEnable     = 10
+// 监督节点组：Propose=11 / Approve=12 / Cancel=13 / Activate=14
+// 分档阈值治理：ParamPropose=15 / ParamApply=16
+ParacrossValidatorSetParamPropose = 15
+ParacrossValidatorSetParamApply   = 16
 ```
 
 字段映射：`Title`=平行链 title；`Addrs`=新集合地址（逗号分隔）；`BlsPubKeys`=与 `Addrs` 一一对应的 BLS 公钥；`Id`=提案 id；`AutonomyItemID`=治理批准项 id。
@@ -122,6 +126,8 @@ ParacrossCrossChainEnable     = 10
 | `mavl-paracross-valset-change-<title>` | 当前待生效提案（第 6.3 节结构） | Propose/Approve/Cancel |
 | `mavl-paracross-valset-version-<title>` | 当前生效版本号 `uint64` | Activate |
 | `mavl-paracross-valset-history-<title>-<version>` | 该版本的集合与 `ActiveFromMainHeight` | Activate（供 Phase 2 追责） |
+| `mavl-paracross-valset-threshold` | 全局分档阈值（int64，coin 精度） | ParamApply |
+| `mavl-paracross-valset-paramchange` | 待应用阈值提案 `{id, value}` | ParamPropose（Apply 后删除） |
 | `mavl-paracross-crosschain-switch-<title>` | 急停状态结构 | Disable/Enable |
 | `mavl-paracross-nodes-title-<title>` | **现有 key，仅 Activate 改写** | Activate |
 | `mavl-paracross-nodes-titleAddr-<title>-<addr>` | **现有 key**，每节点状态与 BLS 公钥 | Activate（复用 `nodeGroupCreate` 的写入逻辑） |
@@ -153,19 +159,33 @@ type ParaCrossChainSwitch struct {
 }
 ```
 
-### 6.4 参数与默认值（从链配置读取，口径同 `nodeGroupFrozenCoins`）
+### 6.4 参数与决定方式
 
-| 参数 | 默认值 | 说明 |
+| 参数 | 初始/默认值 | 决定方式 |
 |---|---|---|
-| `validatorSetHighValueThreshold` | `100000` × coinPrecision | 高/低价值分档阈值（默认 10 万 BTY） |
-| `validatorSetDelayBlocksHigh` | `8640` | 治理批准后的锁定期（按 10s/块 ≈ 1 天） |
-| `validatorSetDelayBlocksLow` | `60480` | 未获治理批准的低价值档锁定期（≈ 7 天） |
+| 分档阈值（`mavl-paracross-valset-threshold`） | `100000` × coinPrecision（10 万 BTY） | **主链治理投票**（见 6.5）；链上无该 key 时用代码默认值 |
+| `validatorSetDelayBlocksHigh` | `8640` | 分叉参数（链配置，按 10s/块 ≈ 1 天） |
+| `validatorSetDelayBlocksLow` | `60480` | 分叉参数（链配置，≈ 7 天） |
+
+阈值**不得**以代码常量或节点配置作为运行值：它由主链治理投票决定，代码默认值只在链上尚无该 key 时生效。延迟仍走链配置（口径同现有 `nodeGroupFrozenCoins`）。
 
 延迟一律按**主链区块高度**计算，不使用墙钟时间（共识确定性）：
 
 - 已批准（高或低价值档）：`EffectiveMainHeight = ApprovalMainHeight + validatorSetDelayBlocksHigh`
 - 未批准且低价值档：`EffectiveMainHeight = ProposeMainHeight + validatorSetDelayBlocksLow`
 - 高价值档未获批准：**不可激活**（`Activate` 失败）
+
+### 6.5 阈值治理化（两段式）
+
+分档阈值由主链治理投票决定，流程复用现有 autonomy `PropItem`（董事会对某笔交易 hash 投票），与现有 `NodeGroupApply → autonomy item → NodeGroupApprove` 完全同构：
+
+1. `ParamPropose`（op=15）：新阈值承载于 `ParaNodeGroupConfig.CoinsFrozen`，写入 `{id = 本交易 hash, value}`；**不改生效阈值**；
+2. 董事会针对该提案交易 hash 发起 autonomy item 并投票通过；
+3. `ParamApply`（op=16）：携带 `AutonomyItemID` 与 `Id`（= 提案交易 hash），校验 `IsAutonomyApprovedItem` 通过后写入 `mavl-paracross-valset-threshold`，并删除待应用提案。
+
+**必须两段式的原因**：autonomy item 只能绑定一个交易 hash；若只用一笔交易（数值写在 item 描述里），链上无法证明董事会批准的就是该数值，任何持有该 itemID 的人都能提交任意阈值。两段式让「提案交易 hash」同时绑定「新数值」。
+
+阈值变更**立即生效**，但**只影响此后新提交的提案**——提案在 `Propose` 时已快照 `Tier`，阈值变化不得改变已存在提案的档位（否则等于绕过时间锁）。阈值变更不影响任何链的锁定资产，因此不设额外时间锁。
 
 ## 7. 状态机
 
@@ -195,6 +215,7 @@ type ParaCrossChainSwitch struct {
 4. **Activate**：任何人可发；必须同时满足 —— 提案状态为 `PENDING/APPROVED`、`mainHeight ≥ EffectiveMainHeight`、`tier==0 || Approved`、目标版本号 > 当前版本号。执行内容：写入集合与每节点状态（复用 `nodeGroupCreate` 的写入路径）、`valset-version+1`、`valset-history` 记录、提案状态置 `ACTIVATED`。
 5. **幂等**：同版本重复 Activate 失败；`Activated/Cancelled` 状态的提案不可再 Approve/Activate。
 6. 所有状态变更都产生独立的 receipt log（含 title、提案 id、新版本号、生效高度），便于索引与监控。
+7. **阈值状态机**：`ParamPropose` 要求新阈值 > 0、与当前生效阈值不同、且当前无待应用提案；`ParamApply` 要求待应用提案存在、`Id` 与其绑定、治理校验通过；应用后阈值立即对**此后**的 `Propose` 生效，已存在提案的 `Tier` 不变。
 
 ## 8. 变更入口接管
 
@@ -213,7 +234,8 @@ type ParaCrossChainSwitch struct {
 - 治理批准项（autonomy item）的发起方式不在本设计范围内改变：沿用现有流程——由平行链治理在主链 autonomy 发起提案、board 成员投票通过后 `IsAutonomyApprovedItem(itemID, proposalId)` 返回成功。本设计的 `Approve` 交易只是**校验并记录**该批准结果，不改变 autonomy 自身的投票机制；
 - 判定只在主链执行（`if !cfg.IsPara()`），平行链跟随主链执行结果，与现有 `nodeGroupApprove` 的模式一致；
 - 高价值档必须批准；低价值档可选择批准以把等待期从 7 天缩短到 1 天；
-- 批准后 1 天窗口内治理可撤销；`Activate` 之前任意时刻治理与提案人均可撤销。
+- 批准后 1 天窗口内治理可撤销；`Activate` 之前任意时刻治理与提案人均可撤销；
+- 分档阈值同样由治理投票决定（6.5），但走独立的 `ParamPropose/ParamApply` 两段式：阈值是全局参数、影响此后所有提案的档位，因此不复用单个 title 的提案对象。
 
 ## 10. 跨链急停
 
@@ -275,7 +297,8 @@ type ParaCrossChainSwitch struct {
 - 分档边界：锁定资产 = 阈值、阈值 + 1；
 - 延迟边界：`EffectiveMainHeight - 1`（失败）、`EffectiveMainHeight`（成功）；
 - 幂等：同版本重复 Activate 失败；
-- 急停：新提交被拒（双向）、挂起提现不执行、恢复后可执行、无治理批准不可切换。
+- 急停：新提交被拒（双向）、挂起提现不执行、恢复后可执行、无治理批准不可切换；
+- 阈值治理：未批准 `ParamApply` 失败、`Id` 与提案不匹配失败、重复 `ParamPropose` 失败、应用后新提案按新阈值分档且已有提案档位不变、链上无 key 时回落到代码默认值。
 
 **集成测试（testnode，主链 + 平行链）**
 
@@ -307,6 +330,7 @@ type ParaCrossChainSwitch struct {
 | 5 | 实现方案 | 验证人集合状态机 + 延迟到点后显式激活（commit 读路径不变） |
 | 6 | 首次建集合 | 保持现有自由注册（状态机只管"已有集合的更换"） |
 | 7 | 急停 | 治理可控、**双向**切断跨链（含入金），恢复后挂起提现可执行 |
+| 8 | 分档阈值 | 由**主链治理投票**决定（链上参数，初始 10 万 BTY），两段式 ParamPropose/ParamApply 绑定数值；批准后立即生效、只影响此后新提案 |
 
 ## 17. 假设与默认口径（如需变更请在实施前提出）
 
@@ -314,6 +338,6 @@ type ParaCrossChainSwitch struct {
 2. **锁定资产口径** = `dapp.ExecAddress("user.p.<name>.paracross")` 的 coin 余额（token 暂不计入），在 `Propose` 时快照定档；
 3. **同一时刻仅一个待生效提案**，新提案必须等前一个 Activate/Cancel 之后；
 4. **提案 id** = `Propose` 交易的 hash；`Cancel` 权限 = 治理或提案发起地址；
-5. **延迟与阈值参数** 走链配置（第 6.4 节默认值），非治理可调参数；后续可迁移为治理参数；
+5. **延迟参数**（1 天/7 天）走链配置；**分档阈值**由主链治理投票决定（第 6.5 节），代码默认值仅在链上无该 key 时生效；
 6. **监督节点组** 与超级节点组同样纳入本状态机；
 7. **版本号** 从 1 开始，已有节点组视为 version 1。

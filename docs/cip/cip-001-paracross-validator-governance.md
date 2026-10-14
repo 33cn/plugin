@@ -14,7 +14,7 @@ discussions-to: https://github.com/33cn/plugin/issues
 
 本提案把 paracross 平行链**验证人集合的更换**从"节点组内部 2/3 投票达成即生效"改为"**平行链提案 → 主链分档治理/时间锁 → 显式激活**"，并新增**主链治理可控的双向跨链急停**。
 
-分档规则：平行链锁定资产高于阈值（默认 10 万 BTY）时，更换**必须**经主链治理批准，批准后仍有 1 天锁定期且治理可在窗口内撤销；低于或等于阈值且未获治理批准时，更换需经历 7 天锁定。生效一律由显式 `Activate` 交易在到点后完成，commit 校验的读路径保持不变。
+分档规则：平行链锁定资产高于阈值（初始 10 万 BTY）时，更换**必须**经主链治理批准，批准后仍有 1 天锁定期且治理可在窗口内撤销；低于或等于阈值且未获治理批准时，更换需经历 7 天锁定。**阈值本身由主链治理投票决定**（链上参数，见"阈值治理化"），不由代码常量或节点配置固定。生效一律由显式 `Activate` 交易在到点后完成，commit 校验的读路径保持不变。
 
 本提案**不**声称解决"多数验证人联合作恶"。主链对平行链状态的独立验证（挑战期、欺诈证明、罚没、zk）列为 Phase 2 路线，见"实施路线"。
 
@@ -41,15 +41,15 @@ paracross 的跨链权限模型把「节点组（super node group）」当作唯
 - 新分叉开关：`paracross.ForkParaValidatorSet`。所有新增逻辑**必须**由该分叉开启；未达分叉高度时行为与现状逐字节一致。
 - 分叉判定**必须**使用 `cfg.IsDappFork(<主链高度>, "paracross", ForkParaValidatorSet)`。**不得**使用 `IsParaForkHeight`/`GetDappForkHeight`：该函数对未映射的 key 在平行链上会 panic。
 - 平行链**必须**在 `[fork.sub.paracross]` 配置与主链相同的主链高度；所有包含 `[fork.sub.paracross]` 的配置文件**必须**补上该键，否则 chain33 `initForkConfig` 会使节点启动失败。
-- 参数（从链配置 `config.exec.sub.paracross.*` 读取，缺省回落默认值）：
+- 参数与决定方式：
 
-| 参数 | 默认值 | 含义 |
+| 参数 | 初始/默认值 | 决定方式 |
 |---|---|---|
-| `validatorSetHighValueThreshold` | `100000 × coinPrecision` | 高/低价值分档阈值 |
-| `validatorSetDelayBlocksHigh` | `8640` | 治理批准后的锁定期（主链区块数，约 1 天） |
-| `validatorSetDelayBlocksLow` | `60480` | 未获治理批准的低价值档锁定期（约 7 天） |
+| 分档阈值 `mavl-paracross-valset-threshold` | `100000 × coinPrecision`（10 万 BTY） | **主链治理投票**（见下节"阈值治理化"）；链上无该 key 时读取代码默认值 |
+| `validatorSetDelayBlocksHigh` | `8640`（约 1 天） | 分叉参数（链配置 `config.exec.sub.paracross.*`） |
+| `validatorSetDelayBlocksLow` | `60480`（约 7 天） | 分叉参数（链配置 `config.exec.sub.paracross.*`） |
 
-延迟**必须**按主链区块高度计算，**不得**使用墙钟时间。
+延迟**必须**按主链区块高度计算，**不得**使用墙钟时间。阈值**不得**以代码常量或配置文件作为运行值——它由主链治理投票决定，代码默认值只在链上尚无该 key 时生效。
 
 ### 数据结构
 
@@ -64,6 +64,8 @@ paracross 的跨链权限模型把「节点组（super node group）」当作唯
 | 9 | `ParacrossCrossChainDisable` | 急停：切断该链跨链资金来往 |
 | 10 | `ParacrossCrossChainEnable` | 解除急停 |
 | 11–14 | `ParacrossSupValidatorSet{Propose,Approve,Cancel,Activate}` | 监督节点组的同一状态机 |
+| 15 | `ParacrossValidatorSetParamPropose` | 提交分档阈值修改提案（值随交易绑定） |
+| 16 | `ParacrossValidatorSetParamApply` | 治理批准后应用新阈值 |
 
 - 提案状态常量：`ParaValidatorSetPending=0`、`Approved=1`、`Cancelled=2`、`Activated=3`；分档常量：`ParaValidatorSetTierLow=0`、`TierHigh=1`。
 - 新增错误：`ErrValidatorSetNotEffective`、`ErrValidatorSetPendingExists`、`ErrValidatorSetNoActive`、`ErrCrossChainDisabled`。
@@ -93,6 +95,8 @@ type paraValidatorSetChange struct {
 | `mavl-paracross-valset-<kind>-history-<title>-<version>` | 该版本的集合与生效高度（供 Phase 2 追责） | Activate |
 | `mavl-paracross-nodes-title-<title>` | 现有 key，**仅 Activate 改写** | Activate（节点组） |
 | `mavl-paracross-supervision-nodes-title-<title>` | 现有 key，**仅 Activate 改写** | Activate（监督组） |
+| `mavl-paracross-valset-threshold` | 全局分档阈值（coin 精度单位，int64） | ParamApply |
+| `mavl-paracross-valset-paramchange` | 待应用阈值提案 `{id=提案交易 hash, value}` | ParamPropose（Apply 后删除） |
 | `mavl-paracross-crosschain-switch-<title>` | 急停高度；**key 存在即禁用** | Disable/Enable（Enable 时删除） |
 | `mavl-paracross-crosschain-switchinfo-<title>` | `{reason, autonomyItemID}` | Disable |
 
@@ -137,6 +141,18 @@ type paraValidatorSetChange struct {
 
 即：**内部 2/3 投票达成不等于生效**。平行链侧的提案与投票仍由平行链自己完成，主链新增的是治理闸门与时间锁。
 
+### 阈值治理化
+
+分档阈值**必须**由主链治理投票决定，且**不得**允许任何人凭一个已获批准的治理项提交任意数值。流程复用现有 autonomy `PropItem`（董事会对某笔交易 hash 投票），两段式：
+
+1. `ParacrossValidatorSetParamPropose`（op=15）：携带新阈值（承载于 `CoinsFrozen` 字段），写入待应用提案 `{id = 本交易 hash, value}`；**不改变**当前生效阈值；
+2. 董事会针对该提案交易 hash 发起 autonomy item 并投票通过；
+3. `ParacrossValidatorSetParamApply`（op=16）：携带 `AutonomyItemID` 与 `Id`（= 提案交易 hash），校验 `IsAutonomyApprovedItem(AutonomyItemID, Id)` 成功后写入 `mavl-paracross-valset-threshold`。
+
+**为什么必须两段式**：autonomy item 只能绑定一个交易 hash。若只允许一笔交易（把新数值放在 item 描述中），链上无法证明董事会批准的就是该数值——任何持有同一 itemID 的人都能提交任意阈值。两段式让「提案交易 hash」同时绑定「新数值」，与现有 `NodeGroupApply → autonomy item → NodeGroupApprove` 的安全边界一致。
+
+阈值变更**立即生效**，但**只影响此后新提交的提案**：提案在 `Propose` 时已快照其 `Tier`，阈值变化**不得**改变已存在提案的档位。变更本身不改变任何链的锁定资产，因此不设额外时间锁。
+
 ### 跨链急停
 
 - 粒度：per 平行链 title。触发与解除**必须**经治理批准（autonomy 项或超级管理员），并链上记录原因与设置高度。
@@ -158,6 +174,7 @@ type paraValidatorSetChange struct {
 - **延迟用主链高度而非时间**：区块高度在所有节点上确定，墙钟时间不是共识输入。
 - **高价值链 1 天 + 治理批准、低价值链 7 天免批准**：高价值链的额外风险由治理承担，因此给更短的窗口但必须有批准；低价值链用更长的窗口替代治理介入，兼顾开链效率。
 - **首次建组不收紧**：主链不存在平行链注册表，无法在合约内判定 title 真伪；收紧会改变既定共识语义与开链流程。该缺口作为已接受风险记录，并由急停与监控缓解。
+- **阈值由治理投票而非代码/配置**：阈值决定哪些链必须走治理批准，把它固定在代码或各节点配置里，既无法随生态规模调整，也可能因配置不一致引发两侧判断分歧。放进链上治理后，取值全网唯一、可审计，且调整只影响后续提案。
 
 ## 向后兼容
 
@@ -179,6 +196,12 @@ type paraValidatorSetChange struct {
 - 现有集合多数联合作恶仍可按旧规则签名并提交伪造 commit 盗取资产（无欺诈证明与罚没）——需 Phase 2；
 - 治理被控的风险：被控治理可以批准恶意变更、滥用急停（只能"停"不能"取"，但可造成跨链拒绝服务）。
 
+**阈值治理的安全边界**
+
+- 阈值修改**必须**经治理投票，且 `ParamApply` 只接受「值已随提案交易上链并被同一 hash 绑定」的提案，因此不存在"拿着已批准 item 提交任意阈值"的注入路径；
+- 阈值变更立即生效但不回溯：已存在提案的分档在其 `Propose` 时已快照，治理无法用改阈值的方式追溯改变某个在途提案的档位（否则等于绕过时间锁）；
+- 治理被控时可以把阈值调到极高或极低，从而改变未来提案的档位要求，但**不得**直接改变任何链的锁定资产或绕过既有时间锁——这类滥用会留下完整链上记录。
+
 **残留风险**
 
 - 首次建组仍为自由注册：无生效集合的平行链仍可能被他人抢先建立集合，此后才受时间锁保护。缓解：急停止血；监控"已有平行链 title 出现新节点组/自审批"。
@@ -196,6 +219,7 @@ type paraValidatorSetChange struct {
 - 延迟边界：`EffectiveMainHeight - 1` 失败、`EffectiveMainHeight` 成功；
 - 主链/平行链一致性：同一批交易在两侧执行后集合 KV 与 BLS 公钥逐字节相同；
 - 回滚：丢弃 Activate 的 receipt KV 后版本号与集合回到旧值；
+- 阈值治理：未经治理批准的 `ParamApply` 必须失败；携带与提案交易 hash 不匹配的 `Id` 必须失败；应用后新提案按新阈值分档、**已有提案档位不变**；
 - 急停：双向提交被拒、挂起提现不执行且 commit 不失败、解除后恢复；
 - 回归：现有 nodegroup/node/supervision/asset/rollup 测试全绿；
 - 配置：所有含 `[fork.sub.paracross]` 的配置文件补键后可正常解析（缺键会 panic）。
