@@ -16,7 +16,8 @@
 - 分叉判定用 `cfg.IsDappFork(mainHeight, pt.ParaX, pt.ForkParaValidatorSet)`，**禁用** `pt.IsParaForkHeight`（未映射 key 在平行链上会 panic）。平行链在 `[fork.sub.paracross]` 配置与主链相同的主链高度。
 - title 必须为规范形式 `user.p.<name>.` 且与交易 execer 精确对应：复用 PR #1326 的 `pt.IsValidParaTitle` 与 `a.checkParaTitleExecMatch`（该 PR 可能尚未合入 master；若不在基线中，先 cherry-pick 或复制这两个函数）。
 - **不新增 protobuf 生成代码**：本环境无 `protoc`；状态用确定性自定义编码（大端、定长、版本字节）。
-- 延迟一律按**主链区块高度**，禁止墙钟时间；参数从链配置读取（`types.ConfSub(cfg, pt.ParaX).GInt(...)`），默认 `validatorSetHighValueThreshold = 100000 * cfg.GetCoinPrecision()`、`validatorSetDelayBlocksHigh = 8640`、`validatorSetDelayBlocksLow = 60480`。
+- 延迟一律按**主链区块高度**，禁止墙钟时间；延迟参数从链配置读取（`types.ConfSub(cfg, pt.ParaX).GInt(...)`），默认 `validatorSetDelayBlocksHigh = 8640`、`validatorSetDelayBlocksLow = 60480`。
+- **分档阈值不是配置项**：它是链上治理参数（`mavl-paracross-valset-threshold`，见 Task 8），链上无该 key 时回落到代码默认 `100000 × cfg.GetCoinPrecision()`（即 10 万 coins，一律以主链原生币计价，不写任何特定链符号）。
 - "锁定资产"口径：`a.coinsAccount.LoadExecAccount(address.ExecAddress(title+pt.ParaX), address.ExecAddress(pt.ParaX)).Balance`（主链视角，与 `executor/asset.go` 的入金账户一致）。
 - 主链判定治理、平行链跟随（`if !cfg.IsPara()`），与现有 `nodeGroupApprove` 模式一致。
 - 所有含 `[fork.sub.paracross]` 的配置文件都必须补 `ForkParaValidatorSet`，否则 chain33 `initForkConfig` 直接 panic。
