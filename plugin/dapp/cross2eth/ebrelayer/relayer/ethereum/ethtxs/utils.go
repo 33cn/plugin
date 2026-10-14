@@ -233,7 +233,8 @@ func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, tx
 
 	txslog.Info(txName, "Wait for tx to be finished executing with hash", txhash.String())
 	timeout := time.NewTimer(PendingDuration4TxExeuction * time.Second)
-	oneSecondtimeout := time.NewTicker(5 * time.Second)
+	// 原来 5s 才查一次回执, 一笔交易最多白等 5s; 出块间隔通常是 1~2s, 改成 500ms 轮询
+	oneSecondtimeout := time.NewTicker(500 * time.Millisecond)
 	count := 0
 
 	for {
