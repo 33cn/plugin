@@ -518,6 +518,57 @@ func TestIsHaveCrossTxsEmptyHashs(t *testing.T) {
 	assert.True(t, isHaveCrossTxs(cfg, status))
 }
 
+func localTitleEntry(title string) []byte {
+	return types.Encode(&pt.ReceiptParacrossDone{Title: title, Height: 10})
+}
+
+func localNodeGroupEntry(title string) []byte {
+	return types.Encode(&pt.ParaNodeGroupStatus{Title: title, Status: pt.ParacrossNodeGroupApprove})
+}
+
+// TestListTitlesFiltersInvalidTitle 分叉后 Query_ListTitles 不再返回非规范title(评审建议)
+func (suite *TitleTakeoverTestSuite) TestListTitlesFiltersInvalidTitle() {
+	suite.localDB.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		[][]byte{localTitleEntry(realParaTitle), localTitleEntry(fakeParaTitle), localTitleEntry("u")}, nil).Once()
+
+	resp, err := suite.exec.paracrossListTitles()
+	suite.Nil(err)
+	titles := resp.(*pt.RespParacrossTitles)
+	suite.Len(titles.Titles, 1)
+	suite.Equal(realParaTitle, titles.Titles[0].Title)
+}
+
+// TestListTitlesPreForkKeepsInvalidTitle 分叉前保持历史行为(不过滤)
+func (suite *TitleTakeoverTestSuite) TestListTitlesPreForkKeepsInvalidTitle() {
+	cfg := newTitleForkTestCfg(types.MaxHeight)
+	exec, _, err := newTitleOnlyExec(cfg)
+	suite.Nil(err)
+	localDB := new(dbmock.KVDB)
+	localDB.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		[][]byte{localTitleEntry(realParaTitle), localTitleEntry(fakeParaTitle)}, nil).Once()
+	exec.SetLocalDB(localDB)
+
+	resp, err := exec.paracrossListTitles()
+	suite.Nil(err)
+	suite.Len(resp.(*pt.RespParacrossTitles).Titles, 2)
+}
+
+// TestListNodeGroupStatusFiltersInvalidTitle 按状态遍历节点组时同样过滤非规范title
+func (suite *TitleTakeoverTestSuite) TestListNodeGroupStatusFiltersInvalidTitle() {
+	exec, _, err := newTitleOnlyExec(chain33TestMainCfg)
+	suite.Nil(err)
+	localDB := new(dbmock.KVDB)
+	localDB.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		[][]byte{localNodeGroupEntry(realParaTitle), localNodeGroupEntry(fakeParaTitle)}, nil).Once()
+	exec.SetLocalDB(localDB)
+
+	resp, err := exec.Query_ListNodeGroupStatus(&pt.ReqParacrossNodeInfo{Status: 0})
+	suite.Nil(err)
+	groups := resp.(*pt.RespParacrossNodeGroups)
+	suite.Len(groups.Ids, 1)
+	suite.Equal(realParaTitle, groups.Ids[0].Title)
+}
+
 func TestTitleTakeoverTestSuite(t *testing.T) {
 	suite.Run(t, new(TitleTakeoverTestSuite))
 }
