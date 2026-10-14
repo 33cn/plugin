@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 
 	"github.com/33cn/chain33/types"
+	ptypes "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
@@ -35,6 +36,11 @@ func (r *rollup) CheckTx(tx *types.Transaction, index int) error {
 
 // isValidatorDedupForkActive 2/3 门槛是否按去重后的验证人公钥数计算，见 types.ForkSecurityHardening
 func (r *rollup) isValidatorDedupForkActive() bool {
+	return r.isSecurityHardeningForkActive()
+}
+
+// isSecurityHardeningForkActive 本分叉下的提交校验(分段续接/title 规范/公钥列表长度)是否按加固后的规则执行
+func (r *rollup) isSecurityHardeningForkActive() bool {
 	return r.GetAPI().GetConfig().IsDappFork(r.GetHeight(), rtypes.RollupX, rtypes.ForkSecurityHardening)
 }
 
@@ -61,8 +67,13 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 		return ErrNullCommitData
 	}
 
-	// 必须是平行链
-	if !strings.HasPrefix(cp.GetChainTitle(), types.ParaKeyX) {
+	// 必须是平行链: 分叉后要求规范形式的平行链title(user.p.<name>.),
+	// 与执行侧一致, 防止用真实链title的前缀/去掉结尾'.'的形式建立提交
+	if r.isSecurityHardeningForkActive() {
+		if !ptypes.IsValidParaTitle(cp.GetChainTitle()) {
+			return ErrChainTitle
+		}
+	} else if !strings.HasPrefix(cp.GetChainTitle(), types.ParaKeyX) {
 		return ErrChainTitle
 	}
 
@@ -163,6 +174,14 @@ func (r *rollup) checkCommit(cp *rtypes.CheckPoint) error {
 	// 精简模式, 不校验交易数据
 	if len(cp.GetBatch().GetTxList()) == 0 {
 		return nil
+	}
+	// 分叉后校验公钥列表与交易列表一一对应, 避免下面按下标取公钥时越界
+	if r.isSecurityHardeningForkActive() &&
+		len(cp.GetBatch().GetPubKeyList()) != len(cp.GetBatch().GetTxList()) {
+		elog.Error("checkCommit", "title", cp.GetChainTitle(), "commitRound", commitRound,
+			"txCount", len(cp.GetBatch().GetTxList()), "pubKeyCount", len(cp.GetBatch().GetPubKeyList()),
+			"err", "pubkey list length not match tx list")
+		return ErrTxPubKeyCountNotMatch
 	}
 	txCount := len(cp.GetBatch().GetTxList())
 	txPubs := make([]crypto.PubKey, 0, txCount)
