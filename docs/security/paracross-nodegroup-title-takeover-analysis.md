@@ -79,7 +79,7 @@ GetNodeGroupAddrs("user.p.superx") = 1Ph4ULn2Ksmz3se5uEuuBnuq1GCtZNcMgy  # 真�
    主链按 title 前缀把真实平行链的挂起提现匹配出来并执行，资金记入攻击者在 paracross 合约下的子账户；
 3. 最后用 `coins withdraw`（`execName=paracross`）一次性提走。
 
-资金影响量级：paracross 合约锁仓资产被抽走约 161.8 万 BTY，合约余额从约 166.8 万 BTY 降至约 4.9 万 BTY。
+资金影响量级：paracross 合约锁仓资产被抽走约 161.8 万 coins，合约余额从约 166.8 万 coins 降至约 4.9 万 coins。
 
 ## 4. 攻击时间线（关键节点）
 
@@ -91,10 +91,10 @@ GetNodeGroupAddrs("user.p.superx") = 1Ph4ULn2Ksmz3se5uEuuBnuq1GCtZNcMgy  # 真�
 | 47805861 | Self-Approve，节点组建立 |
 | 47805883–47806165 | 批量 `crossAssetTransfer` 挂起提现 + 伪造 commit 触发执行 |
 | 47806035–47806072 | 大批 title 变体轰炸：`user.p.superx.` / `user.p.SuperX.` / `USER.P.I8847A` / `user.p.zzzdecouple` / `user.p.i8847a.` 等 |
-| 47806177–47806180 | 创建 title=`user.p.`（匹配**所有**平行链）与 `u` 的节点组；commit 再次转移 2×5 BTY |
-| **47806194** | `coins withdraw` 提走 1,618,556.11765638 BTY |
-| 47806593–47806830 | 大量归集转账（约 2.6 万 BTY），后续 `rollup commit` + `paracross rollupCrossTx` 继续注入跨链交易 |
-| 47822766 | 转出 1,644,901.33365968 BTY |
+| 47806177–47806180 | 创建 title=`user.p.`（匹配**所有**平行链）与 `u` 的节点组；commit 再次转移 2×5 coins |
+| **47806194** | `coins withdraw` 提走 1,618,556.11765638 coins |
+| 47806593–47806830 | 大量归集转账（约 2.6 万 coins），后续 `rollup commit` + `paracross rollupCrossTx` 继续注入跨链交易 |
+| 47822766 | 转出 1,644,901.33365968 coins |
 
 ## 5. 根因归纳
 
