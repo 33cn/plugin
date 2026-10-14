@@ -26,10 +26,13 @@ func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNo
 	if para == nil {
 		cfg := types.NewChain33Config(DefaultConfig)
 		cfg.GetModuleConfig().RPC.ParaChain.MainChainGrpcAddr = main.GetCfg().RPC.GrpcBindAddr
-		para = testnode.NewWithConfig(cfg, nil)
 		// chain33 ForkParaFee 默认-1，测试模式 SetAllFork(0) 激活收费
-		// 导致 para 链处理同步区块时收手续费破坏共识，手动覆盖
-		para.GetClient().GetConfig().SetFork("ForkParaFee", types.MaxHeight)
+		// 导致 para 链处理同步区块时收手续费破坏共识，手动覆盖。
+		// 必须在创建节点之前设置：testnode.NewWithConfig 会立即启动 blockchain 等后台 goroutine，
+		// 之后任何对配置里 Forks 的写入都会与它们并发读 Forks 形成数据竞争（chain33 的 Forks 无锁），
+		// 在 -race 下表现为 TestParaNode 随机失败。
+		cfg.SetFork("ForkParaFee", types.MaxHeight)
+		para = testnode.NewWithConfig(cfg, nil)
 		para.Listen()
 	}
 	return &ParaNode{Main: main, Para: para}
