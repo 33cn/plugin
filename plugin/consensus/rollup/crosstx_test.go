@@ -31,6 +31,29 @@ func newTestHandler() *crossTxHandler {
 	return h
 }
 
+// TestCrossTxInitSyncedHeight 覆盖 Config.CrossTxSyncedHeight:
+// 未配置时取链上值; 配置后覆盖链上值(含向下调, 用于把被抬高的起点拉回)。
+func TestCrossTxInitSyncedHeight(t *testing.T) {
+	ru := &RollUp{base: &consensus.BaseClient{}}
+
+	// 未配置: 用链上值
+	h := &crossTxHandler{}
+	h.init(ru, &rtypes.RollupStatus{CrossTxSyncedHeight: 100})
+	require.Equal(t, int64(100), h.pulledHeight)
+
+	// 配置 50: 覆盖链上的 100(故障恢复时把起点拉回)
+	ru.cfg.CrossTxSyncedHeight = 50
+	h2 := &crossTxHandler{}
+	h2.init(ru, &rtypes.RollupStatus{CrossTxSyncedHeight: 100})
+	require.Equal(t, int64(50), h2.pulledHeight)
+
+	// 配置 0: 不覆盖, 仍用链上值
+	ru.cfg.CrossTxSyncedHeight = 0
+	h3 := &crossTxHandler{}
+	h3.init(ru, &rtypes.RollupStatus{CrossTxSyncedHeight: 70})
+	require.Equal(t, int64(70), h3.pulledHeight)
+}
+
 func TestCrossTxHandler(t *testing.T) {
 
 	h := newTestHandler()
