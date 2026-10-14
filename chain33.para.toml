@@ -464,6 +464,7 @@ Enable=0
 
 [fork.sub.rollup]
 Enable=-1
+ForkSecurityHardening=0
 
 [fork.sub.lightclient]
 Enable=-1
