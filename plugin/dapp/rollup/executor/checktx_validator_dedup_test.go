@@ -16,7 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const dedupTestTitle = "user.p.para"
+// 规范平行链title(user.p.<name>.): ForkSecurityHardening 分叉后的 title 校验只接受该形式
+const dedupTestTitle = "user.p.para."
 
 // 说明: chain33 在 local/测试配置下会把所有 fork 强制置 0(needSetForkZero, types/fork.go),
 // 单测里无法把 ForkSecurityHardening 关掉, 因此"分叉前"那条分支由
