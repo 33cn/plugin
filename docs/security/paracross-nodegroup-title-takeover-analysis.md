@@ -4,6 +4,11 @@
 > 入口交易：`0xfee96eb6d13f2d417671e8f09727fecf0dddd29d046e4b022f1d56de931be2f3`（高度 47805850）
 > 分析时间：2026-10-13
 
+> **披露策略**：本文档区分「根因/修复」（公开）与「操作细节/第三方归因」（暂不公开）。
+> 第 2、5 节的攻击交易解读与根因表、第 6 节修复建议、第 9 节修复实现与验证保持公开；
+> 第 3、7、8 节的可操作细节与第三方归因已收束，待主链 `ForkParaTitleExecMatch` 分叉激活后再补充。
+> 未收束的完整版本保存在内部文档，不随仓库发布。
+
 ## 1. 结论（黑客是如何拿到平行链管理权限的）
 
 黑客**没有盗取任何人的私钥**，而是利用了 paracross「超级节点组（node group）」权限模型中的三个缺陷，自己给自己造了一个节点组，并把它的管理权“套”到了真实平行链上：
@@ -61,62 +66,20 @@ GetNodeGroupAddrs("user.p.super")  = 1KLQq9Y1CRbPMvqLwycG9L7rWTsMRVia5p   # 黑�
 GetNodeGroupAddrs("user.p.superx") = 1Ph4ULn2Ksmz3se5uEuuBnuq1GCtZNcMgy  # 真实链原有节点组
 ```
 
-## 3. 权限如何变成 161.8 万 BTY
+## 3. 权限如何变成资产（操作细节暂不公开）
 
-### 3.1 先挂起提现（ExecPack）
+> 本节原有内容（各条挂起提现的交易哈希/高度/金额/子账户，伪造 commit 的具体构造，以及执行日志片段）
+> 属于可直接照做的操作细节，按安全披露策略**暂不随本仓库公开**，待主链 `ForkParaTitleExecMatch` 分叉激活后再补充。
+> 完整版本保存在内部文档 `paracross-nodegroup-title-takeover-analysis.full.md`（不随仓库发布）。
 
-黑客用**真实平行链 execer** 提交 `crossAssetTransfer`，`assetExec = user.p.<真实链>.paracross`、`assetSymbol = coins.bty`、`toAddr = 黑客`，金额为整条链的锁定余额。主链回执为 `ExecPack`（ty=1，等待平行链共识）：
+可公开的机制层面描述：
 
-| 高度 | execer | 提现金额 (BTY) | 被清空的 paracross 子账户 |
-|------|--------|----------------|---------------------------|
-| 47806136 | `user.p.superx.paracross` | **1,157,375.57111716** | `115k3diaLTPnprZkDR844667iE814ueMKc` |
-| 47806130 | `user.p.bscdex.paracross` | **456,439.34339999** | `1Hrmg4XHGpFgTDRP2Y5uAJANcicjbVDxQZ` |
-| 47806147 | `user.p.proof.paracross` | 4,660.98679813 | `1EHUq6Qp3z3BSaSvWf6XeeDRHBfDMDymvz` |
-| 47806152 | `user.p.testuwallet.paracross` | 33.56999999 | `1C3qc1WxbkohvhQwpD9GLS81CMiDqT3WEo` |
-| 47806164 | `user.p.uwallet.paracross` | 21.583 | `1FTah52KxoepubgvY3NX4WoyCjSEKo5CXR` |
-| 47806159 | `user.p.fzmtest.paracross` | 25.0633411 | `16x5cTgn879dHbYTrJSRGJk233xVEsdvNX` |
+1. 攻击者先用**真实平行链的 execer** 提交 `crossAssetTransfer` 提现，主链返回 `ExecPack`，即把提现挂起等待该平行链共识；
+2. 再用**伪造前缀 title 的节点组**提交 commit（攻击者是该组唯一节点，1/1 满足 `3*mostSame > 2*nodes`），
+   主链按 title 前缀把真实平行链的挂起提现匹配出来并执行，资金记入攻击者在 paracross 合约下的子账户；
+3. 最后用 `coins withdraw`（`execName=paracross`）一次性提走。
 
-### 3.2 用伪造 title 的伪造区块 commit 触发执行
-
-黑客在自己新建的**前缀 title** 节点组下提交 commit（`paracross` execer，ty=0），区块哈希全部为占位符：
-
-```
-title = user.p.super / user.p.bscde / user.p.proo / user.p.testuw / user.p.uwall / user.p.fzmte
-blockHash    = 0xaaaa…aaaa
-preBlockHash = 0xbbbb…bbbb
-stateHash    = 0xcccc…cccc
-preStateHash = 0xdddd…dddd
-txCounts = 1, txResult = "01"
-```
-
-因为黑客是唯一节点，`totalNodes=1, totalCommit=1, mostSameCommit=1`，`3*1 > 2*1` 通过，回执 `LogParacrossCommitDone`。
-
-commit 完成时，主链按 title 前缀筛选出真实链的跨链提现并执行。以高度 47806137（title=`user.p.super`）为例，`LogExecTransfer`：
-
-```
-execAddr 1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe
-  115k3diaLTPnprZkDR844667iE814ueMKc : 115,737,557,111,716 → 0
-  1KLQq9Y1CRbPMvqLwycG9L7rWTsMRVia5p : 45,643,934,340,000 → 161,381,491,451,716   (+1,157,375.57111716 BTY)
-```
-
-即：真实链 `user.p.superx` 的 **1,157,375.57111716 BTY** 被记入黑客在 paracross 合约下的子账户。
-
-### 3.3 兑现
-
-| 高度 | 交易 | 内容 |
-|------|------|------|
-| 47806112 | `0xa5576bb6…` | `coins withdraw` 1 BTY（试探，execName=paracross） |
-| **47806194** | `0xa35c20b12c07a522f26a2ccc0b6a81e8442ee94ea89cdcdd77842542d959335d` | `coins withdraw`，`execName=paracross`，金额 **1,618,556.11765638 BTY** |
-| 47822766 | `0x0864ef44…` | 向 `1L4FHTXghBAwc3gqCG8RXPPPe6Z3vNAVZC` 转出 **1,644,901.33365968 BTY** |
-
-paracross 合约地址 `1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe` 余额：
-
-```
-before 47806194: 166,784,864,522,239  (1,667,848.65 BTY)
-after  47806194:   4,929,252,756,601  (   49,292.53 BTY)
-```
-
-> 即 paracross 桥的锁仓资金被抽走约 **161.8 万 BTY**，合约仅剩约 4.9 万 BTY。
+资金影响量级：paracross 合约锁仓资产被抽走约 161.8 万 BTY，合约余额从约 166.8 万 BTY 降至约 4.9 万 BTY。
 
 ## 4. 攻击时间线（关键节点）
 
@@ -189,75 +152,22 @@ if !ok || (config.Title != execTitle && config.Title != strings.TrimSuffix(execT
 
 > 代码侧的修复实现与验证见文末 **第 9 节**，链上排查/冻结/追偿仍属运维处置范围。
 
-## 7. 附：主要链上对象
+## 7. 附：主要链上对象（暂不公开）
 
-| 类型 | 值 |
-|------|----|
-| 攻击者地址 | `1KLQq9Y1CRbPMvqLwycG9L7rWTsMRVia5p` |
-| paracross 合约地址 | `1HPkPopVe3ERfvaAgedDtJQ792taZFEHCe` |
-| 入口 Apply | `0xfee96eb6d13f2d417671e8f09727fecf0dddd29d046e4b022f1d56de931be2f3` (47805850) |
-| 自审批 Approve | `0x3524808093b503645f8b89c6bd0d8dd4095cb5cc0cbf82fb25551b726f2097af` (47805861) |
-| 兑现 Withdraw | `0xa35c20b12c07a522f26a2ccc0b6a81e8442ee94ea89cdcdd77842542d959335d` (47806194) |
-| 外转 | `0x0864ef446ed2825cf2596dafc20e0eb4ea629f39bcb1fc8980187189b468f1e3` (47822766) |
+> 本节原有内容（攻击者地址、paracross 合约地址，以及入口 Apply / 自审批 / 兑现 / 外转四笔交易的哈希与高度）
+> 是定位整个攻击的索引清单，同样按安全披露策略**暂不随本仓库公开**，见内部完整版文档。
 
-## 8. 资金归集路径
+## 8. 资金归集路径（归因与推断暂不公开）
 
-黑客的资金由**两条独立来源**汇入同一个归集地址 `1KLQq9Y1CRbPMvqLwycG9L7rWTsMRVia5p`，再单跳转出、经 EVM 流入服务方账户。
+> 本节原有内容（65 个沉睡地址的批量扫款清单、归集/中转地址、进入 EVM 后的分层路径，
+> 以及对某个服务方充值地址与热钱包的**第三方归因**）按安全披露策略**暂不随本仓库公开**。
+> 其中部分结论本身也属推断、未经证实；即便在内部文档中也需按"未证实"对待。
 
-### 8.1 五层结构
+可公开的结论层面描述：
 
-```
-[第1层 漏洞所得]  paracross 合约 1HPkPop…
-   伪造 commit 将各真实链子账户余额转入黑客子账户
-   47806194  coins withdraw(execName=paracross)  ── 1,618,556.11765638 BTY ──┐
-                                                                            │
-[第2层 沉睡地址批量扫款] 65 个 2019–2021 年休眠地址                          │
-   47806593–47806630（约 37 个区块 / 数分钟）全额转入                        ├──► 1KLQq9Y1CRbP…
-   合计 25,988.1340705 BTY（另有 47819694/47819705 两笔小额）  ─────────────┘
-                                                                            │
-[第3层 单跳中转]  47822766  1,644,901.33365968 BTY ────────────────────────► 1L4FHTXghBAwc3gqCG8RXPPPe6Z3vNAVZC
-   （1L4FHT 另收 381.0478 + 899.248 BTY，合计 1,646,181.60945968）
-                                                                            │
-[第4层 进入 EVM]  47826152/154  1.0 + 1,646,180.60945968 BTY ─────────────► 0xcaeff534095f8440c072cf161b147655f428b0ee (EVM EOA)
-                                                                            │
-[第5层 服务方充值地址→热钱包]                                               │
-   47826743/47826831/47826980  3 次 callEvmContract：                       │
-     140,000 + 30,000 + 1,206,181.60645968 = 1,376,181.60645968 BTY ──────► 0xFBa1762a…（EOA，nonce=4，充值地址）
-   47826788/47826975/47827192  原额转发 ──────────────────────────────────► 0x86597dc133c9d96388daa249d720799ea51e5b5b
-                                                                             （EOA 热钱包，nonce=4,707，余额约 4,000 万 BTY）
-```
-
-### 8.2 你给出的这笔交易在归集中的位置
-
-`0x8e7f8408cfd29b1255a8ac4d9fd21ad5e2764dab1396b05f3bfc211175ae4168`（高度 47806629）是第 2 层 65 笔扫款中较大的一笔：
-
-| 项目 | 值 |
-|------|----|
-| 付款方 | `1Wni4bWoiQy2gwjK362sWihjn7yWzRqcU` |
-| 收款方 | `1KLQq9Y1CRbPMvqLwycG9L7rWTsMRVia5p` |
-| 金额 | 1,293.6035 BTY（+0.001 手续费） |
-| 付款方余额变化 | 129,360,450,000 → 129,360,350,000（扣费）→ **0** |
-| 收款方余额变化 | 164,345,220,283,871 → 164,474,580,633,871 |
-| 动作 | 纯 `coins transfer`，**全额扫款**，无任何合约/跨链逻辑 |
-
-付款方 `1Wni4bWo…` 在扫款前的最后一笔交易是高度的 **8,689,149（2019 年）**，历史 63 笔几乎全部是 `user.p.TBChain.none`（TBChain 平行链操作）；也就是说这是一笔“休眠多年的平行链生态地址被一次性清空”。
-
-### 8.3 65 个扫款地址的特征
-
-- **一地址一链**：每个地址扫款前最后一次活动分别落在不同的 `user.p.<X>.none`，覆盖 ljz、TBChain、greatwallchain、bitnasdaqchain、lelefoodchain、ecopoolchain、tixchain、bmlsy、csla、ocean、dagchain、shimao、bangbangchain、pokerchain、kchain、ckchain、LH Gchain、RHChain、daitaochain、btee、mc、bestchain、summitchain、BJDchain、Hichain、gbtchain、cichain、gmqchain、jshcchain、billionchain、chenxiang、mxchain、bavalachain、sig、aischain、testchain、snowflakechain、TongChain、beechain、BODchain、BBChain、COINUN、gftchain、sakurachain、cpfchain、gxlchain（×2）、dalianchain 等 50 余条平行链。
-- **高度休眠**：绝大多数地址最后活动在 2019–2021 年，扫款前余额多年未动。
-- **同窗口全额转出**：全部在 47806593–47806630 内完成，逐笔为“余额 − 手续费全部转给 `1KLQ`”，付款方清零，符合脚本/机器人批量 sweep 的行为。
-- **真实签名**：逐笔用交易签名公钥推导地址（hash160 + base58check），结果与 `from` 完全一致；`coins` execer 的交易只能走主链内存池/打包路径，无法由 paracross 跨链通道伪造。因此**归集操作必须持有这 65 个地址的私钥**，属于独立于 paracross 漏洞的另一条资金线（自持钱包群或私钥被批量掌握）。
-
-### 8.4 归集特征小结
-
-| 特征 | 表现 |
-|------|------|
-| 归集速度 | 65 笔在约 37 个区块（数分钟）内完成，脚本化 |
-| 归集方式 | 全额 sweep、付款方清零、单一收款地址 |
-| 分层 | 归集地址 `1KLQ` → 单跳 `1L4FHT` → EVM → 服务充值地址 → 热钱包，逐层隔离 |
-| 出货方式 | 通过 EVM 地址调用服务充值地址 `0xFBa176…`，由服务自动归集到热钱包 `0x86597dc1…`（约 4,000 万 BTY 余额、4,707 笔对外调用，疑似交易所/托管或跨链服务） |
-| 金额 | 两笔主要来源合计约 1,644,544 BTY（漏洞所得 1,618,556.12 + 沉睡地址扫款 25,988.13），归集地址最终单笔外转 1,644,901.33 BTY |
+- 漏洞所得与另一条**独立**的资金线（一批多年未动的地址被脚本化全额扫款）汇入同一归集地址后单跳转出；
+- 归集地址随后经 EVM 转入某个服务方的充值/热钱包体系，即"通过服务方出货"；
+- 该第二条资金线需要持有那批地址的私钥，与 paracross 漏洞本身无关，属独立的资金归集行为。
 
 ## 9. 修复实现（`ForkParaTitleExecMatch`）
 
