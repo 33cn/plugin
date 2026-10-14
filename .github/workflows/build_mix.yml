@@ -28,6 +28,6 @@ jobs:
           cd -
       - name: deploy
         run: |
-          make build_ci
+          make build_ci_dapp dapp=mix
           make docker-compose dapp=mix
           make docker-compose-down dapp=mix
