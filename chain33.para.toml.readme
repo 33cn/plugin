@@ -335,6 +335,7 @@ ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
 ForkEVMMixAddress=0
+ForkEVMSuicidePayer=0
 
 [fork.sub.blackwhite]
 Enable=0

@@ -100,7 +100,12 @@ chain33 侧看到的 `Para` 是 100 字节 ABI calldata，`IsBlockedAccountRaw` 
 这条路径证明 `statedb.Transfer` 的 `sender` 检查不是对 `Call` 检查的重复，
 而是唯一能拦下它的位置。
 
-用例：`TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr`。
+**分叉 `ForkEVMSuicidePayer` 之后** `opSuicide` 的付款方改为 `contract.Address()`（= P），
+A 不再是付款方，这条路径对新区块不再成立；黑名单的 `sender` 检查只对分叉前的历史区块重放
+仍是最后一道闸。
+
+用例：`TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr`（分叉前）、
+`TestSuicidePayerDelegatecallPreFork` / `TestSuicidePayerDelegatecallPostFork`（分叉前后对照）。
 
 ### B4. 黑名单合约内部带 value 的 CALL
 
