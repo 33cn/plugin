@@ -273,12 +273,33 @@ func getPrivMap(privs []crypto.PrivKey, tickets []*ty.Ticket) map[string]crypto.
 	return list
 }
 
+// checkMinerExecer 分叉后挖矿交易必须由 ticket 执行器执行。
+// 执行层是按 tx.Execer 路由的，只校验 payload 形状的话，攻击者可以把 tx[0] 指向
+// 别的执行器，使 Exec_Miner(校验票归属/状态/冻结时间的那一步)根本不执行，
+// 同时仍能拿到 ExecOk 回执满足 CheckBlock 的 Receipts[0] 判定，从而无票出块。
+func (client *Client) checkMinerExecer(height int64, tx *types.Transaction) error {
+	cfg := client.GetAPI().GetConfig()
+	if !cfg.IsDappFork(height, ty.TicketX, ty.ForkMinerExecerCheck) {
+		return nil
+	}
+	if want := cfg.ExecName(ty.TicketX); string(tx.GetExecer()) != want {
+		tlog.Error("checkMinerExecer", "height", height, "execer", string(tx.GetExecer()),
+			"want", want, "txHash", common.ToHex(tx.Hash()))
+		return ty.ErrMinerTxExecer
+	}
+	return nil
+}
+
 func (client *Client) getMinerTx(current *types.Block) (*ty.TicketAction, error) {
 	//检查第一个笔交易的execs, 以及执行状态
 	if len(current.Txs) == 0 {
 		return nil, types.ErrEmptyTx
 	}
 	baseTx := current.Txs[0]
+	//校验挖矿交易的执行器
+	if err := client.checkMinerExecer(current.Height, baseTx); err != nil {
+		return nil, err
+	}
 	//判断交易类型和执行情况
 	var ticketAction ty.TicketAction
 	err := types.Decode(baseTx.GetPayload(), &ticketAction)
