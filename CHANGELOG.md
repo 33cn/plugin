@@ -1,5 +1,12 @@
 changelog
 
+## [1.75.2](https://github.com/33cn/plugin/compare/v1.75.1...v1.75.2) (2026-10-15)
+
+
+### Performance Improvements
+
+* **ci:** bring every PR job under 10 minutes ([92b6876](https://github.com/33cn/plugin/commit/92b68766ec5da3f62322d26b205d40fb356dd568)), closes [#1330](https://github.com/33cn/plugin/issues/1330) [#1328](https://github.com/33cn/plugin/issues/1328)
+
 ## [1.75.1](https://github.com/33cn/plugin/compare/v1.75.0...v1.75.1) (2026-10-14)
 
 
