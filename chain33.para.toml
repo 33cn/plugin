@@ -357,6 +357,7 @@ Enable=0
 Enable=0
 ForkTicketId =0
 ForkTicketVrf =0
+ForkMinerExecerCheck=0
 
 [fork.sub.retrieve]
 Enable=0

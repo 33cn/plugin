@@ -234,6 +234,7 @@ Enable=0
 Enable=0
 ForkTicketId = 1600000
 ForkTicketVrf = 2070000
+ForkMinerExecerCheck = 0
 
 [fork.sub.token]
 Enable=0
