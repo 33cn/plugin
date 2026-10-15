@@ -142,8 +142,10 @@ func TestSuicidePayerDelegatecallPostFork(t *testing.T) {
 	require.False(t, env.mdb.HasSuicided(victim.String()))
 }
 
-// TestSuicidePayerCallCodeUnchanged CALLCODE diverges the same way as DELEGATECALL.
-func TestSuicidePayerCallCodeUnchanged(t *testing.T) {
+// TestSuicidePayerCallCodeBothSides CALLCODE diverges the same way as DELEGATECALL: its
+// Address() is the caller's frame while its CodeAddr is the borrowed code, so the two sides of
+// the fork must differ here too.
+func TestSuicidePayerCallCodeBothSides(t *testing.T) {
 	user, proxy, victim := addr(0x24), addr(0xb4), addr(0xc4)
 	for _, tc := range []struct {
 		name       string
@@ -166,6 +168,43 @@ func TestSuicidePayerCallCodeUnchanged(t *testing.T) {
 				require.Equal(t, proxyStash, env.balance(proxy))
 			} else {
 				require.Equal(t, victimStash, env.balance(victim), "post-fork the code owner is untouched")
+				require.Zero(t, env.balance(proxy))
+			}
+		})
+	}
+}
+
+// TestSuicidePayerInsufficientPayerBalance pins the second defect on the same line. The amount
+// is read from the executing account but spent by the code owner, so before the fork the payer's
+// balance can be lower than the amount: the transfer fails, AddBalance only logs it, and the
+// payout silently becomes a no-op while the executing account is still marked suicided and the
+// call still reports success. After the fork the amount is always read from the account that
+// pays it, so the payout cannot fail this way.
+func TestSuicidePayerInsufficientPayerBalance(t *testing.T) {
+	user, proxy, victim := addr(0x25), addr(0xb5), addr(0xc5)
+	const shortStash = proxyStash / 3
+	for _, tc := range []struct {
+		name       string
+		forkHeight int64
+	}{{"pre-fork", ctypes.MaxHeight}, {"post-fork", 0}} {
+		t.Run(tc.name, func(t *testing.T) {
+			env := newSuicideEnv(t, tc.forkHeight)
+			env.fund(proxy, proxyStash)
+			env.fund(victim, shortStash)
+			env.deploy(proxy, user, buildDelegateCallCode(victim))
+			env.deploy(victim, user, buildSelfdestructCode(user))
+
+			_, _, _, err := env.evm.Call(AccountRef(user), proxy, nil, 5_000_000, 0)
+			require.NoError(t, err, "the failed transfer is swallowed, not propagated")
+
+			require.Equal(t, shortStash, env.balance(victim), "the code owner keeps its balance either way")
+			require.True(t, env.mdb.HasSuicided(proxy.String()))
+			require.False(t, env.mdb.HasSuicided(victim.String()))
+			if tc.forkHeight == ctypes.MaxHeight {
+				require.Zero(t, env.balance(user), "pre-fork the payout is a silent no-op")
+				require.Equal(t, proxyStash, env.balance(proxy), "the proxy keeps its balance too")
+			} else {
+				require.Equal(t, proxyStash, env.balance(user), "post-fork the executing account pays out")
 				require.Zero(t, env.balance(proxy))
 			}
 		})

@@ -341,6 +341,7 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+ForkEVMSuicidePayer=0
 
 [fork.sub.evmxgo]
 Enable=0
