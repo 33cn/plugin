@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/holiman/uint256"
 )
 
@@ -903,10 +904,21 @@ func opStop(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 // 自毁操作
 func opSuicide(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	beneficiary := callContext.stack.pop()
-	balance := evm.StateDB.GetBalance(callContext.contract.Address().String())
+	address := callContext.contract.Address()
+	balance := evm.StateDB.GetBalance(address.String())
+	// The payer is CodeAddr before ForkEVMSuicidePayer. Under CALL/CREATE the two addresses are
+	// equal, but under DELEGATECALL/CALLCODE they are not: the amount is read from the executing
+	// account while the money is taken from the account whose code was borrowed, so a proxy can
+	// spend an unrelated contract's balance on a beneficiary of its choosing. After the fork the
+	// payer is the executing account, so that reading the balance, paying it out and suiciding
+	// all refer to the same account.
+	payer := *callContext.contract.CodeAddr
+	if evm.cfg.IsDappFork(evm.BlockNumber.Int64(), evmtypes.ExecutorName, evmtypes.ForkEVMSuicidePayer) {
+		payer = address
+	}
 	// 合约自毁后，将剩余金额返还给创建者
-	evm.StateDB.AddBalance(common.Uint256ToAddress(&beneficiary).String(), (*callContext.contract.CodeAddr).String(), balance)
-	evm.StateDB.Suicide(callContext.contract.Address().String())
+	evm.StateDB.AddBalance(common.Uint256ToAddress(&beneficiary).String(), payer.String(), balance)
+	evm.StateDB.Suicide(address.String())
 	return nil, nil
 }
 

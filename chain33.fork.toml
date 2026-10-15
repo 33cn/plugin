@@ -94,6 +94,9 @@ ForkIntrinsicGas=0
 ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEVMFixOverflow=0
+# SELFDESTRUCT pays from the executing account: DELEGATECALL/CALLCODE no longer
+# spend the borrowed code contract balance
+ForkEVMSuicidePayer=0
 
 
 [fork.sub.evmxgo]
