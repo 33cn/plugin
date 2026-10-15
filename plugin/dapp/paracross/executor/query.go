@@ -262,6 +262,19 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 		return nil, err
 	}
 	cfg := p.GetAPI().GetConfig()
+	if cfg.IsDappFork(mainHeight, pt.ParaX, pt.ForkParaTitleExecMatch) {
+		//分叉后按状态遍历节点组时不再返回非规范title对应记录
+		addrs := resp.(*pt.RespParacrossNodeGroups)
+		validIds := make([]*pt.ParaNodeGroupStatus, 0, len(addrs.Ids))
+		for _, id := range addrs.Ids {
+			if !pt.IsValidParaTitle(id.Title) {
+				clog.Error("paracross ListNodeGroupStatus skip invalid title", "title", id.Title)
+				continue
+			}
+			validIds = append(validIds, id)
+		}
+		addrs.Ids = validIds
+	}
 	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		addrs := resp.(*pt.RespParacrossNodeGroups)
 		for _, id := range addrs.Ids {
@@ -375,10 +388,21 @@ func (p *Paracross) paracrossGetStateTitleHeight(title string, height int64) (ty
 }
 
 func (p *Paracross) paracrossListTitles() (types.Message, error) {
-	return listLocalTitles(p.GetLocalDB())
+	return listLocalTitles(p.GetLocalDB(), p.isTitleExecMatchForkActive())
 }
 
-func listLocalTitles(db dbm.KVDB) (types.Message, error) {
+// isTitleExecMatchForkActive 查询接口是否按分叉后的规则过滤非法title。
+// 查询不参与共识，取主链高度失败时保持历史行为(不过滤)
+func (p *Paracross) isTitleExecMatchForkActive() bool {
+	mainHeight, err := p.getMainHeight()
+	if err != nil {
+		return false
+	}
+	return p.GetAPI().GetConfig().IsDappFork(mainHeight, pt.ParaX, pt.ForkParaTitleExecMatch)
+}
+
+// listLocalTitles filterInvalidTitle为true时过滤掉非规范title(如user.p.super/user.p./u)的记录
+func listLocalTitles(db dbm.KVDB, filterInvalidTitle bool) (types.Message, error) {
 	prefix := calcLocalTitlePrefix()
 	res, err := db.List(prefix, []byte(""), 0, 1)
 	if err != nil {
@@ -390,6 +414,11 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 		err = types.Decode(r, &st)
 		if err != nil {
 			panic(err)
+		}
+		//分叉后非法title不再返回给调用方，仅记日志保留可发现性，便于排查/清理历史数据
+		if filterInvalidTitle && !pt.IsValidParaTitle(st.Title) {
+			clog.Error("paracross listLocalTitles skip invalid title", "title", st.Title)
+			continue
 		}
 		rst := &pt.RespParacrossDone{
 			TotalNodes:      st.TotalNodes,

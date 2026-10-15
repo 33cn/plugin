@@ -15,5 +15,6 @@ jobs:
           go-version-file: 'go.mod'
       - name: deploy
         run: |
+          make build_ci_dapp dapp=rollup
           make docker-compose dapp=rollup
           make docker-compose-down dapp=rollup

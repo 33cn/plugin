@@ -1110,6 +1110,9 @@ func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupConfig) (*types.Receipt
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
+	if err := a.checkParaTitleExecMatch(config.Title); err != nil {
+		return nil, err
+	}
 	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
@@ -1148,6 +1151,9 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	cfg := a.api.GetConfig()
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
+	}
+	if err := a.checkParaTitleExecMatch(config.Title); err != nil {
+		return nil, err
 	}
 	config.Addr = common2.FmtEthAddressWithFork(config.GetAddr(), cfg, a.height)
 	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {

@@ -1,5 +1,37 @@
 changelog
 
+## [1.75.2](https://github.com/33cn/plugin/compare/v1.75.1...v1.75.2) (2026-10-15)
+
+
+### Performance Improvements
+
+* **ci:** bring every PR job under 10 minutes ([92b6876](https://github.com/33cn/plugin/commit/92b68766ec5da3f62322d26b205d40fb356dd568)), closes [#1330](https://github.com/33cn/plugin/issues/1330) [#1328](https://github.com/33cn/plugin/issues/1328)
+
+## [1.75.1](https://github.com/33cn/plugin/compare/v1.75.0...v1.75.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **testnode:** set ForkParaFee before the para node starts ([97f20f4](https://github.com/33cn/plugin/commit/97f20f4e613b1b5b16fadad64227500ee344478d))
+
+
+### Performance Improvements
+
+* **ci:** cut cross2eth/bridgevmxgo integration runtime with bounded polling ([a0fd866](https://github.com/33cn/plugin/commit/a0fd8663f5e80f89d33c046b9a9982cc5176ff7f))
+
+# [1.75.0](https://github.com/33cn/plugin/compare/v1.74.0...v1.75.0) (2026-10-14)
+
+
+### Bug Fixes
+
+* **paracross:** bind node group title to its exact para execer ([e399683](https://github.com/33cn/plugin/commit/e39968311684701f6e194d95fb686802fe303d84))
+* **paracross:** guard empty CrossTxHashs in isHaveCrossTxs ([e2f672a](https://github.com/33cn/plugin/commit/e2f672acd3136ec777cfa08fb2ea505f132a45c5)), closes [#1326](https://github.com/33cn/plugin/issues/1326)
+
+
+### Features
+
+* **paracross:** filter invalid titles in node group list queries ([bd102c4](https://github.com/33cn/plugin/commit/bd102c4114ee775b1a6e1d47640a65d7aef22ed9)), closes [#1326](https://github.com/33cn/plugin/issues/1326)
+
 # [1.74.0](https://github.com/33cn/plugin/compare/v1.73.0...v1.74.0) (2026-09-18)
 
 

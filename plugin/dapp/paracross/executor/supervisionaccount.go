@@ -453,6 +453,9 @@ func (a *action) SupervisionNodeConfig(config *pt.ParaNodeGroupConfig) (*types.R
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
+	if err := a.checkParaTitleExecMatch(config.Title); err != nil {
+		return nil, err
+	}
 	if !types.IsParaExecName(string(a.tx.Execer)) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}

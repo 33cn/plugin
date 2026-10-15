@@ -236,7 +236,12 @@ func setMinerTxResult(cfg *types.Chain33Config, payload *pt.ParacrossMinerAction
 			paraTxHashs = append(paraTxHashs, hash)
 		}
 	}
-	totalCrossTxHashs := FilterParaMainCrossTxHashes(cfg.GetTitle(), txs)
+	var totalCrossTxHashs [][]byte
+	if cfg.IsDappFork(payload.Status.MainBlockHeight, pt.ParaX, pt.ForkParaTitleExecMatch) {
+		totalCrossTxHashs = FilterParaMainCrossTxHashesFork(cfg.GetTitle(), txs)
+	} else {
+		totalCrossTxHashs = FilterParaMainCrossTxHashes(cfg.GetTitle(), txs)
+	}
 	for _, crossHash := range totalCrossTxHashs {
 		if !isCommitTx[string(crossHash)] {
 			crossTxHashs = append(crossTxHashs, crossHash)

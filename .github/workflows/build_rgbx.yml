@@ -19,6 +19,7 @@ jobs:
         id: go
       - name: deploy
         run: |
+          make build_ci_dapp dapp=rgbx
           make docker-compose dapp=rgbx
       - name: cleanup
         if: always()
