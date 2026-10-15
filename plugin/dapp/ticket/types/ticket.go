@@ -62,6 +62,13 @@ const TicketOldParts = 3
 // TicketCountOpenOnce count open once
 const TicketCountOpenOnce = 1000
 
+// ForkTicketMinerAuth 分叉后 TicketOpen 必须校验 MinerAddress 归属：
+// MinerAddress 只能是签名者自己，或 ReturnAddress 通过 Tbind 明确授权的矿工。
+// 票据的本地索引（LODB-ticket-tl:<MinerAddress>:<status>）与共识选票都挂在
+// MinerAddress 上，不校验归属时第三方可以把票据挂到任意矿工名下，让该矿工节点
+// 把它当成自己的票据去挖，从而把出块奖励送给票据的 ReturnAddress。
+const ForkTicketMinerAuth = "ForkTicketMinerAuth"
+
 // ErrOpenTicketPubHash err type
 var ErrOpenTicketPubHash = errors.New("ErrOpenTicketPubHash")
 
@@ -80,6 +87,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketId", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 0)
+	cfg.RegisterDappFork(TicketX, ForkTicketMinerAuth, 0)
 }
 
 // InitExecutor ...

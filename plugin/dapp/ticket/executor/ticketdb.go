@@ -235,6 +235,21 @@ func (action *Action) TicketBind(tbind *ty.TicketBind) (*types.Receipt, error) {
 // TicketOpen ticket open
 func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 	chain33Cfg := action.api.GetConfig()
+	//MinerAddress 是票据的归属标签: 本地索引、钱包取票、共识选票都按它来。
+	//不校验归属时, 任何签名者只要把 ReturnAddress 填成自己, 就能把票据挂到任意
+	//矿工名下(该矿工节点会把它当自己的票去挖, 奖励却记在出票人的 ReturnAddress)。
+	if chain33Cfg.IsDappFork(action.height, ty.TicketX, ty.ForkTicketMinerAuth) {
+		if err := address.CheckAddress(topen.MinerAddress, action.height); err != nil {
+			tlog.Error("TicketOpen.CheckMinerAddress", "miner", topen.MinerAddress, "err", err)
+			return nil, err
+		}
+		bindMiner := action.getBind(topen.ReturnAddress)
+		if topen.MinerAddress != action.fromaddr && topen.MinerAddress != bindMiner {
+			tlog.Error("TicketOpen.MinerNotOwned", "miner", topen.MinerAddress, "from", action.fromaddr,
+				"return", topen.ReturnAddress, "bind", bindMiner)
+			return nil, ty.ErrMinerAddr
+		}
+	}
 	prefix := common.ToHex(action.txhash)
 	prefix = topen.MinerAddress + ":" + prefix + ":"
 	var logs []*types.ReceiptLog
@@ -255,7 +270,8 @@ func (action *Action) TicketOpen(topen *ty.TicketOpen) (*types.Receipt, error) {
 		id := prefix + fmt.Sprintf("%010d", i)
 		//add pubHash
 		if chain33Cfg.IsDappFork(action.height, ty.TicketX, "ForkTicketId") {
-			if len(topen.PubHashes) == 0 {
+			//PubHashes 必须覆盖 Count, 否则下面按下标取值会越界 panic
+			if len(topen.PubHashes) < int(topen.Count) {
 				return nil, ty.ErrOpenTicketPubHash
 			}
 			id = id + ":" + fmt.Sprintf("%x:%d", topen.PubHashes[i], topen.RandSeed)
