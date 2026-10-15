@@ -17,16 +17,11 @@ package runtime
 // such test a false pass.
 
 import (
-	"math/big"
 	"strings"
 	"testing"
 
-	"github.com/33cn/chain33/account"
-	apimock "github.com/33cn/chain33/client/mocks"
 	ctypes "github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/util"
 	vmcommon "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/stretchr/testify/require"
 )
@@ -48,28 +43,7 @@ func newSuicideEnv(t *testing.T, forkHeight int64) *gapEnv {
 	require.Equal(t, forkHeight <= gapTestHeight,
 		cfg.IsDappFork(gapTestHeight, evmtypes.ExecutorName, evmtypes.ForkEVMSuicidePayer),
 		"the fork must resolve to the intended side at the block height the VM runs at")
-
-	api := new(apimock.QueueProtocolAPI)
-	api.On("GetConfig").Return(cfg)
-
-	dbDir, stateDB, localDB := util.CreateTestDB()
-	t.Cleanup(func() { util.CloseTestDB(dbDir, stateDB) })
-	coins, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), stateDB)
-	require.NoError(t, err)
-
-	mdb := state.NewMemoryStateDB(stateDB, localDB, coins, gapTestHeight, api)
-	mdb.Prepare(vmcommon.BytesToHash([]byte("suicide-payer")), 0)
-
-	env := &gapEnv{t: t, cfg: cfg, mdb: mdb, coins: coins}
-	env.evm = NewEVM(Context{
-		CanTransfer: func(db state.EVMStateDB, s vmcommon.Address, v uint64) bool { return db.CanTransfer(s.String(), v) },
-		Transfer: func(db state.EVMStateDB, s, r vmcommon.Address, v uint64) bool {
-			return db.Transfer(s.String(), r.String(), v)
-		},
-		GetHash:     func(uint64) vmcommon.Hash { return vmcommon.Hash{} },
-		BlockNumber: big.NewInt(gapTestHeight),
-	}, mdb, Config{}, cfg)
-	return env
+	return newGapEnvWithCfg(t, cfg, "suicide-payer")
 }
 
 // buildCallCodeInstruction emits the CALLCODE (0xf2) instruction. Note that buildCallCode in
@@ -96,9 +70,17 @@ const (
 	// proxyStash is both the proxy's balance and the amount the attack moves.
 	proxyStash = int64(300_000)
 	// victimStash must be >= proxyStash, otherwise the pre-fork transfer fails silently
-	// and the drain is not observable.
+	// and the drain is not observable (TestSuicidePayerInsufficientPayerBalance drives the
+	// other side of that boundary on purpose).
 	victimStash = int64(1_000_000)
 )
+
+// forkSides are the two sides of ForkEVMSuicidePayer: closed at MaxHeight, and active from the
+// block the cases run at (0 <= gapTestHeight).
+var forkSides = []struct {
+	name       string
+	forkHeight int64
+}{{"pre-fork", ctypes.MaxHeight}, {"post-fork", 0}}
 
 // TestSuicidePayerDelegatecallPreFork pins today's (defective) behaviour: the amount is read
 // from the proxy, but the proxy's own balance stays put and the borrowed-code contract pays.
@@ -147,10 +129,7 @@ func TestSuicidePayerDelegatecallPostFork(t *testing.T) {
 // the fork must differ here too.
 func TestSuicidePayerCallCodeBothSides(t *testing.T) {
 	user, proxy, victim := addr(0x24), addr(0xb4), addr(0xc4)
-	for _, tc := range []struct {
-		name       string
-		forkHeight int64
-	}{{"pre-fork", ctypes.MaxHeight}, {"post-fork", 0}} {
+	for _, tc := range forkSides {
 		t.Run(tc.name, func(t *testing.T) {
 			env := newSuicideEnv(t, tc.forkHeight)
 			env.fund(proxy, proxyStash)
@@ -183,10 +162,7 @@ func TestSuicidePayerCallCodeBothSides(t *testing.T) {
 func TestSuicidePayerInsufficientPayerBalance(t *testing.T) {
 	user, proxy, victim := addr(0x25), addr(0xb5), addr(0xc5)
 	const shortStash = proxyStash / 3
-	for _, tc := range []struct {
-		name       string
-		forkHeight int64
-	}{{"pre-fork", ctypes.MaxHeight}, {"post-fork", 0}} {
+	for _, tc := range forkSides {
 		t.Run(tc.name, func(t *testing.T) {
 			env := newSuicideEnv(t, tc.forkHeight)
 			env.fund(proxy, proxyStash)
@@ -215,17 +191,19 @@ func TestSuicidePayerInsufficientPayerBalance(t *testing.T) {
 // account either way, so the fork must be a no-op.
 func TestSuicidePayerCallUnchangedAddressEqualsCodeAddr(t *testing.T) {
 	user, callee := addr(0x22), addr(0xc2)
-	for _, forkHeight := range []int64{ctypes.MaxHeight, 0} {
-		env := newSuicideEnv(t, forkHeight)
-		env.fund(callee, victimStash)
-		env.deploy(callee, user, buildSelfdestructCode(user))
+	for _, tc := range forkSides {
+		t.Run(tc.name, func(t *testing.T) {
+			env := newSuicideEnv(t, tc.forkHeight)
+			env.fund(callee, victimStash)
+			env.deploy(callee, user, buildSelfdestructCode(user))
 
-		_, _, _, err := env.evm.Call(AccountRef(user), callee, nil, 5_000_000, 0)
-		require.NoError(t, err)
+			_, _, _, err := env.evm.Call(AccountRef(user), callee, nil, 5_000_000, 0)
+			require.NoError(t, err)
 
-		require.Equal(t, victimStash, env.balance(user), "fork=%d", forkHeight)
-		require.Zero(t, env.balance(callee), "fork=%d", forkHeight)
-		require.True(t, env.mdb.HasSuicided(callee.String()), "fork=%d", forkHeight)
+			require.Equal(t, victimStash, env.balance(user), "the callee pays itself out")
+			require.Zero(t, env.balance(callee))
+			require.True(t, env.mdb.HasSuicided(callee.String()))
+		})
 	}
 }
 
@@ -233,15 +211,18 @@ func TestSuicidePayerCallUnchangedAddressEqualsCodeAddr(t *testing.T) {
 // CodeAddr to the new contract address, so both fork sides must behave identically.
 func TestSuicidePayerCreateUnchangedAddressEqualsCodeAddr(t *testing.T) {
 	user, created := addr(0x23), addr(0xc3)
-	for _, forkHeight := range []int64{ctypes.MaxHeight, 0} {
-		env := newSuicideEnv(t, forkHeight)
-		env.fund(user, proxyStash)
+	for _, tc := range forkSides {
+		t.Run(tc.name, func(t *testing.T) {
+			env := newSuicideEnv(t, tc.forkHeight)
+			env.fund(user, proxyStash)
 
-		_, _, _, err := env.evm.Create(AccountRef(user), created, buildSelfdestructCode(user),
-			5_000_000, "evm."+created.String(), created.String(), uint64(proxyStash))
-		require.NoError(t, err)
+			_, _, _, err := env.evm.Create(AccountRef(user), created, buildSelfdestructCode(user),
+				5_000_000, "evm."+created.String(), created.String(), uint64(proxyStash))
+			require.NoError(t, err)
 
-		require.Equal(t, int64(0), env.balance(created), "fork=%d: the new contract pays out its value", forkHeight)
-		require.Equal(t, proxyStash, env.balance(user), "fork=%d: the beneficiary gets the value back", forkHeight)
+			require.Equal(t, int64(0), env.balance(created), "the new contract pays out its value")
+			require.Equal(t, proxyStash, env.balance(user), "the beneficiary gets the value back")
+			require.True(t, env.mdb.HasSuicided(created.String()))
+		})
 	}
 }

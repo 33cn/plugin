@@ -41,13 +41,11 @@ type gapEnv struct {
 // 需要关闭 fork 做对照时由调用方显式 SetFork。
 // 追加 ethMapFromExecutor="coins" 使 statedb 直接读写 coins 主账户，
 // 否则余额走 evm 子账户（LoadExecAccount），fund/balance 会与实际转账路径不一致。
-func newGapEnv(t *testing.T, blocked []string) *gapEnv {
+// newGapEnvWithCfg assembles the state/coins/EVM plumbing shared by every case that drives the
+// VM against real coins accounts. cfg is the part that differs between callers, and seed only
+// keeps their state roots apart. Cases that need a blocked list set it on env.cfg afterwards.
+func newGapEnvWithCfg(t *testing.T, cfg *ctypes.Chain33Config, seed string) *gapEnv {
 	t.Helper()
-	cfgStr := ctypes.GetDefaultCfgstring()
-	if !strings.Contains(cfgStr, "[exec.sub.evm]") {
-		cfgStr += "\n[exec.sub.evm]\nethMapFromExecutor=\"coins\"\nethMapFromSymbol=\"bty\"\n"
-	}
-	cfg := ctypes.NewChain33Config(cfgStr)
 	api := new(apimock.QueueProtocolAPI)
 	api.On("GetConfig").Return(cfg)
 
@@ -58,10 +56,7 @@ func newGapEnv(t *testing.T, blocked []string) *gapEnv {
 	require.NoError(t, err)
 
 	mdb := state.NewMemoryStateDB(stateDB, localDB, coins, gapTestHeight, api)
-	mdb.Prepare(vmcommon.BytesToHash([]byte("blacklist-gap")), 0)
-
-	restore := cfg.SetBlockedAccountsForTest(0, blocked)
-	t.Cleanup(restore)
+	mdb.Prepare(vmcommon.BytesToHash([]byte(seed)), 0)
 
 	env := &gapEnv{t: t, cfg: cfg, mdb: mdb, coins: coins}
 	env.evm = NewEVM(Context{
@@ -72,6 +67,19 @@ func newGapEnv(t *testing.T, blocked []string) *gapEnv {
 		GetHash:     func(uint64) vmcommon.Hash { return vmcommon.Hash{} },
 		BlockNumber: big.NewInt(gapTestHeight),
 	}, mdb, Config{}, cfg)
+	return env
+}
+
+func newGapEnv(t *testing.T, blocked []string) *gapEnv {
+	t.Helper()
+	cfgStr := ctypes.GetDefaultCfgstring()
+	if !strings.Contains(cfgStr, "[exec.sub.evm]") {
+		cfgStr += "\n[exec.sub.evm]\nethMapFromExecutor=\"coins\"\nethMapFromSymbol=\"bty\"\n"
+	}
+	env := newGapEnvWithCfg(t, ctypes.NewChain33Config(cfgStr), "blacklist-gap")
+
+	restore := env.cfg.SetBlockedAccountsForTest(0, blocked)
+	t.Cleanup(restore)
 	return env
 }
 
