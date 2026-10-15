@@ -148,7 +148,8 @@ jobs:
             sudo apt-get install --fix-missing gcc-multilib
 
       - name: Build
-        run: make build
+        # 只需要验证 386 下能编译: build_only 跳过 depends 里几十个 dapp cmd 产物的编译(约省 70s)
+        run: make build_only
 
       - name: Run unit tests
         run: go test ./... -covermode=atomic
