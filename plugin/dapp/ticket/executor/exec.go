@@ -12,6 +12,13 @@ import (
 
 // Exec_Genesis exec genesis
 func (t *Ticket) Exec_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, index int) (*types.Receipt, error) {
+	// 创世动作只允许在高度 0 执行, 与 coins/coinsx/token 对齐:
+	// 否则可在任意高度重入 GenesisInit 造出 isGenesis=true 的 3 段 ticketId 票据,
+	// 绕过 pubHash 校验/成熟期/提现等待, 把出块奖励记到攻击者 ReturnAddress。
+	if t.GetHeight() != 0 {
+		tlog.Error("ticket genesis is only allowed at height 0", "height", t.GetHeight())
+		return nil, types.ErrReRunGenesis
+	}
 	if payload.Count <= 0 {
 		return nil, ty.ErrTicketCount
 	}
