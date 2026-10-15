@@ -457,8 +457,8 @@ func TestTicketCloseDupDrainsDevFundPool(t *testing.T) {
 	// 循环里每个下标各解冻一份：本该只解冻 1 份，实际解冻了 repeats 份，
 	// 多出的部分直接从全链共享的基金池里拿走 —— 与本地址押金无关，影响的不是攻击者自己
 	after := acc.LoadExecAccount(fundAddr, env.execAddr)
-	assert.Equal(t, int64((fundPool-repeats)*devFund), after.Frozen, "基金池被重复消耗")
-	assert.Equal(t, int64(repeats*devFund), after.Balance, "共解冻出 3 份 CoinDevFund(应为 1 份)")
+	assert.Equal(t, (fundPool-repeats)*devFund, after.Frozen, "基金池被重复消耗")
+	assert.Equal(t, repeats*devFund, after.Balance, "共解冻出 3 份 CoinDevFund(应为 1 份)")
 }
 
 // TestTicketCloseDupFundDrainBlocksOtherHolders 实测「消耗全链共享基金池」真正伤到【别人】的机制：
