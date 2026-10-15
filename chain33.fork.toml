@@ -203,6 +203,10 @@ Enable=0
 ForkRetrive=180000
 ForkRetriveAsset=3150000
 
+[fork.sub.rollup]
+Enable=25770000
+ForkSecurityHardening=-1
+
 [fork.sub.storage]
 Enable=0
 ForkStorageLocalDB=0

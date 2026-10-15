@@ -33,7 +33,7 @@ func Test_CheckTx(t *testing.T) {
 
 func Test_checkCommit(t *testing.T) {
 
-	title := "user.p.para"
+	title := "user.p.para."
 	r := &rollup{}
 	cp := &rtypes.CheckPoint{ChainTitle: "invalidTitle"}
 	require.Equal(t, ErrNullCommitData, r.checkCommit(cp))

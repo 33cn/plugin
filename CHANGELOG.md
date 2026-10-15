@@ -1,5 +1,19 @@
 changelog
 
+# [1.76.0](https://github.com/33cn/plugin/compare/v1.75.2...v1.76.0) (2026-10-15)
+
+
+### Bug Fixes
+
+* **paracross:** settle each rollup round only once ([e379832](https://github.com/33cn/plugin/commit/e379832abd882163d01c403c332946b1e6c37a88))
+* **rollup:** count distinct validator pubkeys toward the 2/3 threshold ([666927b](https://github.com/33cn/plugin/commit/666927b12e1f9ac9b1558a8184d72c651390b59c))
+* **rollup:** harden the commit checks behind ForkSecurityHardening ([b23be4f](https://github.com/33cn/plugin/commit/b23be4f919b72cb1595cc31a1ea668381103115f))
+
+
+### Features
+
+* **rollup:** allow overriding the cross tx sync start height ([e313490](https://github.com/33cn/plugin/commit/e3134907cef12f97dfd2f859cc147b6525f2a4e3))
+
 ## [1.75.2](https://github.com/33cn/plugin/compare/v1.75.1...v1.75.2) (2026-10-15)
 
 
