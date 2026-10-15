@@ -286,6 +286,7 @@ Enable=0
 Enable=0
 ForkTicketId =0
 ForkTicketVrf =0
+ForkTicketCloseDup =0
 
 [fork.sub.retrieve]
 Enable=0

@@ -68,6 +68,10 @@ var ErrOpenTicketPubHash = errors.New("ErrOpenTicketPubHash")
 // TicketX dapp name
 var TicketX = "ticket"
 
+// ForkTicketCloseDup 修复 TicketClose 对重复 ticketId 重复付款的分叉。
+// 开启后同一笔交易内重复出现的 ticketId 会被拒绝(见 executor.TicketClose)。
+const ForkTicketCloseDup = "ForkTicketCloseDup"
+
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TicketX))
 	types.RegFork(TicketX, InitFork)
@@ -80,6 +84,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketId", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 0)
+	cfg.RegisterDappFork(TicketX, ForkTicketCloseDup, 0)
 }
 
 // InitExecutor ...
