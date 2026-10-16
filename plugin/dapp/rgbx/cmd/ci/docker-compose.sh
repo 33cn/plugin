@@ -524,6 +524,20 @@ function apply_dynamic_tss_peers_and_restart() {
     wait_cli_ready "${PARA2_CLI}"
     wait_cli_ready "${PARA3_CLI}"
     wait_cli_ready "${PARA4_CLI}"
+
+    # 临时诊断：重启后重新发现一次 peer 名，与写进配置的 TSS_PEERS(重启前) 对比。
+    # 若不一致，说明节点 DHT 身份在重启后发生变化，配置里的 TSS peers 已失效。
+    local after=""
+    local k
+    for ((k = 0; k < 30; k++)); do
+        after=$(collect_peer_names_from_cli "${PARA1_CLI}" | sort | uniq | sed '/^$/d' | paste -sd, -)
+        if [ -n "${after}" ]; then
+            break
+        fi
+        sleep 1
+    done
+    log_step "DIAG TSS_PEERS(before restart)=${TSS_PEERS}"
+    log_step "DIAG peer names(after restart)=${after}"
 }
 
 function setup_para_nodegroup_on_main() {
@@ -581,7 +595,19 @@ function wait_auto_dkg_commit() {
             log_step "auto DKG done, tssAddress=${tss_addr}"
             return 0
         fi
+        # 临时诊断：记录 DKG 等待期间 para1 看到的 peer 名，与配置里的 TSS_PEERS 对比
+        if [ "${i}" = "20" ] || [ "${i}" = "60" ]; then
+            local now_peers
+            now_peers=$(collect_peer_names_from_cli "${PARA1_CLI}" | sort | uniq | sed '/^$/d' | paste -sd, -)
+            log_step "DIAG t=${i}s TSS_PEERS(config)=${TSS_PEERS} peer names(now)=${now_peers}"
+        fi
         sleep 1
+    done
+    # 临时诊断：超时时导出容器日志，确认是节点未启动还是 TSS 流程未完成
+    compose_cmd ps || true
+    for svc in main para1 para2 para3 para4; do
+        echo "===== ${svc} logs (tail 120) ====="
+        compose_cmd logs --tail=120 --no-log-prefix "${svc}" 2>&1 | tail -120 || true
     done
     fail "auto DKG commit timeout"
 }
