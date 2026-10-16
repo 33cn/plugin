@@ -212,7 +212,7 @@ receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), 
 | 攻击者自己 | 重复付款只把自己冻结的钱提前解冻，受自己押金封顶 | — （无净损失） |
 | 同地址的其他票 | 共享押金池被抽干 → 暂时关不掉 | 能：挖矿奖励回填该池（4.4） |
 | 同地址未到期的票 | 时间锁被绕过，押金被提前解冻 | 资金已解冻，属既成事实（4.2） |
-| 该地址的治理票权 | `autonomy.getAddressVotes` 按 `voteAccount.Frozen / (TicketPrice×precision)` 计票（`plugin/dapp/autonomy/executor/boardaction.go:626`）：池被抽干 → 票权下降；若该链 `UseBalance=true` 则反向（可用余额被抬高 → 票权上升） | 视回填与治理规则 |
+| 该地址的治理票权 | `autonomy.getAddressVotes` 按 `voteAccount.Frozen / (TicketPrice×precision)` 计票（`plugin/dapp/autonomy/executor/boardaction.go:629`）：池被抽干 → 票权下降；若该链 `UseBalance=true` 则反向（可用余额被抬高 → 票权上升） | 视回填与治理规则 |
 
 **「无增发」不等于「后果仅限于提前解冻」（复核意见 2，已在代码中逐条确认）。** 钱包选票
 （`wallet/ticket.go` 的 `getTicketsByStatus`）、ticket 共识选票（`plugin/consensus/ticket/ticket.go`
@@ -410,3 +410,7 @@ driver 级中间态**显式断言**出来（避免被误读为链上终态），
 因此建议：**分叉高度取一个大于当前链尖的值**（与仓库既有做法一致，参考 `ForkParaTitleExecMatch`）；
 若部署方坚持立即生效，至少应先在目标链上完成 §8 提到的重放检查，再取 0。最终取值由部署方按链
 的实际情况决定，本节只提供取舍依据。
+
+**决策记录（2026-10-16）**：维护者选择**保持 0（立即生效）**，即接受"历史若含重复 ticketId 的
+tclose 则无法原样重放"这一风险；本节关于改取大于链尖高度的建议仅作为后续参考保留。
+`TestTicketForkConfigDeclared` 的值断言（要求段内取 0）与该决策一致。
