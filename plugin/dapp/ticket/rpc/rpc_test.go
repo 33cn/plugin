@@ -286,6 +286,7 @@ Enable=0
 Enable=0
 ForkTicketId =0
 ForkTicketVrf =0
+ForkMinerExecerCheck=0
 
 [fork.sub.retrieve]
 Enable=0
@@ -341,6 +342,7 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+ForkEVMSuicidePayer=0
 
 [fork.sub.evmxgo]
 Enable=0

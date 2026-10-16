@@ -359,6 +359,7 @@ Enable=0
 Enable=0
 ForkTicketId =0
 ForkTicketVrf =0
+ForkMinerExecerCheck=0
 
 [fork.sub.retrieve]
 Enable=0
@@ -429,6 +430,9 @@ ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEvmExecNonceV2=0
 ForkEVMFixOverflow=0
+# SELFDESTRUCT pays from the executing account: DELEGATECALL/CALLCODE no longer
+# spend the borrowed code contract balance
+ForkEVMSuicidePayer=0
 [fork.sub.blackwhite]
 Enable=0
 ForkBlackWhiteV2=0
