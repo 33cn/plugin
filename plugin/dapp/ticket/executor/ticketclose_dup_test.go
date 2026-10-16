@@ -6,7 +6,9 @@ package executor_test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -46,10 +48,23 @@ import (
 // TestTicketCloseDupPaysOnlyReturnAddress)；真实危害在别处，均由下列用例实测界定：
 //   - 提现时间锁按【单张票】校验、押金池按【返还地址】共享，于是一张到期票重复即可解冻
 //     同地址未到期票的押金(TestTicketCloseDupBypassesWithdrawLock)；
-//   - 已挖矿票关闭时还会从【全链共享】的开发基金池重复解冻 CoinDevFund，
-//     与本地址押金无关(TestTicketCloseDupDrainsDevFundPool)；
 //   - 共享押金池被抽干后同地址其余票暂时无法关闭，直到挖矿奖励回填
 //     (TestTicketCloseDupDrainsSharedPool)。
+//
+// 可达性：以上两条都发生在【同一个返还地址】内部，与任何分叉无关。
+// 本漏洞唯一一条会伤到无关第三方的路径，是关闭已挖矿票时重复解冻【全链共享】的开发基金池
+// (TestTicketCloseDupDrainsDevFundPoolPreFork)，而它被 chain33 的**系统分叉**门控：
+//
+//	if t.prevstatus == 2 {
+//	    if !chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1") {   // ticketdb.go
+//	        receipt2, err := action.coinsAccount.ExecActive(chain33Cfg.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
+//
+// 该 fork 在主链早已生效(chain33.fork.toml 与 chain33 代码注册默认值同为 3350000，部署仓 bityuan
+// 主链为 4320000)，所以**主链上这条路径根本不存在**；它只活在 fork 未生效的链/配置里
+// (平行链 chain33.para.toml=-1、本文件 testdata=-1)。相应用例因此带 PreFork 后缀，并在运行时
+// 断言 fork 确实未生效(requireLegacyDevFundPath)，标明它们测的是【历史协议路径】，
+// 不能当作现网影响；主链状态由 TestTicketCloseMinedPostFundAddrV1KeepsFundPool 固定。
+// 详见分析文档 §4.3 / §4.7。
 //
 // 修复：分叉 ForkTicketCloseDup 生效后，payload 中重复的 ticketId 直接拒绝，pre-fork 行为不变
 // (保证历史区块可原样重放)。
@@ -59,6 +74,21 @@ const (
 	dupCloseTicketID  = "dup-close-ticket-0000000000"
 	dupCloseTicketID2 = "dup-close-ticket-0000000001"
 )
+
+// forkTicketFundAddrV1 chain33 的系统分叉名：它决定关闭【已挖矿】票时是否解冻开发基金池
+// (ticketdb.go: `if !chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1")`)。该名字在 chain33 里
+// 只是 RegisterSystemFork 的字符串字面量，没有导出常量，故在此显式命名，避免测试里再写裸字符串。
+const forkTicketFundAddrV1 = "ForkTicketFundAddrV1"
+
+// requireLegacyDevFundPath 断言当前配置确实处于「ForkTicketFundAddrV1 未生效」的历史协议状态。
+// 否则「关闭已挖矿票会解冻开发基金池」的两个用例会静默空转(基金池根本不被触碰，断言全部落空)：
+// 这正是把执行器测试配置当成现网配置时会犯的错(见分析文档 §4.7)。
+func requireLegacyDevFundPath(t *testing.T, cfg *types.Chain33Config, height int64) {
+	t.Helper()
+	require.Falsef(t, cfg.IsFork(height, forkTicketFundAddrV1),
+		"%s 在 height=%d 已生效，开发基金池解冻路径不存在；本用例只适用于该 fork 未生效的链",
+		forkTicketFundAddrV1, height)
+}
 
 // dupCloseTestCfg 本文件专用的隔离配置。
 //
@@ -259,61 +289,137 @@ func TestTicketCloseNormalPostFork(t *testing.T) {
 	assert.Equal(t, int32(pty.TicketClosed), env2.ticketStatus(t, dupCloseTicketID2))
 }
 
-// TestTicketForkConfigDeclared 新增 dapp fork 必须同时补齐仓库里所有 [fork.sub.ticket] 配置。
+// TestTicketForkConfigDeclared 新增 dapp fork 必须同时补齐仓库里所有 [fork.sub.ticket] 配置，
+// 而且该条目的**值**必须真的让修复生效。
+//
 // chain33 解析配置时会逐个核对代码里注册的 fork 与 toml 中的条目，缺一个就直接 panic：
 //
 //	exec ticket name ForkTicketCloseDup not config in config file
 //
-// 节点因此无法启动(DisableForkCheck=true 的配置除外，但那类配置不覆盖发布用的链配置)。
+// 但「有条目」不等于「修复生效」(复核意见 1)：toml 里写 -1 会被 initForkConfig 转成 MaxHeight
+// (types/fork.go)，等价于永不生效，而只断言文本里出现键名的写法对此完全无感。
+// 因此这里解析出值并限定取值，再用本包**实际加载的**配置断言 IsDappFork(0,...) 为真。
+//
+// 只检查 git 跟踪的配置：.gitignore 下的本地生成配置不随版本发布，也不该被这里约束(复核意见 4)。
 func TestTicketForkConfigDeclared(t *testing.T) {
 	repoRoot := filepath.Join("..", "..", "..", "..")
-	checkConfig := func(rel string) {
-		data, err := os.ReadFile(filepath.Join(repoRoot, rel))
-		require.Nil(t, err, "read %s", rel)
-		text := string(data)
-		require.Contains(t, text, "[fork.sub.ticket]", "%s no longer holds a ticket fork section", rel)
-		assert.Contains(t, text, pty.ForkTicketCloseDup,
-			"config %s has a [fork.sub.ticket] section but no %s entry", rel, pty.ForkTicketCloseDup)
-	}
-
-	// 随仓库发布的配置(.toml/.readme)：缺条目会让节点在 initForkConfig 处直接 panic
-	var configs []string
-	err := filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			if info.Name() == ".git" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if ext := filepath.Ext(path); ext != ".toml" && ext != ".readme" {
-			return nil
-		}
-		data, readErr := os.ReadFile(path)
-		if readErr != nil {
-			return readErr
-		}
-		if !strings.Contains(string(data), "[fork.sub.ticket]") {
-			return nil
-		}
-		rel, relErr := filepath.Rel(repoRoot, path)
-		if relErr != nil {
-			return relErr
-		}
-		configs = append(configs, rel)
-		return nil
-	})
-	require.Nil(t, err)
+	configs := trackedTicketForkConfigs(t, repoRoot)
 	// 防止断言被改名/搬走后空转
-	require.NotEmpty(t, configs, "no [fork.sub.ticket] config found, nothing was checked")
+	require.NotEmpty(t, configs, "no tracked [fork.sub.ticket] config found, nothing was checked")
 	for _, rel := range configs {
-		checkConfig(rel)
+		verifyTicketForkEntry(t, repoRoot, rel)
 	}
 
-	// 单测里内联的链配置同样会走 initForkConfig，一并核对
-	checkConfig(filepath.Join("plugin", "dapp", "ticket", "rpc", "rpc_test.go"))
+	// 单测里内联的链配置同样会走 initForkConfig，一并核对(不是独立 toml，只做段内取值断言)
+	verifyTicketForkEntry(t, repoRoot, filepath.Join("plugin", "dapp", "ticket", "rpc", "rpc_test.go"))
+
+	// 本包测试实际加载的配置(dupCloseTestCfg)也必须让修复生效 —— 与上面的文本断言互补：
+	// 这里走的是 chain33 自己的 IsDappFork，而不是文本匹配。
+	assert.Truef(t, dupCloseTestCfg.IsDappFork(0, pty.TicketX, pty.ForkTicketCloseDup),
+		"testdata 解析后 %s 在创世高度未生效，TicketCloseDup 相关用例会在旧行为上跑", pty.ForkTicketCloseDup)
+}
+
+// trackedTicketForkConfigs 返回 git 跟踪的、含 [fork.sub.ticket] 段的 .toml/.readme 配置。
+// 仓库没有 .git(源码包/导出目录)或 git 不可用时退回文件系统遍历(该模式下无法排除本地生成配置)。
+func trackedTicketForkConfigs(t *testing.T, repoRoot string) []string {
+	t.Helper()
+	var candidates []string
+	if _, err := os.Stat(filepath.Join(repoRoot, ".git")); err == nil {
+		if out, gitErr := exec.Command("git", "-C", repoRoot, "ls-files", "*.toml", "*.readme").Output(); gitErr == nil {
+			for _, rel := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+				if rel != "" {
+					candidates = append(candidates, rel)
+				}
+			}
+		}
+	}
+	if len(candidates) == 0 {
+		err := filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				if info.Name() == ".git" {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if ext := filepath.Ext(path); ext != ".toml" && ext != ".readme" {
+				return nil
+			}
+			rel, relErr := filepath.Rel(repoRoot, path)
+			if relErr != nil {
+				return relErr
+			}
+			candidates = append(candidates, rel)
+			return nil
+		})
+		require.Nil(t, err)
+	}
+
+	var configs []string
+	for _, rel := range candidates {
+		data, readErr := os.ReadFile(filepath.Join(repoRoot, rel))
+		if readErr != nil {
+			continue
+		}
+		if strings.Contains(string(data), "[fork.sub.ticket]") {
+			configs = append(configs, rel)
+		}
+	}
+	return configs
+}
+
+// verifyTicketForkEntry 校验单个配置里 ForkTicketCloseDup 的位置与取值。
+func verifyTicketForkEntry(t *testing.T, repoRoot, rel string) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(repoRoot, rel))
+	require.Nil(t, err, "read %s", rel)
+	text := string(data)
+	require.Contains(t, text, "[fork.sub.ticket]", "%s no longer holds a ticket fork section", rel)
+
+	// (1) 键必须位于 [fork.sub.ticket] 段内，而不是文件里任意位置(复核意见 4)
+	raw, ok := sectionValue(text, "[fork.sub.ticket]", pty.ForkTicketCloseDup)
+	require.Truef(t, ok, "%s 的 [fork.sub.ticket] 段内缺少 %s 条目(节点会在 initForkConfig panic)",
+		rel, pty.ForkTicketCloseDup)
+	// (2) 值必须真的生效：-1 会被 initForkConfig 转成 MaxHeight(永不生效)，正数则要等到该高度才生效。
+	// 仓库内随版本发布的配置一律取 0；若某条链要延后生效，那是部署仓的决定，请同步改这里与分析文档。
+	val, parseErr := strconv.ParseInt(raw, 10, 64)
+	require.Nilf(t, parseErr, "%s: %s=%q 不是整数", rel, pty.ForkTicketCloseDup, raw)
+	require.Equalf(t, int64(0), val, "%s: %s=%d 无法保证修复生效", rel, pty.ForkTicketCloseDup, val)
+
+	// 注：这里不构造 types.NewChain33Config 来断言 IsDappFork —— chain33 的 initForkConfig 会先把
+	// 各 dapp fork 写进配置、重置包级 AllowUserExec，最后才 panic 校验结果；对缺项/未注册 dapp 的
+	// 配置(如 chain33.para.toml 的 mix)做这个调用会污染同进程内其他测试。生效性改由
+	// dupCloseTestCfg(本包真正加载的那份配置)在上面统一断言。
+}
+
+// sectionValue 取出 text 中 [section] 段内 key 的原始值(已去行尾注释)。
+// 只认该段内的行：段外同名条目、被注释掉的条目都不算数。
+func sectionValue(text, section, key string) (string, bool) {
+	inSection := false
+	for _, line := range strings.Split(text, "\n") {
+		line = strings.TrimSpace(line)
+		if i := strings.Index(line, "#"); i >= 0 {
+			line = strings.TrimSpace(line[:i])
+		}
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			inSection = line == section
+			continue
+		}
+		if !inSection {
+			continue
+		}
+		k, v, found := strings.Cut(line, "=")
+		if !found || strings.TrimSpace(k) != key {
+			continue
+		}
+		return strings.TrimSpace(v), true
+	}
+	return "", false
 }
 
 // TestTicketCloseDupPaysOnlyReturnAddress 界定 H-1 的影响边界：重复付款的入账方恒为票自身的
@@ -412,16 +518,21 @@ func TestTicketCloseDupBypassesWithdrawLock(t *testing.T) {
 	assert.Equal(t, int32(pty.TicketOpened), env.ticketStatus(t, dupCloseTicketID2), "B 本身从未到期")
 }
 
-// TestTicketCloseDupDrainsDevFundPool 实测本漏洞影响面【超出攻击者自己】的那条路径：
+// TestTicketCloseDupDrainsDevFundPoolPreFork 实测本漏洞在【历史协议路径】上的影响面：
 // 关闭一张已挖矿(prevstatus==2)的票时，除了付给票主，还会从【全链共享的】开发基金池
 // (chain33Cfg.GetFundAddr(), ticket 执行地址) 解冻一份 CoinDevFund —— 且这一步在付款循环内，
-// 因此重复 N 次就是重复解冻 N 份，消耗的是所有人的钱，与本地址押金多少无关。
-// (该分支在 ForkTicketFundAddrV1 之前生效，见 testdata 中 ForkTicketFundAddrV1=-1)
-func TestTicketCloseDupDrainsDevFundPool(t *testing.T) {
+// 因此重复 N 次就是重复解冻 N 份，与本地址押金多少无关。
+//
+// ⚠️ 可达性：这一步被系统分叉 ForkTicketFundAddrV1 门控(ticketdb.go)，只在它**未生效**的链上存在。
+// 主链(chain33.fork.toml 与代码注册默认 3350000，部署仓 4320000)早已生效 → 主链没有这条路径；
+// 本用例跑在该 fork 未生效的 testdata 配置上(平行链同此，chain33.para.toml=-1)，断言见
+// requireLegacyDevFundPath。它是历史协议路径的回归用例，**不能**据此推断现网影响。
+func TestTicketCloseDupDrainsDevFundPoolPreFork(t *testing.T) {
 	cfg := dupCloseTestCfg
 	origin := cfg.GetDappFork(pty.TicketX, pty.ForkTicketCloseDup)
 	defer cfg.SetDappFork(pty.TicketX, pty.ForkTicketCloseDup, origin)
 	cfg.SetDappFork(pty.TicketX, pty.ForkTicketCloseDup, types.MaxHeight)
+	requireLegacyDevFundPath(t, cfg, 1000) // 1000 == newDupCloseEnv 里的驱动高度
 
 	devFund := pty.GetTicketMinerParam(cfg, 1000).CoinDevFund
 	require.Greater(t, devFund, int64(0), "coinDevFund 必须为正")
@@ -461,21 +572,31 @@ func TestTicketCloseDupDrainsDevFundPool(t *testing.T) {
 	assert.Equal(t, repeats*devFund, after.Balance, "共解冻出 3 份 CoinDevFund(应为 1 份)")
 }
 
-// TestTicketCloseDupFundDrainBlocksOtherHolders 实测「消耗全链共享基金池」真正伤到【别人】的机制：
+// TestTicketCloseDupFundDrainBlocksOtherHoldersPreFork 实测「消耗全链共享基金池」在【历史协议路径】上
+// 伤到【别人】的机制：
 //
 // 基金池 = 历次挖矿时 ExecDepositFrozen(GetFundAddr(), execAddr, CoinDevFund) 增发并冻结的币，
 // 全链只有这一个(fundKeyAddr 的子账户)。关闭一张【已挖矿】的票时，除了付给票主，还会从这个
 // 池解冻一份 CoinDevFund —— 而这一步在付款循环内、且失败会让整笔交易返回错误。
 //
 // 于是攻击者重复关闭自己的票 N 次，就把基金池多抽走 (N-1) 份。池被抽干后，
-// **其他持票人**关闭自己的票时会卡在这个基金解冻上：ExecActive 返回 ErrNoBalance，
-// 整笔 tclose 失败 —— 他们的押金(TicketPrice)与挖矿奖励(MinerValue)全部取不回来。
-// 这些人跟攻击者毫无关系，这是本漏洞唯一能伤害到第三方的路径。
-func TestTicketCloseDupFundDrainBlocksOtherHolders(t *testing.T) {
+// **其他持票人**关闭自己的票时会卡在这个基金解冻上：ExecActive 返回 ErrNoBalance，整笔 tclose 失败。
+//
+// ⚠️ 可达性：与 TestTicketCloseDupDrainsDevFundPoolPreFork 是同一条被 ForkTicketFundAddrV1 门控的
+// 路径，**主链不可达**(见该用例注释与分析文档 §4.3/§4.7)；运行时断言见 requireLegacyDevFundPath。
+//
+// ⚠️ 覆盖面(复核意见 3)：本用例直接调 driver.Exec，只到【执行器】层。DriverBase.Exec
+// (chain33 system/dapp/driver.go) 在动作返回 error 时既不写 statedb 也不回滚，而 TicketClose 在付款
+// 循环里是**直接写 statedb** 的(ExecActive/t.Save)，所以这里的失败交易会留下中间态：
+// 受害者押金已被解冻进可用余额、票仍是 TicketMined。链上的抢救由区块执行层的 ForkExecRollback
+// 完成(失败交易照常进块、扣手续费，状态改动全部丢弃)，本用例**证明不了**那一步，故只当作
+// 「失败原因 + 执行器逐笔副作用」的复现，并把 driver 级中间态显式断言出来。
+func TestTicketCloseDupFundDrainBlocksOtherHoldersPreFork(t *testing.T) {
 	cfg := dupCloseTestCfg
 	origin := cfg.GetDappFork(pty.TicketX, pty.ForkTicketCloseDup)
 	defer cfg.SetDappFork(pty.TicketX, pty.ForkTicketCloseDup, origin)
 	cfg.SetDappFork(pty.TicketX, pty.ForkTicketCloseDup, types.MaxHeight)
+	requireLegacyDevFundPath(t, cfg, 1000) // 1000 == newDupCloseEnv 里的驱动高度
 
 	devFund := pty.GetTicketMinerParam(cfg, 1000).CoinDevFund
 	require.Greater(t, devFund, int64(0))
@@ -511,11 +632,92 @@ func TestTicketCloseDupFundDrainBlocksOtherHolders(t *testing.T) {
 	require.Nil(t, err, "攻击者的重复关闭成功")
 	assert.Equal(t, int64(0), acc.LoadExecAccount(fundAddr, env.execAddr).Frozen, "全链基金池被抽干")
 
-	// 受害：关闭自己的票 —— 基金池已空，整笔交易失败，押金与奖励都取不回
+	// 受害：关闭自己的票 —— 基金池已空，整笔交易失败
+	victimBefore := acc.LoadExecAccount(victimAddr, env.execAddr)
+	require.Equal(t, int64(2*dupClosePrice), victimBefore.Frozen, "受害者押金=Price+MinerValue 两份")
 	_, err = env.driver.Exec(createCloseTx(t, cfg, []string{dupCloseTicketID2}, victimPriv), 2)
 	assert.Equal(t, types.ErrNoBalance, err, "基金池空的期间，其他人的票关不掉")
 	assert.Equal(t, int32(pty.TicketMined), env.ticketStatus(t, dupCloseTicketID2),
-		"受害者的票仍卡在已挖矿状态，押金+奖励无法取回")
+		"受害者的票仍卡在已挖矿状态")
+
+	// driver 级中间态：失败交易没有回滚，受害者的押金已被解冻进可用余额。
+	// 这是 DriverBase.Exec + 执行器直写 statedb 的语义，**不是**链上最终状态 ——
+	// 链上这些写入会被 ForkExecRollback 丢弃，受害者押金/奖励原样保留、票可待基金池回填后再关。
+	victimAfter := acc.LoadExecAccount(victimAddr, env.execAddr)
+	assert.Equal(t, int64(0), victimAfter.Frozen, "driver 级：失败交易的部分写入被保留(无回滚)")
+	assert.Equal(t, int64(2*dupClosePrice), victimAfter.Balance, "driver 级：押金已落到可用余额")
+
+	// 恢复路径(链上语义)：基金池被后续挖矿回填后，受害者的票即可正常关闭。
+	// 用一套全新环境来等价于「失败交易已被 ForkExecRollback 丢弃」，避免把上一步的 driver 级
+	// 脏状态带进来 —— 这也是本用例唯一能覆盖「补回后恢复」的方式(复核意见 3)。
+	env2 := newDupCloseEnvCross(t, []string{dupCloseTicketID2}, 2*dupClosePrice, victimPriv, victimAddr, victimAddr)
+	require.Nil(t, env2.kvdb.Set(executor.Key(dupCloseTicketID2), types.Encode(&pty.Ticket{
+		TicketId: dupCloseTicketID2, MinerAddress: victimAddr, ReturnAddress: victimAddr,
+		Status: pty.TicketMined, Price: dupClosePrice, MinerValue: dupClosePrice,
+	})))
+	acc2 := account.NewCoinsAccount(cfg)
+	acc2.SetDB(env2.kvdb)
+	acc2.SaveExecAccount(env2.execAddr, &types.Account{Addr: fundAddr, Frozen: devFund})
+	_, err = env2.driver.Exec(createCloseTx(t, cfg, []string{dupCloseTicketID2}, victimPriv), 2)
+	assert.Nil(t, err, "基金池回填 1 份后受害者恢复可关闭")
+	assert.Equal(t, int32(pty.TicketClosed), env2.ticketStatus(t, dupCloseTicketID2))
+}
+
+// TestTicketCloseMinedPostFundAddrV1KeepsFundPool 固定「主链可达性」这一事实：
+// ForkTicketFundAddrV1 生效(即主链状态)后，关闭【已挖矿】票不会触碰开发基金池，票主照常拿回押金+奖励。
+// 这条系统分叉门决定了 §4.3「抽干全链基金池」是否可达，因此必须有与用例绑定的断言：
+// 否则一旦配置漂移(例如主链配置被改成 -1)，上面两个 PreFork 用例的结论就会被误当成现网影响
+// (见分析文档 §4.7)。
+func TestTicketCloseMinedPostFundAddrV1KeepsFundPool(t *testing.T) {
+	cfg := dupCloseTestCfg
+	originFundFork := cfg.GetFork(forkTicketFundAddrV1)
+	defer cfg.SetFork(forkTicketFundAddrV1, originFundFork)
+	originDupFork := cfg.GetDappFork(pty.TicketX, pty.ForkTicketCloseDup)
+	defer cfg.SetDappFork(pty.TicketX, pty.ForkTicketCloseDup, originDupFork)
+
+	// 主链状态：系统分叉已生效；TicketCloseDup 保持分叉前，以便观察未修复时的全部副作用
+	cfg.SetFork(forkTicketFundAddrV1, 0)
+	cfg.SetDappFork(pty.TicketX, pty.ForkTicketCloseDup, types.MaxHeight)
+	require.True(t, cfg.IsFork(1000, forkTicketFundAddrV1), "本用例前提：该 fork 已生效")
+
+	devFund := pty.GetTicketMinerParam(cfg, 1000).CoinDevFund
+	require.Greater(t, devFund, int64(0), "coinDevFund 必须为正")
+	fundAddr := cfg.GetFundAddr()
+	require.NotEmpty(t, fundAddr)
+
+	env := newDupCloseEnv(t, []string{dupCloseTicketID}, 2*dupClosePrice)
+	require.Nil(t, env.kvdb.Set(executor.Key(dupCloseTicketID), types.Encode(&pty.Ticket{
+		TicketId:      dupCloseTicketID,
+		MinerAddress:  env.addr,
+		ReturnAddress: env.addr,
+		CreateTime:    0,
+		MinerTime:     0,
+		Status:        pty.TicketMined,
+		Price:         dupClosePrice,
+		MinerValue:    dupClosePrice,
+	})))
+
+	// 基金池里放 10 份：若这条路径在主链可达，它会被解冻
+	const fundPool = 10
+	acc := account.NewCoinsAccount(cfg)
+	acc.SetDB(env.kvdb)
+	acc.SaveExecAccount(env.execAddr, &types.Account{Addr: fundAddr, Balance: 0, Frozen: fundPool * devFund})
+
+	receipt, err := env.driver.Exec(env.tx, 2)
+	require.Nil(t, err)
+	require.NotNil(t, receipt)
+	assert.Equal(t, int32(types.ExecOk), receipt.Ty)
+
+	// 票主照常拿回押金+奖励
+	owner := env.loadAccount()
+	assert.Equal(t, int64(2*dupClosePrice), owner.Balance, "押金 Price + 奖励 MinerValue")
+	assert.Equal(t, int64(0), owner.Frozen)
+	assert.Equal(t, int32(pty.TicketClosed), env.ticketStatus(t, dupCloseTicketID))
+
+	// 开发基金池分文未动：§4.3 的抽干路径在主链上不存在
+	pool := acc.LoadExecAccount(fundAddr, env.execAddr)
+	assert.Equal(t, int64(fundPool*devFund), pool.Frozen, "fork 生效后关闭已挖矿票不得解冻基金池")
+	assert.Equal(t, int64(0), pool.Balance)
 }
 
 // TestTicketCloseDupDrainsSharedPool 实测 4.2 的危害与其边界：
