@@ -1,5 +1,13 @@
 changelog
 
+## [1.76.1](https://github.com/33cn/plugin/compare/v1.76.0...v1.76.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **evm:** charge SELFDESTRUCT to the executing account behind ForkEVMSuicidePayer ([02efa9f](https://github.com/33cn/plugin/commit/02efa9fb53892708fee6e1f84e27a231f41b66e9))
+* **ticket:** bind the mining tx to the ticket execer in CheckBlock ([da30bbb](https://github.com/33cn/plugin/commit/da30bbbca5bb27cce0ab13903805380e355a051e))
+
 # [1.76.0](https://github.com/33cn/plugin/compare/v1.75.2...v1.76.0) (2026-10-15)
 
 
