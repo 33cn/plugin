@@ -18,9 +18,9 @@
 //     修复后的回归用例：ticket 的 Exec_Genesis 曾经缺少 height != 0 的重入保护
 //     （coins/coinsx/token 都有），分叉生效后攻击者仍能造出 IsGenesis=true、3 段
 //     ticketId 的“创世票”：既绕过 pubHash 校验，又绕过成熟期与提现等待，让受害矿工
-//     立刻替攻击者挖票、奖励增发给攻击者 ReturnAddress。现在执行器自身以及 chain33
-//     框架层（DriverBase.Exec + ForkGenesisOnlyAtHeightZero）都会拒绝高度 != 0 的
-//     Genesis，同时高度 0 的正常创世路径不受影响。
+//     立刻替攻击者挖票、奖励增发给攻击者 ReturnAddress。现在由 chain33 框架层
+//     （DriverBase.Exec 的 checkGenesisHeight + ForkGenesisOnlyAtHeightZero）拒绝
+//     高度 != 0 的 Genesis，同时高度 0 的正常创世路径不受影响。
 //  4. Test_InjectedTicket_MinedByVictim_PreFork_RewardGoesToAttacker
 //     ForkTicketId 未生效（或旧格式 3 段 ticketId）时，受害矿工可以成功挖出注入
 //     票据，而出块奖励（MinerValue）会增发到注入者控制的 ReturnAddress 上。
@@ -49,6 +49,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	ex "github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	pty "github.com/33cn/plugin/plugin/dapp/ticket/types"
@@ -328,14 +329,19 @@ func Test_InjectedTicket_MinedByVictim_PreFork_RewardGoesToAttacker(t *testing.T
 }
 
 // Test_TicketGenesisReRunRejected_PostFork：修复后的回归用例。
-// Genesis 只允许在高度 0 执行：ticket 执行器自身（GetHeight() != 0 -> ErrReRunGenesis）
-// 以及 chain33 框架层（DriverBase.Exec + ForkGenesisOnlyAtHeightZero）都会拒绝
-// height != 0 的创世重入，因此 ForkTicketId 生效后也无法再造出“免检”的创世票，
-// 攻击链在第一步就被挡住。
+// Genesis 只允许在高度 0 执行，由 chain33 框架层统一拦截：DriverBase.Exec 的
+// checkGenesisHeight 配合系统分叉 ForkGenesisOnlyAtHeightZero（本仓库各配置取 0，
+// 默认配置 title=local 亦全为 0），因此 ForkTicketId 生效后也无法再造出“免检”
+// 的创世票，攻击链在第一步就被挡住。
+//
+// 注意：ticket 执行器自身**不再**重复该校验，本用例完全依赖该分叉生效，
+// 因此先把这一前提断言出来 —— 分叉若被配成 -1(→MaxHeight) 或链接旧 chain33，用例会直接变红。
 func Test_TicketGenesisReRunRejected_PostFork(t *testing.T) {
 	cfg := mock33.GetAPI().GetConfig()
 	height := pocPostForkHeight
 	assert.True(t, cfg.IsDappFork(height, pty.TicketX, "ForkTicketId"), "本用例要求 ForkTicketId 已生效")
+	require.True(t, cfg.IsFork(height, types.ForkGenesisOnlyAtHeightZero),
+		"本用例依赖框架层分叉 %s 在高度 %d 已生效", types.ForkGenesisOnlyAtHeightZero, height)
 
 	attackerPriv, err := FromPrivkey(PrivKeyA)
 	assert.NoError(t, err)
@@ -356,21 +362,9 @@ func Test_TicketGenesisReRunRejected_PostFork(t *testing.T) {
 		Count:         1,
 	}, attackerPriv)
 	receipt, err := env.driver.Exec(genesisTx, 0)
-	assert.Equal(t, types.ErrReRunGenesis, err, "高度 %d 上的 Exec_Genesis 必须被拒绝", height)
+	assert.Equal(t, types.ErrReRunGenesis, err, "高度 %d 上的 Exec_Genesis 必须被框架层拒绝", height)
 	assert.Nil(t, receipt, "被拒绝时不得产生回执与状态写入")
-
-	// 直接调用执行器方法：即使链接的 chain33 未开启框架层分叉（旧版本或配置为 -1），
-	// ticket 自身的 height 校验也必须独立拒绝该重入。
-	ticketDriver, ok := env.driver.(*ex.Ticket)
-	assert.True(t, ok)
-	receipt, err = ticketDriver.Exec_Genesis(&pty.TicketGenesis{
-		MinerAddress:  victimAddr,
-		ReturnAddress: attackerAddr,
-		Count:         1,
-	}, genesisTx, 0)
-	assert.Equal(t, types.ErrReRunGenesis, err, "执行器自身必须拒绝高度 != 0 的 Genesis")
-	assert.Nil(t, receipt)
-	t.Logf("post-fork(height=%d) genesis re-run rejected: %v", height, err)
+	t.Logf("post-fork(height=%d) genesis re-run rejected by framework fork: %v", height, err)
 }
 
 // Test_TicketGenesisAllowedAtHeightZero：创世高度（0）上的正常路径不受修复影响。

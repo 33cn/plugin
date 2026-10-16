@@ -32,9 +32,10 @@ import (
 //     height != 0 保护（coins/coinsx/token 都有），高度 >0 依然执行成功并造出
 //     IsGenesis=true、3 段 ticketId 的“创世票”（MinerAddress=受害矿工、ReturnAddress=攻击者），
 //     既绕过 pubHash 校验又绕过成熟期，受害矿工会替攻击者挖票并把奖励增发到攻击者地址；
-//  3. 修复后该交易仍然可以进块，但 Exec_Genesis 在执行阶段被拒绝（chain33 框架层
-//     DriverBase.Exec + ForkGenesisOnlyAtHeightZero，以及 ticket 执行器自身的 height 校验），
-//     回执为 ExecErr，链上不产生任何票据状态，受害矿工也就无从挖出伪造票。
+//  3. 修复后该交易仍然可以进块，但 Exec_Genesis 在派发前被 chain33 框架层拒绝
+//     （DriverBase.Exec 的 checkGenesisHeight + 系统分叉 ForkGenesisOnlyAtHeightZero，
+//     本仓库配置取 0、默认配置 title=local 亦全为 0），回执为 ExecErr，
+//     链上不产生任何票据状态，受害矿工也就无从挖出伪造票。
 func TestGenesisReentryRejectedOnTicketNode(t *testing.T) {
 	// 关闭手续费：攻击者地址的 plain coins 为 0（资产都在 ticket 子账户里）
 	cfgStr := strings.Replace(types.GetDefaultCfgstring(), "minTxFeeRate=100000", "minTxFeeRate=0", 1)
