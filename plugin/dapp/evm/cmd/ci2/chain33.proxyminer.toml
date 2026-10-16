@@ -600,6 +600,9 @@ ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEvmExecNonceV2=0
 ForkEVMFixOverflow=0
+# SELFDESTRUCT pays from the executing account: DELEGATECALL/CALLCODE no longer
+# spend the borrowed code contract balance
+ForkEVMSuicidePayer=0
 
 [fork.sub.evmxgo]
 Enable=0
@@ -722,6 +725,7 @@ ForkTicketId=1062000
 ForkTicketVrf=1770000
 # 拒绝同一笔 tclose 交易内重复的 ticketId(重复会等价于同一张票被多次付款)
 ForkTicketCloseDup=0
+ForkMinerExecerCheck=0
 
 [fork.sub.token]
 Enable=100899

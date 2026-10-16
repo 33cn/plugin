@@ -21,6 +21,8 @@ var (
 	ErrEmptyMinerTx = errors.New("ErrEmptyMinerTx")
 	// ErrMinerNotPermit err type
 	ErrMinerNotPermit = errors.New("ErrMinerNotPermit")
+	// ErrMinerTxExecer err type, 挖矿交易的执行器不是 ticket
+	ErrMinerTxExecer = errors.New("ErrMinerTxExecer")
 	// ErrMinerAddr err type
 	ErrMinerAddr = errors.New("ErrMinerAddr")
 	// ErrModify err type
