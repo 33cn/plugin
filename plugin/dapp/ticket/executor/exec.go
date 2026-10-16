@@ -11,6 +11,10 @@ import (
 )
 
 // Exec_Genesis exec genesis
+//
+// 创世动作只允许在高度 0 执行；该校验由 chain33 框架层统一提供
+// （DriverBase.checkGenesisHeight + 系统分叉 ForkGenesisOnlyAtHeightZero，
+// 本仓库各配置均取 0），执行器侧不再重复实现，避免同一约束存在两份实现。
 func (t *Ticket) Exec_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.Count <= 0 {
 		return nil, ty.ErrTicketCount
