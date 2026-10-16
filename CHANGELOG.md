@@ -1,5 +1,12 @@
 changelog
 
+## [1.76.2](https://github.com/33cn/plugin/compare/v1.76.1...v1.76.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* **ticket:** only allow Exec_Genesis at height 0 ([ef5d860](https://github.com/33cn/plugin/commit/ef5d860bc33b887e59d6eeeb905efe5c745efff3))
+
 ## [1.76.1](https://github.com/33cn/plugin/compare/v1.76.0...v1.76.1) (2026-10-16)
 
 
