@@ -716,7 +716,7 @@ func TestTicketCloseMinedPostFundAddrV1KeepsFundPool(t *testing.T) {
 
 	// 开发基金池分文未动：§4.3 的抽干路径在主链上不存在
 	pool := acc.LoadExecAccount(fundAddr, env.execAddr)
-	assert.Equal(t, int64(fundPool*devFund), pool.Frozen, "fork 生效后关闭已挖矿票不得解冻基金池")
+	assert.Equal(t, fundPool*devFund, pool.Frozen, "fork 生效后关闭已挖矿票不得解冻基金池")
 	assert.Equal(t, int64(0), pool.Balance)
 }
 
