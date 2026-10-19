@@ -1,5 +1,12 @@
 changelog
 
+## [1.76.3](https://github.com/33cn/plugin/compare/v1.76.2...v1.76.3) (2026-10-19)
+
+
+### Bug Fixes
+
+* **ticket:** reject duplicated ticket ids in one tclose ([#1335](https://github.com/33cn/plugin/issues/1335)) ([1458fe2](https://github.com/33cn/plugin/commit/1458fe27c970d42e371f257d87e97642dc92e03a))
+
 ## [1.76.2](https://github.com/33cn/plugin/compare/v1.76.1...v1.76.2) (2026-10-16)
 
 
