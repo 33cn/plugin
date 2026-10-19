@@ -887,7 +887,17 @@ func TestKV(t *testing.T) {
 }
 
 func TestSafeMul(t *testing.T) {
-	t.Log(SafeMul(1e8, 1e7, types.DefaultCoinPrecision))
-	t.Log(SafeMul(1e10, 1e16, types.DefaultCoinPrecision))
-	t.Log(SafeMul(1e7, 1e6, types.DefaultCoinPrecision))
+	v, err := SafeMul(1e8, 1e7, types.DefaultCoinPrecision)
+	t.Log(v, err)
+	assert.Nil(t, err)
+	v, err = SafeMul(1e10, 1e16, types.DefaultCoinPrecision)
+	t.Log(v, err)
+	assert.Nil(t, err)
+	v, err = SafeMul(1e7, 1e6, types.DefaultCoinPrecision)
+	t.Log(v, err)
+	assert.Nil(t, err)
+	// 超出int64时必须返回错误，而不是静默截断
+	if _, err = SafeMul(28999941890838049, 1e16, types.DefaultCoinPrecision); err == nil {
+		t.Fatal("SafeMul should report overflow")
+	}
 }
