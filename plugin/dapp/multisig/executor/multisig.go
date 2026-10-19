@@ -931,10 +931,20 @@ func getOwnerInfoByAddr(multiSigAcc *mty.MultiSig, oldowner string) (uint64, int
 }
 
 // 确认某笔交易是否已经达到确认需要的权重
-func isConfirmed(requiredWeight uint64, multiSigTx *mty.MultiSigTx) bool {
+// useCurWeight为true时忽略确认时记录的权重快照，按owner当前权重重新累计，
+// 防止owner权重被modify/del/replace后仍按过期权重凑足阈值执行交易
+func isConfirmed(requiredWeight uint64, multiSigTx *mty.MultiSigTx, multiSigAcc *mty.MultiSig, useCurWeight bool) bool {
 	var totalweight uint64
 	for _, owner := range multiSigTx.ConfirmedOwner {
-		totalweight += owner.Weight
+		weight := owner.Weight
+		if useCurWeight {
+			curWeight, isowner := isOwner(multiSigAcc, owner.OwnerAddr)
+			if !isowner {
+				continue
+			}
+			weight = curWeight
+		}
+		totalweight += weight
 	}
 	return totalweight >= requiredWeight
 }

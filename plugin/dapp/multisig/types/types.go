@@ -19,6 +19,7 @@ func init() {
 // InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(MultiSigX, "Enable", 0)
+	cfg.RegisterDappFork(MultiSigX, ForkMultiSigFixStaleWeight, 0)
 }
 
 // InitExecutor ...
