@@ -24,6 +24,12 @@ const (
 	LotteryX = "lottery"
 )
 
+// Fork for lottery
+const (
+	// ForkLotteryFixOverflow 修复购买金额溢出漏洞，LotteryBuy 在转账/冻结前增加金额上限与溢出检查
+	ForkLotteryFixOverflow = "ForkLotteryFixOverflow"
+)
+
 // Lottery status
 const (
 	LotteryCreated = 1 + iota

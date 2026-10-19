@@ -26,6 +26,7 @@ func init() {
 // InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(LotteryX, "Enable", 0)
+	cfg.RegisterDappFork(LotteryX, ForkLotteryFixOverflow, 0)
 }
 
 // InitExecutor ...
