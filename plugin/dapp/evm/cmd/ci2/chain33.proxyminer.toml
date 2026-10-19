@@ -746,6 +746,7 @@ ForkTradeAsset=1010000
 ForkTradeID=1450000
 ForkTradeFixAssetDB=2500000
 ForkTradePrice=3150000
+ForkTradeFixOverflow=0
 
 [fork.sub.unfreeze]
 Enable=0
