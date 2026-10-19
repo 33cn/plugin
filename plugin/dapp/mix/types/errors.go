@@ -18,6 +18,8 @@ var (
 
 	//ErrNulliferHashExist exist
 	ErrNulliferHashExist = errors.New("ErrNulliferHashExist")
+	//ErrAmountOverflow amount sum overflow
+	ErrAmountOverflow = errors.New("ErrAmountOverflow")
 	//ErrAuthorizeHashExist exist
 	ErrAuthorizeHashExist = errors.New("ErrAuthorizeHashExist")
 
