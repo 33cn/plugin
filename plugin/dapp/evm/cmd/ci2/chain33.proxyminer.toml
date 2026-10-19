@@ -676,6 +676,7 @@ Enable=0
 
 [fork.sub.multisig]
 Enable=0
+ForkMultiSigFixStaleWeight=0
 
 [fork.sub.norm]
 Enable=0
