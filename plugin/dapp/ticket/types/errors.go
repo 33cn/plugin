@@ -15,10 +15,14 @@ var (
 	ErrTime = errors.New("ErrTime")
 	// ErrTicketClosed err type
 	ErrTicketClosed = errors.New("ErrTicketClosed")
+	// ErrDupTicketID 同一笔交易内重复关闭同一个 ticket
+	ErrDupTicketID = errors.New("ErrDupTicketID")
 	// ErrEmptyMinerTx err type
 	ErrEmptyMinerTx = errors.New("ErrEmptyMinerTx")
 	// ErrMinerNotPermit err type
 	ErrMinerNotPermit = errors.New("ErrMinerNotPermit")
+	// ErrMinerTxExecer err type, 挖矿交易的执行器不是 ticket
+	ErrMinerTxExecer = errors.New("ErrMinerTxExecer")
 	// ErrMinerAddr err type
 	ErrMinerAddr = errors.New("ErrMinerAddr")
 	// ErrModify err type

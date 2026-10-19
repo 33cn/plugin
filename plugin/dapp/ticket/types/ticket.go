@@ -59,6 +59,10 @@ const (
 // TicketOldParts old tick type
 const TicketOldParts = 3
 
+// ForkMinerExecerCheck 分叉后挖矿交易(tx[0])的执行器必须是 ticket 本身，
+// 否则可以用其他执行器构造 tx[0]，绕过 Exec_Miner 对票归属/状态/冻结时间的校验出块
+const ForkMinerExecerCheck = "ForkMinerExecerCheck"
+
 // TicketCountOpenOnce count open once
 const TicketCountOpenOnce = 1000
 
@@ -67,6 +71,10 @@ var ErrOpenTicketPubHash = errors.New("ErrOpenTicketPubHash")
 
 // TicketX dapp name
 var TicketX = "ticket"
+
+// ForkTicketCloseDup 修复 TicketClose 对重复 ticketId 重复付款的分叉。
+// 开启后同一笔交易内重复出现的 ticketId 会被拒绝(见 executor.TicketClose)。
+const ForkTicketCloseDup = "ForkTicketCloseDup"
 
 func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(TicketX))
@@ -80,6 +88,8 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketId", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 0)
+	cfg.RegisterDappFork(TicketX, ForkTicketCloseDup, 0)
+	cfg.RegisterDappFork(TicketX, ForkMinerExecerCheck, 0)
 }
 
 // InitExecutor ...

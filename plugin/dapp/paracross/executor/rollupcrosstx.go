@@ -11,8 +11,10 @@ import (
 	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	rtypes "github.com/33cn/plugin/plugin/dapp/rollup/types"
 )
 
 // Exec_RollupCrossTx exec commit rollup
@@ -85,6 +87,8 @@ var (
 	ErrGetRollupCrossTx     = errors.New("ErrGetRollupCrossTx")
 	ErrGetRollupCommitRound = errors.New("ErrGetRollupCommitRound")
 	ErrCrossTxCheckHash     = errors.New("ErrCrossTxCheckHash")
+	ErrRollupRoundSettled   = errors.New("ErrRollupRoundSettled")
+	ErrGetRollupCrossDone   = errors.New("ErrGetRollupCrossDone")
 )
 
 func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error) {
@@ -110,6 +114,25 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 		clog.Error("rollupCrossTx", "currRound", status.GetCommitRound(),
 			"commitRound", commit.GetCommitRound(), "getRollupStatus err", err)
 		return nil, ErrInvalidCommitRound
+	}
+
+	//分叉后同一轮的结算只允许执行一次(见 rollup types.ForkSecurityHardening, 该分叉注册在 rollup 名下,
+	//paracross 与 rollup 共用同一个配置项)。
+	//此前准入只校验"轮次相等", 而当前轮次要到【下一轮】提交时才推进, 因此在被打断之前任何人都能重放
+	//这笔结算(改 nonce 即新交易), 反复从该 title 的托管池支取/重复铸币。
+	settleOnce := cfg.IsDappFork(a.exec.GetMainHeight(), rtypes.RollupX, rtypes.ForkSecurityHardening)
+	if settleOnce {
+		doneRound, err := getRollupCrossDone(a.db, commit.GetChainTitle())
+		if err != nil {
+			clog.Error("rollupCrossTx getRollupCrossDone", "chainTitle", commit.GetChainTitle(),
+				"commitRound", commit.GetCommitRound(), "txHash", common.ToHex(a.txhash), "err", err)
+			return nil, ErrGetRollupCrossDone
+		}
+		if commit.GetCommitRound() <= doneRound {
+			clog.Error("rollupCrossTx round already settled", "chainTitle", commit.GetChainTitle(),
+				"commitRound", commit.GetCommitRound(), "doneRound", doneRound, "txHash", common.ToHex(a.txhash))
+			return nil, ErrRollupRoundSettled
+		}
 	}
 
 	roundInfo, err := rexec.GetRoundInfo(a.db, commit.GetChainTitle(), commit.GetCommitRound())
@@ -161,7 +184,31 @@ func (a *action) rollupCrossTx(commit *pt.RollupCrossTx) (*types.Receipt, error)
 		return nil, err
 	}
 
+	if settleOnce {
+		//结算成功才推进水位: 该 KV 随本笔交易一起落库, 交易失败回滚时水位也不会前进
+		receipt.KV = append(receipt.KV, &types.KeyValue{
+			Key:   calcRollupCrossDoneKey(commit.GetChainTitle()),
+			Value: types.Encode(&types.Int64{Data: commit.GetCommitRound()}),
+		})
+	}
+
 	return mergeReceipt(receipt, rep), nil
+}
+
+// getRollupCrossDone 读取某 title 已结算的最大 rollup 轮次, 未记录过时返回 0
+func getRollupCrossDone(db dbm.KV, title string) (int64, error) {
+	value, err := db.Get(calcRollupCrossDoneKey(title))
+	if err != nil {
+		if isNotFound(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	var round types.Int64
+	if err := types.Decode(value, &round); err != nil {
+		return 0, err
+	}
+	return round.Data, nil
 }
 
 func getTx(api client.QueueProtocolAPI, hash []byte) (*types.Transaction, error) {

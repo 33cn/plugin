@@ -57,6 +57,9 @@ const (
 	ForkEvmExecNonceV2 = "ForkEvmExecNonceV2"
 	// ForkEVMFixOverflow 修复 uint64→int64 金额溢出漏洞，在所有资产操作前增加溢出检查
 	ForkEVMFixOverflow = "ForkEVMFixOverflow"
+	// ForkEVMSuicidePayer SELFDESTRUCT pays from the executing account (Address()) instead of
+	// CodeAddr, so that reading the balance, debiting it and suiciding all use the same account
+	ForkEVMSuicidePayer = "ForkEVMSuicidePayer"
 )
 
 var (

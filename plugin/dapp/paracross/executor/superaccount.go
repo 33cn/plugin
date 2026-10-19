@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	manager "github.com/33cn/chain33/system/dapp/manage/types"
@@ -988,6 +989,9 @@ func (a *action) checkApproveOpOld(config *pt.ParaNodeGroupConfig) error {
 func (a *action) checkApproveOpNew(config *pt.ParaNodeGroupConfig, status *pt.ParaNodeGroupStatus) error {
 	cfg := a.api.GetConfig()
 
+	//自审批建组是纯观测点, 只在下面记日志, 不参与审批结果
+	a.logSelfApproveNodeGroup(config, status)
+
 	//from地址和apply的相同，ok
 	if status.FromAddr == a.fromaddr {
 		return nil
@@ -1013,6 +1017,73 @@ func (a *action) checkApproveOpNew(config *pt.ParaNodeGroupConfig, status *pt.Pa
 	}
 
 	return errors.Wrapf(types.ErrNotAllow, "from Addr=%s not applier=%s or manager", a.fromaddr, status.FromAddr)
+}
+
+// logSelfApproveNodeGroup 记录「自由注册(ForkParaFreeRegister)下, 申请人自审批创建一个尚不存在的节点组」的告警。
+//
+// 节点组是 title 维度的资产处置权限: 谁持有某 title 的节点组, 谁就能处置该 title 的资产。自由注册之后,
+// 对一个尚无节点组的 title, 任何人都能 Apply 后用同一地址 Approve, 成为该 title 唯一的超级节点 ——
+// 这是产品上有意保留的行为, 但除本日志外链上不留任何痕迹, 因此这是该权限被接管时唯一的观测点。
+//
+// 只写日志, 不改变返回值/状态: 池子为空属正常自助建组, 记 Error; 池子里有资产则说明"有资产却在裸奔建组",
+// 是接管特征, 记 Crit(本包 clog 用 log15, Crit 只记日志、不 panic)。
+func (a *action) logSelfApproveNodeGroup(config *pt.ParaNodeGroupConfig, status *pt.ParaNodeGroupStatus) {
+	//只有自审批才是"自己给自己授权"; 超级管理员/autonomy 审批别人的申请不在本告警范围内
+	if status.FromAddr != a.fromaddr {
+		return
+	}
+	//只在"建组"这个动作上告警: 节点组已存在时, 本次审批改的是一个已有的组, 不是接管无主 title
+	if a.nodeGroupAddrsExist(config.Title) {
+		return
+	}
+
+	fields := []interface{}{
+		"title", config.Title,
+		"applyAddr", status.FromAddr,
+		"approveAddr", a.fromaddr,
+		"proposalId", config.Id,
+		"applyStatusId", status.Id,
+		"height", a.height,
+	}
+
+	balance, poolAddr, err := a.titleEscrowBalance(config.Title)
+	if err != nil {
+		clog.Error("paracross node group created by self approval, load escrow pool failed",
+			append(fields, "err", err)...)
+		return
+	}
+
+	fields = append(fields, "poolAddr", poolAddr, "poolBalance", balance)
+	if balance > 0 {
+		clog.Crit("paracross node group created by self approval with balance in escrow pool", fields...)
+		return
+	}
+	clog.Error("paracross node group created by self approval", fields...)
+}
+
+// nodeGroupAddrsExist 判断该 title 是否已经建过节点组(与 checkNodeGroupExist 读同一个 key)。
+// 没有复用 checkNodeGroupExist 的原因: 它在节点组已存在时会打一条 "group existed" 的 error, 那是给
+// "申请建组"入口用的; 本函数在审批路径上调用, 命中已有节点组是正常情况(改组), 复用它会平白多一条
+// 误导性的 error, 因此这里只做一次无副作用的只读判断。
+func (a *action) nodeGroupAddrsExist(title string) bool {
+	value, err := a.db.Get(calcParaNodeGroupAddrsKey(title))
+	return err == nil && value != nil
+}
+
+// titleEscrowBalance 返回某 title 托管池的余额与池地址。
+// 池子就是主链 coins 账户库里 paracross 执行器地址下、以 <title>paracross 的执行器地址为用户地址的
+// 子账户 —— 与 execWithdraw 支取的是同一个账户。地址算法依赖"只在主链调用"这一前提:
+// checkApproveOp 由 nodeGroupApprove 在 !cfg.IsPara() 时才调用。
+// 托管池读不到时按余额 0 处理(降为 Error), 不改变任何执行结果。
+func (a *action) titleEscrowBalance(title string) (int64, string, error) {
+	cfg := a.api.GetConfig()
+	accDB, err := a.createAccount(cfg, a.db, cfg.GetCoinExec(), cfg.GetCoinSymbol())
+	if err != nil {
+		return 0, "", err
+	}
+	poolAddr := address.ExecAddress(title + pt.ParaX)
+	execAddr := address.ExecAddress(pt.ParaX)
+	return accDB.LoadExecAccount(poolAddr, execAddr).Balance, poolAddr, nil
 }
 
 // 核查approve的条件，最新的分叉版本开启了自由注册模式，只要申请者和approve者是同一个用户即可

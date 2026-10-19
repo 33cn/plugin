@@ -539,6 +539,8 @@ ForkParaFee=-1
 ForkEthAddressFormat=0
 # 交易chainID严格校验启用高度，启用后交易组内每笔交易及minTxFeeRate=0时的单笔交易都会校验chainID，防止跨链重放；-1 表示关闭
 ForkTxChainIDStrict=-1
+# 创世动作(Genesis)执行高度限制：启用后框架统一拒绝 height != 0 的 Exec_Genesis，防止执行器漏写 height 校验被创世重入；-1 表示关闭
+ForkGenesisOnlyAtHeightZero=0
 
 [fork.sub.none]
 ForkUseTimeDelay=0
@@ -600,6 +602,9 @@ ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEvmExecNonceV2=0
 ForkEVMFixOverflow=0
+# SELFDESTRUCT pays from the executing account: DELEGATECALL/CALLCODE no longer
+# spend the borrowed code contract balance
+ForkEVMSuicidePayer=0
 
 [fork.sub.evmxgo]
 Enable=0
@@ -720,6 +725,9 @@ ForkStorageLocalDB=0
 Enable=0
 ForkTicketId=1062000
 ForkTicketVrf=1770000
+# 拒绝同一笔 tclose 交易内重复的 ticketId(重复会等价于同一张票被多次付款)
+ForkTicketCloseDup=0
+ForkMinerExecerCheck=0
 
 [fork.sub.token]
 Enable=100899
