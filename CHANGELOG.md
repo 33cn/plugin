@@ -1,5 +1,27 @@
 changelog
 
+## [1.76.3](https://github.com/33cn/plugin/compare/v1.76.2...v1.76.3) (2026-10-19)
+
+
+### Bug Fixes
+
+* **ticket:** reject duplicated ticket ids in one tclose ([#1335](https://github.com/33cn/plugin/issues/1335)) ([1458fe2](https://github.com/33cn/plugin/commit/1458fe27c970d42e371f257d87e97642dc92e03a))
+
+## [1.76.2](https://github.com/33cn/plugin/compare/v1.76.1...v1.76.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* **ticket:** only allow Exec_Genesis at height 0 ([ef5d860](https://github.com/33cn/plugin/commit/ef5d860bc33b887e59d6eeeb905efe5c745efff3))
+
+## [1.76.1](https://github.com/33cn/plugin/compare/v1.76.0...v1.76.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **evm:** charge SELFDESTRUCT to the executing account behind ForkEVMSuicidePayer ([02efa9f](https://github.com/33cn/plugin/commit/02efa9fb53892708fee6e1f84e27a231f41b66e9))
+* **ticket:** bind the mining tx to the ticket execer in CheckBlock ([da30bbb](https://github.com/33cn/plugin/commit/da30bbbca5bb27cce0ab13903805380e355a051e))
+
 # [1.76.0](https://github.com/33cn/plugin/compare/v1.75.2...v1.76.0) (2026-10-15)
 
 

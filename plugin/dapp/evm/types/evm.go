@@ -48,6 +48,8 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExecutorName, ForkEvmExecNonce, 0)
 	cfg.RegisterDappFork(ExecutorName, ForkEvmExecNonceV2, 0)
 	cfg.RegisterDappFork(ExecutorName, ForkEVMFixOverflow, 0)
+	// SELFDESTRUCT payer fix: DELEGATECALL/CALLCODE no longer spend the borrowed code's balance
+	cfg.RegisterDappFork(ExecutorName, ForkEVMSuicidePayer, 0)
 
 }
 

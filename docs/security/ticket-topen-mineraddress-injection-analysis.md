@@ -3,7 +3,7 @@
 > 代码版本：`plugin` HEAD `92b68766e`，依赖 `chain33 v1.72.0`
 > 分析时间：2026-10-15（含独立复核代理的交叉验证与修正）
 > 可执行证据：
-> ① 执行器级 PoC：`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`（5 个用例，全部通过）
+> ① 执行器级 PoC：`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`（6 个用例，全部通过；其中演示“注入”的用例显式把 `ForkTicketMinerAuth` 配到未来高度，固定修复前的旧行为）
 > ② 真实测试节点端到端 PoC：`plugin/dapp/ticket/testnode/genesis_reentry_attack_test.go`（mempool → 出块 → 执行 → 票共识挖票 → 奖励结算，通过）
 > 复现：`go test -run 'Test_TicketOpen_Injects|Test_InjectedTicket|Test_TicketGenesisReRun|Test_TicketOpen_CountExceeds' -v ./plugin/dapp/ticket/executor/`
 > 　　　`go test -run 'TestGenesisReentryAttackOnTicketNode' -v ./plugin/dapp/ticket/testnode/`
@@ -104,7 +104,7 @@ t := NewDB(..., genesis.MinerAddress, genesis.ReturnAddress, ..., /*isGenesis*/ 
 
 ### 4.1 `ForkTicketId` 已生效：借道 Genesis 重入盗取奖励（严重）
 
-**执行器级 PoC**（`Test_TicketGenesisReRun_PostFork_RewardGoesToAttacker`）在 `height=1,700,000`（> `ForkTicketId=1,600,000`，断言分叉已生效）实测：
+**执行器级 PoC**（修复前的 `Test_TicketGenesisReRun_PostFork_RewardGoesToAttacker`，随 `Exec_Genesis` 修复已改为回归断言 `Test_TicketGenesisReRunRejected_PostFork`）在 `height=1,700,000`（> `ForkTicketId=1,600,000`，断言分叉已生效）当时实测：
 
 ```
 post-fork(height=1700000) genesis re-run: victim 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
@@ -147,12 +147,12 @@ attacker closed a mined forged genesis ticket immediately at height=81
 
 ## 5. 相邻缺陷：`Count > len(PubHashes)` panic（修正为低–中危）
 
-`ticketdb.go:257-262` 只拒绝 `len(topen.PubHashes) == 0`，随后按 `Count` 下标访问 `topen.PubHashes[i]`；`Count=1000, PubHashes=[1 项]` → `runtime error: index out of range [1] with length 1`（PoC 5 验证）。
+`ticketdb.go:257-262` 只拒绝 `len(topen.PubHashes) == 0`，随后按 `Count` 下标访问 `topen.PubHashes[i]`；`Count=1000, PubHashes=[1 项]` → `runtime error: index out of range [1] with length 1`（修复前由 PoC 5 验证，现已改为回归断言）。
 
 链上后果（PoC 5 + 代码 + 独立复核实测）：
 
 - mempool 不拦：票据 `CheckTx` 只拒绝 `TicketActionMiner`（`executor/ticket.go:182-195`），chain33 mempool 检查只调用 `CheckTx`（`system/mempool/check.go:189-209`），手续费/基本检查通过；
-- panic 被 **`DriverBase.Exec` 的 recover** 兜住并返回 `types.ErrActionNotSupport`（chain33 `system/dapp/driver.go:296-307`）——不是 `ErrExecPanic`（`executor.Exec` 的 recover 在 `execenv.go:251-261`，层级更高，看不到这个 panic）。本仓库 PoC 5 断言的正是 `ErrActionNotSupport`；
+- panic 被 **`DriverBase.Exec` 的 recover** 兜住并返回 `types.ErrActionNotSupport`（chain33 `system/dapp/driver.go:296-307`）——不是 `ErrExecPanic`（`executor.Exec` 的 recover 在 `execenv.go:251-261`，层级更高，看不到这个 panic）。修复前的 PoC 5 断言的正是 `ErrActionNotSupport`；该修复不设分叉保护，修复后 `Test_TicketOpen_CountExceedsPubHashesRejected` 断言返回 `ErrOpenTicketPubHash` 且不再 panic；
 - 自挖路径 `PreExecBlock` 会把执行失败（`ExecErr`）的交易从区块中剔除并重算状态根（chain33 `util/util.go:381-396`），`WriteBlock` 的 diff 逻辑再把它从 mempool 清除（`system/consensus/base.go:479-490`）；因此节点会继续正常出块（复核实测高度 435→600 约 20s），**不会停摆**；非法区块也不会被广播（广播发生在 `connectBlock` 成功之后）；
 - 残余风险：这属于健壮性缺陷——目前唯一阻止节点 panic 的就是驱动层的 recover，一旦该 recover 被绕过或调整（例如执行器直接调用 action），就会变成进程级崩溃。
 
@@ -200,15 +200,15 @@ if action.fromaddr != topen.ReturnAddress && bindMiner != action.fromaddr {
 
 **已由可执行 PoC 验证**：
 
-执行器级（`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`，5/5 通过）：
+执行器级（`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`，6/6 通过；注入类用例显式固定 `ForkTicketMinerAuth` 未生效的配置）：
 
 | 用例 | 结论 |
 | --- | --- |
 | `Test_TicketOpen_InjectsTicketsToArbitraryMiner` | 第三方可把票据挂到任意矿工名下；`LODB-ticket-tl:<受害矿工>:1` 生成；官方 `TicketList(受害矿工)` 返回这些票 |
 | `Test_InjectedTicket_NotMinableByVictim_PostFork` | 分叉后受害矿工挖 `Topen` 注入票 → `ErrCheckPubHash`（不盗币） |
-| `Test_TicketGenesisReRun_PostFork_RewardGoesToAttacker` | **分叉后 `Exec_Genesis` 重入成功**；创世格式票免成熟期；受害矿工挖出并**把奖励记到攻击者地址**；攻击者立即 `Tclose` 成功 |
+| `Test_TicketGenesisReRunRejected_PostFork` / `Test_TicketGenesisAllowedAtHeightZero` | 修复后回归：高度 1.7M 的 `Exec_Genesis` 被框架层以 `ErrReRunGenesis` 拒绝；高度 0 的正常创世路径不受影响 |
 | `Test_InjectedTicket_MinedByVictim_PreFork_RewardGoesToAttacker` | 分叉前 `Topen` 注入可被受害矿工挖出，奖励记到攻击者地址 |
-| `Test_TicketOpen_CountExceedsPubHashesPanic` | `Count > len(PubHashes)` panic；`DriverBase.Exec` 返回 `ErrActionNotSupport` |
+| `Test_TicketOpen_CountExceedsPubHashesRejected` | 修复后回归：`Count > len(PubHashes)` 返回 `ErrOpenTicketPubHash`，不再 panic（该修复不设分叉保护） |
 
 真实测试节点端到端（`plugin/dapp/ticket/testnode/genesis_reentry_attack_test.go`，通过）：默认配置（`ForkTicketId=0`）下发送一笔 `Genesis` 交易 → 上链执行成功 → 1000 张 `IsGenesis` 3 段票据挂在受害矿工名下 → 受害节点在高度 77 挖出 → 攻击者地址余额增量 = 1 × `coinReward` → 攻击者在高度 81 立即关闭提款。
 
@@ -236,8 +236,10 @@ if action.fromaddr != topen.ReturnAddress && bindMiner != action.fromaddr {
 3. 配置：
    - 主链 `chain33.fork.toml` = `48100000`、镜像主链的 `plugin/dapp/evm/cmd/ci2/chain33.proxyminer.toml`
      同为 `48100000`（按仓库既有做法取 `tip + 241920` ≈ 两周升级窗口，主链 2026-10-15 高度约 47.85M）；
-   - `chain33.para.toml`、`chain33.para.toml.readme`、`plugin/dapp/ticket/rpc/rpc_test.go` 内嵌配置 = `0`（平行链直接生效）。
+   - `chain33.para.toml`、`chain33.para.toml.readme`、`plugin/dapp/ticket/rpc/rpc_test.go` 内嵌配置、`plugin/dapp/ticket/executor/testdata/chain33.cfg.toml` = `0`（平行链/测试配置直接生效）。
    - 分叉高度必须留在升级窗口之后：§6 的 `Test_TicketOpen_LegacyPathBeforeFork` 断言分叉高度之前仍按旧逻辑放行。
+
+4. 合并上游后，已入库的 H-2 PoC 文件（`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`）中演示“注入成功”的用例显式改用 `ForkTicketMinerAuth` 未生效的配置（`pocCfgBeforeMinerAuth`），并断言该前提，从而继续固定修复前行为；`Count > len(PubHashes)` 用例改为断言 `ErrOpenTicketPubHash`。
 
 回归用例（`plugin/dapp/ticket/executor/ticket_miner_auth_test.go`）：
 

@@ -288,6 +288,8 @@ ForkTicketId =0
 ForkTicketVrf =0
 # TicketOpen 的 MinerAddress 归属校验（H-2）：MinerAddress 只能是签名者自己，或 ReturnAddress 通过 Tbind 授权的矿工
 ForkTicketMinerAuth =0
+ForkTicketCloseDup =0
+ForkMinerExecerCheck=0
 
 [fork.sub.retrieve]
 Enable=0
@@ -343,6 +345,7 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+ForkEVMSuicidePayer=0
 
 [fork.sub.evmxgo]
 Enable=0
