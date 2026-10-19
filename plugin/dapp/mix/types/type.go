@@ -19,6 +19,13 @@ var (
 	glog = log.New("module", MixX)
 )
 
+const (
+	// ForkMixAmountOverflow 修复存款金额以uint64累加无溢出检查的漏洞
+	ForkMixAmountOverflow = "ForkMixAmountOverflow"
+	// ForkMixDupNullifier 修复同一笔Withdraw交易内重复proof双花的漏洞
+	ForkMixDupNullifier = "ForkMixDupNullifier"
+)
+
 func init() {
 	// init executor type
 	types.AllowUserExec = append(types.AllowUserExec, []byte(MixX))
@@ -30,7 +37,8 @@ func init() {
 // InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(MixX, "Enable", 0)
-
+	cfg.RegisterDappFork(MixX, ForkMixAmountOverflow, 0)
+	cfg.RegisterDappFork(MixX, ForkMixDupNullifier, 0)
 }
 
 // InitExecutor ...

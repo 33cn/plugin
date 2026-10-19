@@ -37,6 +37,11 @@ var (
 	Multisiglog = log15.New("module", MultiSigX)
 )
 
+const (
+	// ForkMultiSigFixStaleWeight 修复确认权重判定使用过期权重快照的问题，按owner当前权重重新累计确认权重
+	ForkMultiSigFixStaleWeight = "ForkMultiSigFixStaleWeight"
+)
+
 // MultiSig 交易的actionid
 const (
 	ActionMultiSigAccCreate        = 10000

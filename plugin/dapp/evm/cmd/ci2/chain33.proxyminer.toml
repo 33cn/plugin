@@ -615,6 +615,7 @@ Enable=-1
 [fork.sub.exchange]
 Enable=0
 ForkFix1=0
+ForkFixSafeMulOverflow=0
 ForkParamV1 = 0
 ForkParamV2 = 0
 ForkParamV3 = 0
@@ -670,12 +671,16 @@ Enable=0
 
 [fork.sub.lottery]
 Enable=0
+ForkLotteryFixOverflow=0
 
 [fork.sub.mix]
 Enable=0
+ForkMixAmountOverflow=0
+ForkMixDupNullifier=0
 
 [fork.sub.multisig]
 Enable=0
+ForkMultiSigFixStaleWeight=0
 
 [fork.sub.norm]
 Enable=0
@@ -746,6 +751,7 @@ ForkTradeAsset=1010000
 ForkTradeID=1450000
 ForkTradeFixAssetDB=2500000
 ForkTradePrice=3150000
+ForkTradeFixOverflow=0
 
 [fork.sub.unfreeze]
 Enable=0

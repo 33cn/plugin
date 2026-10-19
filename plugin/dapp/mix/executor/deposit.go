@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"math"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -42,6 +44,8 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (*mixTy.DepositCircuit,
 4. add new commits to merkle tree
 */
 func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	checkOverflow := cfg.IsDappFork(a.height, mixTy.MixX, mixTy.ForkMixAmountOverflow)
 	var notes []string
 	var sum uint64
 	//1. zk-proof校验
@@ -54,6 +58,10 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 		if err != nil {
 			return nil, err
 		}
+		//分叉后校验累加溢出，防止存入金额回绕（同时避免sum超出int64范围）
+		if checkOverflow && v.Uint64() > math.MaxInt64-sum {
+			return nil, errors.Wrapf(mixTy.ErrAmountOverflow, "deposit amount sum overflow,sum=%d,amount=%d", sum, v.Uint64())
+		}
 		sum += v.Uint64()
 		noteHash, err := mixTy.VariableToElement(input.NoteHash)
 		if err != nil {
@@ -63,7 +71,6 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	}
 
 	//存款
-	cfg := a.api.GetConfig()
 	execer, symbol := mixTy.GetAssetExecSymbol(cfg, deposit.AssetExec, deposit.AssetSymbol)
 	accoutDb, err := createAccount(cfg, execer, symbol, a.db)
 	if err != nil {

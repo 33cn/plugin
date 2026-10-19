@@ -94,4 +94,7 @@ const (
 	ForkTradeFixAssetDBX = "ForkTradeFixAssetDB"
 	// ForkTradePriceX all asset can be price
 	ForkTradePriceX = "ForkTradePrice"
+	// ForkTradeFixOverflowX fix bug: frozen amount int64 overflow in tradeSell/tradeBuyLimit/tradeBuy/tradeSellMarket,
+	// and checkPrice/notSameAsset wrongly called with PriceExec instead of PriceSymbol
+	ForkTradeFixOverflowX = "ForkTradeFixOverflow"
 )

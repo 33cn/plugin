@@ -69,6 +69,11 @@ func notSameAsset(cfg *types.Chain33Config, height int64, assetExec, assetSymbol
 	return true
 }
 
+// isMulOverflow checks whether a*b overflows int64, a and b must be non-negative
+func isMulOverflow(a, b int64) bool {
+	return a != 0 && (a*b)/a != b
+}
+
 func createAccountDB(cfg *types.Chain33Config, height int64, db db.KV, exec, symbol string) (*account.DB, error) {
 	if cfg.IsDappFork(height, pt.TradeX, pt.ForkTradeFixAssetDBX) {
 		if exec == "" {

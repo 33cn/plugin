@@ -3,6 +3,7 @@ package executor
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/33cn/chain33/types"
 	x2eTy "github.com/33cn/plugin/plugin/dapp/x2ethereum/types"
@@ -86,17 +87,32 @@ func NewClaim(id string, validatorAddress string, content string) x2eTy.OracleCl
 	}
 }
 
+// calcProphecyID 通过ethchain33结构生成prophecy唯一ID
+// 分叉后采用带分隔符的拼接，避免如(chainID=1,nonce=23)与(chainID=12,nonce=3)产生相同ID的碰撞
+func calcProphecyID(ethClaim *x2eTy.Eth2Chain33, isFixFork bool) string {
+	claimType := "lock"
+	if ethClaim.ClaimType == int64(x2eTy.BurnClaimType) {
+		claimType = "burn"
+	}
+	if isFixFork {
+		return strings.Join([]string{
+			strconv.Itoa(int(ethClaim.EthereumChainID)),
+			strconv.Itoa(int(ethClaim.Nonce)),
+			ethClaim.EthereumSender,
+			ethClaim.TokenContractAddress,
+			claimType,
+		}, ":")
+	}
+	return strconv.Itoa(int(ethClaim.EthereumChainID)) + strconv.Itoa(int(ethClaim.Nonce)) +
+		ethClaim.EthereumSender + ethClaim.TokenContractAddress + claimType
+}
+
 // CreateOracleClaimFromEthClaim 通过ethchain33结构构造一个OracleClaim结构，包括生成唯一的ID
-func CreateOracleClaimFromEthClaim(ethClaim x2eTy.Eth2Chain33) (x2eTy.OracleClaim, error) {
+func CreateOracleClaimFromEthClaim(ethClaim x2eTy.Eth2Chain33, isFixFork bool) (x2eTy.OracleClaim, error) {
 	if ethClaim.ClaimType != int64(x2eTy.LockClaimType) && ethClaim.ClaimType != int64(x2eTy.BurnClaimType) {
 		return x2eTy.OracleClaim{}, x2eTy.ErrInvalidClaimType
 	}
-	oracleID := strconv.Itoa(int(ethClaim.EthereumChainID)) + strconv.Itoa(int(ethClaim.Nonce)) + ethClaim.EthereumSender + ethClaim.TokenContractAddress
-	if ethClaim.ClaimType == int64(x2eTy.LockClaimType) {
-		oracleID = oracleID + "lock"
-	} else if ethClaim.ClaimType == int64(x2eTy.BurnClaimType) {
-		oracleID = oracleID + "burn"
-	}
+	oracleID := calcProphecyID(&ethClaim, isFixFork)
 	claimContent := NewOracleClaimContent(ethClaim.Chain33Receiver, ethClaim.Amount, ethClaim.ClaimType, ethClaim.Decimals)
 	claimBytes := types.Encode(&claimContent)
 

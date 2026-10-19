@@ -66,12 +66,35 @@ func (a *Action) OpSwap(op int32) int32 {
 	return et.OpBuy
 }
 
+// isFixSafeMulOverflowFork 判定当前高度是否启用大数乘法溢出修复分叉
+func (a *Action) isFixSafeMulOverflowFork() bool {
+	return a.api.GetConfig().IsDappFork(a.height, et.ExchangeX, et.ForkFixSafeMulOverflow)
+}
+
+// calcActualCostWithFork 计算订单成本；结果溢出时，分叉后返回错误，分叉前保持旧的回绕行为
+func (a *Action) calcActualCostWithFork(op int32, amount, price, coinPrecision int64) (int64, error) {
+	cost, err := CalcActualCost(op, amount, price, coinPrecision)
+	if err != nil && a.isFixSafeMulOverflowFork() {
+		return 0, err
+	}
+	return cost, nil
+}
+
+// caclAVGPriceWithFork 计算平均成交价；结果溢出时，分叉后返回错误，分叉前保持旧的回绕行为
+func (a *Action) caclAVGPriceWithFork(order *et.Order, price, amount int64) (int64, error) {
+	avg, err := caclAVGPrice(order, price, amount)
+	if err != nil && a.isFixSafeMulOverflowFork() {
+		return 0, err
+	}
+	return avg, nil
+}
+
 // CalcActualCost Calculate actual cost
-func CalcActualCost(op int32, amount int64, price, coinPrecision int64) int64 {
+func CalcActualCost(op int32, amount int64, price, coinPrecision int64) (int64, error) {
 	if op == et.OpBuy {
 		return SafeMul(amount, price, coinPrecision)
 	}
-	return amount
+	return amount, nil
 }
 
 // CheckPrice price  1<=price<=1e16
@@ -167,7 +190,11 @@ func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.
 	}
 	//Check your account balance first
 	if payload.GetOp() == et.OpBuy {
-		amount := SafeMul(payload.GetAmount(), payload.GetPrice(), cfg.GetCoinPrecision())
+		amount, costErr := SafeMul(payload.GetAmount(), payload.GetPrice(), cfg.GetCoinPrecision())
+		if costErr != nil && a.isFixSafeMulOverflowFork() {
+			elog.Error("limit check right balance overflow", "addr", a.fromaddr, "amount", payload.GetAmount(), "price", payload.GetPrice())
+			return nil, costErr
+		}
 		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if rightAccount.Balance < amount {
 			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", rightAccount.Balance, "need", amount)
@@ -215,7 +242,10 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 		if err != nil {
 			return nil, err
 		}
-		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
+		amount, costErr := a.calcActualCostWithFork(et.OpBuy, balance, price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, costErr
+		}
 		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if rightAccount.Frozen < amount {
 			elog.Error("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount)
@@ -234,7 +264,10 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 		if err != nil {
 			return nil, err
 		}
-		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
+		amount, costErr := a.calcActualCostWithFork(et.OpSell, balance, price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, costErr
+		}
 		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if leftAccount.Frozen < amount {
 			elog.Error("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount)
@@ -424,7 +457,10 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 
 	//Outstanding orders require freezing of the remaining unclosed funds
 	if payload.Op == et.OpBuy {
-		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
+		amount, costErr := a.calcActualCostWithFork(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, costErr
+		}
 		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("LimitOrder.ExecFrozen OpBuy", "addr", a.fromaddr, "amount", amount, "err", err.Error())
@@ -434,7 +470,10 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		kvs = append(kvs, receipt.KV...)
 	}
 	if payload.Op == et.OpSell {
-		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
+		amount, costErr := a.calcActualCostWithFork(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, costErr
+		}
 		receipt, err := leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("LimitOrder.ExecFrozen OpSell", "addr", a.fromaddr, "amount", amount, "err", err.Error())
@@ -468,9 +507,13 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	cfg := a.api.GetConfig()
 	var receipt *types.Receipt
 	var err error
+	var avgErr error
 	if payload.Op == et.OpSell {
 		//Transfer of frozen assets
-		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		amount, costErr := a.calcActualCostWithFork(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, nil, costErr
+		}
 		if matchorder.Addr != a.fromaddr {
 			receipt, err = rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		} else {
@@ -498,7 +541,10 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		}
 
 		//The settlement of the corresponding assets for the transaction to be concluded
-		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		amount, costErr = a.calcActualCostWithFork(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, nil, costErr
+		}
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 			if err != nil {
@@ -523,12 +569,21 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		or.AVGPrice = caclAVGPrice(or, matchorder.GetLimitOrder().Price, matched)
+		or.AVGPrice, avgErr = a.caclAVGPriceWithFork(or, matchorder.GetLimitOrder().Price, matched)
+		if avgErr != nil {
+			return nil, nil, avgErr
+		}
 		//Calculate the average transaction price
-		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched)
+		matchorder.AVGPrice, avgErr = a.caclAVGPriceWithFork(matchorder, matchorder.GetLimitOrder().Price, matched)
+		if avgErr != nil {
+			return nil, nil, avgErr
+		}
 	}
 	if payload.Op == et.OpBuy {
-		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		amount, costErr := a.calcActualCostWithFork(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, nil, costErr
+		}
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		} else {
@@ -554,7 +609,10 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		amount, costErr = a.calcActualCostWithFork(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
+		if costErr != nil {
+			return nil, nil, costErr
+		}
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 			if err != nil {
@@ -578,8 +636,14 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		or.AVGPrice = caclAVGPrice(or, matchorder.GetLimitOrder().Price, matched)
-		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched)
+		or.AVGPrice, avgErr = a.caclAVGPriceWithFork(or, matchorder.GetLimitOrder().Price, matched)
+		if avgErr != nil {
+			return nil, nil, avgErr
+		}
+		matchorder.AVGPrice, avgErr = a.caclAVGPriceWithFork(matchorder, matchorder.GetLimitOrder().Price, matched)
+		if avgErr != nil {
+			return nil, nil, avgErr
+		}
 	}
 
 	matchorder.UpdateTime = a.blocktime
@@ -951,20 +1015,27 @@ func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, p
 }
 
 // SafeMul Safe multiplication of large numbers, prevent overflow
-func SafeMul(x, y, coinPrecision int64) int64 {
+// 返回截断值与 ErrOverflow；调用方根据分叉决定是拒绝订单还是沿用旧行为
+func SafeMul(x, y, coinPrecision int64) (int64, error) {
 	res := big.NewInt(0).Mul(big.NewInt(x), big.NewInt(y))
 	res = big.NewInt(0).Div(res, big.NewInt(coinPrecision))
-	return res.Int64()
+	if !res.IsInt64() {
+		return res.Int64(), et.ErrOverflow
+	}
+	return res.Int64(), nil
 }
 
 // Calculate the average transaction price
-func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
+func caclAVGPrice(order *et.Order, price int64, amount int64) (int64, error) {
 	x := big.NewInt(0).Mul(big.NewInt(order.AVGPrice), big.NewInt(order.GetLimitOrder().Amount-order.GetBalance()))
 	y := big.NewInt(0).Mul(big.NewInt(price), big.NewInt(amount))
 	total := big.NewInt(0).Add(x, y)
 	div := big.NewInt(0).Add(big.NewInt(order.GetLimitOrder().Amount-order.GetBalance()), big.NewInt(amount))
 	avg := big.NewInt(0).Div(total, div)
-	return avg.Int64()
+	if !avg.IsInt64() {
+		return avg.Int64(), et.ErrOverflow
+	}
+	return avg.Int64(), nil
 }
 
 // 计Calculation fee

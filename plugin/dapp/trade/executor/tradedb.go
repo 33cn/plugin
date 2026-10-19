@@ -248,10 +248,15 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 	if !checkAsset(cfg, action.height, sell.AssetExec, sell.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
-	if !checkPrice(cfg, action.height, sell.PriceExec, sell.PriceExec) {
+	fixOverflow := cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeFixOverflowX)
+	priceSymbol := sell.PriceExec
+	if fixOverflow {
+		priceSymbol = sell.PriceSymbol
+	}
+	if !checkPrice(cfg, action.height, sell.PriceExec, priceSymbol) {
 		return nil, types.ErrInvalidParam
 	}
-	if !notSameAsset(cfg, action.height, sell.AssetExec, sell.TokenSymbol, sell.PriceExec, sell.PriceExec) {
+	if !notSameAsset(cfg, action.height, sell.AssetExec, sell.TokenSymbol, sell.PriceExec, priceSymbol) {
 		return nil, pty.ErrAssetAndPriceSame
 	}
 
@@ -260,6 +265,11 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 		return nil, err
 	}
 	//确认发起此次出售或者众筹的余额是否足够
+	if fixOverflow && isMulOverflow(sell.GetTotalBoardlot(), sell.GetAmountPerBoardlot()) {
+		tradelog.Error("trade sell overflow", "addr", action.fromaddr,
+			"totalBoardlot", sell.GetTotalBoardlot(), "amountPerBoardlot", sell.GetAmountPerBoardlot())
+		return nil, types.ErrInvalidParam
+	}
 	totalAmount := sell.GetTotalBoardlot() * sell.GetAmountPerBoardlot()
 	receipt, err := accDB.ExecFrozen(action.fromaddr, action.execaddr, totalAmount)
 	if err != nil {
@@ -334,11 +344,19 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 			"price", sellOrder.PriceExec+"-"+sellOrder.PriceSymbol, "err", err)
 		return nil, err
 	}
+	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeFixOverflowX) &&
+		(isMulOverflow(buyOrder.BoardlotCnt, sellOrder.PricePerBoardlot) ||
+			isMulOverflow(buyOrder.BoardlotCnt, sellOrder.AmountPerBoardlot)) {
+		tradelog.Error("trade buy overflow", "addr", action.fromaddr, "boardlotCnt", buyOrder.BoardlotCnt,
+			"price", sellOrder.PricePerBoardlot, "amountPerBoardlot", sellOrder.AmountPerBoardlot)
+		return nil, types.ErrInvalidParam
+	}
+	payAmount := buyOrder.BoardlotCnt * sellOrder.PricePerBoardlot
 	//首先购买费用的划转
-	receiptFromAcc, err := priceAcc.ExecTransfer(action.fromaddr, sellOrder.Address, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+	receiptFromAcc, err := priceAcc.ExecTransfer(action.fromaddr, sellOrder.Address, action.execaddr, payAmount)
 	if err != nil {
 		tradelog.Error("account.Transfer ", "addrFrom", action.fromaddr, "addrTo", sellOrder.Address,
-			"amount", buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+			"amount", payAmount)
 		return nil, err
 	}
 	//然后实现购买token的转移,因为这部分token在之前的卖单生成时已经进行冻结
@@ -354,7 +372,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 			"addrTo", action.fromaddr, "execaddr", action.execaddr,
 			"amount", buyOrder.BoardlotCnt*sellOrder.AmountPerBoardlot)
 		//因为未能成功将对应的token进行转账，所以需要将购买方的账户资金进行回退
-		priceAcc.ExecTransfer(sellOrder.Address, action.fromaddr, action.execaddr, buyOrder.BoardlotCnt*sellOrder.PricePerBoardlot)
+		priceAcc.ExecTransfer(sellOrder.Address, action.fromaddr, action.execaddr, payAmount)
 		return nil, err
 	}
 
@@ -464,10 +482,15 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 	if !checkAsset(cfg, action.height, buy.AssetExec, buy.TokenSymbol) {
 		return nil, types.ErrInvalidParam
 	}
-	if !checkPrice(cfg, action.height, buy.PriceExec, buy.PriceExec) {
+	fixOverflow := cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeFixOverflowX)
+	priceSymbol := buy.PriceExec
+	if fixOverflow {
+		priceSymbol = buy.PriceSymbol
+	}
+	if !checkPrice(cfg, action.height, buy.PriceExec, priceSymbol) {
 		return nil, types.ErrInvalidParam
 	}
-	if !notSameAsset(cfg, action.height, buy.AssetExec, buy.TokenSymbol, buy.PriceExec, buy.PriceExec) {
+	if !notSameAsset(cfg, action.height, buy.AssetExec, buy.TokenSymbol, buy.PriceExec, priceSymbol) {
 		return nil, pty.ErrAssetAndPriceSame
 	}
 
@@ -476,6 +499,11 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 		return nil, err
 	}
 	// check enough bty
+	if fixOverflow && isMulOverflow(buy.PricePerBoardlot, buy.TotalBoardlot) {
+		tradelog.Error("trade buyLimit overflow", "addr", action.fromaddr,
+			"pricePerBoardlot", buy.PricePerBoardlot, "totalBoardlot", buy.TotalBoardlot)
+		return nil, types.ErrInvalidParam
+	}
 	amount := buy.PricePerBoardlot * buy.TotalBoardlot
 	receipt, err := priceAcc.ExecFrozen(action.fromaddr, action.execaddr, amount)
 	if err != nil {
@@ -543,6 +571,13 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	if err != nil {
 		tradelog.Error("createAccountDB failed", "err", err, "order", buyOrder)
 		return nil, err
+	}
+	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeFixOverflowX) &&
+		(isMulOverflow(sellOrder.BoardlotCnt, buyOrder.AmountPerBoardlot) ||
+			isMulOverflow(sellOrder.BoardlotCnt, buyOrder.PricePerBoardlot)) {
+		tradelog.Error("trade sellMarket overflow", "addr", action.fromaddr, "boardlotCnt", sellOrder.BoardlotCnt,
+			"amountPerBoardlot", buyOrder.AmountPerBoardlot, "price", buyOrder.PricePerBoardlot)
+		return nil, types.ErrInvalidParam
 	}
 	amountToken := sellOrder.BoardlotCnt * buyOrder.AmountPerBoardlot
 	tradelog.Debug("tradeSellMarket", "step1 cnt", sellOrder.BoardlotCnt, "amountToken", amountToken)

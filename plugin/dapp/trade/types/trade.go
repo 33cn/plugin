@@ -65,6 +65,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TradeX, ForkTradeIDX, 0)
 	cfg.RegisterDappFork(TradeX, ForkTradeFixAssetDBX, 0)
 	cfg.RegisterDappFork(TradeX, ForkTradePriceX, 0)
+	cfg.RegisterDappFork(TradeX, ForkTradeFixOverflowX, 0)
 }
 
 // InitExecutor ...

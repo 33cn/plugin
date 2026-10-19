@@ -41,6 +41,11 @@ func newAction(t *MultiSig, tx *types.Transaction, index int32) *action {
 		t.GetBlockTime(), t.GetHeight(), index, dapp.ExecAddress(string(tx.Execer)), t.GetAPI()}
 }
 
+// isFixStaleWeight 判定当前高度是否启用确认权重按owner当前权重重算的修复分叉
+func (a *action) isFixStaleWeight() bool {
+	return a.api.GetConfig().IsDappFork(a.height, mty.MultiSigX, mty.ForkMultiSigFixStaleWeight)
+}
+
 // MultiSigAccCreate 创建多重签名账户
 func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -364,7 +369,7 @@ func (a *action) MultiSigConfirmTx(ConfirmTx *mty.MultiSigConfirmTx) (*types.Rec
 	}
 
 	multiSigTxOwner := &mty.MultiSigTxOwner{MultiSigAddr: multiSigAccAddr, Txid: ConfirmTx.TxId, ConfirmedOwner: owner}
-	isConfirm := isConfirmed(multiSigAcc.RequiredWeight, multiSigTx)
+	isConfirm := isConfirmed(multiSigAcc.RequiredWeight, multiSigTx, multiSigAcc, a.isFixStaleWeight())
 
 	//权重未达到要求或者撤销确认交易，构造MultiSigConfirmTx的receiptLog
 	if !isConfirm || !ConfirmTx.ConfirmOrRevoke {
@@ -757,7 +762,7 @@ func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty
 
 	//确认此交易额度是否在每日限额之内，或者权重已达到要求
 	amount := transfer.Amount
-	confirmed := isConfirmed(multiSigAcc.RequiredWeight, newMultiSigTx)
+	confirmed := isConfirmed(multiSigAcc.RequiredWeight, newMultiSigTx, multiSigAcc, a.isFixStaleWeight())
 	underLimit, newlastday := isUnderLimit(a.blocktime, uint64(amount), curDailyLimit)
 
 	//新的一天更新lastday和spenttoday的值
@@ -838,7 +843,7 @@ func (a *action) executeTransferTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty
 func (a *action) executeAccOperateTx(multiSigAcc *mty.MultiSig, newMultiSigTx *mty.MultiSigTx, accountOperate *mty.MultiSigAccOperate, confOwner *mty.Owner, subOrConfirm bool) (*types.Receipt, error) {
 
 	//确认权重是否已达到要求
-	confirmed := isConfirmed(multiSigAcc.RequiredWeight, newMultiSigTx)
+	confirmed := isConfirmed(multiSigAcc.RequiredWeight, newMultiSigTx, multiSigAcc, a.isFixStaleWeight())
 	prevExecuted := newMultiSigTx.Executed
 
 	var logs []*types.ReceiptLog
@@ -899,7 +904,7 @@ func (a *action) executeOwnerOperateTx(multiSigAccount *mty.MultiSig, newMultiSi
 	var receiptLog *types.ReceiptLog
 	var err error
 	//确认权重是否已达到要求
-	confirmed := isConfirmed(multiSigAccount.RequiredWeight, newMultiSigTx)
+	confirmed := isConfirmed(multiSigAccount.RequiredWeight, newMultiSigTx, multiSigAccount, a.isFixStaleWeight())
 	prevExecuted := newMultiSigTx.Executed
 
 	flag := accountOperate.OperateFlag
