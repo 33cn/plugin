@@ -86,10 +86,13 @@ func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (
 3. set nullifier exist
 */
 func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, error) {
-	exec, symbol := mixTy.GetAssetExecSymbol(a.api.GetConfig(), withdraw.AssetExec, withdraw.AssetSymbol)
+	cfg := a.api.GetConfig()
+	exec, symbol := mixTy.GetAssetExecSymbol(cfg, withdraw.AssetExec, withdraw.AssetSymbol)
+	checkDupNullifier := cfg.IsDappFork(a.height, mixTy.MixX, mixTy.ForkMixDupNullifier)
 
 	var nulliferSet []string
 	var sumValue uint64
+	nullifierDup := make(map[string]struct{})
 	for _, k := range withdraw.Proofs {
 		input, err := a.withdrawVerify(exec, symbol, k)
 		if err != nil {
@@ -104,6 +107,13 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 		if err != nil {
 			return nil, err
 		}
+		//分叉后校验交易内nullifier唯一：nullifier在交易结束才落库，同一交易内重复proof会双花
+		if checkDupNullifier {
+			if _, ok := nullifierDup[nullHash.String()]; ok {
+				return nil, errors.Wrapf(mixTy.ErrNulliferHashExist, "duplicate nullifier in tx,nullifier=%s", nullHash.String())
+			}
+			nullifierDup[nullHash.String()] = struct{}{}
+		}
 		nulliferSet = append(nulliferSet, nullHash.String())
 	}
 
@@ -112,7 +122,6 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 	}
 
 	//withdraw value
-	cfg := a.api.GetConfig()
 	accoutDb, err := createAccount(cfg, exec, symbol, a.db)
 	if err != nil {
 		return nil, err
