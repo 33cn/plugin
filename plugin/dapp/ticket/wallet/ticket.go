@@ -472,6 +472,40 @@ func (policy *ticketPolicy) closeTickets(priv crypto.PrivKey, addressID int32, i
 	return policy.getWalletOperate().SendTransaction(ta, []byte(ty.TicketX), priv, addressID, "")
 }
 
+// filterTrustedTickets 只保留 ReturnAddress 受信的票据。
+//
+// 票据的 MinerAddress 是公开可写的归属标签：第三方可以签一笔 Tbind 把自己的
+// ReturnAddress 绑到本矿工，再把票挂到本矿工名下(执行器层的 ForkTicketMinerAuth
+// 只能挡住“未绑定”的裸挂)。本节点若把这些票挖出来，出块奖励会增发给票的
+// ReturnAddress 而不是本矿工，等于替别人出块。
+//
+// 这里在选票入口做本地过滤：受信 = 自挖(MinerAddress == ReturnAddress)，
+// 或 ReturnAddress 命中 wallet.sub.ticket.minerwhitelist —— 该白名单是矿工本地的
+// 显式批准名单，只有名单内的 ReturnAddress 才能使用本矿工的挖矿身份。
+// 默认 minerwhitelist=["*"] 时不做任何过滤，保持原有行为。
+//
+// 该过滤只影响本节点的选票(挖矿)，不改变链上规则：票据仍然存在、仍可查询，
+// 只是本节点不再消耗算力去挖不属于自己的票。
+func filterTrustedTickets(tickets []*ty.Ticket) []*ty.Ticket {
+	if len(tickets) == 0 {
+		return tickets
+	}
+	trusted := tickets[:0]
+	for _, ticket := range tickets {
+		if ticket == nil {
+			continue
+		}
+		if ticket.GetMinerAddress() == ticket.GetReturnAddress() ||
+			checkMinerWhiteList(ticket.GetReturnAddress()) {
+			trusted = append(trusted, ticket)
+			continue
+		}
+		bizlog.Warn("skipUntrustedTicket", "ticketId", ticket.GetTicketId(),
+			"miner", ticket.GetMinerAddress(), "return", ticket.GetReturnAddress())
+	}
+	return trusted
+}
+
 func (policy *ticketPolicy) getTicketsByStatus(status int32) ([]*ty.Ticket, [][]byte, error) {
 	operater := policy.getWalletOperate()
 	accounts, err := operater.GetWalletAccounts()

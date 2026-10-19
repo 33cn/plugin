@@ -8,9 +8,16 @@
 > 复现：`go test -run 'Test_TicketOpen_Injects|Test_InjectedTicket|Test_TicketGenesisReRun|Test_TicketOpen_CountExceeds' -v ./plugin/dapp/ticket/executor/`
 > 　　　`go test -run 'TestGenesisReentryAttackOnTicketNode' -v ./plugin/dapp/ticket/testnode/`
 >
-> 修复状态：**H-2 的 `MinerAddress` 归属校验由本 PR 修复**（新增 dapp 分叉
-> `ticket.ForkTicketMinerAuth`，见 §8）；**§3 的 `Exec_Genesis` 重入由独立提交修复**
-> （`Exec_Genesis` 增加 `height != 0` 校验），两者互不依赖。
+> 修复状态（本 PR，见 §8）：
+> 1. **执行器层**：新增 dapp 分叉 `ticket.ForkTicketMinerAuth`，**默认关闭**（`InitFork`
+>    注册为 `types.MaxHeight`，必须由链配置显式指定激活高度），拒绝 `MinerAddress` 既非
+>    签名者、也非其绑定矿工的开票；主链配置为 `48100000`。
+> 2. **矿工侧（无需分叉）**：选票入口按 `wallet.sub.ticket.minerwhitelist`（ReturnAddress
+>    白名单）过滤，只挖自挖票与名单内的票。这是矿工本地的“批准名单”：执行器校验挡不住
+>    自签 `Tbind` 的挂票（`Tbind` 只由 ReturnAddress 签名，见 §8.3），最终是否消耗算力
+>    由矿工节点自己决定。
+> 3. **§3 的 `Exec_Genesis` 重入由独立提交修复**（`Exec_Genesis` 增加 `height != 0` 校验），
+>    与本 PR 互不依赖。
 
 ## 1. 结论
 
@@ -212,7 +219,9 @@ if action.fromaddr != topen.ReturnAddress && bindMiner != action.fromaddr {
 
 真实测试节点端到端（`plugin/dapp/ticket/testnode/genesis_reentry_attack_test.go`，通过）：默认配置（`ForkTicketId=0`）下发送一笔 `Genesis` 交易 → 上链执行成功 → 1000 张 `IsGenesis` 3 段票据挂在受害矿工名下 → 受害节点在高度 77 挖出 → 攻击者地址余额增量 = 1 × `coinReward` → 攻击者在高度 81 立即关闭提款。
 
-**H-2 修复回归**（`plugin/dapp/ticket/executor/ticket_miner_auth_test.go`，本 PR，6/6 通过）：第三方开票被 `ErrMinerAddr` 拒绝且不动用票面资金；自挖与 `Tbind` 绑定代挖路径不受影响；非法 `MinerAddress` 被 `CheckAddress` 拒绝；`Count > len(PubHashes)` 返回错误而非 panic；分叉高度之前保持旧行为。详见 §8。
+**H-2 修复回归**（`plugin/dapp/ticket/executor/ticket_miner_auth_test.go`，本 PR，8/8 通过）：第三方开票被 `ErrMinerAddr` 拒绝且不动用票面资金；自挖与 `Tbind` 绑定代挖路径不受影响；非法 `MinerAddress` 被 `CheckAddress` 拒绝；`Count > len(PubHashes)` 返回错误而非 panic；分叉高度之前保持旧行为；分叉默认关闭；并固定已知限制“自签 Tbind 仍可挂票”（由矿工侧白名单兜底）。
+
+**矿工侧白名单回归**（`plugin/dapp/ticket/wallet/ticket_test.go`，`TestFilterTrustedTickets`）：默认 `minerwhitelist=["*"]` 时不过滤（保持原有挖矿行为）；显式白名单时只保留自挖票与白名单 ReturnAddress 的票，注入票被过滤并打 `skipUntrustedTicket` 告警。详见 §8.2。
 
 **由代码推导 + 独立复核实测、但未纳入本仓库测试**：灌入票据后节点重试/停滞的时序（多矿工 vs 单矿工）；panic 交易被 `PreExecBlock` 丢弃后节点继续出块（复核在临时节点上实测 435→600）。**未做大规模仿真**：§4.3 的抽签模型为解析推导。
 
@@ -220,8 +229,16 @@ if action.fromaddr != topen.ReturnAddress && bindMiner != action.fromaddr {
 
 ## 8. 修复实现（H-2，本 PR）
 
-代码改动全部由新增的 dapp 分叉 **`ticket.ForkTicketMinerAuth`** 门控（`InitFork` 默认注册为 0，
-链上通过 `[fork.sub.ticket] ForkTicketMinerAuth` 指定激活高度）：
+修复分两层：执行器层用**默认关闭**的分叉收紧开票校验；矿工侧用**无需分叉**的 ReturnAddress
+白名单过滤选票。前者阻止“裸挂”上链，后者让矿工不再替别人出块；两层互相补充。
+
+### 8.1 执行器层：新增 dapp 分叉 `ticket.ForkTicketMinerAuth`（默认关闭）
+
+`InitFork` 把该分叉注册为 **`types.MaxHeight`（关闭）**，只有链配置
+`[fork.sub.ticket] ForkTicketMinerAuth` 显式指定激活高度后才启用。这一点很关键：链配置里
+没有 `[fork]` 段时（例如部署仓的 `bityuan.toml`）`initForkConfig` 会被跳过，分叉静默按注册
+默认值生效；若默认注册为 0，升级二进制就会立刻在所有这类链上启用本规则，既可能让历史区块
+重放失败，也会改变当下的开票/挖矿行为。回归：`TestForkTicketMinerAuthDefaultDisabled`。
 
 1. `Action.TicketOpen`（`plugin/dapp/ticket/executor/ticketdb.go`）新增强制校验：
    - `address.CheckAddress(MinerAddress, height)`：非法地址直接拒绝；
@@ -229,29 +246,75 @@ if action.fromaddr != topen.ReturnAddress && bindMiner != action.fromaddr {
      `ReturnAddress` 已通过 `Tbind` 明确授权的矿工名下，否则返回 `ty.ErrMinerAddr`。
    原有“非 `ReturnAddress` 签名者必须是该 `ReturnAddress` 绑定矿工”的逻辑保持不变，
    因此 `buyTicketOne`（自挖）与 `buyMinerAddrTicketOne`（冷地址绑定矿工）两条合法路径不受影响。
+   注意：这条规则只能挡住“未绑定”的裸挂，挡不住自签 `Tbind`，见 §8.3。
 2. 同一函数修掉 `Count > len(PubHashes)` 的越界 panic：`len(topen.PubHashes) == 0`
    改为 `len(topen.PubHashes) < int(topen.Count)`，返回 `ErrOpenTicketPubHash`。
    该修复无需分叉保护：panic 交易会被 `PreExecBlock` 从区块中丢弃，从未写入任何区块，
    因此不影响历史区块重放。
-3. 配置：
+3. 分叉高度配置：
    - 主链 `chain33.fork.toml` = `48100000`、镜像主链的 `plugin/dapp/evm/cmd/ci2/chain33.proxyminer.toml`
      同为 `48100000`（按仓库既有做法取 `tip + 241920` ≈ 两周升级窗口，主链 2026-10-15 高度约 47.85M）；
-   - `chain33.para.toml`、`chain33.para.toml.readme`、`plugin/dapp/ticket/rpc/rpc_test.go` 内嵌配置、`plugin/dapp/ticket/executor/testdata/chain33.cfg.toml` = `0`（平行链/测试配置直接生效）。
-   - 分叉高度必须留在升级窗口之后：§6 的 `Test_TicketOpen_LegacyPathBeforeFork` 断言分叉高度之前仍按旧逻辑放行。
+   - `chain33.para.toml`、`chain33.para.toml.readme`、`plugin/dapp/ticket/rpc/rpc_test.go` 内嵌配置、
+     `plugin/dapp/ticket/executor/testdata/chain33.cfg.toml` = `0`（平行链/测试配置直接生效）；
+   - **未显式配置该键的链保持关闭**（注册默认值 `types.MaxHeight`），升级二进制本身不改变行为；
+   - 分叉高度必须留在升级窗口之后：`Test_TicketOpen_LegacyPathBeforeFork` 断言分叉高度之前仍按旧逻辑放行。
 
-4. 合并上游后，已入库的 H-2 PoC 文件（`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`）中演示“注入成功”的用例显式改用 `ForkTicketMinerAuth` 未生效的配置（`pocCfgBeforeMinerAuth`），并断言该前提，从而继续固定修复前行为；`Count > len(PubHashes)` 用例改为断言 `ErrOpenTicketPubHash`。
+### 8.2 矿工侧（无需分叉）：ReturnAddress 白名单过滤选票
 
-回归用例（`plugin/dapp/ticket/executor/ticket_miner_auth_test.go`）：
+执行器规则无法挡住“自签 `Tbind`”的挂票（§8.3），而这类票的危害发生在**选票/出块**环节：
+本节点挖出票后，`ExecDepositFrozen` 会把出块奖励增发给票的 `ReturnAddress`。因此本 PR 在
+选票入口增加本地过滤，不改变任何链上状态，**不需要分叉**：
+
+- 位置：`plugin/dapp/ticket/wallet/exec.go` 的 `On_WalletGetTickets`（共识 `flushTicket`
+  通过 `WalletGetTickets` 取票的唯一入口）→ `filterTrustedTickets`；
+- 规则：只保留 `MinerAddress == ReturnAddress`（自挖）或 `ReturnAddress` 命中
+  `wallet.sub.ticket.minerwhitelist` 的票；被过滤的票打 `skipUntrustedTicket` 告警；
+- `minerwhitelist` 就是矿工本地的**批准名单**：只有名单内的 ReturnAddress 才能使用本矿工的
+  挖矿身份。默认 `["*"]` 表示不过滤，保持原有挖矿行为；链上不新增任何批准动作；
+- 局限：只保护升级并配置了白名单的节点；不阻止攻击者把票发上链，也不清除链上票据与本地
+  索引（`TicketList` 仍能查到），即“链上归因伪造”仍在。它解决的是算力被占用、奖励被
+  拿走这一核心危害。
+
+回归：`TestFilterTrustedTickets`（默认 `*` 不过滤；显式白名单时注入票被过滤）。
+
+### 8.3 为什么 `Tbind` 不能当作“矿工侧批准”
+
+`Tbind`（`Action.TicketBind`）要求 `fromaddr == ReturnAddress`，即**票主单方签名**，矿工本人
+不签名；它表达的是“票主授权某矿工动用我的票面资金”，不是“矿工同意别人把票挂到我名下”。
+因此攻击者可以自签 `Tbind{ReturnAddress=自己, MinerAddress=受害矿工}`，随后
+`Topen{MinerAddress=受害矿工, ReturnAddress=自己}` 就能通过 8.1 的绑定分支（回归用例
+`Test_TicketOpen_SelfTbindStillInjects` 固定这一已知限制，票据仍会以受害矿工为 `MinerAddress`）。
+要链上强制“矿工批准”，需要新增矿工签名的批准动作（新 action + 分叉 + 钱包支持，历史绑定还需
+迁移），不在本 PR 范围；本 PR 用 §8.2 的本地白名单承担矿工侧批准。
+
+### 8.4 合并上游的适配
+
+已入库的 H-2 PoC 文件（`plugin/dapp/ticket/executor/ticket_miner_inject_poc_test.go`）中演示
+“注入成功”的用例显式改用 `ForkTicketMinerAuth` 未生效的配置（`pocCfgBeforeMinerAuth`），并断言
+该前提，从而继续固定修复前行为；`Count > len(PubHashes)` 用例改为断言 `ErrOpenTicketPubHash`
+且不再 panic。
+
+### 8.5 回归用例
+
+执行器层（`plugin/dapp/ticket/executor/ticket_miner_auth_test.go`）：
 
 | 用例 | 断言 |
 | --- | --- |
+| `TestForkTicketMinerAuthDefaultDisabled` | 没有 `[fork]` 段的链配置下分叉默认关闭（`types.MaxHeight`），升级不改变旧行为 |
 | `Test_TicketOpen_RejectsForeignMinerAddress` | 第三方把票挂到别的矿工 → `ErrMinerAddr`，且校验发生在冻结之前（票面资金未被动用） |
 | `Test_TicketOpen_AllowsOwnMinerAddress` | 自挖路径照常 `ExecOk`，票据以自己为 `MinerAddress` 落地 |
 | `Test_TicketOpen_AllowsBoundMinerAddress` | 票主开票给已绑定矿工、绑定矿工代开票，两条路径都放行 |
 | `Test_TicketOpen_RejectsInvalidMinerAddress` | 非法 `MinerAddress` 被地址校验拒绝 |
 | `Test_TicketOpen_RejectsPubHashesCountMismatch` | `Count > len(PubHashes)` 返回 `ErrOpenTicketPubHash`，不再 panic |
 | `Test_TicketOpen_LegacyPathBeforeFork` | 分叉高度之前保持旧行为，说明必须留足升级窗口 |
+| `Test_TicketOpen_SelfTbindStillInjects` | 已知限制：自签 `Tbind` 仍可把票挂到任意矿工（由 §8.2 兜底） |
+
+矿工侧（`plugin/dapp/ticket/wallet/ticket_test.go`）：
+
+| 用例 | 断言 |
+| --- | --- |
+| `TestFilterTrustedTickets` | 默认 `["*"]` 不过滤；显式白名单时只保留自挖票与白名单 ReturnAddress 的票 |
 
 仍建议后续处理（不在本 PR 范围）：分叉生效后拒绝非创世的 3 段 `ticketId`（清除分叉前预埋的旧格式票，
-这类票的 `pubHash` 校验恒被跳过）；共识侧对 `ReturnAddress` 未与本节点绑定的票据做过滤/告警；
+这类票的 `pubHash` 校验恒被跳过）；若需要链上强制“矿工批准”，新增矿工签名的批准动作；
 已用创世重入伪造出来的 `IsGenesis` 票据需由运维用 force-close 清理。

@@ -29,6 +29,8 @@ func (policy *ticketPolicy) On_CloseTickets(req *ty.TicketClose) (types.Message,
 // On_WalletGetTickets get ticket
 func (policy *ticketPolicy) On_WalletGetTickets(req *types.ReqNil) (types.Message, error) {
 	tickets, privs, err := policy.getTicketsByStatus(1)
+	// 共识选票会直接用这里的结果，按 ReturnAddress 白名单过滤掉别人挂到本矿工名下的票
+	tickets = filterTrustedTickets(tickets)
 	tks := &ty.ReplyWalletTickets{Tickets: tickets, Privkeys: privs}
 	return tks, err
 }

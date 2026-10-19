@@ -356,3 +356,67 @@ func Test_TicketOpen_LegacyPathBeforeFork(t *testing.T) {
 	require.Len(t, ids, 1)
 	assert.Equal(t, victimAddr, addrs[0], "分叉前仍会把票挂到任意矿工名下（因此分叉高度必须留足升级窗口）")
 }
+
+// TestForkTicketMinerAuthDefaultDisabled 本分叉默认必须关闭。
+// 链配置里没有 [fork] 段时(例如部署仓的 bityuan.toml) initForkConfig 会被跳过，
+// 分叉静默按 InitFork 的注册默认值生效；若默认注册为 0，升级二进制就会立刻在所有
+// 这类链上启用本规则，既可能让历史区块重放失败，也会改变当下的开票/挖矿行为。
+// 本包 testdata 显式配了 0，所以修复相关的用例仍会在生效状态下运行。
+func TestForkTicketMinerAuthDefaultDisabled(t *testing.T) {
+	data, err := os.ReadFile("testdata/chain33.cfg.toml")
+	require.NoError(t, err)
+	cfgStr := string(data)
+	// 去掉 [fork] 段，模拟没有 fork 配置的部署链
+	idx := strings.Index(cfgStr, "[fork.")
+	require.Greater(t, idx, 0, "testdata 应包含 [fork] 段")
+	cfg := types.NewChain33Config(cfgStr[:idx])
+
+	assert.False(t, cfg.IsDappFork(0, pty.TicketX, pty.ForkTicketMinerAuth), "默认注册值不能是 0")
+	assert.False(t, cfg.IsDappFork(minerAuthHeight, pty.TicketX, pty.ForkTicketMinerAuth), "未显式配置时必须保持关闭")
+	assert.False(t, cfg.IsDappFork(types.MaxHeight-1, pty.TicketX, pty.ForkTicketMinerAuth), "默认值应为 types.MaxHeight")
+
+	// 对照：显式配置了高度的配置(testdata)按配置生效
+	assert.True(t, mock33.GetAPI().GetConfig().IsDappFork(minerAuthHeight, pty.TicketX, pty.ForkTicketMinerAuth))
+}
+
+// Test_TicketOpen_SelfTbindStillInjects 固定一个已知限制：Tbind 只由 ReturnAddress(票主)
+// 单方签名，矿工本人不签名，因此它不是“矿工侧批准”。攻击者自签 Tbind 把自己的 ReturnAddress
+// 绑到任意矿工后，仍能通过 ForkTicketMinerAuth 的绑定分支把票挂到该矿工名下。
+// 该危害由矿工侧的选票白名单过滤兜底(见 wallet.filterTrustedTickets)；链上强制“矿工批准”
+// 需要新增矿工签名的 action、新分叉与钱包支持，不在本 PR 范围。
+func Test_TicketOpen_SelfTbindStillInjects(t *testing.T) {
+	cfg := mock33.GetAPI().GetConfig()
+	attacker, err := FromPrivkey(PrivKeyA)
+	require.NoError(t, err)
+	victim, err := FromPrivkey(PrivKeyB)
+	require.NoError(t, err)
+	attackerAddr, victimAddr := authAddr(attacker), authAddr(victim)
+
+	env := newAuthEnv(t, cfg, minerAuthHeight, minerAuthTime)
+	defer env.close()
+
+	price := pty.GetTicketMinerParam(cfg, minerAuthHeight).TicketPrice
+	env.fundTicketExec(t, cfg, attackerAddr, 4*price)
+
+	// 1) 攻击者自签 Tbind：把自己的 ReturnAddress 绑到受害矿工
+	bindTx := authTx(t, cfg, "Tbind", &pty.TicketBind{MinerAddress: victimAddr, ReturnAddress: attackerAddr}, attacker)
+	bindReceipt, err := env.driver.Exec(bindTx, 0)
+	require.NoError(t, err)
+	require.NotNil(t, bindReceipt)
+	require.Equal(t, int32(types.ExecOk), bindReceipt.Ty)
+
+	// 2) 走绑定分支，把票挂到受害矿工名下（已知限制：仍然成功）
+	topen := &pty.TicketOpen{
+		MinerAddress:  victimAddr,
+		ReturnAddress: attackerAddr,
+		Count:         1,
+		RandSeed:      1,
+		PubHashes:     authPubHashes(attacker, 1, 1),
+	}
+	receipt, err := env.driver.Exec(authTx(t, cfg, "Topen", topen, attacker), 0)
+	require.NoError(t, err, "已知限制：自签 Tbind 后可把票挂到任意矿工名下")
+	require.NotNil(t, receipt)
+	ids, addrs := authNewTickets(t, receipt)
+	require.Len(t, ids, 1)
+	assert.Equal(t, victimAddr, addrs[0], "票据仍以受害矿工为 MinerAddress")
+}

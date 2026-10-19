@@ -285,3 +285,32 @@ func (_m *walletOperateMock) WaitTxs(hashes [][]byte) []*types.TransactionDetail
 func (_m *walletOperateMock) GetCoinType() uint32 {
 	return 0
 }
+
+// TestFilterTrustedTickets 选票入口必须按 ReturnAddress 白名单过滤：
+// 别人挂到本矿工名下的票不能进入共识选票，否则本节点会替票的 ReturnAddress 出块。
+func TestFilterTrustedTickets(t *testing.T) {
+	old := minerAddrWhiteList
+	defer func() { minerAddrWhiteList = old }()
+
+	tickets := []*ty.Ticket{
+		{TicketId: "self:ticket", MinerAddress: "miner", ReturnAddress: "miner"},
+		{TicketId: "bound:ticket", MinerAddress: "miner", ReturnAddress: "cold"},
+		{TicketId: "injected:ticket", MinerAddress: "miner", ReturnAddress: "attacker"},
+	}
+
+	// 默认 ["*"]：不过滤，保持原有行为
+	minerAddrWhiteList = map[string]bool{"*": true}
+	assert.Len(t, filterTrustedTickets(tickets), 3)
+
+	// 显式白名单：只保留自挖票和白名单冷地址的票
+	minerAddrWhiteList = map[string]bool{"cold": true}
+	got := filterTrustedTickets(tickets)
+	if assert.Len(t, got, 2) {
+		assert.Equal(t, "self:ticket", got[0].TicketId)
+		assert.Equal(t, "bound:ticket", got[1].TicketId)
+	}
+
+	// 空列表与 nil 元素安全
+	assert.Empty(t, filterTrustedTickets(nil))
+	assert.Empty(t, filterTrustedTickets([]*ty.Ticket{nil}))
+}

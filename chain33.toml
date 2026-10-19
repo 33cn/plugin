@@ -273,6 +273,10 @@ signType="secp256k1"
 
 [wallet.sub.ticket]
 minerdisable=false
+# 矿工本地批准的 ReturnAddress 白名单：
+# - 买票时只动用名单内冷地址的票面资金；
+# - 选票(挖矿)时只挖自挖票和名单内 ReturnAddress 的票，避免第三方把票挂到本矿工名下占用算力；
+# ["*"] 表示不限制(保持原有行为)。
 minerwhitelist=["*"]
 
 [wallet.sub.multisig]

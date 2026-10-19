@@ -95,7 +95,11 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketId", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 0)
-	cfg.RegisterDappFork(TicketX, ForkTicketMinerAuth, 0)
+	// 默认关闭: 链配置里没有 [fork] 段时(例如部署仓的 bityuan.toml) initForkConfig 会被跳过,
+	// 分叉按这里的注册默认值生效。这类链若在升级时默认启用本分叉, 历史区块重放与当下挖矿
+	// 行为都会被立即改变; 因此默认必须为 MaxHeight(关闭), 由 [fork.sub.ticket]
+	// ForkTicketMinerAuth 显式指定激活高度后再启用。
+	cfg.RegisterDappFork(TicketX, ForkTicketMinerAuth, types.MaxHeight)
 	cfg.RegisterDappFork(TicketX, ForkTicketCloseDup, 0)
 	cfg.RegisterDappFork(TicketX, ForkMinerExecerCheck, 0)
 }
