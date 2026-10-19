@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/33cn/chain33/account"
@@ -343,6 +344,14 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 	if buy.GetAmount() <= 0 {
 		llog.Error("LotteryBuy", "buyAmount", buy.GetAmount())
 		return nil, pty.ErrLotteryBuyAmount
+	}
+
+	if cfg.IsDappFork(action.height, pty.LotteryX, pty.ForkLotteryFixOverflow) {
+		//拒绝乘精度溢出或超过最大发行量的购买金额
+		if buy.GetAmount() >= types.MaxCoin || buy.GetAmount() > math.MaxInt64/cfg.GetCoinPrecision() {
+			llog.Error("LotteryBuy", "buyAmount overflow", buy.GetAmount())
+			return nil, pty.ErrLotteryBuyAmount
+		}
 	}
 
 	if buy.GetNumber() < 0 || buy.GetNumber() >= luckyNumMol {

@@ -670,6 +670,7 @@ Enable=0
 
 [fork.sub.lottery]
 Enable=0
+ForkLotteryFixOverflow=0
 
 [fork.sub.mix]
 Enable=0
