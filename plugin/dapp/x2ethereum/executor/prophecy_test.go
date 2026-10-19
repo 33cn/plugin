@@ -30,3 +30,15 @@ func TestAddClaim(t *testing.T) {
 	assert.Contains(t, prophecy.ClaimValidators[1].Validators.Validators, "bb")
 
 }
+
+// TestCalcProphecyIDSeparator 确认分叉后 ID 带分隔符，不同(chainID,nonce)组合不再碰撞
+func TestCalcProphecyIDSeparator(t *testing.T) {
+	claimA := &x2eTy.Eth2Chain33{EthereumChainID: 1, Nonce: 23, EthereumSender: "0xsender", TokenContractAddress: "0xtoken", ClaimType: int64(x2eTy.LockClaimType)}
+	claimB := &x2eTy.Eth2Chain33{EthereumChainID: 12, Nonce: 3, EthereumSender: "0xsender", TokenContractAddress: "0xtoken", ClaimType: int64(x2eTy.LockClaimType)}
+
+	// 旧格式无分隔符，两种组合拼出相同 ID
+	assert.Equal(t, calcProphecyID(claimA, false), calcProphecyID(claimB, false))
+	// 分叉后带分隔符，ID 不再碰撞
+	assert.NotEqual(t, calcProphecyID(claimA, true), calcProphecyID(claimB, true))
+	assert.NotEqual(t, calcProphecyID(claimA, true), calcProphecyID(claimA, false))
+}

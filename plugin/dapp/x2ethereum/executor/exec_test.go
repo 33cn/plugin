@@ -197,7 +197,7 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	_, err = x.x2eth.Query_GetEthProphecy(&types2.QueryEthProphecyParams{ID: "010x7B95B6EC7EbD73572298cEf32Bb54FA408207359"})
 	x.Equal(err, types.ErrNotFound)
 
-	ID := strconv.Itoa(0) + strconv.Itoa(0) + ethereumAddr + tokenContractAddress + "lock"
+	ID := calcProphecyID(payload, true)
 	x.queryGetEthProphecy(ID, types2.EthBridgeStatus_SuccessStatusText)
 	x.queryGetSymbolTotalAmountByTxType(1, symbol, "lock", "", "10")
 
@@ -214,7 +214,7 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.NoError(err)
 	x.setDb(receipt)
 
-	x.queryGetEthProphecy("000x7B95B6EC7EbD73572298cEf32Bb54FA4082073590x0000000000000000000000000000000000000000lock", types2.EthBridgeStatus_SuccessStatusText)
+	x.queryGetEthProphecy(calcProphecyID(payload, true), types2.EthBridgeStatus_SuccessStatusText)
 	x.queryGetSymbolTotalAmount(symbol, "", 7, true)
 	x.queryGetSymbolTotalAmountByTxType(2, symbol, "withdraw", "", "3")
 
@@ -231,7 +231,7 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.NoError(err)
 	x.setDb(receipt)
 
-	x.queryGetEthProphecy("010x7B95B6EC7EbD73572298cEf32Bb54FA4082073590x0000000000000000000000000000000000000000lock", types2.EthBridgeStatus_SuccessStatusText)
+	x.queryGetEthProphecy(calcProphecyID(payload, true), types2.EthBridgeStatus_SuccessStatusText)
 	x.queryGetSymbolTotalAmountByTxType(1, symbol, "lock", "", "11")
 }
 
@@ -278,7 +278,7 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 
 	x.queryGetSymbolTotalAmount("coins.bty", tokenContractAddress, 1, false)
 	x.queryGetSymbolTotalAmountByTxType(1, "coins.bty", "withdraw", tokenContractAddress, "4")
-	x.queryGetEthProphecy("020x7B95B6EC7EbD73572298cEf32Bb54FA4082073590x0000000000000000000000000000000000000000burn", types2.EthBridgeStatus_SuccessStatusText)
+	x.queryGetEthProphecy(calcProphecyID(payload, true), types2.EthBridgeStatus_SuccessStatusText)
 }
 
 func (x *suiteX2Ethereum) accountSetup() {

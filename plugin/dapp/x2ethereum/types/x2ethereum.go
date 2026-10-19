@@ -60,6 +60,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(X2ethereumX, "Enable", 0)
+	cfg.RegisterDappFork(X2ethereumX, ForkX2EthFixReplayCollisionNormalize, 0)
 }
 
 // InitExecutor defines register executor
