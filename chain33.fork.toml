@@ -220,6 +220,8 @@ ForkStorageLocalDB=0
 Enable=0
 ForkTicketId=1062000
 ForkTicketVrf=1770000
+# 拒绝同一笔 tclose 交易内重复的 ticketId(重复会等价于同一张票被多次付款)
+ForkTicketCloseDup=0
 ForkMinerExecerCheck=0
 
 [fork.sub.token]

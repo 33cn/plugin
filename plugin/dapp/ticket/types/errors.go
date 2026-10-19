@@ -15,6 +15,8 @@ var (
 	ErrTime = errors.New("ErrTime")
 	// ErrTicketClosed err type
 	ErrTicketClosed = errors.New("ErrTicketClosed")
+	// ErrDupTicketID 同一笔交易内重复关闭同一个 ticket
+	ErrDupTicketID = errors.New("ErrDupTicketID")
 	// ErrEmptyMinerTx err type
 	ErrEmptyMinerTx = errors.New("ErrEmptyMinerTx")
 	// ErrMinerNotPermit err type
