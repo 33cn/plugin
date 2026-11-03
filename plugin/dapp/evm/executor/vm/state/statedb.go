@@ -524,6 +524,54 @@ const (
 	Error
 )
 
+// isForkActive reports whether fork is active at the current block height.
+func (mdb *MemoryStateDB) isForkActive(fork string) bool {
+	if mdb.api == nil {
+		return false
+	}
+	cfg := mdb.api.GetConfig()
+	if cfg == nil {
+		return false
+	}
+	return cfg.IsDappFork(mdb.blockHeight, evmtypes.ExecutorName, fork)
+}
+
+// transferPreState captures the raw account KV touched by Transfer, keyed the same way the
+// coins account DB stores them.
+func (mdb *MemoryStateDB) transferPreState(sender, recipient string) []kvPreState {
+	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
+		return mdb.capturePreState([][]byte{
+			mdb.CoinsAccount.AccountKey(sender),
+			mdb.CoinsAccount.AccountKey(recipient),
+		})
+	}
+	// paracross: balances live in the exec account of the mapped executor
+	return mdb.capturePreState([][]byte{
+		mdb.execAccountKey(sender),
+		mdb.execAccountKey(recipient),
+	})
+}
+
+func (mdb *MemoryStateDB) execAccountKey(addr string) []byte {
+	return mdb.CoinsAccount.GetExecKVSet(mdb.evmPlatformAddr, &types.Account{Addr: addr})[0].Key
+}
+
+// capturePreState reads the raw values behind keys before a transfer overwrites them.
+func (mdb *MemoryStateDB) capturePreState(keys [][]byte) []kvPreState {
+	states := make([]kvPreState, 0, len(keys))
+	for _, key := range keys {
+		pre := kvPreState{key: append([]byte(nil), key...)}
+		if value, err := mdb.StateDB.Get(key); err == nil {
+			pre.value = append([]byte(nil), value...)
+			pre.existed = true
+		}
+		states = append(states, pre)
+	}
+	return states
+}
+
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)
@@ -550,6 +598,10 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 
 	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
 	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	var preState []kvPreState
+	if mdb.isForkActive(evmtypes.ForkEVMTransferRevert) {
+		preState = mdb.transferPreState(sender, recipient)
+	}
 	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
 		ret, err = mdb.CoinsAccount.Transfer(sender, recipient, value)
 	} else { //paracross
@@ -567,6 +619,7 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 			amount:     value,
 			data:       ret.KV,
 			logs:       ret.Logs,
+			preState:   preState,
 		})
 	}
 
@@ -604,6 +657,14 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 	if recipient == execaddress {
 		return false, errors.New("not allow")
 	}
+	// Token accounts use the same non-exec account keys as tokendb.Transfer.
+	var preState []kvPreState
+	if mdb.isForkActive(evmtypes.ForkEVMTransferRevert) {
+		preState = mdb.capturePreState([][]byte{
+			tokendb.AccountKey(from),
+			tokendb.AccountKey(recipient),
+		})
+	}
 	receipt, err := tokendb.Transfer(from, recipient, amount)
 	if err != nil {
 		return false, err
@@ -614,6 +675,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 		amount:     amount,
 		data:       receipt.GetKV(),
 		logs:       receipt.GetLogs(),
+		preState:   preState,
 	})
 	return true, nil
 

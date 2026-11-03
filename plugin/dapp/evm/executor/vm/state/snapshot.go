@@ -42,6 +42,15 @@ func (ver *Snapshot) revert() bool {
 	if ver.entries == nil {
 		return true
 	}
+	// The interface contract requires undoing changes in reverse creation order. Applying two
+	// writes to the same slot forward would restore the intermediate value instead of the
+	// pre-frame one. Legacy behaviour is kept before ForkEVMTransferRevert.
+	if ver.statedb != nil && ver.statedb.isForkActive(evmtypes.ForkEVMTransferRevert) {
+		for i := len(ver.entries) - 1; i >= 0; i-- {
+			ver.entries[i].revert(ver.statedb)
+		}
+		return true
+	}
 	for _, entry := range ver.entries {
 		entry.revert(ver.statedb)
 	}
@@ -144,6 +153,17 @@ type (
 		amount int64
 		data   []*types.KeyValue
 		logs   []*types.ReceiptLog
+		// preState carries the raw account KV read before the transfer. It is only populated
+		// when ForkEVMTransferRevert is active; empty keeps the legacy no-op revert.
+		preState []kvPreState
+	}
+
+	// kvPreState is the raw value of one account key before a transfer wrote to it.
+	// existed=false means the key was absent and revert must remove it again.
+	kvPreState struct {
+		key     []byte
+		value   []byte
+		existed bool
 	}
 
 	// 合约生成日志事件
@@ -323,4 +343,30 @@ func (ch transferChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 }
 func (ch transferChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
 	return ch.logs
+}
+
+// revert restores the account KV captured before the transfer. Before ForkEVMTransferRevert
+// preState is empty, so a reverted transfer keeps its old behaviour and leaves the cache as is.
+//
+// executor.StateDB, the KV used in production, has no Delete method, so a key that did not
+// exist before the transfer is shadowed with Set(key, nil) instead. That still appends the key
+// to GetSetKeys(): the reverted transfer's keys therefore drop out of the receipt while
+// remaining in the set, and chain33's checkKV rejects the whole transaction with
+// ErrNotAllowMemSetKey. The attack is neutralised as a rejected transaction, not as a silent
+// reconciliation.
+func (ch transferChange) revert(mdb *MemoryStateDB) {
+	for _, pre := range ch.preState {
+		var err error
+		if pre.existed {
+			err = mdb.StateDB.Set(pre.key, pre.value)
+		} else if deleter, ok := mdb.StateDB.(interface{ Delete([]byte) error }); ok {
+			err = deleter.Delete(pre.key)
+		} else {
+			// executor.StateDB has no Delete: a nil value shadows the key as absent.
+			err = mdb.StateDB.Set(pre.key, nil)
+		}
+		if err != nil {
+			log15.Error("transferChange revert failed", "key", string(pre.key), "err", err)
+		}
+	}
 }
