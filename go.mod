@@ -6,6 +6,10 @@ toolchain go1.22.12
 
 replace github.com/ava-labs/avalanchego => github.com/33cn/avalanchego v1.10.10-0.20240529041529-ada691598153
 
+// Temporary test-time pin: the EVM transfer-revert fix calls StateDB.RevertSet, which comes
+// from 33cn/chain33#1412. Drop this replace once chain33 releases a version containing it.
+replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v1.72.1-0.20261103124951-0ba08b76ebaf
+
 require (
 	github.com/33cn/chain33 v1.72.7-0.20261016082959-e1bde75e25d0
 	github.com/BurntSushi/toml v1.3.2
