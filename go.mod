@@ -8,7 +8,7 @@ replace github.com/ava-labs/avalanchego => github.com/33cn/avalanchego v1.10.10-
 
 // Temporary test-time pin: the EVM transfer-revert fix calls StateDB.RevertSet, which comes
 // from 33cn/chain33#1412. Drop this replace once chain33 releases a version containing it.
-replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v1.72.1-0.20261103124951-0ba08b76ebaf
+replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v1.72.1-0.20261103141406-9f5c055ab050
 
 require (
 	github.com/33cn/chain33 v1.72.7-0.20261016082959-e1bde75e25d0
