@@ -5,6 +5,8 @@
 package state
 
 import (
+	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
@@ -150,10 +152,11 @@ func TestSnapshotRevertSameSlotReverseOrder(t *testing.T) {
 	})
 }
 
-// TestTransferRevertWithoutDeleteHidesKey covers transferChange.revert's fallback for a KV with
-// no Delete: executor.StateDB, the production implementation, only exposes Set, so a key that
-// did not exist before the transfer is shadowed with a nil value, which Get reports as absent.
-// The goleveldb used by the other tests has Delete and never reaches this branch.
+// TestTransferRevertWithoutDeleteHidesKey covers transferChange.revert's fallback when the KV
+// has no transaction open: executor.StateDB exposes RevertSet, but outside Begin there is no
+// key list to repair, so revert writes directly. A key that did not exist before the transfer
+// is then shadowed with a nil value, which Get reports as absent. The goleveldb used by the
+// other tests has Delete and never reaches this branch.
 func TestTransferRevertWithoutDeleteHidesKey(t *testing.T) {
 	const (
 		sender    = "14KEKbY3kNFLfQEGJbNweV4whre7NpqzuB"
@@ -165,6 +168,8 @@ func TestTransferRevertWithoutDeleteHidesKey(t *testing.T) {
 	st := cexecutor.NewStateDB(nil, nil, nil, nil).(*cexecutor.StateDB)
 	_, hasDelete := interface{}(st).(interface{ Delete([]byte) error })
 	require.False(t, hasDelete, "executor.StateDB must not expose Delete or the fallback stays untested")
+	_, hasRevertSet := interface{}(st).(interface{ RevertSet([]byte, []byte) error })
+	require.True(t, hasRevertSet, "executor.StateDB should undo writes through RevertSet inside a tx")
 
 	mdb := newTransferRevertMDBWith(t, newTransferRevertConfig(t, 0), st)
 	fundCoinAccount(mdb, sender, initial)
@@ -179,4 +184,86 @@ func TestTransferRevertWithoutDeleteHidesKey(t *testing.T) {
 	_, err = mdb.StateDB.Get(recipientKey)
 	require.Equal(t, ctypes.ErrNotFound, err, "the nil Set must shadow the key as absent")
 	require.Equal(t, initial, coinBalance(mdb, sender))
+}
+
+// faultyKV wraps a KV and fails the read of one key, standing in for a store timeout.
+type faultyKV struct {
+	db.KV
+	failKey []byte
+	err     error
+}
+
+func (f faultyKV) Get(key []byte) ([]byte, error) {
+	if bytes.Equal(key, f.failKey) {
+		return nil, f.err
+	}
+	return f.KV.Get(key)
+}
+
+// revertFailingKV is a KV whose RevertSet always fails, so the error path of the producer can
+// be observed without a real storage fault.
+type revertFailingKV struct {
+	db.KV
+	err error
+}
+
+func (f revertFailingKV) RevertSet(key, originalValue []byte) error {
+	return f.err
+}
+
+// TestRevertErrorIsRecorded pins the propagation of a failed RevertSet: the error reaches the
+// MemoryStateDB instead of being swallowed, and the next execution can clear it.
+func TestRevertErrorIsRecorded(t *testing.T) {
+	const (
+		sender    = "14KEKbY3kNFLfQEGJbNweV4whre7NpqzuB"
+		recipient = "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+		initial   = int64(1000)
+	)
+
+	dbDir, stateDB, _ := util.CreateTestDB()
+	t.Cleanup(func() { util.CloseTestDB(dbDir, stateDB) })
+	revertErr := errors.New("revert failed")
+	mdb := newTransferRevertMDBWith(t, newTransferRevertConfig(t, 0), revertFailingKV{KV: stateDB, err: revertErr})
+	fundCoinAccount(mdb, sender, initial)
+
+	snapshot := mdb.Snapshot()
+	require.True(t, mdb.Transfer(sender, recipient, 400))
+	mdb.RevertToSnapshot(snapshot)
+	require.ErrorIs(t, mdb.RevertError(), revertErr, "the producer error must reach the caller")
+
+	mdb.ResetRevertError()
+	require.NoError(t, mdb.RevertError())
+}
+
+// TestCapturePreStateFailsTransferOnReadError pins the reviewer's Suggestion: only ErrNotFound
+// may mean "the key did not exist". Any other read error leaves the pre-transfer value unknown,
+// so the transfer must fail instead of recording a state that was never read.
+func TestCapturePreStateFailsTransferOnReadError(t *testing.T) {
+	const (
+		sender    = "14KEKbY3kNFLfQEGJbNweV4whre7NpqzuB"
+		recipient = "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+		initial   = int64(1000)
+		moved     = uint64(400)
+	)
+
+	cfg := newTransferRevertConfig(t, 0)
+	dbDir, stateDB, _ := util.CreateTestDB()
+	t.Cleanup(func() { util.CloseTestDB(dbDir, stateDB) })
+
+	// The key is built from the same config the coins DB uses.
+	coinsAccount, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), stateDB)
+	require.NoError(t, err)
+	storeErr := errors.New("store read timeout")
+	mdb := newTransferRevertMDBWith(t, cfg, faultyKV{
+		KV:      stateDB,
+		failKey: coinsAccount.AccountKey(recipient),
+		err:     storeErr,
+	})
+	fundCoinAccount(mdb, sender, initial)
+
+	snapshot := mdb.Snapshot()
+	require.False(t, mdb.Transfer(sender, recipient, moved), "a pre-state read error must fail the transfer")
+	mdb.RevertToSnapshot(snapshot)
+	require.Equal(t, initial, coinBalance(mdb, sender))
+	require.Zero(t, coinBalance(mdb, recipient))
 }
