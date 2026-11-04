@@ -1,5 +1,14 @@
 changelog
 
+## [1.76.4](https://github.com/33cn/plugin/compare/v1.76.3...v1.76.4) (2026-11-04)
+
+
+### Bug Fixes
+
+* **config:** register ForkEthSignEnvelope in the shipped fork configs ([125ab23](https://github.com/33cn/plugin/commit/125ab2379f6121b77a58d226f1a652e24487713d))
+* **evm:** make reverted value transfers revertible ([8379439](https://github.com/33cn/plugin/commit/83794393d0faec7cbd845ba299e2c8bab100f18d))
+* **evm:** undo reverted value transfers through StateDB.RevertSet ([545f258](https://github.com/33cn/plugin/commit/545f258e43188c879c5c762dda2af3b802a6e31b)), closes [33cn/chain33#1412](https://github.com/33cn/chain33/issues/1412)
+
 ## [1.76.3](https://github.com/33cn/plugin/compare/v1.76.2...v1.76.3) (2026-10-19)
 
 
