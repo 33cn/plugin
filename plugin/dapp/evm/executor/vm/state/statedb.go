@@ -33,13 +33,15 @@ import (
 // 执行器的Exec阶段会返回：交易收据、合约账户（包含合约地址、合约代码、合约存储信息）
 // 执行器的ExecLocal阶段会返回：合约创建人和合约的关联信息
 type MemoryStateDB struct {
-	// StateDB 状态DB，从执行器框架传入
+	// StateDB 状态DB：执行器框架传入的 StateDB 外包一层 journalKV，
+	// 执行期间的写入只进缓冲，随快照自动回滚
 	StateDB db.KV
+	kv      *journalKV
 
 	// LocalDB 本地DB，从执行器框架传入
 	LocalDB db.KVDB
 
-	// CoinsAccount Coins账户操作对象，从执行器框架传入
+	// CoinsAccount Coins账户操作对象：执行器框架传入对象的副本，读写经由 journalKV
 	CoinsAccount *account.DB
 
 	//evm 平台账户地址
@@ -72,19 +74,21 @@ type MemoryStateDB struct {
 	stateDirty map[string]interface{}
 	dataDirty  map[string]interface{}
 	api        client.QueueProtocolAPI
-
-	// revertErr records the first error a snapshot revert hit in the current transaction.
-	// RevertToSnapshot cannot return it to the EVM (its callers are already unwinding an
-	// error), so innerExec checks RevertError before accepting a successful execution.
-	revertErr error
 }
 
 // NewMemoryStateDB 基于执行器框架的三个DB构建内存状态机对象
 // 此对象的生命周期对应一个区块，在同一个区块内的多个交易执行时共享同一个DB对象
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
 func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
+	kv := newJournalKV(StateDB)
+	if CoinsAccount != nil {
+		// 复制一份再换 DB，不改动执行器框架共享的 coins 账户对象
+		coins := *CoinsAccount
+		CoinsAccount = coins.SetDB(kv)
+	}
 	mdb := &MemoryStateDB{
-		StateDB:         StateDB,
+		StateDB:         kv,
+		kv:              kv,
 		LocalDB:         LocalDB,
 		CoinsAccount:    CoinsAccount,
 		evmPlatformAddr: address.ExecAddress(api.GetConfig().ExecName("evm")),
@@ -405,11 +409,10 @@ func (mdb *MemoryStateDB) RevertToSnapshot(version int) {
 
 	// 从最近版本开始回滚
 	for index := len(mdb.snapshots) - 1; index >= version; index-- {
-		if err := mdb.snapshots[index].revert(); err != nil && mdb.revertErr == nil {
-			log15.Error("RevertToSnapshot failed", "snapshot", index, "err", err)
-			mdb.revertErr = err
-		}
+		mdb.snapshots[index].revert()
 	}
+
+	mdb.kv.revertTo(version)
 
 	// 只保留回滚版本之前的版本数据
 	mdb.snapshots = mdb.snapshots[:version]
@@ -422,24 +425,13 @@ func (mdb *MemoryStateDB) RevertToSnapshot(version int) {
 
 }
 
-// RevertError returns the first error a snapshot revert recorded in the current transaction,
-// or nil when every revert succeeded. innerExec turns a non-nil value into a failed
-// transaction: the account cache and the receipt no longer describe the same state.
-func (mdb *MemoryStateDB) RevertError() error {
-	return mdb.revertErr
-}
-
-// ResetRevertError clears the recorded revert error at the start of an execution.
-func (mdb *MemoryStateDB) ResetRevertError() {
-	mdb.revertErr = nil
-}
-
 // Snapshot 对当前的数据状态打快照，并生成快照版本号，方便后面回滚数据
 func (mdb *MemoryStateDB) Snapshot() int {
 	id := mdb.versionID
 	mdb.versionID++
 	mdb.currentVer = &Snapshot{id: id, statedb: mdb}
 	mdb.snapshots = append(mdb.snapshots, mdb.currentVer)
+	mdb.kv.snapshot(id)
 	log15.Debug("MemoryStateDB::Snapshot", "mdb.versionID", mdb.versionID)
 	return id
 }
@@ -475,6 +467,9 @@ func (mdb *MemoryStateDB) GetReceiptLogs(addr string) (logs []*types.ReceiptLog)
 // 因为目前执行器每次执行都是一个新的MemoryStateDB，所以，所有的快照都是从0开始的，
 // 这里获取的应该是从0到目前快照的所有变更；
 // 另外，因为合约内部会调用其它合约，也会产生数据变更，所以这里返回的数据，不止是一个合约的数据。
+//
+// coins/token 等经由 journalKV 的写入取缓冲中的最终值，同时写回底层 StateDB，
+// 使同一区块内后续交易可见；本方法只应在执行成功、不再回滚时调用。
 func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, logs []*types.ReceiptLog) {
 	if version < 0 || version >= len(mdb.snapshots) {
 		return
@@ -490,6 +485,12 @@ func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, 
 		}
 	}
 
+	for _, kv := range mdb.kv.changes() {
+		if err := mdb.kv.parent.Set(kv.Key, kv.Value); err != nil {
+			panic(err)
+		}
+		kvSet = append(kvSet, kv)
+	}
 	return
 }
 
@@ -544,63 +545,6 @@ const (
 	Error
 )
 
-// isForkActive reports whether fork is active at the current block height.
-func (mdb *MemoryStateDB) isForkActive(fork string) bool {
-	if mdb.api == nil {
-		return false
-	}
-	cfg := mdb.api.GetConfig()
-	if cfg == nil {
-		return false
-	}
-	return cfg.IsDappFork(mdb.blockHeight, evmtypes.ExecutorName, fork)
-}
-
-// transferPreState captures the raw account KV touched by Transfer, keyed the same way the
-// coins account DB stores them.
-func (mdb *MemoryStateDB) transferPreState(sender, recipient string) ([]kvPreState, error) {
-	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
-	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
-	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
-		return mdb.capturePreState([][]byte{
-			mdb.CoinsAccount.AccountKey(sender),
-			mdb.CoinsAccount.AccountKey(recipient),
-		})
-	}
-	// paracross: balances live in the exec account of the mapped executor
-	return mdb.capturePreState([][]byte{
-		mdb.execAccountKey(sender),
-		mdb.execAccountKey(recipient),
-	})
-}
-
-func (mdb *MemoryStateDB) execAccountKey(addr string) []byte {
-	return mdb.CoinsAccount.GetExecKVSet(mdb.evmPlatformAddr, &types.Account{Addr: addr})[0].Key
-}
-
-// capturePreState reads the raw values behind keys before a transfer overwrites them. Only
-// ErrNotFound means the key did not exist: any other error leaves us without a value to
-// restore, so the transfer must fail instead of recording a state that was never read.
-func (mdb *MemoryStateDB) capturePreState(keys [][]byte) ([]kvPreState, error) {
-	states := make([]kvPreState, 0, len(keys))
-	for _, key := range keys {
-		pre := kvPreState{key: append([]byte(nil), key...)}
-		value, err := mdb.StateDB.Get(key)
-		switch {
-		case err == nil:
-			pre.value = append([]byte(nil), value...)
-			pre.existed = true
-		case errors.Is(err, types.ErrNotFound):
-			// The key did not exist yet; revert must make it absent again.
-		default:
-			log15.Error("capturePreState failed", "key", string(key), "err", err)
-			return nil, fmt.Errorf("read state key %x before transfer: %w", key, err)
-		}
-		states = append(states, pre)
-	}
-	return states, nil
-}
-
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)
@@ -627,15 +571,6 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 
 	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
 	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
-	var preState []kvPreState
-	if mdb.isForkActive(evmtypes.ForkEVMTransferRevert) {
-		preState, err = mdb.transferPreState(sender, recipient)
-		if err != nil {
-			log15.Error("transfer capture pre-state failed", "sender", sender, "recipient", recipient,
-				"amount", amount, "err", err)
-			return false
-		}
-	}
 	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
 		ret, err = mdb.CoinsAccount.Transfer(sender, recipient, value)
 	} else { //paracross
@@ -651,9 +586,7 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		mdb.addChange(transferChange{
 			baseChange: baseChange{},
 			amount:     value,
-			data:       ret.KV,
 			logs:       ret.Logs,
-			preState:   preState,
 		})
 	}
 
@@ -691,19 +624,6 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 	if recipient == execaddress {
 		return false, errors.New("not allow")
 	}
-	// Token accounts use the same non-exec account keys as tokendb.Transfer.
-	var preState []kvPreState
-	if mdb.isForkActive(evmtypes.ForkEVMTransferRevert) {
-		preState, err = mdb.capturePreState([][]byte{
-			tokendb.AccountKey(from),
-			tokendb.AccountKey(recipient),
-		})
-		if err != nil {
-			log15.Error("TransferToToken capture pre-state failed", "from", from, "recipient", recipient,
-				"symbol", symbol, "amount", amount, "err", err)
-			return false, err
-		}
-	}
 	receipt, err := tokendb.Transfer(from, recipient, amount)
 	if err != nil {
 		return false, err
@@ -712,9 +632,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 	mdb.addChange(transferChange{
 		baseChange: baseChange{},
 		amount:     amount,
-		data:       receipt.GetKV(),
 		logs:       receipt.GetLogs(),
-		preState:   preState,
 	})
 	return true, nil
 

@@ -82,9 +82,10 @@ func privKey(idx int) crypto.PrivKey { return util.TestPrivkeyList[idx] }
 
 func fundAddr(t *testing.T, exec *EVMExecutor, addr string, amount int64) {
 	t.Helper()
-	acc := exec.mStateDB.CoinsAccount.LoadAccount(addr)
+	// 写到执行器的 StateDB：mStateDB 的写缓冲每笔交易重建，写进去的余额不会留到下一次 Exec
+	acc := exec.GetCoinsAccount().LoadAccount(addr)
 	acc.Balance = amount
-	exec.mStateDB.CoinsAccount.SaveAccount(acc)
+	exec.GetCoinsAccount().SaveAccount(acc)
 }
 
 func addrFromRole(cfg *ctypes.Chain33Config, roleIdx int) string {

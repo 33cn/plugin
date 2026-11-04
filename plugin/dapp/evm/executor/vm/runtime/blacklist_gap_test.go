@@ -89,8 +89,9 @@ func (e *gapEnv) fund(addr vmcommon.Address, amount int64) {
 	e.coins.SaveAccount(acc)
 }
 
+// balance 经由 mdb 读取：执行期间的转账只在 mdb 的写缓冲中，直接读 StateDB 看不到
 func (e *gapEnv) balance(addr vmcommon.Address) int64 {
-	return e.coins.LoadAccount(addr.String()).Balance
+	return e.mdb.CoinsAccount.LoadAccount(addr.String()).Balance
 }
 
 func (e *gapEnv) deploy(addr, creator vmcommon.Address, code []byte) {
