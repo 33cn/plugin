@@ -33,15 +33,16 @@ import (
 // 执行器的Exec阶段会返回：交易收据、合约账户（包含合约地址、合约代码、合约存储信息）
 // 执行器的ExecLocal阶段会返回：合约创建人和合约的关联信息
 type MemoryStateDB struct {
-	// StateDB 状态DB：执行器框架传入的 StateDB 外包一层 journalKV，
+	// StateDB 状态DB，从执行器框架传入；ForkEVMTransferRevert 之后外包一层 journalKV，
 	// 执行期间的写入只进缓冲，随快照自动回滚
 	StateDB db.KV
-	kv      *journalKV
+	// kv 为 nil 表示分叉之前的旧行为：写入直达 StateDB，transferChange 自带回执 KV
+	kv *journalKV
 
 	// LocalDB 本地DB，从执行器框架传入
 	LocalDB db.KVDB
 
-	// CoinsAccount Coins账户操作对象：执行器框架传入对象的副本，读写经由 journalKV
+	// CoinsAccount Coins账户操作对象，从执行器框架传入；分叉之后为绑定 journalKV 的副本
 	CoinsAccount *account.DB
 
 	//evm 平台账户地址
@@ -80,14 +81,18 @@ type MemoryStateDB struct {
 // 此对象的生命周期对应一个区块，在同一个区块内的多个交易执行时共享同一个DB对象
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
 func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
-	kv := newJournalKV(StateDB)
-	if CoinsAccount != nil {
-		// 复制一份再换 DB，不改动执行器框架共享的 coins 账户对象
-		coins := *CoinsAccount
-		CoinsAccount = coins.SetDB(kv)
+	var kv *journalKV
+	if api.GetConfig().IsDappFork(blockHeight, evmtypes.ExecutorName, evmtypes.ForkEVMTransferRevert) {
+		kv = newJournalKV(StateDB)
+		StateDB = kv
+		if CoinsAccount != nil {
+			// 复制一份再换 DB，不改动执行器框架共享的 coins 账户对象
+			coins := *CoinsAccount
+			CoinsAccount = coins.SetDB(kv)
+		}
 	}
 	mdb := &MemoryStateDB{
-		StateDB:         kv,
+		StateDB:         StateDB,
 		kv:              kv,
 		LocalDB:         LocalDB,
 		CoinsAccount:    CoinsAccount,
@@ -412,7 +417,9 @@ func (mdb *MemoryStateDB) RevertToSnapshot(version int) {
 		mdb.snapshots[index].revert()
 	}
 
-	mdb.kv.revertTo(version)
+	if mdb.kv != nil {
+		mdb.kv.revertTo(version)
+	}
 
 	// 只保留回滚版本之前的版本数据
 	mdb.snapshots = mdb.snapshots[:version]
@@ -431,7 +438,9 @@ func (mdb *MemoryStateDB) Snapshot() int {
 	mdb.versionID++
 	mdb.currentVer = &Snapshot{id: id, statedb: mdb}
 	mdb.snapshots = append(mdb.snapshots, mdb.currentVer)
-	mdb.kv.snapshot(id)
+	if mdb.kv != nil {
+		mdb.kv.snapshot(id)
+	}
 	log15.Debug("MemoryStateDB::Snapshot", "mdb.versionID", mdb.versionID)
 	return id
 }
@@ -468,7 +477,7 @@ func (mdb *MemoryStateDB) GetReceiptLogs(addr string) (logs []*types.ReceiptLog)
 // 这里获取的应该是从0到目前快照的所有变更；
 // 另外，因为合约内部会调用其它合约，也会产生数据变更，所以这里返回的数据，不止是一个合约的数据。
 //
-// coins/token 等经由 journalKV 的写入取缓冲中的最终值，同时写回底层 StateDB，
+// 分叉之后，coins/token 等经由 journalKV 的写入取缓冲中的最终值，同时写回底层 StateDB，
 // 使同一区块内后续交易可见；本方法只应在执行成功、不再回滚时调用。
 func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, logs []*types.ReceiptLog) {
 	if version < 0 || version >= len(mdb.snapshots) {
@@ -485,6 +494,9 @@ func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, 
 		}
 	}
 
+	if mdb.kv == nil {
+		return
+	}
 	for _, kv := range mdb.kv.changes() {
 		if err := mdb.kv.parent.Set(kv.Key, kv.Value); err != nil {
 			panic(err)
@@ -545,6 +557,14 @@ const (
 	Error
 )
 
+// legacyTransferKV 分叉之前转账的回执 KV 由 transferChange 携带；分叉之后由 journalKV 提供
+func (mdb *MemoryStateDB) legacyTransferKV(kvs []*types.KeyValue) []*types.KeyValue {
+	if mdb.kv != nil {
+		return nil
+	}
+	return kvs
+}
+
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)
@@ -586,6 +606,7 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		mdb.addChange(transferChange{
 			baseChange: baseChange{},
 			amount:     value,
+			data:       mdb.legacyTransferKV(ret.KV),
 			logs:       ret.Logs,
 		})
 	}
@@ -632,6 +653,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 	mdb.addChange(transferChange{
 		baseChange: baseChange{},
 		amount:     amount,
+		data:       mdb.legacyTransferKV(receipt.GetKV()),
 		logs:       receipt.GetLogs(),
 	})
 	return true, nil

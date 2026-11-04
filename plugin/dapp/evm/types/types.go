@@ -60,9 +60,12 @@ const (
 	// ForkEVMSuicidePayer SELFDESTRUCT pays from the executing account (Address()) instead of
 	// CodeAddr, so that reading the balance, debiting it and suiciding all use the same account
 	ForkEVMSuicidePayer = "ForkEVMSuicidePayer"
-	// ForkEVMTransferRevert 已废弃，代码不再读取。
-	// 1.76.4 用它门控手写的转账回滚；之后 EVM 写入统一经由 journalKV 随快照自动回滚，不再分叉。
-	// 已发布的配置文件里带有这个 key，initForkConfig 遇到未注册的 key 会 panic，所以保留注册。
+	// ForkEVMTransferRevert makes EVM state writes revertible: MemoryStateDB buffers them in
+	// journalKV, which rolls back with each snapshot, a failed CREATE rolls back its value, and
+	// Snapshot.revert unwinds entries in reverse order. Without it a reverted transfer stays in
+	// the account cache while its receipt KV is dropped, so a later call in the same tx can
+	// spend the phantom balance. Registered in InitFork at MaxHeight, so chains must opt in
+	// explicitly.
 	ForkEVMTransferRevert = "ForkEVMTransferRevert"
 )
 

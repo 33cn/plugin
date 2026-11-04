@@ -50,7 +50,10 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExecutorName, ForkEVMFixOverflow, 0)
 	// SELFDESTRUCT payer fix: DELEGATECALL/CALLCODE no longer spend the borrowed code's balance
 	cfg.RegisterDappFork(ExecutorName, ForkEVMSuicidePayer, 0)
-	// 已废弃，仅为兼容已发布配置中的 key 保留注册，见 ForkEVMTransferRevert 注释
+	// Revertible value transfers are opt-in per chain. Default to MaxHeight (off) because
+	// registering 0 would enable the consensus change from genesis on every chain that does
+	// not configure the key, rewriting historical execution. A chain that wants the fix sets
+	// a concrete height under [fork.sub.evm]; initForkConfig overrides this default.
 	cfg.RegisterDappFork(ExecutorName, ForkEVMTransferRevert, types.MaxHeight)
 }
 

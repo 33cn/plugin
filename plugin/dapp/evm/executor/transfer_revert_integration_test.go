@@ -5,9 +5,10 @@
 package executor
 
 // Transaction-level repro of the reverted-transfer mint: A calls B with value, B reverts, then
-// the phantom credit B kept in the account cache was spent by a later call in the same tx,
-// minting the moved amount. The reverted transfer is now rolled back by journalKV, so the later
-// spend has no balance to take.
+// the phantom credit B kept in the account cache is spent by a later call in the same tx. The
+// committed state is assembled from the receipt KV only, so before ForkEVMTransferRevert the
+// transaction mints the moved amount. From the fork on the first transfer is rolled back and
+// the later spend has no balance to take.
 
 import (
 	"strings"
@@ -21,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTransferRevertConfig(t *testing.T) *ctypes.Chain33Config {
+func newTransferRevertConfig(t *testing.T, forkHeight int64) *ctypes.Chain33Config {
 	t.Helper()
 	cfgStr := strings.Replace(ctypes.GetDefaultCfgstring(), `Title="local"`, `Title="integration-test"`, 1)
 	if !strings.Contains(cfgStr, "[exec.sub.evm]") {
@@ -29,6 +30,8 @@ func newTransferRevertConfig(t *testing.T) *ctypes.Chain33Config {
 	}
 	cfg := ctypes.NewChain33Config(cfgStr)
 	require.False(t, cfg.IsLocal())
+	cfg.SetDappFork(evmtypes.ExecutorName, evmtypes.ForkEVMTransferRevert, forkHeight)
+	require.Equal(t, forkHeight, cfg.GetDappFork(evmtypes.ExecutorName, evmtypes.ForkEVMTransferRevert))
 	return cfg
 }
 
@@ -142,29 +145,40 @@ func TestRevertedCallValueCannotBeSpent(t *testing.T) {
 	require.NoError(t, err)
 	vcomm.InitEvmAddressDriver(driver)
 
-	cfg := newTransferRevertConfig(t)
-	exec := newTestExecutor(t, cfg, 0)
+	for _, tc := range []struct {
+		name       string
+		forkHeight int64
+		minted     uint64
+	}{
+		{"pre-fork mints the reverted value", ctypes.MaxHeight, moved},
+		{"post-fork mints nothing", 0, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newTransferRevertConfig(t, tc.forkHeight)
+			exec := newTestExecutor(t, cfg, 0)
 
-	target := vcomm.BytesToAddress([]byte{0xd0})
-	forwarder := deployCode(t, cfg, exec, buildForwarderCode(target, moved))
-	caller := deployCode(t, cfg, exec, buildCallerCode(*vcomm.StringToAddress(forwarder), moved))
+			target := vcomm.BytesToAddress([]byte{0xd0})
+			forwarder := deployCode(t, cfg, exec, buildForwarderCode(target, moved))
+			caller := deployCode(t, cfg, exec, buildCallerCode(*vcomm.StringToAddress(forwarder), moved))
 
-	user := addrFromRole(cfg, roleLegitUser)
-	fundRole(t, exec, cfg, roleLegitUser, int64(topUp)*2)
+			user := addrFromRole(cfg, roleLegitUser)
+			fundRole(t, exec, cfg, roleLegitUser, int64(topUp)*2)
 
-	sum := func() int64 {
-		return balanceOf(exec, user) + balanceOf(exec, caller) +
-			balanceOf(exec, forwarder) + balanceOf(exec, target.String())
+			sum := func() int64 {
+				return balanceOf(exec, user) + balanceOf(exec, caller) +
+					balanceOf(exec, forwarder) + balanceOf(exec, target.String())
+			}
+			before := sum()
+
+			receipt, err := exec.Exec(makeCallTx(cfg, roleLegitUser, caller, []byte{0x01}, topUp), 0)
+			require.NoError(t, err)
+			require.Equal(t, int32(ctypes.ExecOk), receipt.GetTy())
+			applyReceiptKV(t, exec, receipt)
+
+			require.Equal(t, before+int64(tc.minted), sum(), "committed total must not grow beyond the minted amount")
+			require.Equal(t, int64(tc.minted), balanceOf(exec, target.String()), "the forwarder must not spend a phantom credit")
+		})
 	}
-	before := sum()
-
-	receipt, err := exec.Exec(makeCallTx(cfg, roleLegitUser, caller, []byte{0x01}, topUp), 0)
-	require.NoError(t, err)
-	require.Equal(t, int32(ctypes.ExecOk), receipt.GetTy())
-	applyReceiptKV(t, exec, receipt)
-
-	require.Equal(t, before, sum(), "committed total must not grow")
-	require.Zero(t, balanceOf(exec, target.String()), "the forwarder must not spend a phantom credit")
 }
 
 func balanceOf(exec *EVMExecutor, addr string) int64 {

@@ -72,8 +72,8 @@ func checkReceiptCoversSetKeys(memset []string, kvs []*ctypes.KeyValue) error {
 	return nil
 }
 
-// newProductionExec builds an EVM executor over the production StateDB with ForkExecRollback
-// open at height 0.
+// newProductionExec builds an EVM executor over the production StateDB with the transfer-revert
+// fork and ForkExecRollback both open at height 0.
 func newProductionExec(t *testing.T, cfg *ctypes.Chain33Config, st *cexecutor.StateDB, localDB db.KVDB) *EVMExecutor {
 	t.Helper()
 	api := new(apimock.QueueProtocolAPI)
@@ -114,7 +114,7 @@ func buildForwardAndStoreCode(callee vcomm.Address, value uint64) []byte {
 func productionStateDBFixture(t *testing.T) (*ctypes.Chain33Config, *cexecutor.StateDB, db.KVDB) {
 	t.Helper()
 	restoreBtcAddressDriver(t)
-	cfg := newTransferRevertConfig(t)
+	cfg := newTransferRevertConfig(t, 0)
 	// checkKV only sees Set keys when the framework begins a per-tx transaction, which it does
 	// under ForkExecRollback.
 	cfg.SetFork("ForkExecRollback", 0)
@@ -126,7 +126,7 @@ func productionStateDBFixture(t *testing.T) (*ctypes.Chain33Config, *cexecutor.S
 }
 
 // TestRevertedCallValueTxSucceedsUnderCheckKV is the reviewer's positive case: the outer call
-// succeeds, an inner CALL{value} reverts, execution continues and writes state. The
+// succeeds, an inner CALL{value} reverts, execution continues and writes state. Post-fork the
 // transaction must be ExecOk, pass checkKV, and commit exactly the post-revert balances.
 func TestRevertedCallValueTxSucceedsUnderCheckKV(t *testing.T) {
 	const (

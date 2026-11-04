@@ -42,9 +42,16 @@ func (ver *Snapshot) revert() bool {
 	if ver.entries == nil {
 		return true
 	}
-	// 按生成顺序倒序回滚：同一版本内多次修改同一数据时，才能恢复到最早的值
-	for i := len(ver.entries) - 1; i >= 0; i-- {
-		ver.entries[i].revert(ver.statedb)
+	// ForkEVMTransferRevert 之后按生成顺序倒序回滚：同一版本内多次修改同一数据时，才能恢复到最早的值。
+	// 分叉之前保留正序，历史区块按原结果重放。
+	if ver.statedb.kv != nil {
+		for i := len(ver.entries) - 1; i >= 0; i-- {
+			ver.entries[i].revert(ver.statedb)
+		}
+		return true
+	}
+	for _, entry := range ver.entries {
+		entry.revert(ver.statedb)
 	}
 	return true
 }
@@ -138,11 +145,13 @@ type (
 		prev uint64
 	}
 
-	// 转账事件，只记录日志
-	// 账户余额的 KV 写入 journalKV，回滚与回执数据都由 journalKV 负责
+	// 转账事件
+	// ForkEVMTransferRevert 之前：data 携带回执 KV，回滚时不处理（缓存中的转账不会撤销）；
+	// 之后：data 为空，账户余额的回滚与回执数据都由 journalKV 负责，这里只记录日志
 	transferChange struct {
 		baseChange
 		amount int64
+		data   []*types.KeyValue
 		logs   []*types.ReceiptLog
 	}
 
@@ -318,6 +327,9 @@ func (ch addPreimageChange) revert(mdb *MemoryStateDB) {
 	delete(mdb.preimages, ch.hash)
 }
 
+func (ch transferChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
+	return ch.data
+}
 func (ch transferChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
 	return ch.logs
 }
