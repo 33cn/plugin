@@ -298,7 +298,7 @@ func (ca *ContractAccount) Empty() bool {
 	// fork 开启后采用以太坊语义：有 nonce 的账户非空
 	if ca.State.GetNonce() != 0 && ca.mdb != nil && ca.mdb.api != nil {
 		cfg := ca.mdb.api.GetConfig()
-		if cfg != nil && cfg.IsDappFork(ca.mdb.blockHeight, evmtypes.ExecutorName, evmtypes.ForkEVMContractCreateV2) {
+		if cfg != nil && cfg.IsDappFork(ca.mdb.blockHeight, evmtypes.ExecutorName, evmtypes.ForkEVMCompat) {
 			return false
 		}
 	}

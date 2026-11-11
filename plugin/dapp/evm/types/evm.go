@@ -58,7 +58,7 @@ func InitFork(cfg *types.Chain33Config) {
 	// 内部CREATE/CREATE2采用以太坊地址派生（caller nonce）、nonce递增与地址碰撞检查。
 	// 与 ForkEVMTransferRevert 同理：默认关闭（MaxHeight），需要该修复的链在
 	// [fork.sub.evm] 里显式配置高度，避免对存量链追溯生效。
-	cfg.RegisterDappFork(ExecutorName, ForkEVMContractCreateV2, types.MaxHeight)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMCompat, types.MaxHeight)
 }
 
 // InitExecutor ...
