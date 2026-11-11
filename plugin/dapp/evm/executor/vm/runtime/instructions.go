@@ -642,7 +642,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 		gas          = callContext.contract.Gas
 	)
 
-	if evm.IsContractCreateV2() {
+	if evm.IsEVMCompat() {
 		// EIP-150：CREATE 最多使用剩余 Gas 的 63/64
 		gas = gas - gas/64
 	}
@@ -651,7 +651,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	stackvalue := size
 
 	addr := common.NewContractAddress(evm.Origin, evm.TxHash)
-	if evm.IsContractCreateV2() {
+	if evm.IsEVMCompat() {
 		// 以太坊语义：地址由调用者地址与调用者 nonce 派生
 		creator := callContext.contract.Address()
 		nonce := evm.StateDB.GetNonce(creator.String())
@@ -672,7 +672,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 	// 出错时压栈0，否则压栈创建出来的合约对象的地址
 	// fork 开启时 ErrCodeStoreOutOfGas 与其它错误一致，整体失败并压栈0
-	if suberr != nil && (suberr != model.ErrCodeStoreOutOfGas || evm.IsContractCreateV2()) {
+	if suberr != nil && (suberr != model.ErrCodeStoreOutOfGas || evm.IsEVMCompat()) {
 		log15.Error("evm contract opCreate instruction error,value", suberr, value)
 		stackvalue.Clear()
 	} else {
@@ -700,7 +700,7 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	)
 
 	// Apply EIP150
-	if evm.IsContractCreateV2() {
+	if evm.IsEVMCompat() {
 		// EIP-150：CREATE2 最多使用剩余 Gas 的 63/64
 		gas = gas - gas/64
 	} else {
@@ -714,7 +714,7 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	if !endowment.IsZero() {
 		bigEndowment = endowment.ToBig()
 	}
-	if evm.IsContractCreateV2() && !endowment.IsZero() && evm.CheckIsEthTx() {
+	if evm.IsEVMCompat() && !endowment.IsZero() && evm.CheckIsEthTx() {
 		// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
 		newValue := evm.ethPrecision2Chain33Standard(endowment.ToBig())
 		bigValue, overflow := uint256.FromBig(newValue)

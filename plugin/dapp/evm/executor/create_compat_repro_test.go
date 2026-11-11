@@ -109,16 +109,16 @@ func newTestExecutorFrom(t *testing.T, cfg *ctypes.Chain33Config, height int64, 
 	return exec
 }
 
-// contractCreateV2ForkHeight is above the execution height (0) used by the
+// evmCompatForkHeight is above the execution height (0) used by the
 // tests below, so setting it keeps the fork disabled.
-const contractCreateV2ForkHeight = 1000
+const evmCompatForkHeight = 1000
 
-func enableContractCreateV2(cfg *ctypes.Chain33Config) {
-	cfg.SetDappFork("evm", evmtypes.ForkEVMContractCreateV2, 0)
+func enableEVMCompat(cfg *ctypes.Chain33Config) {
+	cfg.SetDappFork("evm", evmtypes.ForkEVMCompat, 0)
 }
 
-func disableContractCreateV2(cfg *ctypes.Chain33Config) {
-	cfg.SetDappFork("evm", evmtypes.ForkEVMContractCreateV2, contractCreateV2ForkHeight)
+func disableEVMCompat(cfg *ctypes.Chain33Config) {
+	cfg.SetDappFork("evm", evmtypes.ForkEVMCompat, evmCompatForkHeight)
 }
 
 // resetEvmExecAddress refreshes the package-level exec address caches. They are
@@ -158,7 +158,7 @@ func ethCreateAddress(t *testing.T, chain33Addr string, nonce uint64) gethcommon
 
 func TestInternalCreateAddressForkOff(t *testing.T) {
 	cfg := newTestConfig(t)
-	disableContractCreateV2(cfg)
+	disableEVMCompat(cfg)
 	exec := newTestExecutor(t, cfg, 0)
 
 	factoryAddr := deployContract(t, cfg, exec, factoryCreateTwiceBytecode)
@@ -187,7 +187,7 @@ func TestInternalCreateAddressForkOff(t *testing.T) {
 
 func TestInternalCreateAddressForkOn(t *testing.T) {
 	cfg := newTestConfig(t)
-	enableContractCreateV2(cfg)
+	enableEVMCompat(cfg)
 	exec := newTestExecutor(t, cfg, 0)
 
 	factoryAddr := deployContract(t, cfg, exec, factoryCreateTwiceBytecode)
@@ -225,7 +225,7 @@ func TestInternalCreateAddressForkOn(t *testing.T) {
 
 func TestCreate2CollisionForkOn(t *testing.T) {
 	cfg := newTestConfig(t)
-	enableContractCreateV2(cfg)
+	enableEVMCompat(cfg)
 	exec := newTestExecutor(t, cfg, 0)
 	addr := deployContract(t, cfg, exec, create2TwiceBytecode)
 
@@ -253,7 +253,7 @@ func TestCreate2CollisionForkOn(t *testing.T) {
 
 func TestCreateNoncePersistsAcrossTransactions(t *testing.T) {
 	cfg := newTestConfig(t)
-	enableContractCreateV2(cfg)
+	enableEVMCompat(cfg)
 	exec := newTestExecutor(t, cfg, 0)
 
 	factoryAddr := deployContract(t, cfg, exec, factoryCreateOnceBytecode)
@@ -331,7 +331,7 @@ const factoryCreateRevertingChildBytecode = "6011600c60003960116000f3" + factory
 // may be written to the contract state.
 func TestInternalCreateAddressForkOffLegacy(t *testing.T) {
 	cfg := newTestConfig(t)
-	disableContractCreateV2(cfg)
+	disableEVMCompat(cfg)
 	exec := newTestExecutor(t, cfg, 0)
 
 	factoryAddr := deployContract(t, cfg, exec, factoryCreateTwiceBytecode)
@@ -362,7 +362,7 @@ func TestInternalCreateAddressForkOffLegacy(t *testing.T) {
 // fork on: a failed CREATE still consumes one nonce, like go-ethereum.
 func TestCreateFailureStillIncrementsNonce(t *testing.T) {
 	cfg := newTestConfig(t)
-	enableContractCreateV2(cfg)
+	enableEVMCompat(cfg)
 	exec := newTestExecutor(t, cfg, 0)
 
 	factoryAddr := deployContract(t, cfg, exec, factoryCreateRevertingChildBytecode)
@@ -394,7 +394,7 @@ const factoryCreateWithValueBytecode = "6011600c60003960116000f3" + factoryCreat
 // attached to the CREATE is rolled back as well.
 func TestFailedCreateRollsBackValueWithTransferRevert(t *testing.T) {
 	cfg := newTestConfig(t)
-	enableContractCreateV2(cfg)
+	enableEVMCompat(cfg)
 	cfg.SetDappFork("evm", evmtypes.ForkEVMTransferRevert, 0)
 	exec := newTestExecutor(t, cfg, 0)
 

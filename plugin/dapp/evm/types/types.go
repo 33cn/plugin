@@ -66,12 +66,18 @@ const (
 	// cache while its receipt KV is dropped, so a later call in the same tx can spend the
 	// phantom balance. Registered in InitFork at MaxHeight, so chains must opt in explicitly.
 	ForkEVMTransferRevert = "ForkEVMTransferRevert"
-	// ForkEVMContractCreateV2 内部CREATE/CREATE2采用以太坊地址派生（caller nonce）、nonce递增与地址碰撞检查。
-	// fork 前创建的合约没有 nonce 记录（视为0），其 fork 后的首次 CREATE 从 nonce 0 派生，
-	// 与以太坊（合约 nonce 从1开始）不完全一致；fork 后创建的合约派生的子合约地址与以太坊完全相同。
-	// 与 ForkEVMTransferRevert 同高开启才是完整的以太坊语义：只开本 fork 时，
-	// 创建失败会保留已递增的 nonce，但不会回滚随 CREATE 转账的 value。
-	ForkEVMContractCreateV2 = "ForkEVMContractCreateV2"
+	// ForkEVMCompat aligns the interpreter with Ethereum behind a single activation height:
+	//   - internal CREATE/CREATE2: address from the executing account and its nonce, nonce
+	//     increment persisted, address collision check, EIP-150 63/64 gas;
+	//   - opcodes PUSH0, BASEFEE, MCOPY, TLOAD/TSTORE;
+	//   - gas: EIP-2200/2929/3529 (net SSTORE metering, cold/warm access, refund cap) and
+	//     refunds actually applied to the used gas.
+	// Contracts created before the fork have no nonce record (treated as 0), so their first
+	// post-fork internal CREATE does not match Ethereum exactly; contracts created after the
+	// fork match exactly.
+	// Enable it at the same height as ForkEVMTransferRevert: the latter rolls back the value
+	// attached to a failed CREATE, which this fork alone does not do.
+	ForkEVMCompat = "ForkEVMCompat"
 )
 
 var (
