@@ -381,6 +381,45 @@ func TestCreateFailureStillIncrementsNonce(t *testing.T) {
 	}
 }
 
+// factory that CREATEs one child with value 1 whose init code reverts.
+//
+//	PUSH5 0x60006000fd; PUSH1 0; MSTORE
+//	PUSH1 5; PUSH1 27; PUSH1 1; CREATE; STOP
+const factoryCreateWithValueRuntime = "6460006000fd" + "600052" + "6005601b6001f0" + "00"
+
+// deploy wrapper: CODECOPY runtime (17 bytes at offset 12) then RETURN it
+const factoryCreateWithValueBytecode = "6011600c60003960116000f3" + factoryCreateWithValueRuntime
+
+// A failed CREATE consumes a nonce; with ForkEVMTransferRevert enabled the value
+// attached to the CREATE is rolled back as well.
+func TestFailedCreateRollsBackValueWithTransferRevert(t *testing.T) {
+	cfg := newTestConfig(t)
+	enableContractCreateV2(cfg)
+	cfg.SetDappFork("evm", evmtypes.ForkEVMTransferRevert, 0)
+	exec := newTestExecutor(t, cfg, 0)
+
+	factoryAddr := deployContract(t, cfg, exec, factoryCreateWithValueBytecode)
+	fundAddr(t, exec, factoryAddr, 1000)
+	before := exec.mStateDB.GetBalance(factoryAddr)
+
+	r, _, err := callRet(t, cfg, exec, factoryAddr)
+	if err != nil || r == nil || r.Ty != ctypes.ExecOk {
+		t.Fatalf("call factory: err=%v ty=%d", err, r.GetTy())
+	}
+	applyReceiptKV(t, exec, r)
+
+	if after := exec.mStateDB.GetBalance(factoryAddr); after != before {
+		t.Fatalf("factory balance %d -> %d, value was not rolled back", before, after)
+	}
+	if nonce := readContractNonce(t, exec, factoryAddr); nonce != 2 {
+		t.Fatalf("factory nonce after failed CREATE = %d, want 2", nonce)
+	}
+	child := ethCreateAddress(t, factoryAddr, 1)
+	if bal := exec.mStateDB.GetBalance(vcomm.BytesToAddress(child.Bytes()).String()); bal != 0 {
+		t.Fatalf("failed create address holds %d coins", bal)
+	}
+}
+
 // receiptRet extracts the EVM return data from a receipt.
 func receiptRet(t *testing.T, r *ctypes.Receipt) (*evmtypes.ReceiptEVMContract, []byte) {
 	t.Helper()
