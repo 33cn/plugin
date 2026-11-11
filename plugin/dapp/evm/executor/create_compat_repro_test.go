@@ -142,7 +142,7 @@ func readContractNonce(t *testing.T, exec *EVMExecutor, addr string) uint64 {
 	if err := ctypes.Decode(raw, &st); err != nil {
 		t.Fatalf("decode contract state: %v", err)
 	}
-	return uint64(st.GetNonce())
+	return st.GetNonce()
 }
 
 // ethCreateAddress computes the ethereum CREATE address for a chain33-format
