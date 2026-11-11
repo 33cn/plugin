@@ -396,7 +396,7 @@ function withdrawTicketBalance(){
    echo "ticket balance:${tbalance},addr:${m4normalAddr},timestamp:$(date +"%s")"
    # The ticket balance also grows with mining rewards, so it cannot be used as
    # the expected coin balance after the withdraw. Compare the coins delta.
-   local coinsBefore=$(${CLI} account balance -a "${m4normalAddr}" -e coins | jq -r ".balance")
+   local coinsBefore=$(${CLI} account balance -a "${m4normalAddr}" -e coins | jq -er ".balance")
    echo "coins balance before withdraw:${coinsBefore}"
 
    local withdrawTx=$( ${CLI} coins withdraw  -e ticket -a 100000  -n "take test money")
@@ -413,12 +413,13 @@ function withdrawTicketBalance(){
    fi
    echo "withdraw hash:${hash}"
    chain33_QueryTx ${hash} ${MCli}
-   #check coins balance: the withdraw moves exactly 100000 into the coins account,
-   #minus the transaction fee; allow a small tolerance for fees and rounding.
-   local coinsAfter=$(${CLI} account balance -a "${m4normalAddr}" -e coins | jq -r ".balance")
+   #check coins balance: the withdraw moves 100000 into the coins account minus the
+   #transaction fee (~0.1), so require a lower bound with margin instead of an exact
+   #value: the boundary is sensitive to floating-point rounding of the balances.
+   local coinsAfter=$(${CLI} account balance -a "${m4normalAddr}" -e coins | jq -er ".balance")
    echo "coldminer addr coins balance after withdraw:${coinsAfter}"
    if ! awk -v before="${coinsBefore}" -v after="${coinsAfter}" \
-      'BEGIN { exit !((after - before) >= 99999.9) }'; then
+      'BEGIN { exit !((after - before) >= 99999) }'; then
       echo "withdraw balance check failed: before=${coinsBefore} after=${coinsAfter}"
       exit 1
    fi
