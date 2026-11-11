@@ -642,10 +642,21 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 		gas          = callContext.contract.Gas
 	)
 
+	if evm.IsContractCreateV2() {
+		// EIP-150：CREATE 最多使用剩余 Gas 的 63/64
+		gas = gas - gas/64
+	}
+
 	callContext.contract.UseGas(gas)
 	stackvalue := size
 
 	addr := common.NewContractAddress(evm.Origin, evm.TxHash)
+	if evm.IsContractCreateV2() {
+		// 以太坊语义：地址由调用者地址与调用者 nonce 派生
+		creator := callContext.contract.Address()
+		nonce := evm.StateDB.GetNonce(creator.String())
+		addr = common.NewEvmContractAddressRaw(creator, nonce)
+	}
 
 	if !value.IsZero() && evm.CheckIsEthTx() {
 		// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
@@ -660,7 +671,8 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	res, _, returnGas, suberr := evm.Create(callContext.contract, addr, input, gas, "innerContract", "", value.Uint64())
 
 	// 出错时压栈0，否则压栈创建出来的合约对象的地址
-	if suberr != nil && suberr != model.ErrCodeStoreOutOfGas {
+	// fork 开启时 ErrCodeStoreOutOfGas 与其它错误一致，整体失败并压栈0
+	if suberr != nil && (suberr != model.ErrCodeStoreOutOfGas || evm.IsContractCreateV2()) {
 		log15.Error("evm contract opCreate instruction error,value", suberr, value)
 		stackvalue.Clear()
 	} else {
@@ -688,13 +700,28 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	)
 
 	// Apply EIP150
-	gas = gas / 2
+	if evm.IsContractCreateV2() {
+		// EIP-150：CREATE2 最多使用剩余 Gas 的 63/64
+		gas = gas - gas/64
+	} else {
+		gas = gas / 2
+	}
 	callContext.contract.UseGas(gas)
 	// reuse size int for stackvalue
 	stackvalue := size
 	//TODO: use uint256.Int instead of converting with toBig()
 	bigEndowment := big0
 	if !endowment.IsZero() {
+		bigEndowment = endowment.ToBig()
+	}
+	if evm.IsContractCreateV2() && !endowment.IsZero() && evm.CheckIsEthTx() {
+		// value 是coins的值，opcall 中默认是 1e18,框架默认coins 1e8 ，需要对value 处理成精度1e8的值
+		newValue := evm.ethPrecision2Chain33Standard(endowment.ToBig())
+		bigValue, overflow := uint256.FromBig(newValue)
+		if overflow {
+			panic("opCreate2: value wrong format")
+		}
+		endowment = *bigValue
 		bigEndowment = endowment.ToBig()
 	}
 
@@ -713,13 +740,8 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	log15.Info("opCreate2", "callContext.contract.Address()", callContext.contract.Address(),
 		"salt", saltStr, "suberr", suberr)
 	// 出错时压栈0，否则压栈创建出来的合约对象的地址
-	if suberr != nil && suberr != model.ErrCodeStoreOutOfGas {
-		log15.Error("evm contract opCreate instruction error,endowment,salt", suberr, bigEndowment, salt)
-		stackvalue.Clear()
-	} else {
-		stackvalue.SetBytes(newContractAddr.Bytes())
-	}
 	if suberr != nil {
+		log15.Error("evm contract opCreate instruction error,endowment,salt", suberr, bigEndowment, salt)
 		stackvalue.Clear()
 	} else {
 		stackvalue.SetBytes(newContractAddr.Bytes())

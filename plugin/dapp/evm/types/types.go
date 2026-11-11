@@ -66,6 +66,10 @@ const (
 	// cache while its receipt KV is dropped, so a later call in the same tx can spend the
 	// phantom balance. Registered in InitFork at MaxHeight, so chains must opt in explicitly.
 	ForkEVMTransferRevert = "ForkEVMTransferRevert"
+	// ForkEVMContractCreateV2 内部CREATE/CREATE2采用以太坊地址派生（caller nonce）、nonce递增与地址碰撞检查。
+	// fork 前创建的合约没有 nonce 记录（视为0），其 fork 后的首次 CREATE 从 nonce 0 派生，
+	// 与以太坊（合约 nonce 从1开始）不完全一致；fork 后创建的合约派生的子合约地址与以太坊完全相同。
+	ForkEVMContractCreateV2 = "ForkEVMContractCreateV2"
 )
 
 var (

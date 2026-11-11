@@ -55,6 +55,10 @@ func InitFork(cfg *types.Chain33Config) {
 	// not configure the key, rewriting historical execution. A chain that wants the fix sets
 	// a concrete height under [fork.sub.evm]; initForkConfig overrides this default.
 	cfg.RegisterDappFork(ExecutorName, ForkEVMTransferRevert, types.MaxHeight)
+	// 内部CREATE/CREATE2采用以太坊地址派生（caller nonce）、nonce递增与地址碰撞检查。
+	// 与 ForkEVMTransferRevert 同理：默认关闭（MaxHeight），需要该修复的链在
+	// [fork.sub.evm] 里显式配置高度，避免对存量链追溯生效。
+	cfg.RegisterDappFork(ExecutorName, ForkEVMContractCreateV2, types.MaxHeight)
 }
 
 // InitExecutor ...

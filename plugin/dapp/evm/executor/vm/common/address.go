@@ -161,6 +161,14 @@ func NewEvmContractAddress(b Address, nonce uint64) Address {
 	return a
 }
 
+// NewEvmContractAddressRaw 通过nonce创建合约地址，raw 直接取以太坊地址的 20 字节，
+// 不经过 chain33 地址驱动的 FormatAddr/FromString 往返转换。
+// btc 类地址驱动无法解析 0x 十六进制串，往返会得到全零 raw，内部 CREATE 必须用本方法。
+func NewEvmContractAddressRaw(b Address, nonce uint64) Address {
+	execAddr := ethcrypto.CreateAddress(common.BytesToAddress(b.Bytes()), nonce)
+	return BytesToAddress(execAddr.Bytes())
+}
+
 // PubKey2Address pub key to address
 func PubKey2Address(pub []byte) Address {
 

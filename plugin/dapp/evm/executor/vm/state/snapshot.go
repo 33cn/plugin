@@ -250,11 +250,16 @@ func (ch nonceChange) revert(mdb *MemoryStateDB) error {
 }
 
 func (ch nonceChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
-	// nonce目前没有应用场景，而且每次调用都会变更，暂时先不写到状态数据库中
-	//acc := mdb.accounts[ch.account]
-	//if acc != nil {
-	//	return acc.GetStateKV()
-	//}
+	// nonce 只在 ForkEVMContractCreateV2 之后参与状态，必须与调用侧同样门控：
+	// 该变更会写入合约状态 KV，未门控时任何新增的 SetNonce 都会改变历史区块的哈希。
+	if mdb.api == nil || mdb.api.GetConfig() == nil ||
+		!mdb.api.GetConfig().IsDappFork(mdb.blockHeight, evmtypes.ExecutorName, evmtypes.ForkEVMContractCreateV2) {
+		return nil
+	}
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		return acc.GetStateKV()
+	}
 	return nil
 }
 
