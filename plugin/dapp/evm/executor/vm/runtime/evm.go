@@ -198,6 +198,12 @@ func (evm *EVM) CheckIsEthTx() bool {
 	return evm.isEthTx
 }
 
+// IsEVMCompat 以太坊 EVM 兼容性（指令/计价/CREATE）是否开启（fork 门控）
+func (evm *EVM) IsEVMCompat() bool {
+	return evm.cfg != nil && evm.BlockNumber != nil &&
+		evm.cfg.IsDappFork(evm.BlockNumber.Int64(), evmtypes.ExecutorName, evmtypes.ForkEVMCompat)
+}
+
 // 封装合约的各种调用逻辑中通用的预检查逻辑
 func (evm *EVM) preCheck(caller ContractRef, value uint64) (pass bool, err error) {
 	// 检查调用深度是否合法
@@ -537,6 +543,19 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		return nil, -1, gas, berr
 	}
 
+	// 以太坊语义（fork 门控）：先递增调用者 nonce，再检查目标地址是否已被占用。
+	// nonce 递增必须在快照之前，这样创建失败时 nonce 仍然生效。
+	if evm.IsEVMCompat() {
+		callerAddr := caller.Address()
+		nonce := evm.StateDB.GetNonce(callerAddr.String())
+		evm.StateDB.SetNonce(callerAddr.String(), nonce+1)
+
+		if evm.StateDB.GetNonce(contractAddr.String()) != 0 || evm.StateDB.GetCodeSize(contractAddr.String()) > 0 {
+			log.Error("evm contract address collision", "caller", callerAddr.String(), "contractAddr", contractAddr.String())
+			return nil, -1, 0, model.ErrContractAddressCollision
+		}
+	}
+
 	// 向合约地址转账
 	cfg := evm.StateDB.GetConfig()
 	// From ForkEVMTransferRevert on, the snapshot is taken before the transfer so that a
@@ -576,6 +595,10 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		snapshot = evm.StateDB.Snapshot()
 	}
 	evm.StateDB.CreateAccount(contractAddr.String(), contract.CallerAddress.String(), execName, alias)
+	if evm.IsEVMCompat() {
+		// EIP-161：新建合约账户的 nonce 初始化为 1
+		evm.StateDB.SetNonce(contractAddr.String(), 1)
+	}
 
 	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 		evm.VMConfig.Tracer.CaptureStart(caller.Address(), contractAddr, true, code, gas, 0)
@@ -598,7 +621,7 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 
 	// 如果合约代码超大，或者出现除Gas不足外的其它错误情况
 	// 则回滚本次合约创建操作
-	if maxCodeSizeExceeded || (err != nil && err != model.ErrCodeStoreOutOfGas) {
+	if maxCodeSizeExceeded || (err != nil && (err != model.ErrCodeStoreOutOfGas || evm.IsEVMCompat())) {
 		evm.StateDB.RevertToSnapshot(snapshot)
 
 		// 如果之前步骤出错，且没有回滚过，则扣除Gas

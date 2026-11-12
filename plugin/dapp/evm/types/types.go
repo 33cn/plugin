@@ -66,6 +66,16 @@ const (
 	// cache while its receipt KV is dropped, so a later call in the same tx can spend the
 	// phantom balance. Registered in InitFork at MaxHeight, so chains must opt in explicitly.
 	ForkEVMTransferRevert = "ForkEVMTransferRevert"
+	// ForkEVMCompat aligns the interpreter with Ethereum behind a single activation height:
+	//   - internal CREATE/CREATE2: address from the executing account and its nonce, nonce
+	//     increment persisted, address collision check, EIP-150 63/64 gas;
+	//   - opcodes PUSH0 and BASEFEE.
+	// Contracts created before the fork have no nonce record (treated as 0), so their first
+	// post-fork internal CREATE does not match Ethereum exactly; contracts created after the
+	// fork match exactly.
+	// Enable it at the same height as ForkEVMTransferRevert: the latter rolls back the value
+	// attached to a failed CREATE, which this fork alone does not do.
+	ForkEVMCompat = "ForkEVMCompat"
 )
 
 var (

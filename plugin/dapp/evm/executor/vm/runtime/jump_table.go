@@ -52,10 +52,32 @@ var (
 	constantinopleInstructionSet   = newConstantinopleInstructionSet()
 	istanbulInstructionSet         = newIstanbulInstructionSet()
 	berlinInstructionSet           = newBerlinInstructionSet()
+	evmCompatInstructionSet        = newEVMCompatInstructionSet()
 )
 
 // JumpTable contains the EVM opcodes supported at a given fork.
 type JumpTable [256]*operation
+
+// newEVMCompatInstructionSet returns the Berlin set extended with the opcodes enabled by
+// ForkEVMCompat: PUSH0 (EIP-3855) and BASEFEE (EIP-3198).
+func newEVMCompatInstructionSet() JumpTable {
+	instructionSet := newBerlinInstructionSet()
+
+	instructionSet[PUSH0] = &operation{
+		execute:     opPush0,
+		constantGas: GasQuickStep,
+		minStack:    minStack(0, 1),
+		maxStack:    maxStack(0, 1),
+	}
+	instructionSet[BASEFEE] = &operation{
+		execute:     opBaseFee,
+		constantGas: GasQuickStep,
+		minStack:    minStack(0, 1),
+		maxStack:    maxStack(0, 1),
+	}
+
+	return instructionSet
+}
 
 // newBerlinInstructionSet returns the frontier, homestead, byzantium,
 // contantinople, istanbul, petersburg and berlin instructions.
