@@ -532,6 +532,18 @@ func opMstore8(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	return nil, nil
 }
 
+// PUSH0 指令，将零压入栈（EIP-3855）
+func opPush0(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.push(new(uint256.Int))
+	return nil, nil
+}
+
+// BASEFEE 指令，chain33 没有 base fee 机制，固定返回 0
+func opBaseFee(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.push(new(uint256.Int))
+	return nil, nil
+}
+
 // 加载合约状态数据
 func opSload(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	loc := callContext.stack.peek()

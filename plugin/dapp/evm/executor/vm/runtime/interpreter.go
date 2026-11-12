@@ -56,6 +56,9 @@ func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
 			//这里需要替换为最新得指令集
 			cfg.JumpTable = berlinInstructionSet
 		}
+		if evm.IsEVMCompat() {
+			cfg.JumpTable = evmCompatInstructionSet
+		}
 	}
 
 	return &Interpreter{
