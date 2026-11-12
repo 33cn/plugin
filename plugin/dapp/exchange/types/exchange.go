@@ -97,6 +97,9 @@ var (
 	//ForkFix Forks
 	ForkFix1 = "ForkFix1"
 
+	//ForkFixSafeMulOverflow 修复SafeMul/caclAVGPrice大数计算结果超出int64被静默截断的漏洞，溢出时拒绝订单
+	ForkFixSafeMulOverflow = "ForkFixSafeMulOverflow"
+
 	ForkParamV1 = "ForkParamV1"
 	ForkParamV2 = "ForkParamV2"
 	ForkParamV3 = "ForkParamV3"
@@ -141,6 +144,7 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
 	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFixSafeMulOverflow, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV1, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV2, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV3, 0)
