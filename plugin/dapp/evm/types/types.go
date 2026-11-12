@@ -69,9 +69,7 @@ const (
 	// ForkEVMCompat aligns the interpreter with Ethereum behind a single activation height:
 	//   - internal CREATE/CREATE2: address from the executing account and its nonce, nonce
 	//     increment persisted, address collision check, EIP-150 63/64 gas;
-	//   - opcodes PUSH0, BASEFEE, MCOPY, TLOAD/TSTORE;
-	//   - gas: EIP-2200/2929/3529 (net SSTORE metering, cold/warm access, refund cap) and
-	//     refunds actually applied to the used gas.
+	//   - opcodes PUSH0 and BASEFEE.
 	// Contracts created before the fork have no nonce record (treated as 0), so their first
 	// post-fork internal CREATE does not match Ethereum exactly; contracts created after the
 	// fork match exactly.
