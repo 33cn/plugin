@@ -8,6 +8,7 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	pty "github.com/33cn/plugin/plugin/dapp/hashlock/types"
 )
 
 var clog = log.New("module", "execs.hashlock")
@@ -50,8 +51,17 @@ func (h *Hashlock) GetDriverName() string {
 	return driverName
 }
 
-// CheckTx nil
+// CheckTx rejects a lock with an empty hash so the mempool does not pack a
+// transaction that cannot be saved. Payloads that fail to decode are left to
+// Exec, which returns the same decode error.
 func (h *Hashlock) CheckTx(tx *types.Transaction, index int) error {
+	var action pty.HashlockAction
+	if err := types.Decode(tx.GetPayload(), &action); err != nil {
+		return nil
+	}
+	if action.GetTy() == pty.HashlockActionLock && len(action.GetHlock().GetHash()) == 0 {
+		return pty.ErrHashlockHash
+	}
 	return nil
 }
 

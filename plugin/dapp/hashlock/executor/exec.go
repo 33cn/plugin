@@ -15,6 +15,10 @@ import (
 // Exec_Hlock Action
 func (h *Hashlock) Exec_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, index int) (*types.Receipt, error) {
 	clog.Debug("hashlocklock action")
+	if len(hlock.Hash) == 0 {
+		clog.Warn("hashlock hash is empty")
+		return nil, pty.ErrHashlockHash
+	}
 	if hlock.Amount <= 0 {
 		clog.Warn("hashlock amount <=0")
 		return nil, pty.ErrHashlockAmount

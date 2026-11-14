@@ -178,3 +178,57 @@ func CompareRetrieveExecResult(rec1 *types.Receipt, err1 error, rec2 *types.Rece
 	}
 	return true
 }
+
+func TestExecHashlockEmptyHash(t *testing.T) {
+	fromAddr, fromPriv := genaddress()
+	tx := constructEmptyHashLockTx(fromAddr, fromPriv)
+
+	coinsAcc := hashlock.GetCoinsAccount()
+	acc := coinsAcc.LoadExecAccount(fromAddr, addrexec)
+	acc.Balance = 100
+	acc.Frozen = 0
+	coinsAcc.SaveExecAccount(addrexec, acc)
+
+	receipt, err := hashlock.Exec(tx, 0)
+	if err != pty.ErrHashlockHash {
+		t.Errorf("Exec_Hlock error = %v, want %v", err, pty.ErrHashlockHash)
+	}
+	if receipt != nil {
+		t.Errorf("Exec_Hlock receipt = %v, want nil", receipt)
+	}
+
+	acc = coinsAcc.LoadExecAccount(fromAddr, addrexec)
+	if acc.Balance != 100 || acc.Frozen != 0 {
+		t.Errorf("funds frozen: balance = %d, frozen = %d, want 100 and 0", acc.Balance, acc.Frozen)
+	}
+}
+
+func TestCheckTxHashlockEmptyHash(t *testing.T) {
+	tx := constructEmptyHashLockTx(returnAddr, returnPriv)
+	if err := hashlock.CheckTx(tx, 0); err != pty.ErrHashlockHash {
+		t.Errorf("CheckTx error = %v, want %v", err, pty.ErrHashlockHash)
+	}
+
+	if err := hashlock.CheckTx(ConstructLockTx(), 0); err != nil {
+		t.Errorf("CheckTx rejected a lock with a hash: %v", err)
+	}
+	if err := hashlock.CheckTx(ConstructSendTx(), 0); err != nil {
+		t.Errorf("CheckTx rejected a send: %v", err)
+	}
+	if err := hashlock.CheckTx(ConstructUnlockTx(), 0); err != nil {
+		t.Errorf("CheckTx rejected an unlock: %v", err)
+	}
+}
+
+func constructEmptyHashLockTx(fromAddr string, fromPriv crypto.PrivKey) *types.Transaction {
+	var lockAmount int64 = 90
+	var locktime int64 = 70
+	var fee int64 = 1e6
+
+	vlock := &pty.HashlockAction_Hlock{Hlock: &pty.HashlockLock{Amount: lockAmount, Time: locktime, ToAddress: toAddr, ReturnAddress: fromAddr}}
+	transfer := &pty.HashlockAction{Value: vlock, Ty: pty.HashlockActionLock}
+	tx := &types.Transaction{Execer: []byte("hashlock"), Payload: types.Encode(transfer), Fee: fee, To: toAddr}
+	tx.Nonce = rand.Int63()
+	tx.Sign(types.SECP256K1, fromPriv)
+	return tx
+}
