@@ -315,6 +315,7 @@ ForkTradeAsset= 0
 ForkTradeID = 0
 ForkTradeFixAssetDB = 0
 ForkTradePrice = 0
+ForkTradeStatusGate = -1
 
 [fork.sub.paracross]
 Enable=0
