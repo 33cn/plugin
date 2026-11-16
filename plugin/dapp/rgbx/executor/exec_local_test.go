@@ -16,6 +16,7 @@ func testSetKV(t *testing.T, db db.DB, kvSet *types.LocalDBSet, del bool) {
 	for _, kv := range kvSet.GetKV() {
 		if !del {
 			err = db.Set(kv.Key, kv.Value)
+			require.Nil(t, err)
 			continue
 		}
 		if kv.Value == nil {

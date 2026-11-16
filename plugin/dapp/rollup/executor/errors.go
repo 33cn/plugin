@@ -12,5 +12,6 @@ var (
 	ErrOutOfOrderCommit       = errors.New("ErrOutOfOrderCommit")
 	ErrInvalidValidatorSign   = errors.New("ErrInvalidValidatorSign")
 	ErrInvalidBlsPub          = errors.New("ErrInvalidBlsPub")
+	ErrTxPubKeyCountNotMatch  = errors.New("ErrTxPubKeyCountNotMatch")
 	ErrInvalidTxAggregateSign = errors.New("ErrInvalidTxAggregateSign")
 )

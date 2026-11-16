@@ -188,7 +188,7 @@ func (*AccountmanagerAction) XXX_OneofWrappers() []interface{} {
 	}
 }
 
-//注册
+// 注册
 type Register struct {
 	AccountID            string   `protobuf:"bytes,1,opt,name=accountID,proto3" json:"accountID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -228,7 +228,7 @@ func (m *Register) GetAccountID() string {
 	return ""
 }
 
-//重置公钥
+// 重置公钥
 type ResetKey struct {
 	AccountID            string   `protobuf:"bytes,1,opt,name=accountID,proto3" json:"accountID,omitempty"`
 	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
@@ -276,7 +276,7 @@ func (m *ResetKey) GetAddr() string {
 	return ""
 }
 
-//用户申请服务
+// 用户申请服务
 type Apply struct {
 	AccountID string `protobuf:"bytes,1,opt,name=accountID,proto3" json:"accountID,omitempty"`
 	//操作， 1 撤销账户公钥重置, 2 锁定期结束后，执行重置公钥操作
@@ -325,7 +325,7 @@ func (m *Apply) GetOp() int32 {
 	return 0
 }
 
-//合约内部账户之间转账
+// 合约内部账户之间转账
 type Transfer struct {
 	//资产类型 及转账金额
 	Asset *types.Asset `protobuf:"bytes,1,opt,name=asset,proto3" json:"asset,omitempty"`
@@ -384,7 +384,7 @@ func (m *Transfer) GetToAccountID() string {
 	return ""
 }
 
-//管理员监管操作
+// 管理员监管操作
 type Supervise struct {
 	//账户名单
 	AccountIDs []string `protobuf:"bytes,1,rep,name=accountIDs,proto3" json:"accountIDs,omitempty"`
@@ -696,7 +696,7 @@ func (m *TransferReceipt) GetIndex() int64 {
 	return 0
 }
 
-//回执日志
+// 回执日志
 type SuperviseReceipt struct {
 	Accounts             []*Account `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
 	Op                   int32      `protobuf:"varint,2,opt,name=op,proto3" json:"op,omitempty"`

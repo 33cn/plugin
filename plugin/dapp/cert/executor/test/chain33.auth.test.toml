@@ -1,4 +1,5 @@
 Title="chain33"
+DisableForkCheck=true
 
 [crypto]
 [log]

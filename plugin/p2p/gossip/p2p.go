@@ -140,7 +140,7 @@ func New(mgr *p2p.Manager, subCfg []byte) p2p.IP2P {
 	return p2p
 }
 
-//Wait wait for ready
+// Wait wait for ready
 func (network *P2p) Wait() {}
 
 func (network *P2p) isClose() bool {
@@ -151,7 +151,7 @@ func (network *P2p) isRestart() bool {
 	return atomic.LoadInt32(&network.restart) == 1
 }
 
-//CloseP2P Close network client
+// CloseP2P Close network client
 func (network *P2p) CloseP2P() {
 	network.lock.Lock()
 	defer network.lock.Unlock()
@@ -327,7 +327,7 @@ func (network *P2p) genAirDropKeyFromWallet() error {
 	return nil
 }
 
-//ReStart p2p
+// ReStart p2p
 func (network *P2p) ReStart() {
 	network.lock.Lock()
 	defer network.lock.Unlock()

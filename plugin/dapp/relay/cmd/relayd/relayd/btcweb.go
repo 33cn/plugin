@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
@@ -103,7 +104,16 @@ func (b *btcWeb) GetTransaction(hash string) (*ty.BtcTransaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tx.BtcTransaction(), nil
+
+	// 获取 raw tx hex，链上会根据其内容重算交易哈希
+	rawHex, err := b.requestURL(url + "?format=hex")
+	if err != nil {
+		return nil, err
+	}
+	btcTx := tx.BtcTransaction()
+	// 响应可能带换行/空格，去掉后再上链，避免链上 hex 解码失败
+	btcTx.RawTx = strings.TrimSpace(string(rawHex))
+	return btcTx, nil
 }
 
 func (b *btcWeb) GetSPV(height uint64, txHash string) (*ty.BtcSpv, error) {

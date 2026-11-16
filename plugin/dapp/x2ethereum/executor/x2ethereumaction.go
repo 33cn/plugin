@@ -351,9 +351,9 @@ func (a *action) procMsgWithDrawFromExec(msgWithdrawFromExec *types.AssetsWithdr
 	return receipt, nil
 }
 
-//需要一笔交易来注册validator
-//这里注册的validator的power之和可能不为1，需要在内部进行加权
-//返回的回执中，KV包含所有validator的power值，Log中包含本次注册的validator的power值
+// 需要一笔交易来注册validator
+// 这里注册的validator的power之和可能不为1，需要在内部进行加权
+// 返回的回执中，KV包含所有validator的power值，Log中包含本次注册的validator的power值
 func (a *action) procAddValidator(msgAddValidator *x2eTy.MsgValidator) (*types.Receipt, error) {
 	elog.Info("procAddValidator", "start", msgAddValidator)
 

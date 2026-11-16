@@ -59,6 +59,10 @@ func (r *rollup) Exec_Commit(cp *rolluptypes.CheckPoint, tx *types.Transaction, 
 	status.CommitBlockHash = calcBlockHash(headers[len(headers)-1])
 	status.CommitAddr = tx.From()
 	status.CrossTxSyncedHeight = cp.CrossTxSyncedHeight
+	// 分叉后记录区块分段索引, 校验侧据此识别续接批(见 checkCommit 的 fragment 分支)
+	if r.isSecurityHardeningForkActive() {
+		status.BlockFragIndex = cp.GetBatch().GetBlockFragIndex()
+	}
 	encodeVal = types.Encode(status)
 	receipt.KV = append(receipt.KV, &types.KeyValue{
 		Key:   formatRollupStatusKey(cp.GetChainTitle()),

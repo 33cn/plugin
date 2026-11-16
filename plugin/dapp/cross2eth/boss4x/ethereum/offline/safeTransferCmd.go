@@ -203,7 +203,7 @@ func addPreliminarySignMultisignTransferTxFlag(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("keys")
 }
 
-//签名交易
+// 签名交易
 func preliminarySignMultisignTransferTx(cmd *cobra.Command, _ []string) {
 	txFilePath, _ := cmd.Flags().GetString("file")
 	keys, _ := cmd.Flags().GetString("keys")

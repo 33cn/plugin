@@ -33,7 +33,7 @@ relay_CreateRawRelayAcceptTx() {
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
         echo "id is null"
-        echo_rst "$FUNCNAME" "$?"
+        echo_rst "$FUNCNAME" "1"
         exit 1
     fi
 
@@ -48,7 +48,7 @@ relay_CreateRawRelayRevokeTx() {
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
         echo "id is null"
-        echo_rst "$FUNCNAME" "$?"
+        echo_rst "$FUNCNAME" "1"
         exit 1
     fi
 
@@ -63,7 +63,7 @@ relay_CreateRawRelayConfirmTx() {
     id=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result.relayorders[0].id")
     if [ "$id" == null ]; then
         echo "id is null"
-        echo_rst "$FUNCNAME" "$?"
+        echo_rst "$FUNCNAME" "1"
         exit 1
     fi
 

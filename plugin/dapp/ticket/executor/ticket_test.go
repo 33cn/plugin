@@ -65,7 +65,12 @@ func TestTicket(t *testing.T) {
 	addr := mock33.GetGenesisAddress()
 	accounts, err := acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "ticket", Addresses: []string{addr}})
 	assert.Nil(t, err)
-	assert.Equal(t, accounts[0].Balance, int64(0))
+	assert.Len(t, accounts, 1)
+	// testnode.New 已经启动挖矿，创世票 CreateTime 是创世区块时间，
+	// 一开始就满足 ticketWithdrawTime，tclose 会把 ticketPrice+coinReward 从冻结转成可用余额。
+	// 可用余额为 0 只在创世状态成立，必须按高度 0 的 state 断言，否则是竞态。
+	genesisAcc := mock33.GetExecAccount(mock33.GetBlock(0).StateHash, "ticket", addr)
+	assert.Equal(t, int64(0), genesisAcc.Balance)
 	hotaddr := mock33.GetHotAddress()
 	_, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "coins", Addresses: []string{hotaddr}})
 	assert.Nil(t, err)

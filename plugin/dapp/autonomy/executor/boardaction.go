@@ -452,7 +452,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-//统计参与率的时候，计算弃权票，但是统计赞成率的时候，忽略弃权票。比如10票，4票赞成，3票反对，2票弃权，那么参与率是 90%， 赞成 4/7 反对 3/7
+// 统计参与率的时候，计算弃权票，但是统计赞成率的时候，忽略弃权票。比如10票，4票赞成，3票反对，2票弃权，那么参与率是 90%， 赞成 4/7 反对 3/7
 func isApproved(totalVotes, approveVotes, opposeVotes, quitVotes, attendRation, approveRatio int32, autoCfg *AutonomyParam) bool {
 	if attendRation <= 0 {
 		attendRation = autoCfg.PubAttendRatio
@@ -733,7 +733,7 @@ func (a *action) checkVotesRecord(addrs []string, key []byte) (*auty.VotesRecord
 	return &votes, nil
 }
 
-//新增addr场景，任一probAddr在当前board里即返回true
+// 新增addr场景，任一probAddr在当前board里即返回true
 func checkAddrInBoard(act *auty.ActiveBoard, probAddrs map[string]struct{}) bool {
 	for _, board := range act.Boards {
 		if _, ok := probAddrs[board]; ok {
@@ -765,7 +765,7 @@ func (a *action) addPropBoard(prob *auty.ProposalBoard, mpBd map[string]struct{}
 	return act, nil
 }
 
-//删除addr场景，若任一proposal addr不存在 则返回true,
+// 删除addr场景，若任一proposal addr不存在 则返回true,
 func checkAddrNotInBoard(act *auty.ActiveBoard, prob *auty.ProposalBoard) error {
 	actBoards := make(map[string]bool)
 	for _, board := range act.Boards {
@@ -781,7 +781,7 @@ func checkAddrNotInBoard(act *auty.ActiveBoard, prob *auty.ProposalBoard) error 
 	return nil
 }
 
-//这里只考虑Board，不考虑revBoard
+// 这里只考虑Board，不考虑revBoard
 func (a *action) delPropBoard(prob *auty.ProposalBoard, mpBd map[string]struct{}) (*auty.ActiveBoard, error) {
 	act, err := a.getActiveBoard()
 	if err != nil {

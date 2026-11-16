@@ -33,7 +33,7 @@ import (
 
 var relayerLog = log.New("module", "chain33_relayer")
 
-//Relayer4Chain33 ...
+// Relayer4Chain33 ...
 type Relayer4Chain33 struct {
 	syncEvmTxLogs       *syncTx.EVMTxLogs
 	rpcLaddr            string //用户向指定的blockchain节点进行rpc调用
@@ -617,17 +617,23 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 
 func (chain33Relayer *Relayer4Chain33) BurnAsyncFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return burnAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
 
 func (chain33Relayer *Relayer4Chain33) LockBTYAssetAsync(ownerPrivateKey, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return lockAsync(ownerPrivateKey, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
 
-//ShowBridgeRegistryAddr ...
+// ShowBridgeRegistryAddr ...
 func (chain33Relayer *Relayer4Chain33) ShowBridgeRegistryAddr() (string, error) {
 	if "" == chain33Relayer.bridgeRegistryAddr {
 		return "", errors.New("the relayer is not started yet")
@@ -713,7 +719,7 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 	}
 }
 
-//用于chain33的事件信息被中继之后的ack信息，重置标志位
+// 用于chain33的事件信息被中继之后的ack信息，重置标志位
 func (chain33Relayer *Relayer4Chain33) procTxRelayAck(ack *ebTypes.TxRelayAck) {
 	//reset with another key to exclude from the check list to resend the same message
 	if err := chain33Relayer.resetKeyChain33TxRelayedAlready(ack.TxHash); nil != err {
@@ -782,12 +788,18 @@ func (chain33Relayer *Relayer4Chain33) GetMultiSignAddr() string {
 
 func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return withdrawAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
 
 func (chain33Relayer *Relayer4Chain33) BurnWithIncreaseAsyncFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	bn, ok := bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	if !ok || !bn.IsInt64() {
+		return "", errors.New("amount overflows int64")
+	}
 	return burnWithIncreaseAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }

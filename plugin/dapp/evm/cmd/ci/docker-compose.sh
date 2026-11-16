@@ -107,11 +107,7 @@ function testcase_coinsTransfer(){
     fi
     echo "${hash}"
 
-    balance=$(${Chain33_CLI} account balance -a ${testAddr} -e coins | jq -r ".balance")
-    if [ "${balance}" != "12.0000" ]; then
-        echo " balance  not correct, balance=${balance}"
-        exit 1
-    fi
+    waitBalance ${testAddr} "12.0000"
 
     echo "^_^check eth-evm-coins transfer success! ^_^ "
 
@@ -161,14 +157,21 @@ function checkBalanceOf(){
   local addr=${1}
   local expectBalance=${2}
   local data=${balanceOfSig}${addr:2:40}
-  local balance=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_call","params":[{"to":"'"${evm_contractAddr}"'","data":"'"${data}"'"}]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
-   if [ "${balance}" != "${expectBalance}" ]; then
-          echo "check balance faild "
-          return 1
-      else
+  local timeout=15
+  local interval=1
+  local elapsed=0
+  local balance=""
+  while [ "${elapsed}" -lt "${timeout}" ]; do
+    balance=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"eth_call","params":[{"to":"'"${evm_contractAddr}"'","data":"'"${data}"'"}]}' -H 'content-type:application/json;' "${ETH_HTTP}" | jq -r .result)
+    if [ "${balance}" == "${expectBalance}" ]; then
           echo "check balance ok ^_^"
           return 0
-      fi
+    fi
+    sleep "${interval}"
+    elapsed=$((elapsed + interval))
+  done
+  echo "check balance faild, expect=${expectBalance}, got=${balance}"
+  return 1
 }
 
 
@@ -248,7 +251,8 @@ function token_preCreate() {
   token_symbol=${1}
   owner=${2}
   echo "token_preCreate:symbol:${token_symbol}"
-  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 1000000000000 )
+  # total 会被 CLI 乘以 TokenPrecision(1e8), 且需小于 MaxCoin*coinPrecision(1e17), 否则 finish 时 GenesisInit 报 ErrAmount
+  local unsignedTx=$(${Chain33_CLI}  token precreate  -c 1  -p 0 -s "${token_symbol}"  -n "${token_symbol}" -a "${2}"  -i "for test" --total 10000 )
   if [ "${unsignedTx}" == "" ]; then
      echo "token preCreate create tx"
      return
@@ -307,22 +311,80 @@ function testcase_evmPrecompile(){
 
 
 
+# CLI 在交易尚未写入索引时会 os.Exit(1)。必须吞掉失败码，否则 set -e + pipefail
+# 会在进入重试循环之前直接退出整个脚本。
+function queryTxReceipt() {
+    ${Chain33_CLI} tx query --hash "${1}" 2>/dev/null | jq -r .receipt.tyName 2>/dev/null || true
+}
+
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
+# 交易 broadcast 到被打包上链并写入 tx 索引有短暂延迟，单次立即查询会偶发 "tx not exist"
+# （交易已进 mempool 但尚未写入区块索引）。故对"预期存在"的交易先查一次（通常已打包，
+# 直接命中，零等待）；未命中再轮询等待回执出现，覆盖打包/索引延迟。
+# 注意：不用"等待区块高度增长"作信号——solo 不产生空块，交易打包后 mempool 为空，
+# 高度不再增长，等高度只会白白超时。
+# 仅当 expectRes 为空（预期交易不存在，如 nonce 过高滞留在 mempool）时只查询一次。
 function queryTransaction() {
     txHash=$1
     validators=$2
     expectRes=$3
-    res=$(${Chain33_CLI} tx query --hash  "${txHash}" |jq -r .receipt.tyName)
+    local timeout=15
+    local interval=1
+    local elapsed=0
+    local res=""
 
-
-    if [ "${res}" != "${expectRes}" ]; then
-        echo "check tx faild"
+    if [ -z "${expectRes}" ]; then
+        # 预期交易不存在：只查一次。查不到（空/null）即成功。
+        res=$(queryTxReceipt "${txHash}")
+        if [ -z "${res}" ] || [ "${res}" == "null" ]; then
+            echo "check tx status success"
+            return 0
+        fi
+        echo "check tx faild (tx ${txHash}: expect absent, got '${res}')"
         return 1
-    else
-        echo "check tx status success"
-        return 0
     fi
+
+    # 预期交易存在：立刻查一次（测查询，通常已打包直接命中）；未命中则 sleep 后重试。
+    while true; do
+        res=$(queryTxReceipt "${txHash}")
+        if [ "${res}" == "${expectRes}" ]; then
+            echo "check tx status success"
+            return 0
+        fi
+        # ExecPack 是执行失败终态，再等也不会变成 ExecOk
+        if [ "${res}" == "ExecPack" ]; then
+            echo "check tx faild (tx ${txHash}: expect '${expectRes}', got ExecPack)"
+            return 1
+        fi
+        if [ "${elapsed}" -ge "${timeout}" ]; then
+            echo "check tx faild (tx ${txHash}: expect '${expectRes}', got '${res}' after ${timeout}s)"
+            return 1
+        fi
+        sleep "${interval}"
+        elapsed=$((elapsed + interval))
+    done
+}
+
+# 等待指定 coins 地址余额达到期望值（solo 打包上链有延迟，send 后立即查余额会读到旧状态）
+function waitBalance() {
+    local addr=$1
+    local expect=$2
+    local timeout=15
+    local interval=1
+    local elapsed=0
+    local balance=""
+    while [ "${elapsed}" -lt "${timeout}" ]; do
+        balance=$(${Chain33_CLI} account balance -a "${addr}" -e coins | jq -r ".balance")
+        if [ "${balance}" == "${expect}" ]; then
+            echo "check balance ok ^_^"
+            return 0
+        fi
+        sleep "${interval}"
+        elapsed=$((elapsed + interval))
+    done
+    echo "check balance faild, expect=${expect}, got=${balance}"
+    return 1
 }
 
 
@@ -382,12 +444,7 @@ function testcase_evmProxyExec() {
    #查询交易哈希
    queryTransaction "${hash}"  "jq -r .result.receipt.tyName" "ExecOk"
 
-   balance=$(${Chain33_CLI} account balance -a "0xa42431Da868c58877a627CC71Dc95F01bf40c196" -e coins | jq -r ".balance")
-   if [ "${balance}" != "1024.0000" ]; then
-       echo " balance  not correct, balance=${balance}"
-       exit 1
-   fi
-   echo "check balance success"
+   waitBalance "0xa42431Da868c58877a627CC71Dc95F01bf40c196" "1024.0000"
 
   #测试连续多笔代理执行币交易
   #nonce =8

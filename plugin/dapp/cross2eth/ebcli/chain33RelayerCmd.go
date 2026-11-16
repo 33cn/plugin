@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//Chain33RelayerCmd RelayerCmd command func
+// Chain33RelayerCmd RelayerCmd command func
 func Chain33RelayerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chain33 ",
@@ -37,7 +37,7 @@ func Chain33RelayerCmd() *cobra.Command {
 	return cmd
 }
 
-//TokenAddressCmd...
+// TokenAddressCmd...
 func TokenAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
@@ -60,7 +60,7 @@ func ShowTokenAddressCmd() *cobra.Command {
 	return cmd
 }
 
-//SetTokenFlags ...
+// SetTokenFlags ...
 func ShowTokenFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol(optional), if not set,show all the token")
 }
@@ -88,7 +88,7 @@ func ShowBridgeRegistryAddr4chain33Cmd() *cobra.Command {
 	return cmd
 }
 
-//ShowBridgeRegistryAddr ...
+// ShowBridgeRegistryAddr ...
 func ShowBridgeRegistryAddr4chain33(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
@@ -106,7 +106,7 @@ func simBurnFromEthCmd() *cobra.Command {
 	return cmd
 }
 
-//SimBurnFlags ...
+// SimBurnFlags ...
 func SimBurnFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "Ethereum sender address")
 	_ = cmd.MarkFlagRequired("key")
@@ -148,7 +148,7 @@ func simLockFromEthCmd() *cobra.Command {
 	return cmd
 }
 
-//LockEthErc20AssetFlags ...
+// LockEthErc20AssetFlags ...
 func simLockEthErc20AssetFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "Ethereum sender address")
 	_ = cmd.MarkFlagRequired("key")
@@ -179,7 +179,7 @@ func simLockFromEth(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//LockAsyncCmd ...
+// LockAsyncCmd ...
 func LockAsyncFromChain33Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lock",
@@ -227,7 +227,7 @@ func BurnfromChain33Cmd() *cobra.Command {
 	return cmd
 }
 
-//BurnAsyncFromChain33Flags ...
+// BurnAsyncFromChain33Flags ...
 func BurnAsyncFromChain33Flags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "owner private key for chain33")
 	_ = cmd.MarkFlagRequired("key")
@@ -295,7 +295,7 @@ func BurnWithIncreaseAsyncFromChain33(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ImportPrivateKeyCmd SetPwdCmd set password
+// ImportPrivateKeyCmd SetPwdCmd set password
 func ImportPrivateKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import_privatekey",
@@ -323,7 +323,7 @@ func importPrivatekey(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ShowValidatorAddrCmd ...
+// ShowValidatorAddrCmd ...
 func ShowValidatorAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_validator",
@@ -340,7 +340,7 @@ func showValidatorAddr(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ShowTxsHashCmd ...
+// ShowTxsHashCmd ...
 func ShowTxsHashCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_txhashes",
@@ -402,7 +402,7 @@ func WithdrawFromChain33Cmd() *cobra.Command {
 	return cmd
 }
 
-//addWithdrawFromChain33CmdFlags ...
+// addWithdrawFromChain33CmdFlags ...
 func addWithdrawFromChain33Flags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "owner private key for chain33")
 	_ = cmd.MarkFlagRequired("key")

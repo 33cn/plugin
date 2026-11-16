@@ -20,12 +20,12 @@ func init() {
 	types.RegExec(QbftNodeX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(QbftNodeX, "Enable", 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(QbftNodeX, NewType(cfg))
 }

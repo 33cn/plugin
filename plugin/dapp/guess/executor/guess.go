@@ -26,13 +26,13 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	InitExecType()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Guess{}))
 }
 
-//Guess 执行器，用于竞猜合约的具体执行
+// Guess 执行器，用于竞猜合约的具体执行
 type Guess struct {
 	drivers.DriverBase
 }
@@ -44,17 +44,17 @@ func newGuessGame() drivers.Driver {
 	return t
 }
 
-//GetName 获取Guess执行器的名称
+// GetName 获取Guess执行器的名称
 func GetName() string {
 	return newGuessGame().GetName()
 }
 
-//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+// ExecutorOrder Exec 的时候 同时执行 ExecLocal
 func (g *Guess) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
 
-//GetDriverName 获取Guess执行器的名称
+// GetDriverName 获取Guess执行器的名称
 func (g *Guess) GetDriverName() string {
 	return gty.GuessX
 }

@@ -370,7 +370,7 @@ func (*ParaP2PSubMsg_CommitTx) isParaP2PSubMsg_Value() {}
 
 func (*ParaP2PSubMsg_SyncMsg) isParaP2PSubMsg_Value() {}
 
-//bls sign leader info
+// bls sign leader info
 type ElectionStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

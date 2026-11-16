@@ -1,6 +1,6 @@
 package testnode
 
-//DefaultConfig default config for testnode
+// DefaultConfig default config for testnode
 var DefaultConfig = `
 Title="user.p.test."
 CoinSymbol="bty"

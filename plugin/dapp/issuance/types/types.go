@@ -4,7 +4,7 @@
 
 package types
 
-//Issuance op
+// Issuance op
 const (
 	IssuanceActionCreate = 1 + iota // 创建借贷
 	IssuanceActionDebt              // 大户抵押
@@ -28,13 +28,13 @@ const (
 	IssuancePreLiquidationRatio = 11000 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 
-//Issuance status
+// Issuance status
 const (
 	IssuanceStatusCreated = 1 + iota
 	IssuanceStatusClose
 )
 
-//status ...
+// status ...
 const (
 	IssuanceUserStatusCreate = 1 + iota
 	IssuanceUserStatusWarning
@@ -44,7 +44,7 @@ const (
 	IssuanceUserStatusClose
 )
 
-//type ...
+// type ...
 const (
 	PriceFeedKey = "issuance-price-feed"
 	GuarantorKey = "issuance-guarantor"
@@ -52,7 +52,7 @@ const (
 	FundKey      = "issuance-fund"
 )
 
-//fork ...
+// fork ...
 var (
 	ForkIssuanceTableUpdate = "ForkIssuanceTableUpdate"
 	ForkIssuancePrecision   = "ForkIssuancePrecision"

@@ -10,7 +10,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 )
 
-//MultiplySpecifyTimes ...
+// MultiplySpecifyTimes ...
 func MultiplySpecifyTimes(start float64, time int64) float64 {
 	for i := 0; i < int(time); i++ {
 		start *= 10
@@ -18,7 +18,7 @@ func MultiplySpecifyTimes(start float64, time int64) float64 {
 	return start
 }
 
-//Toeth ...
+// Toeth ...
 func Toeth(amount string, decimal int64) float64 {
 
 	bf := big.NewFloat(0)
@@ -32,7 +32,7 @@ func Toeth(amount string, decimal int64) float64 {
 	return f
 }
 
-//ToWei 将eth单位的金额转为wei单位
+// ToWei 将eth单位的金额转为wei单位
 func ToWei(amount float64, decimal int64) *big.Int {
 
 	var ok bool
@@ -49,7 +49,7 @@ func ToWei(amount float64, decimal int64) *big.Int {
 	return nil
 }
 
-//TrimZeroAndDot ...
+// TrimZeroAndDot ...
 func TrimZeroAndDot(s string) string {
 	if strings.Contains(s, ".") {
 		var trimDotStr string
@@ -61,7 +61,7 @@ func TrimZeroAndDot(s string) string {
 	return s
 }
 
-//CheckPower ...
+// CheckPower ...
 func CheckPower(power int64) bool {
 	if power <= 0 || power > 100 {
 		return false
@@ -69,7 +69,7 @@ func CheckPower(power int64) bool {
 	return true
 }
 
-//DivideDot ...
+// DivideDot ...
 func DivideDot(in string) (left, right string, err error) {
 	if strings.Contains(in, ".") {
 		ss := strings.Split(in, ".")
@@ -78,7 +78,7 @@ func DivideDot(in string) (left, right string, err error) {
 	return "", "", errors.New("Divide error")
 }
 
-//IsExecAddrMatch ...
+// IsExecAddrMatch ...
 func IsExecAddrMatch(name string, to string) bool {
 	toaddr := address.ExecAddress(name)
 	return toaddr == to

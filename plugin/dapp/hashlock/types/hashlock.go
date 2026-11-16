@@ -23,13 +23,13 @@ func init() {
 	types.RegExec(HashlockX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(HashlockX, "Enable", 0)
 	cfg.RegisterDappFork(HashlockX, ForkBadRepeatSecretX, 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(HashlockX, NewType(cfg))
 }

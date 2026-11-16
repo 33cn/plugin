@@ -2,7 +2,7 @@ package types
 
 import "errors"
 
-//err ...
+// err ...
 var (
 	ErrInvalidClaimType              = errors.New("invalid claim type provided")
 	ErrInvalidEthSymbol              = errors.New("invalid symbol provided, symbol \"eth\" must have null address set as token contract address")
@@ -31,7 +31,7 @@ var (
 	ErrInvalidPower                  = errors.New("This power is invalid")
 )
 
-//common
+// common
 var (
 	ErrSetKV = errors.New("Set KV error")
 )

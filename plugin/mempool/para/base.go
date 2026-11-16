@@ -15,7 +15,7 @@ import (
 var mlog = log.New("module", "mempool.para")
 var topic = "mempool"
 
-//Mempool mempool 基础类
+// Mempool mempool 基础类
 type Mempool struct {
 	key         string
 	wg          sync.WaitGroup
@@ -25,14 +25,14 @@ type Mempool struct {
 	isclose int32
 }
 
-//NewMempool 新建mempool 实例
+// NewMempool 新建mempool 实例
 func NewMempool(cfg *types.Mempool) *Mempool {
 	pool := &Mempool{}
 	pool.key = topic
 	return pool
 }
 
-//SetQueueClient 初始化mempool模块
+// SetQueueClient 初始化mempool模块
 func (mem *Mempool) SetQueueClient(client queue.Client) {
 	mem.client = client
 	mem.client.Sub(mem.key)

@@ -6,7 +6,7 @@ package types
 
 import "github.com/33cn/chain33/types"
 
-//cert
+// cert
 const (
 	CertActionNew    = 1
 	CertActionUpdate = 2
@@ -23,12 +23,12 @@ func init() {
 	types.RegExec(CertX, InitExecutor)
 }
 
-//InitFork ...
+// InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(CertX, "Enable", 0)
 }
 
-//InitExecutor ...
+// InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(CertX, NewType(cfg))
 }

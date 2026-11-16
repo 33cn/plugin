@@ -109,6 +109,18 @@ genesisBlockTime=1514533390
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["paracross"]    #配置挖矿合约
 
+# 账户黑名单：命中地址禁止收发任何交易，支持base58与0x两种地址格式
+# 名单按高度分版本演进，每个 [mver.blacklist.<分叉名>] 段是一份全量名单而非增量，
+# 高度 h 生效的是「高度不大于 h 的最大分叉」那一份；下面的基线段在任何分叉生效前使用
+# 启用时须在 [fork.system] 把 ForkAccountBlacklist 配成真实高度，并取消下面 V1 段注释
+[mver.blacklist]
+accountBlacklist=[]
+
+#[mver.blacklist.ForkAccountBlacklist]
+#accountBlacklist=["1xxx", "0xyyy"]
+#[mver.blacklist.ForkAccountBlacklistV2]
+#accountBlacklist=["1xxx", "0xyyy", "0xzzz"]
+
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
 powLimitBits = "0x1f00ffff"
@@ -324,7 +336,16 @@ ForkFormatAddressKey=0
 ForkCheckEthTxSort=0
 ForkProxyExec=0
 ForkMaxTxFeeV1=0
+ForkAccountBlacklist=-1
+ForkAccountBlacklistV2=-1
+ForkParaFee=-1
 ForkEthAddressFormat=0
+# 交易chainID严格校验启用高度，启用后交易组内每笔交易及minTxFeeRate=0时的单笔交易都会校验chainID，防止跨链重放；-1 表示关闭
+ForkTxChainIDStrict=-1
+# 创世动作(Genesis)执行高度限制：启用后框架统一拒绝 height != 0 的 Exec_Genesis，防止执行器漏写 height 校验被创世重入；-1 表示关闭
+ForkGenesisOnlyAtHeightZero=0
+# eth签名交易的chain33信封校验启用高度；-1 表示关闭
+ForkEthSignEnvelope=-1
 
 [fork.sub.none]
 ForkUseTimeDelay=0
@@ -340,6 +361,9 @@ Enable=0
 Enable=0
 ForkTicketId =0
 ForkTicketVrf =0
+# 拒绝同一笔 tclose 交易内重复的 ticketId(重复会等价于同一张票被多次付款)
+ForkTicketCloseDup=0
+ForkMinerExecerCheck=0
 
 [fork.sub.retrieve]
 Enable=0
@@ -376,6 +400,7 @@ ForkTradeStatusGate = -1
 
 [fork.sub.paracross]
 Enable=0
+ForkParaTitleExecMatch=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0
@@ -409,6 +434,13 @@ ForkIntrinsicGas=0
 ForkEVMAddressInit=0
 ForkEvmExecNonce=0
 ForkEvmExecNonceV2=0
+ForkEVMFixOverflow=0
+# SELFDESTRUCT pays from the executing account: DELEGATECALL/CALLCODE no longer
+# spend the borrowed code contract balance
+ForkEVMSuicidePayer=0
+# Revertible value transfers; -1 keeps the fix off (resolved to MaxHeight)
+ForkEVMTransferRevert=-1
+
 [fork.sub.blackwhite]
 Enable=0
 ForkBlackWhiteV2=0
@@ -427,6 +459,7 @@ Enable=0
 
 [fork.sub.relay]
 Enable=0
+ForkRelayVerifyBtcTx=0
 
 [fork.sub.norm]
 Enable=0
@@ -445,6 +478,7 @@ Enable=0
 
 [fork.sub.rollup]
 Enable=-1
+ForkSecurityHardening=0
 
 [fork.sub.lightclient]
 Enable=-1

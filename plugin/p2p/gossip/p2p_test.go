@@ -125,7 +125,7 @@ func processMsg(q queue.Queue) {
 	}()
 }
 
-//new p2p
+// new p2p
 func newP2p(cfg *types.Chain33Config, port int32, dbpath string, q queue.Queue) *P2p {
 	p2pCfg := cfg.GetModuleConfig().P2P
 	p2pCfg.Enable = true
@@ -152,7 +152,7 @@ func newP2p(cfg *types.Chain33Config, port int32, dbpath string, q queue.Queue) 
 	return p2pcli
 }
 
-//free P2p
+// free P2p
 func freeP2p(p2p *P2p) {
 	p2p.CloseP2P()
 	if err := os.RemoveAll(p2p.p2pCfg.DbPath); err != nil {
@@ -187,7 +187,7 @@ func testNetInfo(t *testing.T, p2p *P2p) {
 	assert.NotNil(t, p2p.node.nodeInfo.GetExternalAddr())
 }
 
-//测试Peer
+// 测试Peer
 func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 	cfg := types.NewChain33Config(types.ReadFile("../../../chain33.toml"))
 	conn, err := grpc.Dial("localhost:53802", grpc.WithInsecure(),
@@ -310,7 +310,7 @@ func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 	localP2P.node.remove(peer.GetPeerName())
 }
 
-//测试grpc 多连接
+// 测试grpc 多连接
 func testGrpcConns(t *testing.T) {
 	var conns []*grpc.ClientConn
 
@@ -341,7 +341,7 @@ func testGrpcConns(t *testing.T) {
 
 }
 
-//测试grpc 流多连接
+// 测试grpc 流多连接
 func testGrpcStreamConns(t *testing.T, p2p *P2p) {
 
 	conn, err := grpc.Dial("localhost:53802", grpc.WithInsecure(),

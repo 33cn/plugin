@@ -79,7 +79,7 @@ func TestExecHashlock(t *testing.T) {
 	}
 }
 
-//timelimit
+// timelimit
 func TestExecHashunlock(t *testing.T) {
 
 	var targetReceipt types.Receipt

@@ -120,6 +120,7 @@ message BtcTransaction {
     repeated Vout vout          = 4;
     int64         time          = 5;
     uint64        confirmations = 6;
+    string        rawTx         = 7; // hex encoded raw serialized btc tx, used to recompute the tx hash
 }
 
 message Vin {

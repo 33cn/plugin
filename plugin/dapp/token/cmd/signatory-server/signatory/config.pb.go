@@ -5,9 +5,11 @@
 Package signatory is a generated protocol buffer package.
 
 It is generated from these files:
+
 	config.proto
 
 It has these top-level messages:
+
 	Config
 */
 package signatory

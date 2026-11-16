@@ -104,7 +104,7 @@ func TestMultiSigAccount(t *testing.T) {
 	testAbnormal(t, mocker, jrpcClient)
 }
 
-//创建多重签名账户
+// 创建多重签名账户
 func testAccCreateTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient) string {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -204,7 +204,7 @@ func testAccCreateTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jso
 	return multiSigAccAddr
 }
 
-//多重签名地址转入操作
+// 多重签名地址转入操作
 func testTransferInTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -280,7 +280,7 @@ func testTransferInTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *js
 	//t.Log(rep4)
 }
 
-//多重签名地址转出操作 AddrB
+// 多重签名地址转出操作 AddrB
 func testTransferOutTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -347,7 +347,7 @@ func testTransferOutTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *j
 	//t.Log(rep8)
 }
 
-//owner add AddrE
+// owner add AddrE
 func testAddOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -390,7 +390,7 @@ func testAddOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsoncl
 	//t.Log(rep10)
 }
 
-//owner del AddrE
+// owner del AddrE
 func testDelOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -433,7 +433,7 @@ func testDelOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsoncl
 	//t.Log(rep)
 }
 
-//ModifyOwnerWeight
+// ModifyOwnerWeight
 func testModifyOwnerWeight(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -477,7 +477,7 @@ func testModifyOwnerWeight(t *testing.T, mocker *testnode.Chain33Mock, jrpcClien
 	//t.Log(rep)
 }
 
-//testReplaceOwner owner AddrA replace by  AddrE
+// testReplaceOwner owner AddrA replace by  AddrE
 func testReplaceOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -521,7 +521,7 @@ func testReplaceOwner(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *js
 	//t.Log(rep)
 }
 
-//testModifyDailyLimit modify dailylimit coins:BTY  1200000000
+// testModifyDailyLimit modify dailylimit coins:BTY  1200000000
 func testModifyDailyLimit(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -569,7 +569,7 @@ func testModifyDailyLimit(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient
 	//t.Log(rep)
 }
 
-//testAddDailyLimit add dailylimit token:HYB  1000000000
+// testAddDailyLimit add dailylimit token:HYB  1000000000
 func testAddDailyLimit(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -617,7 +617,7 @@ func testAddDailyLimit(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *j
 	//t.Log(rep)
 }
 
-//testModifyRequestWeight Modify RequestWeight 16
+// testModifyRequestWeight Modify RequestWeight 16
 func testModifyRequestWeight(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string) {
 	gen := mocker.GetGenesisKey()
 	var params rpctypes.Query4Jrpc
@@ -796,7 +796,7 @@ func testConfirmTx(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonc
 
 }
 
-//查询txid的交易Confirm信息
+// 查询txid的交易Confirm信息
 func checkTxInfo(t *testing.T, jrpcClient *jsonclient.JSONClient, multiSigAccAddr string, txid uint64, executed bool, ownerAddr string) {
 
 	var params rpctypes.Query4Jrpc
@@ -873,7 +873,7 @@ func checkMultiSigAccAssets(t *testing.T, jrpcClient *jsonclient.JSONClient, add
 	//t.Log(rep)
 }
 
-//异常测试，主要是参数的合法性校验
+// 异常测试，主要是参数的合法性校验
 func testAbnormal(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsonclient.JSONClient) {
 	//1. MultiSigAccCreateTx owner重复
 	var owners []*mty.Owner

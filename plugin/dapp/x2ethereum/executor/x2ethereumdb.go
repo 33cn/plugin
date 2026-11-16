@@ -11,13 +11,13 @@ import (
 	x2eTy "github.com/33cn/plugin/plugin/dapp/x2ethereum/types"
 )
 
-//Oracle ...
+// Oracle ...
 type Oracle struct {
 	db                 dbm.KV
 	consensusThreshold int64
 }
 
-//NewOracle ...
+// NewOracle ...
 func NewOracle(db dbm.KV, consensusThreshold int64) *Oracle {
 	if consensusThreshold <= 0 || consensusThreshold > 100 {
 		return nil
@@ -28,7 +28,7 @@ func NewOracle(db dbm.KV, consensusThreshold int64) *Oracle {
 	}
 }
 
-//ProcessSuccessfulClaimForLock 处理经过审核的关于Lock的claim
+// ProcessSuccessfulClaimForLock 处理经过审核的关于Lock的claim
 func (o *Oracle) ProcessSuccessfulClaimForLock(claim, execAddr string, accDB *account.DB) (*types.Receipt, error) {
 	var receipt *types.Receipt
 	oracleClaim, err := CreateOracleClaimFromOracleString(claim)
@@ -53,7 +53,7 @@ func (o *Oracle) ProcessSuccessfulClaimForLock(claim, execAddr string, accDB *ac
 	return nil, x2eTy.ErrInvalidClaimType
 }
 
-//ProcessSuccessfulClaimForBurn 处理经过审核的关于Burn的claim
+// ProcessSuccessfulClaimForBurn 处理经过审核的关于Burn的claim
 func (o *Oracle) ProcessSuccessfulClaimForBurn(claim, execAddr, tokenSymbol string, accDB *account.DB) (*types.Receipt, error) {
 	oracleClaim, err := CreateOracleClaimFromOracleString(claim)
 	if err != nil {
@@ -98,7 +98,7 @@ func (o *Oracle) ProcessLock(address, to, execAddr, amount string, accDB *accoun
 	return receipt, nil
 }
 
-//ProcessAddValidator ...
+// ProcessAddValidator ...
 // 对于相同的地址该如何处理?
 // 现有方案是相同地址就报错
 func (o *Oracle) ProcessAddValidator(address string, power int64) (*types.Receipt, error) {
@@ -142,7 +142,7 @@ func (o *Oracle) ProcessAddValidator(address string, power int64) (*types.Receip
 	return receipt, nil
 }
 
-//ProcessRemoveValidator ...
+// ProcessRemoveValidator ...
 func (o *Oracle) ProcessRemoveValidator(address string) (*types.Receipt, error) {
 	var exist bool
 	receipt := new(types.Receipt)
@@ -180,7 +180,7 @@ func (o *Oracle) ProcessRemoveValidator(address string) (*types.Receipt, error) 
 	return receipt, nil
 }
 
-//ProcessModifyValidator 这里的power指的是修改后的power
+// ProcessModifyValidator 这里的power指的是修改后的power
 func (o *Oracle) ProcessModifyValidator(address string, power int64) (*types.Receipt, error) {
 	var exist bool
 	receipt := new(types.Receipt)
@@ -217,7 +217,7 @@ func (o *Oracle) ProcessModifyValidator(address string, power int64) (*types.Rec
 	return receipt, nil
 }
 
-//ProcessSetConsensusNeeded ...
+// ProcessSetConsensusNeeded ...
 func (o *Oracle) ProcessSetConsensusNeeded(ConsensusThreshold int64) (int64, int64, error) {
 	preCon := o.GetConsensusThreshold()
 	o.SetConsensusThreshold(ConsensusThreshold)
@@ -228,7 +228,7 @@ func (o *Oracle) ProcessSetConsensusNeeded(ConsensusThreshold int64) (int64, int
 	return preCon, nowCon, nil
 }
 
-//GetProphecy ...
+// GetProphecy ...
 func (o *Oracle) GetProphecy(id string) (*x2eTy.ReceiptEthProphecy, error) {
 	if id == "" {
 		return nil, x2eTy.ErrInvalidIdentifier
@@ -290,7 +290,7 @@ func (o *Oracle) checkProphecy(prophecy *x2eTy.ReceiptEthProphecy) error {
 	return nil
 }
 
-//ProcessClaim 处理接收到的ethchain33请求
+// ProcessClaim 处理接收到的ethchain33请求
 func (o *Oracle) ProcessClaim(claim x2eTy.Eth2Chain33) (*x2eTy.ProphecyStatus, error) {
 	oracleClaim, err := CreateOracleClaimFromEthClaim(claim)
 	if err != nil {
@@ -392,7 +392,7 @@ func (o *Oracle) processCompletion(prophecy *x2eTy.ReceiptEthProphecy, claimType
 	return prophecy, nil
 }
 
-//GetLastTotalPower Load the last total validator power.
+// GetLastTotalPower Load the last total validator power.
 func (o *Oracle) GetLastTotalPower() (int64, error) {
 	b, err := o.db.Get(x2eTy.CalLastTotalPowerPrefix())
 	if err != nil && err != types.ErrNotFound {
@@ -408,7 +408,7 @@ func (o *Oracle) GetLastTotalPower() (int64, error) {
 	return powers.TotalPower, nil
 }
 
-//SetLastTotalPower Set the last total validator power.
+// SetLastTotalPower Set the last total validator power.
 func (o *Oracle) SetLastTotalPower() error {
 	var totalPower int64
 	validatorArrays, err := o.GetValidatorArray()
@@ -429,7 +429,7 @@ func (o *Oracle) SetLastTotalPower() error {
 	return nil
 }
 
-//GetValidatorArray ...
+// GetValidatorArray ...
 func (o *Oracle) GetValidatorArray() (*x2eTy.ValidatorList, error) {
 	validatorsBytes, err := o.db.Get(x2eTy.CalValidatorMapsPrefix())
 	if err != nil {
@@ -443,13 +443,13 @@ func (o *Oracle) GetValidatorArray() (*x2eTy.ValidatorList, error) {
 	return &validatorArrays, nil
 }
 
-//SetConsensusThreshold ...
+// SetConsensusThreshold ...
 func (o *Oracle) SetConsensusThreshold(ConsensusThreshold int64) {
 	o.consensusThreshold = ConsensusThreshold
 	elog.Info("SetConsensusNeeded", "nowConsensusNeeded", o.consensusThreshold)
 }
 
-//GetConsensusThreshold ...
+// GetConsensusThreshold ...
 func (o *Oracle) GetConsensusThreshold() int64 {
 	return o.consensusThreshold
 }

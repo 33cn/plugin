@@ -24,7 +24,7 @@ var boardOpt = &table.Option{
 	Index:   []string{"addr", "status", "addr_status"},
 }
 
-//NewBoardTable 新建表
+// NewBoardTable 新建表
 func NewBoardTable(kvdb db.KV) *table.Table {
 	rowmeta := NewBoardRow()
 	newTable, err := table.NewTable(rowmeta, kvdb, boardOpt)
@@ -34,22 +34,22 @@ func NewBoardTable(kvdb db.KV) *table.Table {
 	return newTable
 }
 
-//BoardRow table meta 结构
+// BoardRow table meta 结构
 type BoardRow struct {
 	*auty.AutonomyProposalBoard
 }
 
-//NewBoardRow 新建一个meta 结构
+// NewBoardRow 新建一个meta 结构
 func NewBoardRow() *BoardRow {
 	return &BoardRow{AutonomyProposalBoard: &auty.AutonomyProposalBoard{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
 func (r *BoardRow) CreateRow() *table.Row {
 	return &table.Row{Data: &auty.AutonomyProposalBoard{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (r *BoardRow) SetPayload(data types.Message) error {
 	if d, ok := data.(*auty.AutonomyProposalBoard); ok {
 		r.AutonomyProposalBoard = d
@@ -58,7 +58,7 @@ func (r *BoardRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (r *BoardRow) Get(key string) ([]byte, error) {
 	if key == "heightindex" {
 		return []byte(dapp.HeightIndexStr(r.Height, int64(r.Index))), nil

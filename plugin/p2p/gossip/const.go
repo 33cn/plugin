@@ -61,7 +61,7 @@ const (
 	privKeyTag = "privkey"
 )
 
-//TTL
+// TTL
 const (
 	DefaultLtTxBroadCastTTL  = 3
 	DefaultMaxTxBroadCastTTL = 25

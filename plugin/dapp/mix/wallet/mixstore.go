@@ -54,10 +54,7 @@ func (store *mixStore) enablePrivacy() {
 
 func (store *mixStore) getPrivacyEnable() bool {
 	_, err := store.Get(calcMixPrivacyEnable())
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (store *mixStore) setRescanNoteStatus(status int32) {
@@ -82,7 +79,7 @@ func (store *mixStore) getRescanNoteStatus() int32 {
 	return mixTy.MixWalletRescanStatus_value[string(v)]
 }
 
-//AddRollbackKV add rollback kv
+// AddRollbackKV add rollback kv
 func (d *mixStore) AddRollbackKV(tx *types.Transaction, execer []byte, kvs []*types.KeyValue) []*types.KeyValue {
 	k := types.CalcRollbackKey(types.GetRealExecName(execer), tx.Hash())
 	kvc := system.NewKVCreator(d.GetDB(), types.CalcLocalPrefix(execer), k)
@@ -91,7 +88,7 @@ func (d *mixStore) AddRollbackKV(tx *types.Transaction, execer []byte, kvs []*ty
 	return kvc.KVList()
 }
 
-//DelRollbackKV del rollback kv when exec_del_local
+// DelRollbackKV del rollback kv when exec_del_local
 func (d *mixStore) DelRollbackKV(tx *types.Transaction, execer []byte) ([]*types.KeyValue, error) {
 	krollback := types.CalcRollbackKey(types.GetRealExecName(execer), tx.Hash())
 	kvc := system.NewKVCreator(d.GetDB(), types.CalcLocalPrefix(execer), krollback)

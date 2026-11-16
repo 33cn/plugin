@@ -72,7 +72,7 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 	return p.paracrossGetHeight(in.GetTitle())
 }
 
-//Query_GetNodeGroupAddrs get node group addrs
+// Query_GetNodeGroupAddrs get node group addrs
 func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -103,7 +103,7 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 	return &reply, nil
 }
 
-//Query_GetNodeGroupAddrs get node group addrs
+// Query_GetNodeGroupAddrs get node group addrs
 func (p *Paracross) Query_GetSupervisionNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -134,7 +134,7 @@ func (p *Paracross) Query_GetSupervisionNodeGroupAddrs(in *pt.ReqParacrossNodeIn
 	return &reply, nil
 }
 
-//Query_GetNodeAddrInfo get specific node addr info
+// Query_GetNodeAddrInfo get specific node addr info
 func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Addr == "" {
 		return nil, types.ErrInvalidParam
@@ -175,7 +175,7 @@ func (p *Paracross) getMainHeight() (int64, error) {
 	return mainHeight, nil
 }
 
-//Query_GetNodeIDInfo get specific node addr info
+// Query_GetNodeIDInfo get specific node addr info
 func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Id == "" {
 		return nil, types.ErrInvalidParam
@@ -203,7 +203,7 @@ func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Mess
 	return stat, nil
 }
 
-//Query_ListNodeStatusInfo list node info by status
+// Query_ListNodeStatusInfo list node info by status
 func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
@@ -227,7 +227,7 @@ func (p *Paracross) Query_ListNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types
 	return resp, nil
 }
 
-//Query_GetNodeGroupStatus get specific node addr info
+// Query_GetNodeGroupStatus get specific node addr info
 func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
@@ -247,7 +247,7 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	return stat, nil
 }
 
-//Query_ListNodeGroupStatus list node info by status
+// Query_ListNodeGroupStatus list node info by status
 func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -262,6 +262,19 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 		return nil, err
 	}
 	cfg := p.GetAPI().GetConfig()
+	if cfg.IsDappFork(mainHeight, pt.ParaX, pt.ForkParaTitleExecMatch) {
+		//分叉后按状态遍历节点组时不再返回非规范title对应记录
+		addrs := resp.(*pt.RespParacrossNodeGroups)
+		validIds := make([]*pt.ParaNodeGroupStatus, 0, len(addrs.Ids))
+		for _, id := range addrs.Ids {
+			if !pt.IsValidParaTitle(id.Title) {
+				clog.Error("paracross ListNodeGroupStatus skip invalid title", "title", id.Title)
+				continue
+			}
+			validIds = append(validIds, id)
+		}
+		addrs.Ids = validIds
+	}
 	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		addrs := resp.(*pt.RespParacrossNodeGroups)
 		for _, id := range addrs.Ids {
@@ -272,7 +285,7 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 	return resp, nil
 }
 
-//Query_ListSupervisionNodeStatusInfo list node info by status
+// Query_ListSupervisionNodeStatusInfo list node info by status
 func (p *Paracross) Query_ListSupervisionNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
@@ -297,7 +310,7 @@ func (p *Paracross) Query_ListSupervisionNodeStatusInfo(in *pt.ReqParacrossNodeI
 	return resp, nil
 }
 
-//Query_ListTitles query paracross titles list
+// Query_ListTitles query paracross titles list
 func (p *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
 	return p.paracrossListTitles()
 }
@@ -375,10 +388,21 @@ func (p *Paracross) paracrossGetStateTitleHeight(title string, height int64) (ty
 }
 
 func (p *Paracross) paracrossListTitles() (types.Message, error) {
-	return listLocalTitles(p.GetLocalDB())
+	return listLocalTitles(p.GetLocalDB(), p.isTitleExecMatchForkActive())
 }
 
-func listLocalTitles(db dbm.KVDB) (types.Message, error) {
+// isTitleExecMatchForkActive 查询接口是否按分叉后的规则过滤非法title。
+// 查询不参与共识，取主链高度失败时保持历史行为(不过滤)
+func (p *Paracross) isTitleExecMatchForkActive() bool {
+	mainHeight, err := p.getMainHeight()
+	if err != nil {
+		return false
+	}
+	return p.GetAPI().GetConfig().IsDappFork(mainHeight, pt.ParaX, pt.ForkParaTitleExecMatch)
+}
+
+// listLocalTitles filterInvalidTitle为true时过滤掉非规范title(如user.p.super/user.p./u)的记录
+func listLocalTitles(db dbm.KVDB, filterInvalidTitle bool) (types.Message, error) {
 	prefix := calcLocalTitlePrefix()
 	res, err := db.List(prefix, []byte(""), 0, 1)
 	if err != nil {
@@ -390,6 +414,11 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 		err = types.Decode(r, &st)
 		if err != nil {
 			panic(err)
+		}
+		//分叉后非法title不再返回给调用方，仅记日志保留可发现性，便于排查/清理历史数据
+		if filterInvalidTitle && !pt.IsValidParaTitle(st.Title) {
+			clog.Error("paracross listLocalTitles skip invalid title", "title", st.Title)
+			continue
 		}
 		rst := &pt.RespParacrossDone{
 			TotalNodes:      st.TotalNodes,
@@ -442,7 +471,7 @@ func listNodeGroupStatus(db dbm.KVDB, prefix []byte) (types.Message, error) {
 	return &resp, nil
 }
 
-//按状态遍历
+// 按状态遍历
 func listLocalNodeStatus(db dbm.KVDB, title string, status int32) (types.Message, error) {
 	var prefix []byte
 	if status == 0 {
@@ -512,7 +541,7 @@ func (p *Paracross) paracrossGetAssetTxResult(hash []byte) (types.Message, error
 	return &rst, nil
 }
 
-//Query_GetSelfConsStages get self consensus stages configed
+// Query_GetSelfConsStages get self consensus stages configed
 func (p *Paracross) Query_GetSelfConsStages(in *types.ReqNil) (types.Message, error) {
 	stages, err := getSelfConsensStages(p.GetStateDB())
 	if err != nil {
@@ -522,7 +551,7 @@ func (p *Paracross) Query_GetSelfConsStages(in *types.ReqNil) (types.Message, er
 	return stages, nil
 }
 
-//Query_GetSelfConsOneStage get self consensus one stage
+// Query_GetSelfConsOneStage get self consensus one stage
 func (p *Paracross) Query_GetSelfConsOneStage(in *types.Int64) (types.Message, error) {
 	stage, err := getSelfConsOneStage(p.GetStateDB(), in.Data)
 	if errors.Cause(err) == pt.ErrKeyNotExist {
@@ -540,7 +569,7 @@ func (p *Paracross) Query_ListSelfStages(in *pt.ReqQuerySelfStages) (types.Messa
 	return p.listSelfStages(in)
 }
 
-//Query_GetBlock2MainInfo ...
+// Query_GetBlock2MainInfo ...
 func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock2MainInfo, error) {
 	ret := &pt.ParaBlock2MainInfo{}
 	details, err := p.GetAPI().GetBlocks(req)
@@ -561,7 +590,7 @@ func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock
 	return ret, nil
 }
 
-//Query_GetHeight ...
+// Query_GetHeight ...
 func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensusStatus, error) {
 	cfg := p.GetAPI().GetConfig()
 	if req == nil || req.Data == "" {

@@ -22,7 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//para bind miner
+// para bind miner
 type ParaBindMinerCmd struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -244,7 +244,7 @@ func (x *ReceiptParaBindMinerInfo) GetCurrent() *ParaBindMinerInfo {
 	return nil
 }
 
-//共识节点绑定全局状态
+// 共识节点绑定全局状态
 type ParaBindNodeInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -355,7 +355,7 @@ func (x *ReceiptParaBindConsensusNodeInfo) GetCurrent() *ParaBindNodeInfo {
 	return nil
 }
 
-//共识节点索引绑定挖矿地址
+// 共识节点索引绑定挖矿地址
 type ParaBindAddr struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -11,7 +11,7 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-//Exec_Commit consensus commit tx exec process
+// Exec_Commit consensus commit tx exec process
 func (e *Paracross) Exec_Commit(payload *pt.ParacrossCommitAction, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	receipt, err := a.Commit(payload)
@@ -22,7 +22,7 @@ func (e *Paracross) Exec_Commit(payload *pt.ParacrossCommitAction, tx *types.Tra
 	return receipt, nil
 }
 
-//Exec_AssetTransfer asset transfer exec process
+// Exec_AssetTransfer asset transfer exec process
 func (e *Paracross) Exec_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	clog.Debug("Paracross.Exec", "transfer", "")
 	_, err := e.checkTxGroup(tx, index)
@@ -39,7 +39,7 @@ func (e *Paracross) Exec_AssetTransfer(payload *types.AssetsTransfer, tx *types.
 	return receipt, nil
 }
 
-//Exec_AssetWithdraw asset withdraw exec process
+// Exec_AssetWithdraw asset withdraw exec process
 func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	_, err := e.checkTxGroup(tx, index)
 	if err != nil {
@@ -55,7 +55,7 @@ func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.
 	return receipt, nil
 }
 
-//Exec_CrossAssetTransfer parallel chain asset transfer exec process
+// Exec_CrossAssetTransfer parallel chain asset transfer exec process
 func (e *Paracross) Exec_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	_, err := e.checkTxGroup(tx, index)
 	if err != nil {
@@ -71,7 +71,7 @@ func (e *Paracross) Exec_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *
 	return receipt, nil
 }
 
-//Exec_Miner miner tx exec process
+// Exec_Miner miner tx exec process
 func (e *Paracross) Exec_Miner(payload *pt.ParacrossMinerAction, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if index != 0 && payload.AddIssueCoins <= 0 {
 		return nil, pt.ErrParaMinerBaseIndex
@@ -84,49 +84,49 @@ func (e *Paracross) Exec_Miner(payload *pt.ParacrossMinerAction, tx *types.Trans
 	return a.Miner(payload)
 }
 
-//Exec_Transfer exec asset transfer process
+// Exec_Transfer exec asset transfer process
 func (e *Paracross) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.Transfer(payload, tx, index)
 }
 
-//Exec_Withdraw exec asset withdraw
+// Exec_Withdraw exec asset withdraw
 func (e *Paracross) Exec_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.Withdraw(payload, tx, index)
 }
 
-//Exec_TransferToExec exec transfer asset
+// Exec_TransferToExec exec transfer asset
 func (e *Paracross) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.TransferToExec(payload, tx, index)
 }
 
-//Exec_NodeConfig exec super node config
+// Exec_NodeConfig exec super node config
 func (e *Paracross) Exec_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.NodeConfig(payload)
 }
 
-//Exec_NodeGroupConfig node group config process
+// Exec_NodeGroupConfig node group config process
 func (e *Paracross) Exec_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.NodeGroupConfig(payload)
 }
 
-//Exec_SelfStageConfig node group config process
+// Exec_SelfStageConfig node group config process
 func (e *Paracross) Exec_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.SelfStageConfig(payload)
 }
 
-//Exec_ParaBindMiner node group config process
+// Exec_ParaBindMiner node group config process
 func (e *Paracross) Exec_ParaBindMiner(payload *pt.ParaBindMinerCmd, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.bindMiner(payload)
 }
 
-//Exec_SupervisionNodeConfig exec Supervision node config
+// Exec_SupervisionNodeConfig exec Supervision node config
 func (e *Paracross) Exec_SupervisionNodeConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.SupervisionNodeConfig(payload)

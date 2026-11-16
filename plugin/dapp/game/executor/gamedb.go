@@ -112,12 +112,12 @@ func (action *Action) GetReceiptLog(game *gt.Game) *types.ReceiptLog {
 	return log
 }
 
-//GetIndex get index
+// GetIndex get index
 func (action *Action) GetIndex(game *gt.Game) int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
-//GetKVSet get kv set
+// GetKVSet get kv set
 func (action *Action) GetKVSet(game *gt.Game) (kvset []*types.KeyValue) {
 	value := types.Encode(game)
 	kvset = append(kvset, &types.KeyValue{Key: Key(game.GameId), Value: value})
@@ -497,7 +497,7 @@ func (action *Action) checkGameIsTimeOut(game *gt.Game) bool {
 	return action.blocktime > (game.GetMatchTime() + DurTime)
 }
 
-//根据传入密钥，揭晓游戏结果
+// 根据传入密钥，揭晓游戏结果
 func (action *Action) checkGameResult(game *gt.Game, close *gt.GameClose) (int32, int32) {
 	//如果超时，直接走超时开奖逻辑
 	if action.checkGameIsTimeOut(game) {

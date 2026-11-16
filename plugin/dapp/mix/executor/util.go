@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//考虑vk平滑切换的场景，允许有两个vk存在
+// 考虑vk平滑切换的场景，允许有两个vk存在
 func zkProofVerify(db dbm.KV, proof *mixTy.ZkProofInfo, ty mixTy.VerifyType) error {
 	keys, err := getVerifyKeys(db, int32(ty))
 	if err != nil {

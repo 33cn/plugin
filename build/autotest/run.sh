@@ -101,6 +101,11 @@ function main() {
         echo "$dir"
         rm -rf ../autotest/"$dir" && mkdir "$dir"
         cp -r "$CHAIN33_PATH"/build/autotest/"$dir"/* ./"$dir"/ && copyAll "$dir"
+        # chain33 模块里的 autotest.sh 只 sleep 1s 且走 localhost，GitHub Actions 上会连 [::1] 被拒。
+        # plugin 侧覆盖 local 脚本：绑 127.0.0.1、轮询 RPC，失败时打印 chain33 日志。
+        if [[ "${dir}" == "local" && -f ./autotest.local.sh ]]; then
+            cp ./autotest.local.sh "./${dir}/autotest.sh"
+        fi
         chmod -R 755 "$dir" && cd "$dir" && ./autotest.sh "${@:2}" && cd ../
     fi
 }

@@ -11,6 +11,7 @@ import (
 	token "github.com/33cn/plugin/plugin/dapp/evm/contracts/token/generated"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 const (
@@ -23,12 +24,12 @@ const (
 
 const tokenExecer = "token"
 
-//TokenContract token 合约
+// TokenContract token 合约
 type TokenContract struct {
 	SuperManager []string `json:"superManager,omitempty"`
 }
 
-//NewTokenPrecompile ...
+// NewTokenPrecompile ...
 func NewTokenPrecompile(tokeninfo *TokenContract) StatefulPrecompiledContract {
 	call := &tokenPrecompile{}
 	call.contractInfo = make(map[string]string)
@@ -68,7 +69,7 @@ func (t *tokenPrecompile) checkCreator(evm *EVM, caller ContractRef) bool {
 	return false
 }
 
-//setTokenSymbol 把token下币种的名称缓存起来
+// setTokenSymbol 把token下币种的名称缓存起来
 func (t *tokenPrecompile) setTokenSymbol(evm *EVM, caller ContractRef) {
 	t.cacheLock.Lock()
 	defer t.cacheLock.Unlock()
@@ -98,7 +99,7 @@ func (t *tokenPrecompile) setTokenSymbol(evm *EVM, caller ContractRef) {
 	log.Error("token.Precompiled setTokenSymbol", "err:", err)
 }
 
-//Run ...
+// Run ...
 func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
 	log.Info("token.Precompiled", "Run.Caller", caller.Address().String(), "inputSize:", len(input))
 	if !t.checkCreator(evm, caller) {
@@ -121,6 +122,30 @@ func (t *tokenPrecompile) Run(evm *EVM, caller ContractRef, input []byte, suppli
 		from := common.BytesToAddress(input[4:36])
 		to := common.BytesToAddress(input[36 : 36+32])
 		amount := big.NewInt(1).SetBytes(input[36+32:])
+		// 分叉修复：防止 uint256 calldata → int64 溢出
+		cfg := evm.StateDB.GetConfig()
+		if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
+			if !amount.IsInt64() {
+				err = fmt.Errorf("token.Precompiled transfer amount exceeds int64 range: %s", amount.String())
+				ret = []byte(err.Error())
+				return
+			}
+			v := amount.Int64()
+			if v <= 0 {
+				err = fmt.Errorf("token.Precompiled transfer amount must be positive: %d", v)
+				ret = []byte(err.Error())
+				return
+			}
+			var ok bool
+			ok, err = t.callTransfer(evm, from, to, caller.Address(), v)
+			if err != nil {
+				log.Error("token.Precompiled Run", "callTransfer", err, "input:", common.Bytes2Hex(input))
+				ret = []byte(err.Error())
+				return
+			}
+			ret, err = t.encode("transfer", ok)
+			return
+		}
 		var ok bool
 		ok, err = t.callTransfer(evm, from, to, caller.Address(), amount.Int64())
 		if err != nil {

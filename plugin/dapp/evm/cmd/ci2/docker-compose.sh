@@ -163,6 +163,11 @@ function run_testcase(){
   #从创世地址导出部分币用于挖矿 110000 coins
   chain33_BlockWait 10 ${MCli}
   targeBalance=110000
+  local elapsed=0
+  # 票是成批关闭的（每张回 ticketPrice+coinReward=3005），批次间隔可达 2 分钟，
+  # 且这条链启动慢（首块曾耗时 50s）。预算要能容纳启动 + 至少两个完整批次，
+  # 否则会在余额还在上涨时被掐断
+  local timeout=600
   while true; do
   result=$(${CLI} account balance -a "${genesis}" -e ticket | jq -r ".balance")
   balance=$(printf "%.0f\n" $result)
@@ -170,7 +175,12 @@ function run_testcase(){
   if [ $((balance))  -ge ${targeBalance} ];then
     break
   fi
+  if [ "${elapsed}" -ge "${timeout}" ]; then
+    echo "wait genesis ticket balance timeout: expect>=${targeBalance}, got=${balance}"
+    exit 1
+  fi
   sleep 1
+  elapsed=$((elapsed + 1))
   done
 
   local rawtx=$(${CLI} coins withdraw  -e ticket -a 110000  -n "take test money")
@@ -238,18 +248,60 @@ function bindMiner(){
       fi
 
       chain33_QueryTx ${hash} ${MCli}
-      #检查节点的绑定挖矿的冷钱包地址
-      coldAddrs=$(${CLI} ticket cold -m ${m4minerAddr} |jq ".datas")
-      preCut=${coldAddrs#*[}
-      realColdAddr=$( echo ${preCut%]*}|tr -d '\n' |tr -d '"')
-      echo "coldAddr:${realColdAddr}"
-      echo "m4normal:${m4normalAddr}"
-
-      if [ "${realColdAddr}" != "${m4normalAddr}" ]; then
-        echo "addr should equal"
-         exit 1
-      fi
+      waitMinerColdAddrs "${m4minerAddr}" "${m4normalAddr}"
 }
+# 查询矿工绑定的冷地址。无绑定时链上返回 ErrNotFound（CLI os.Exit(1)），视为空列表。
+# 其它 CLI/RPC 错误原样失败，避免把节点异常当成解绑成功。
+function queryMinerColdAddrs() {
+    local miner=$1
+    local out
+    out=$(${CLI} ticket cold -m "${miner}" 2>&1) || true
+    if echo "${out}" | grep -q "ErrNotFound"; then
+        echo ""
+        return 0
+    fi
+    if echo "${out}" | jq -e '.datas' >/dev/null 2>&1; then
+        echo "${out}" | jq -r '.datas // [] | join(" ")'
+        return 0
+    fi
+    echo "ticket cold unexpected output: ${out}" >&2
+    return 1
+}
+
+# expect 为空表示解绑成功（无冷地址）；非空则等到查出该地址。
+# 绑定/解绑交易上链后 local 查询可能仍短暂 ErrNotFound 或旧值，故轮询。
+# queryMinerColdAddrs 失败（非 ErrNotFound 的 CLI 错误）不把空串当成功，继续重试到超时。
+function waitMinerColdAddrs() {
+    local miner=$1
+    local expect=$2
+    # ticket 共识下出块 3~5s，15s 只够 3~5 个块，不足以覆盖 local 索引延迟
+    local timeout=60
+    local interval=1
+    local elapsed=0
+    local addrs=""
+    local qok=0
+    while true; do
+        addrs=""
+        qok=0
+        addrs=$(queryMinerColdAddrs "${miner}") && qok=1 || qok=0
+        if [ "${qok}" -eq 1 ] && [ "${addrs}" == "${expect}" ]; then
+            echo "coldAddr:${addrs}"
+            if [ -n "${expect}" ]; then
+                echo "m4normal:${expect}"
+            else
+                echo "unbind success, no cold addr"
+            fi
+            return 0
+        fi
+        if [ "${elapsed}" -ge "${timeout}" ]; then
+            echo "ticket cold timeout: expect '${expect}', got '${addrs}' query_ok=${qok}"
+            return 1
+        fi
+        sleep "${interval}"
+        elapsed=$((elapsed + interval))
+    done
+}
+
 function closeBindMiner() {
     ip=$( ${CLI} net info | jq -r ".externalAddr")
     MCli=http://${ip}:8801
@@ -271,15 +323,7 @@ function closeBindMiner() {
       fi
 
       chain33_QueryTx ${hash} ${MCli}
-      #检查节点的绑定挖矿的冷钱包地址
-      coldAddrs=$(${CLI} ticket cold -m ${m4minerAddr} |jq ".datas")
-      preCut=${coldAddrs#*[}
-      realColdAddr=$( echo ${preCut%]*}|tr -d '\n' |tr -d '"')
-      echo "coldAddr:${realColdAddr}"
-      if [ -n "${realColdAddr}" ];then
-          exit 1
-
-      fi
+      waitMinerColdAddrs "${m4minerAddr}" ""
 }
 
 #关闭代理挖矿源地址的票
@@ -295,15 +339,29 @@ function closeColdAddrTicket() {
       echo "ticket balance:${result}"
       ${CLI} wallet auto_mine -f 0
       sleep 10
-      hash=$(${CLI} ticket close | jq ".hashes")
-      preCut=${hash#*[}
-      realhash=$( echo ${preCut%]*}|tr -d '\n' |tr -d '"')
-      echo "ticket close hash:${realhash}"
+      local elapsed=0
+      # 关闭自动挖矿后要等票进入可关闭状态，ticket 共识出块 3~5s，15s 余量不够
+      local timeout=60
+      realhash=""
+      while [ "${elapsed}" -lt "${timeout}" ]; do
+        hash=$(${CLI} ticket close 2>/dev/null | jq ".hashes" 2>/dev/null || true)
+        preCut=${hash#*[}
+        realhash=$( echo ${preCut%]*}|tr -d '\n' |tr -d '"')
+        echo "ticket close hash:${realhash}"
+        if [ -n "${realhash}" ]; then
+            break
+        fi
+        sleep 1
+        elapsed=$((elapsed + 1))
+      done
       if [ -z "${realhash}" ]; then
+          echo "ticket close timeout: empty hash"
           exit 1
       fi
       chain33_QueryTx ${realhash} ${MCli}
       #Check ticket balance/frozen
+      elapsed=0
+      timeout=120
       while true; do
         result=$(${CLI} account balance -a "${m4normalAddr}" -e ticket)
         local balance=$(echo "${result}" | jq -r ".balance")
@@ -315,7 +373,12 @@ function closeColdAddrTicket() {
         if [ $((checkBalance))  -eq 0 ];then
             break
         fi
+        if [ "${elapsed}" -ge "${timeout}" ]; then
+            echo "wait ticket frozen==0 timeout: frozen=${frozen}"
+            exit 1
+        fi
         sleep 1
+        elapsed=$((elapsed + 1))
       done
 
 
@@ -383,13 +446,20 @@ function trans2Ticket() {
       #等待挖矿
       #获取tiket票数
 
+      local elapsed=0
+      local timeout=120
       while true; do
         ticketNum=$(${CLI} ticket count)
         echo "ticketNum:${ticketNum} time:$(date +"%s") "
         if [ ${ticketNum} -gt 0 ]; then
           break
         fi
+        if [ "${elapsed}" -ge "${timeout}" ]; then
+            echo "wait ticket count timeout: ticketNum=${ticketNum}"
+            exit 1
+        fi
         sleep 1
+        elapsed=$((elapsed + 1))
         done
 }
 

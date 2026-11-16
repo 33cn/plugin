@@ -79,7 +79,8 @@ func signtxs(priv crypto.PrivKey, cert []byte) {
 	signtx(tx13, priv, cert)
 }
 
-/**
+/*
+*
 初始化Author实例和userloader
 */
 func initEnv() (*types.Chain33Config, error) {
@@ -114,7 +115,8 @@ func initEnv() (*types.Chain33Config, error) {
 	return cfg, nil
 }
 
-/**
+/*
+*
 TestCase01 带证书的交易验签
 */
 func TestChckSign(t *testing.T) {
@@ -128,7 +130,8 @@ func TestChckSign(t *testing.T) {
 	assert.Equal(t, true, tx1.CheckSign(0))
 }
 
-/**
+/*
+*
 TestCase10 带证书的多交易验签
 */
 func TestChckSigns(t *testing.T) {
@@ -141,13 +144,14 @@ func TestChckSigns(t *testing.T) {
 
 	for i, tx := range txs {
 		if !tx.CheckSign(0) {
-			t.Error(fmt.Sprintf("error check tx[%d]", i+1))
+			t.Errorf("error check tx[%d]", i+1)
 			return
 		}
 	}
 }
 
-/**
+/*
+*
 TestCase02 带证书的交易并行验签
 */
 func TestChckSignsPara(t *testing.T) {
@@ -166,7 +170,8 @@ func TestChckSignsPara(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 TestCase03 不带证书，公链签名算法验证
 */
 func TestChckSignWithNoneAuth(t *testing.T) {
@@ -184,7 +189,8 @@ func TestChckSignWithNoneAuth(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 TestCase04 不带证书，SM2签名验证
 */
 func TestChckSignWithSm2(t *testing.T) {
@@ -209,7 +215,8 @@ func TestChckSignWithSm2(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 TestCase05 不带证书，secp256r1签名验证
 */
 func TestChckSignWithEcdsa(t *testing.T) {
@@ -233,7 +240,8 @@ func TestChckSignWithEcdsa(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 TestCase 06 证书检验
 */
 func TestValidateCert(t *testing.T) {
@@ -254,7 +262,8 @@ func TestValidateCert(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 Testcase07 noneimpl校验器验证（回滚到未开启证书验证的区块使用）
 */
 func TestValidateTxWithNoneAuth(t *testing.T) {
@@ -276,7 +285,8 @@ func TestValidateTxWithNoneAuth(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 Testcase08 重载历史证书
 */
 func TestReloadCert(t *testing.T) {
@@ -298,7 +308,8 @@ func TestReloadCert(t *testing.T) {
 	}
 }
 
-/**
+/*
+*
 Testcase09 根据高度重载历史证书
 */
 func TestReloadByHeight(t *testing.T) {

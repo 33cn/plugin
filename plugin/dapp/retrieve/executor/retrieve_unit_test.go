@@ -78,7 +78,7 @@ func TestExecPrepare(t *testing.T) {
 	}
 }
 
-//timelimit
+// timelimit
 func TestExecPerform(t *testing.T) {
 	var targetReceipt types.Receipt
 	var targetErr = rt.ErrRetrievePeriodLimit

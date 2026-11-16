@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -18,6 +19,37 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
+
+// checkBlockedAccount 合约内部调用/创建的黑名单拦截，按当前区块高度选取名单版本。
+// 命中返回包装后的 types.ErrBlockedAccount，由调用方返回 error 触发 RevertToSnapshot。
+// 与 executor 层共用同一份按高度分版本的名单，按 EVM 地址（0x 字符串）检查。
+//
+// 这是 chain33 框架层看不见的一层：框架只解析交易信封（from/to/ContractAddr/Para），
+// 合约运行后内部 CALL 了谁只存在于运行时栈上。Call 的 target 检查是阻止
+// "干净用户 → 干净合约 → CALL → 黑名单合约 → 转出自身余额" 的唯一位置
+// （docs/security/evm-account-blacklist.md 场景 B1，blacklist_gap_test.go 有对应用例）。
+// caller 维度则是纵深防御：顶层 caller 即 tx.From 已被框架拦截，
+// 内部 caller 若是黑名单合约，它必须先通过某次 Call 的 target 检查才能执行到这里。
+// CallCode / DelegateCall / StaticCall 不做检查：它们借目标代码在调用者上下文执行，
+// 动的是调用者的存储和余额，不构成从黑名单打出的路径。
+// 唯一例外是 DELEGATECALL 到黑名单代码执行 SELFDESTRUCT：在 ForkEVMSuicidePayer 之前
+// opSuicide 的付款方取 contract.CodeAddr，即黑名单合约本身，只有 statedb.Transfer 的
+// sender 检查能拦，历史重放仍依赖它；该分叉之后付款方改为 contract.Address()，
+// 代码合约不再是付款方，这条路径对新区块不再成立。
+func checkBlockedAccount(evm *EVM, addrs ...common.Address) error {
+	cfg := evm.cfg
+	if cfg == nil || evm.BlockNumber == nil {
+		return nil
+	}
+	height := evm.BlockNumber.Int64()
+	for _, addr := range addrs {
+		if cfg.IsBlockedAccount(addr.String(), height) {
+			log.Error("checkBlockedAccount hit", "height", height, "addr", addr.String())
+			return fmt.Errorf("%w: %s", types.ErrBlockedAccount, addr.String())
+		}
+	}
+	return nil
+}
 
 type (
 	// CanTransferFunc 检查制定账户是否有足够的金额进行转账
@@ -36,9 +68,9 @@ func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte,
 	if contract.CodeAddr != nil {
 		p, sp, _ := evm.precompile(*contract.CodeAddr)
 		if p != nil {
-			ret, contract.Gas, err = RunPrecompiledContract(p, input, contract.Gas)
+			_, contract.Gas, _ = RunPrecompiledContract(p, input, contract.Gas)
 		} else if sp != nil {
-			ret, contract.Gas, err = RunStateFulPrecompiledContract(evm, contract, sp, input, contract.Gas)
+			_, contract.Gas, _ = RunStateFulPrecompiledContract(evm, contract, sp, input, contract.Gas)
 		}
 	}
 	// 在此处打印下自定义合约的错误信息
@@ -200,6 +232,13 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, -1, gas, err
 	}
 
+	// 账户黑名单：合约内部调用拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）。
+	// addr（被调目标）是本检查的实质价值所在，caller 为纵深防御，见 checkBlockedAccount 注释。
+	if berr := checkBlockedAccount(evm, caller.Address(), addr); berr != nil {
+		log.Error("Call blocked account", "caller", caller.Address().String(), "addr", addr.String(), "err", berr)
+		return nil, -1, gas, berr
+	}
+
 	p, sp, isPrecompile := evm.precompile(addr)
 	if !evm.StateDB.Exist(addr.String()) {
 		// 合约地址在自定义合约和预编译合约中都不存在时，可能为外部账户
@@ -230,10 +269,19 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	snapshot = evm.StateDB.Snapshot()
 	to := AccountRef(addr)
 	// 向合约地址转账
-	evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
+	cfg := evm.StateDB.GetConfig()
+	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
+		if value > 0 && !evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value) {
+			log.Error("evm call transfer failed", "caller", caller.Address().String(), "to", to.Address().String(), "value", value)
+			evm.StateDB.RevertToSnapshot(snapshot)
+			return nil, snapshot, gas, model.ErrInsufficientBalance
+		}
+	} else {
+		evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
+	}
 	log.Info("evm call", "caller address", caller.Address().String(), "contract address", to.Address().String(), "value", value)
 	// 从ForkV20EVMState开始，状态数据存储发生变更，需要做数据迁移
-	cfg := evm.StateDB.GetConfig()
+	cfg = evm.StateDB.GetConfig()
 	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
 		evm.StateDB.TransferStateData(addr.String())
 	}
@@ -481,7 +529,33 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		return nil, -1, gas, err
 	}
 
-	evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value)
+	// 账户黑名单：合约创建拦截，返回 error 触发 RevertToSnapshot（ExecPack 语义）。
+	// 顶层 Create 的 caller / contractAddr 已由 chain33 覆盖；此处主要拦 CREATE/CREATE2
+	// 派生出的合约地址恰好命中名单的情况（概率意义上的兜底）。
+	if berr := checkBlockedAccount(evm, caller.Address(), contractAddr); berr != nil {
+		log.Error("Create blocked account", "caller", caller.Address().String(), "contractAddr", contractAddr.String(), "err", berr)
+		return nil, -1, gas, berr
+	}
+
+	// 向合约地址转账
+	cfg := evm.StateDB.GetConfig()
+	// From ForkEVMTransferRevert on, the snapshot is taken before the transfer so that a
+	// failed create also reverts the attached value (see transferChange.revert).
+	snapshotBeforeTransfer := cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMTransferRevert)
+	if snapshotBeforeTransfer {
+		snapshot = evm.StateDB.Snapshot()
+	}
+	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
+		if value > 0 && !evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value) {
+			if snapshotBeforeTransfer {
+				evm.StateDB.RevertToSnapshot(snapshot)
+			}
+			log.Error("evm create transfer failed", "caller", caller.Address().String(), "contractAddr", contractAddr.String(), "value", value)
+			return nil, -1, gas, model.ErrInsufficientBalance
+		}
+	} else {
+		evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value)
+	}
 
 	// 创建新的合约对象，包含双方地址以及合约代码，可用Gas信息
 	var bigValue = new(big.Int).SetUint64(value)
@@ -498,7 +572,9 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	contract.SetCallCode(&contractAddr, common.ToHash(code), code)
 
 	// 创建一个新的账户对象（合约账户）
-	snapshot = evm.StateDB.Snapshot()
+	if !snapshotBeforeTransfer {
+		snapshot = evm.StateDB.Snapshot()
+	}
 	evm.StateDB.CreateAccount(contractAddr.String(), contract.CallerAddress.String(), execName, alias)
 
 	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {

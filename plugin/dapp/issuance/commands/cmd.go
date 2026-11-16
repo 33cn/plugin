@@ -51,7 +51,7 @@ func addIssuanceCreateFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("period", "p", 0, "period")
 }
 
-//IssuanceCreate ....
+// IssuanceCreate ....
 func IssuanceCreate(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -91,7 +91,7 @@ func addIssuanceDebtFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("value")
 }
 
-//IssuanceDebt ...
+// IssuanceDebt ...
 func IssuanceDebt(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -128,7 +128,7 @@ func addIssuanceRepayFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("debtID")
 }
 
-//IssuanceRepay ...
+// IssuanceRepay ...
 func IssuanceRepay(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -165,7 +165,7 @@ func addIssuancePriceFeedFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("volume")
 }
 
-//IssuancePriceFeed ...
+// IssuancePriceFeed ...
 func IssuancePriceFeed(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -200,7 +200,7 @@ func addIssuanceCloseFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("issuanceID")
 }
 
-//IssuanceClose ...
+// IssuanceClose ...
 func IssuanceClose(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -234,7 +234,7 @@ func addIssuanceManageFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("addr")
 }
 
-//IssuanceManage ...
+// IssuanceManage ...
 func IssuanceManage(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 
@@ -252,7 +252,7 @@ func IssuanceManage(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-//IssuacneQueryPriceCmd ...
+// IssuacneQueryPriceCmd ...
 func IssuacneQueryPriceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "price",
@@ -262,7 +262,7 @@ func IssuacneQueryPriceCmd() *cobra.Command {
 	return cmd
 }
 
-//IssuanceQueryPrice ...
+// IssuanceQueryPrice ...
 func IssuanceQueryPrice(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
@@ -275,7 +275,7 @@ func IssuanceQueryPrice(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//IssuanceQueryUserBalanceCmd ...
+// IssuanceQueryUserBalanceCmd ...
 func IssuanceQueryUserBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance",
@@ -291,7 +291,7 @@ func addIssuanceQueryBalanceFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("address")
 }
 
-//IssuanceQueryUserBalance ...
+// IssuanceQueryUserBalance ...
 func IssuanceQueryUserBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("address")
@@ -333,7 +333,7 @@ func addIssuanceQueryFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("debtID", "d", "", "debt ID")
 }
 
-//IssuanceQuery ...
+// IssuanceQuery ...
 func IssuanceQuery(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	issuanceID, _ := cmd.Flags().GetString("issuanceID")

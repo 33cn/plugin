@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-//key ...
+// key ...
 var (
 	lastSyncHeightPrefix              = []byte("lastSyncHeight:")
 	chain33ToEthBurnLockTxHashPrefix  = "chain33ToEthBurnLockTxHash"
@@ -72,7 +72,7 @@ func (chain33Relayer *Relayer4Chain33) getStatusCheckedIndex() int64 {
 	return index
 }
 
-//获取上次同步到app的高度
+// 获取上次同步到app的高度
 func (chain33Relayer *Relayer4Chain33) loadLastSyncHeight() int64 {
 	height, err := utils.LoadInt64FromDB(lastSyncHeightPrefix, chain33Relayer.db)
 	if nil != err && err != types.ErrHeightNotExist {

@@ -41,11 +41,11 @@ proj := "build"
 default: build
 
 build:
-	@go build $(BUILD_FLAGS) -v -i -o $(EBRELAER) $(SRC_EBRELAYER)
-	@go build $(BUILD_FLAGS) -v -i -o $(CLI_A) $(SRC_EBCLI)
-	@go build $(BUILD_FLAGSB) -v -i -o $(CLI_B) $(SRC_EBCLI)
-	@go build $(BUILD_FLAGSC) -v -i -o $(CLI_C) $(SRC_EBCLI)
-	@go build $(BUILD_FLAGSD) -v -i -o $(CLI_D) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGS) -v -o $(EBRELAER) $(SRC_EBRELAYER)
+	@go build $(BUILD_FLAGS) -v -o $(CLI_A) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSB) -v -o $(CLI_B) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSC) -v -o $(CLI_C) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSD) -v -o $(CLI_D) $(SRC_EBCLI)
 	@cp ebrelayer/relayer.toml build/
 
 rebuild:
@@ -53,13 +53,13 @@ rebuild:
 	make build
 
 cli:
-	@go build $(BUILD_FLAGS) -v -i -o $(CLI_A) $(SRC_EBCLI)
-	@go build $(BUILD_FLAGSB) -v -i -o $(CLI_B) $(SRC_EBCLI)
-	@go build $(BUILD_FLAGSC) -v -i -o $(CLI_C) $(SRC_EBCLI)
-	@go build $(BUILD_FLAGSD) -v -i -o $(CLI_D) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGS) -v -o $(CLI_A) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSB) -v -o $(CLI_B) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSC) -v -o $(CLI_C) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSD) -v -o $(CLI_D) $(SRC_EBCLI)
 
 build_ci: depends ## Build the binary file for CI
-	@go build -v -i -o $(CLI) $(SRC_EBCLI)
+	@go build -v -o $(CLI) $(SRC_EBCLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
 	@cp chain33.toml build/
 

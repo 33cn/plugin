@@ -94,6 +94,71 @@ func validTitle(cfg *types.Chain33Config, title string) bool {
 	return len(title) > 0
 }
 
+// checkParaTitleExecMatch 分叉后校验入口交易携带的title与交易execer精确对应，
+// 即title必须是user.p.<name>.且execer为title+paracross。防止用真实平行链的execer
+// (user.p.superx.paracross)携带伪造的前缀title(user.p.super)创建节点组/节点，
+// 再借助跨链交易的前缀匹配接管真实平行链资产。
+func (a *action) checkParaTitleExecMatch(title string) error {
+	cfg := a.api.GetConfig()
+	if !cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return nil
+	}
+
+	normalized := pt.NormalizeParaTitle(title)
+	//title必须为规范形式(user.p.<name>.)，避免以非规范形式写入mavl key导致后续commit无法对应
+	if title != normalized {
+		return errors.Wrapf(pt.ErrInvalidTitle, "para title should end with '.', title=%s", title)
+	}
+	if !pt.IsValidParaTitle(normalized) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "invalid para title=%s", title)
+	}
+
+	exec := string(a.tx.Execer)
+	if !types.IsParaExecName(exec) {
+		//分叉前主链上存在直接使用paracross执行器的历史交易，保持兼容
+		if !cfg.IsPara() && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
+			return errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", exec)
+		}
+		return nil
+	}
+
+	if !pt.IsExactParaTitleExec(normalized, exec) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "title=%s not match exec=%s", title, exec)
+	}
+	return nil
+}
+
+// checkCrossTxTitleMatch 分叉后执行的跨链交易必须精确属于该title的平行链：title必须是规范形式
+// user.p.<name>.且execer精确等于title+paracross。防止伪造的前缀title(如user.p.super)或
+// "真实链title去掉结尾'.'"的非规范title(如user.p.superx，与真实链user.p.superx.是两个不同的状态key)
+// 执行真实平行链的跨链交易。该检查在跨链交易执行入口，同时覆盖paracross commit和rollup两条路径，
+// 即使某个伪造title的节点组在分叉前已经存在，也无法再通过rollup等其他入口执行真实平行链的跨链交易。
+func (a *action) checkCrossTxTitleMatch(title string, tx *types.Transaction) error {
+	cfg := a.api.GetConfig()
+	if !cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return nil
+	}
+	if tx == nil || !pt.IsExactParaTitleExec(title, string(tx.Execer)) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "cross tx exec=%s not match para title=%s",
+			common.ToHex(tx.GetExecer()), title)
+	}
+	return nil
+}
+
+// checkCommitParaTitle 分叉后commit交易携带的title必须是规范的平行链title(user.p.<name>.),
+// 防止用伪造的前缀title(如user.p.super)建立节点组后提交commit，触发真实平行链的跨链交易
+func (a *action) checkCommitParaTitle(title string) error {
+	cfg := a.api.GetConfig()
+	if !cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return nil
+	}
+	//必须是规范形式，user.p.super 这类缺少结尾'.'的title是真实平行链user.p.superx.的前缀
+	if !pt.IsValidParaTitle(title) {
+		return errors.Wrapf(pt.ErrInvalidTitle, "invalid commit para title=%s", title)
+	}
+	return nil
+}
+
 func validNode(addr string, nodes map[string]struct{}) bool {
 	if _, exist := nodes[addr]; exist {
 		return exist
@@ -139,7 +204,7 @@ func checkCommitInfo(cfg *types.Chain33Config, commit *pt.ParacrossNodeStatus) e
 	return nil
 }
 
-//区块链中不能使用float类型
+// 区块链中不能使用float类型
 func isCommitDone(nodes, mostSame int) bool {
 	return 3*mostSame > 2*nodes
 }
@@ -236,7 +301,7 @@ func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight, execHeight int64,
 	}
 }
 
-//GetMostCommit ...
+// GetMostCommit ...
 func GetMostCommit(commits [][]byte) (int, string) {
 	stats := make(map[string]int)
 	n := len(commits)
@@ -258,7 +323,7 @@ func GetMostCommit(commits [][]byte) (int, string) {
 	return most, hash
 }
 
-//需要在ForkLoopCheckCommitTxDone后使用
+// 需要在ForkLoopCheckCommitTxDone后使用
 func getMostResults(mostHash []byte, stat *pt.ParacrossHeightStatus) []byte {
 	for i, hash := range stat.BlockDetails.BlockHashs {
 		if bytes.Equal(mostHash, hash) {
@@ -332,7 +397,7 @@ func (a *action) isValidSuperNode(addr string) error {
 	return nil
 }
 
-//相同的BlockHash，只保留一份数据
+// 相同的BlockHash，只保留一份数据
 func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.ParacrossNodeStatus) {
 	if stat.BlockDetails == nil {
 		stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
@@ -346,7 +411,7 @@ func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.Paracross
 	stat.BlockDetails.TxResults = append(stat.BlockDetails.TxResults, commit.TxResult)
 }
 
-//根据nodes过滤掉可能退出了的addrs
+// 根据nodes过滤掉可能退出了的addrs
 func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}) {
 	details := &pt.ParacrossStatusDetails{}
 	for i, addr := range stat.Details.Addrs {
@@ -369,9 +434,9 @@ func updateSupervisionDetailsCommitAddrs(stat *pt.ParacrossHeightStatus, nodes m
 	stat.SupervisionDetails = supervisionDetailsDetails
 }
 
-//自共识分阶段使能，综合考虑挖矿奖励和共识分配奖励，判断是否自共识使能需要采用共识的高度，而不能采用当前区块高度a.height
-//考虑自共识使能区块高度100，如果采用区块高度判断，则在100高度可能收到80~99的20条共识交易，这20条交易在100高度参与共识，则无奖励可分配，而且共识高度将是80而不是100
-//采用共识高度commit.Status.Height判断，则严格执行了产生奖励和分配奖励，且共识高度从100开始
+// 自共识分阶段使能，综合考虑挖矿奖励和共识分配奖励，判断是否自共识使能需要采用共识的高度，而不能采用当前区块高度a.height
+// 考虑自共识使能区块高度100，如果采用区块高度判断，则在100高度可能收到80~99的20条共识交易，这20条交易在100高度参与共识，则无奖励可分配，而且共识高度将是80而不是100
+// 采用共识高度commit.Status.Height判断，则严格执行了产生奖励和分配奖励，且共识高度从100开始
 func paraCheckSelfConsOn(cfg *types.Chain33Config, db dbm.KV, commit *pt.ParacrossNodeStatus) (bool, *types.Receipt, error) {
 	if !cfg.IsDappFork(commit.Height, pt.ParaX, pt.ForkParaSelfConsStages) {
 		return true, nil, nil
@@ -393,6 +458,10 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddrs 
 	cfg := a.api.GetConfig()
 	err := checkCommitInfo(cfg, commit)
 	if err != nil {
+		return err
+	}
+
+	if err := a.checkCommitParaTitle(commit.Title); err != nil {
 		return err
 	}
 
@@ -454,7 +523,7 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 	return ret
 }
 
-//get secp256 addr's bls pubkey
+// get secp256 addr's bls pubkey
 func getAddrBlsPubKey(db dbm.KV, title, addr string) (string, error) {
 	addrStat, err := getNodeAddr(db, title, addr)
 	if err != nil {
@@ -463,7 +532,7 @@ func getAddrBlsPubKey(db dbm.KV, title, addr string) (string, error) {
 	return addrStat.BlsPubKey, nil
 }
 
-//bls签名共识交易验证 大约平均耗时3ms (2~4ms)
+// bls签名共识交易验证 大约平均耗时3ms (2~4ms)
 func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
 	signAddrs := util.GetAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
@@ -541,7 +610,7 @@ func (a *action) getValidCommitAddrs(commit *pt.ParacrossCommitAction, nodesMap 
 	return validAddrs, nil
 }
 
-//共识commit　msg　处理
+// 共识commit　msg　处理
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	//平行链侧，自共识未使能则不处理
@@ -709,7 +778,7 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	return receipt, nil
 }
 
-//分叉以前stat里面只记录了blockhash的信息，没有crossTxHash等信息，无法通过stat直接重构出mostCommitStatus
+// 分叉以前stat里面只记录了blockhash的信息，没有crossTxHash等信息，无法通过stat直接重构出mostCommitStatus
 func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus,
 	nodes map[string]struct{}, supervisionNodes map[string]struct{}) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
@@ -834,7 +903,8 @@ func isHaveCrossTxs(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus) bo
 
 	haveCrossTxs := len(status.CrossTxHashs) > 0
 	//ForkCommitTx后，CrossTxHashs[][] 所有跨链交易做成一个校验hash，如果没有则[0]为nil
-	if status.Height > 0 && pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
+	//注意先判断切片非空，否则CrossTxHashs为空时下面访问[0]会越界panic
+	if haveCrossTxs && status.Height > 0 && pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkCommitTx) && len(status.CrossTxHashs[0]) == 0 {
 		haveCrossTxs = false
 	}
 	return haveCrossTxs
@@ -860,7 +930,7 @@ func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 	return nil, nil
 }
 
-//由于可能对当前块的共识交易进行处理，需要全部数据保存到statedb，通过tx获取数据无法处理当前块的场景
+// 由于可能对当前块的共识交易进行处理，需要全部数据保存到statedb，通过tx获取数据无法处理当前块的场景
 func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
 
@@ -926,7 +996,7 @@ func (a *action) checkCommitTxDone(stat *pt.ParacrossHeightStatus, nodes, superv
 	return a.commitTxDoneByStat(stat, status, nodes, supervisionNodes)
 }
 
-//只根据stat的信息在commitDone之后重构一个commitMostStatus做后续处理
+// 只根据stat的信息在commitDone之后重构一个commitMostStatus做后续处理
 func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus, nodes, supervisionNodes map[string]struct{}) (*types.Receipt, error) {
 	clog.Debug("paracross.commitTxDoneByStat", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
 	for i, v := range stat.Details.Addrs {
@@ -995,7 +1065,7 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 	return receipt, nil
 }
 
-//主链共识跳跃条件： 仅支持主链共识初始高度为-1，也就是没有共识过，共识过不允许再跳跃
+// 主链共识跳跃条件： 仅支持主链共识初始高度为-1，也就是没有共识过，共识过不允许再跳跃
 func (a *action) isAllowMainConsensJump(commit *pt.ParacrossNodeStatus, titleStatus *pt.ParacrossStatus) bool {
 	cfg := a.api.GetConfig()
 	if cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkLoopCheckCommitTxDone) {
@@ -1007,7 +1077,7 @@ func (a *action) isAllowMainConsensJump(commit *pt.ParacrossNodeStatus, titleSta
 	return false
 }
 
-//平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
+// 平行链自共识无缝切换条件：1，平行链没有共识过，2：commit高度是大于自共识分叉高度且上一次共识的主链高度小于自共识分叉高度，保证只运行一次，
 // 1. 分叉之前，开启过共识的平行链需要从１跳跃，没开启过的将使用新版本，从0开始发送，不用考虑从１跳跃的问题
 // 2. 分叉之后，只有stage.blockHeight== commit.height，也就是stage起始高度时候允许跳跃
 func (a *action) isAllowParaConsensJump(commit *pt.ParacrossNodeStatus, titleStatus *pt.ParacrossStatus) (bool, error) {
@@ -1249,8 +1319,8 @@ func rollbackCrossTxNew(a *action, cross *types.Transaction, crossTxHash []byte)
 //
 //}
 
-//无跨链交易高度列表是人为配置的，是确认的历史高度，是一种特殊处理，不会影响区块状态hash
-//para.ignore.10-100.200-300
+// 无跨链交易高度列表是人为配置的，是确认的历史高度，是一种特殊处理，不会影响区块状态hash
+// para.ignore.10-100.200-300
 func isInIgnoreHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error) {
 	if len(str) <= 0 {
 		return false, nil
@@ -1322,10 +1392,10 @@ func isInHitHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error)
 	return false, nil
 }
 
-//命中高度
-//s: para.hit.10.100, title=user.p.para.
-//在有设置ParaCrossStatusBitMapVerLen的老版本之前，有些共识tx对应的区块没有跨链tx，分片查询很浪费时间，这里统计出来后，
-//增加到配置文件里直接忽略相应高度。采用新的BitMap版本后，主链可以根据版本号判断有没有跨链tx，没有则直接退出，不需要再去区块中检查了。
+// 命中高度
+// s: para.hit.10.100, title=user.p.para.
+// 在有设置ParaCrossStatusBitMapVerLen的老版本之前，有些共识tx对应的区块没有跨链tx，分片查询很浪费时间，这里统计出来后，
+// 增加到配置文件里直接忽略相应高度。采用新的BitMap版本后，主链可以根据版本号判断有没有跨链tx，没有则直接退出，不需要再去区块中检查了。
 func checkIsIgnoreHeight(heightList []string, status *pt.ParacrossNodeStatus) (bool, error) {
 	if len(heightList) <= 0 {
 		return false, nil
@@ -1414,7 +1484,8 @@ func getCrossTxsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatu
 	for _, tx := range paraAllTxs {
 		baseHashs = append(baseHashs, tx.Hash())
 	}
-	paraCrossTxs := FilterParaCrossTxs(paraAllTxs)
+	//分叉后仅保留execer精确对应title的跨链交易，避免前缀title匹配到真实平行链交易
+	paraCrossTxs := filterCrossTxsByExactTitle(cfg, status.MainBlockHeight, status.Title, FilterParaCrossTxs(paraAllTxs))
 	var paraCrossHashs [][]byte
 	for _, tx := range paraCrossTxs {
 		paraCrossHashs = append(paraCrossHashs, tx.Hash())
@@ -1472,7 +1543,8 @@ func getCrossTxs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([
 	}
 	//校验
 	paraBaseTxs := FilterTxsForPara(cfg, blockDetail.FilterParaTxsByTitle(cfg, status.Title))
-	paraCrossTxs := FilterParaCrossTxs(paraBaseTxs)
+	//分叉后仅保留execer精确对应title的跨链交易，避免前缀title匹配到真实平行链交易
+	paraCrossTxs := filterCrossTxsByExactTitle(cfg, status.MainBlockHeight, status.Title, FilterParaCrossTxs(paraBaseTxs))
 	var baseHashs [][]byte
 	for _, tx := range paraBaseTxs {
 		baseHashs = append(baseHashs, tx.Hash())
@@ -1511,6 +1583,12 @@ func (a *action) execCrossTxs(title string, height int64, crossTxs []*types.Tran
 	var receipt types.Receipt
 
 	for i := 0; i < len(crossTxs); i++ {
+		//分叉后跨链交易的execer必须精确对应title，避免前缀title执行其他平行链的跨链交易
+		if err := a.checkCrossTxTitleMatch(title, crossTxs[i]); err != nil {
+			clog.Error("paracross.Commit execCrossTx title not match", "para title", title, "para height", height,
+				"para tx index", i, "error", err)
+			return nil, err
+		}
 		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", common.ToHex(crossTxs[i].Hash()),
 			"res", util.BitMapBit(crossTxResult, uint32(i)))
 		if util.BitMapBit(crossTxResult, uint32(i)) {

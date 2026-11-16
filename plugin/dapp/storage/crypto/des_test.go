@@ -28,7 +28,7 @@ var (
 	}
 )
 
-//DES 加解密测试
+// DES 加解密测试
 func TestDes(t *testing.T) {
 	des := NewDES(keys[0], ivs[0])
 	result, err := des.Encrypt(contents[0])
@@ -43,7 +43,7 @@ func TestDes(t *testing.T) {
 	assert.Equal(t, contents[0], origData)
 }
 
-//3DES 加解密测试
+// 3DES 加解密测试
 func Test3Des(t *testing.T) {
 	des := NewTripleDES(keys[1], ivs[1])
 	result, err := des.Encrypt(contents[0])

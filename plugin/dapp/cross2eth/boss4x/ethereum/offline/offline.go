@@ -181,5 +181,4 @@ func InitCfg(filepath string, cfg interface{}) {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	return
 }

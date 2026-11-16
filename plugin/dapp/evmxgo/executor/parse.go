@@ -18,8 +18,8 @@ const (
 	LockMethod = "lock"
 )
 
-//solidity interface: function lock(address _recipient, address _token, uint256 _amount)
-//铸币交易的接收人必须与发起lock交易时填写的接收地址一致
+// solidity interface: function lock(address _recipient, address _token, uint256 _amount)
+// 铸币交易的接收人必须与发起lock交易时填写的接收地址一致
 func checkMintPara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction, db dbm.KV) error {
 	bridgevmxgoConfig, err := loadBridgevmxgoAddr(db)
 	if nil != err {

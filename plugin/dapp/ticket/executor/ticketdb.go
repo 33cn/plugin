@@ -383,7 +383,22 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 	chain33Cfg := action.api.GetConfig()
 	tickets := make([]*DB, len(tclose.TicketId))
 	cfg := ty.GetTicketMinerParam(chain33Cfg, action.height)
+	//分叉后拒绝重复的 ticketId。本方法先在这个循环里校验并构造 tickets, 全部校验完才进入付款
+	//循环, 中途不写库, 于是同一个 id 出现 N 次会被当成 N 张票各付一次, 而库里只记一次关闭,
+	//重复支取了该返还地址的押金池(见 ty.ForkTicketCloseDup)
+	checkDup := chain33Cfg.IsDappFork(action.height, ty.TicketX, ty.ForkTicketCloseDup)
+	var seenIDs map[string]struct{}
+	if checkDup {
+		seenIDs = make(map[string]struct{}, len(tclose.TicketId))
+	}
 	for i := 0; i < len(tclose.TicketId); i++ {
+		if checkDup {
+			if _, ok := seenIDs[tclose.TicketId[i]]; ok {
+				tlog.Error("TicketClose repeated ticketId", "id", tclose.TicketId[i], "tx", common.ToHex(action.txhash))
+				return nil, ty.ErrDupTicketID
+			}
+			seenIDs[tclose.TicketId[i]] = struct{}{}
+		}
 		ticket, err := readTicket(action.db, tclose.TicketId[i])
 		if err != nil {
 			return nil, err

@@ -234,7 +234,7 @@ func (client *Client) readCommits(commitC <-chan *types.Block, errorC <-chan err
 	}
 }
 
-//轮询任务，去检测本机器是否为validator节点，如果是，则执行打包任务
+// 轮询任务，去检测本机器是否为validator节点，如果是，则执行打包任务
 func (client *Client) pollingTask() {
 	for {
 		select {
@@ -259,7 +259,7 @@ func (client *Client) pollingTask() {
 	}
 }
 
-//CmpBestBlock 比较newBlock是不是最优区块
+// CmpBestBlock 比较newBlock是不是最优区块
 func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	return false
 }

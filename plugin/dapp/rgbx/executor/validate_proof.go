@@ -138,8 +138,15 @@ func (r *rgbx) validateBtcTxProof(txHash string, proof *rtypes.BtcTxProof) (*wir
 		return nil, ErrInvalidBtcTxProof
 	}
 	var btcTx wire.MsgTx
-	if err := btcTx.DeserializeNoWitness(bytes.NewReader(proof.GetTxData())); err != nil {
+	reader := bytes.NewReader(proof.GetTxData())
+	if err := btcTx.DeserializeNoWitness(reader); err != nil {
 		elog.Error("validateBtcTxProof decode btc tx", "txHash", txHash, "err", err)
+		return nil, ErrInvalidBtcTxProof
+	}
+	// 拒绝尾随字节：btcd DeserializeNoWitness 接受 tx 之后的多余字节，若放行，
+	// Exec_Confirm 对原始字节算出的 spendHash 会与 merkle 证明的 txid 脱钩（可塑性）
+	if reader.Len() > 0 {
+		elog.Error("validateBtcTxProof trailing bytes after tx", "txHash", txHash, "trailing", reader.Len())
 		return nil, ErrInvalidBtcTxProof
 	}
 

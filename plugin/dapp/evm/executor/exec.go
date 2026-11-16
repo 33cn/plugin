@@ -58,6 +58,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
 
 	cfg := evm.GetAPI().GetConfig()
+	evm.mStateDB.ResetRevertError()
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	execAddr := evm.getEvmExecAddress()
@@ -102,13 +103,27 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 			receiver = common.BytesToAddress(msg.Para())
 		}
 
+		// 账户黑名单：拦截收发双方命中名单的转账，保持 ExecPack 语义（返回 error 由上层包装）。
+		// caller 已由 chain33 from 维度覆盖；receiver 在 Para 超过 20 字节时只有这里能拦（见 checkEvmBlockedAccount 注释）。
+		if err := checkEvmBlockedAccount(cfg, evm.GetHeight(), caller.String(), receiver.String()); err != nil {
+			log.Error("innerExec blocked account transfer", "caller", caller.String(), "receiver", receiver.String(), "value", msg.Value(), "err", err)
+			return nil, err
+		}
+
 		if !evm.mStateDB.CanTransfer(caller.String(), msg.Value()) {
 			log.Error("innerExec", "Not enough balance to be transferred from", caller.String(), "amout", msg.Value())
 			return nil, types.ErrNoBalance
 		}
 
 		env.StateDB.Snapshot()
-		env.Transfer(env.StateDB, caller, receiver, msg.Value())
+		if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMFixOverflow) {
+			if !env.Transfer(env.StateDB, caller, receiver, msg.Value()) {
+				log.Error("innerExec", "Transfer failed", "from", caller.String(), "to", receiver.String(), "amount", msg.Value())
+				return nil, types.ErrNoBalance
+			}
+		} else {
+			env.Transfer(env.StateDB, caller, receiver, msg.Value())
+		}
 		curVer := evm.mStateDB.GetLastSnapshot()
 		kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
@@ -134,6 +149,14 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	//      evm
 	// 状态机中设置当前交易状态
 	evm.mStateDB.Prepare(common.BytesToHash(txHash), index)
+
+	// 账户黑名单：合约调用/创建时拦截发送方与目标合约地址命中名单的情况。
+	// 两个维度均已由 chain33 的 from / ContractAddr 检查覆盖，此处为纵深防御。
+	if err := checkEvmBlockedAccount(cfg, evm.GetHeight(), msg.From().String(), contractAddrStr); err != nil {
+		log.Error("innerExec blocked account call/create", "from", msg.From().String(), "contractAddr", contractAddrStr, "err", err)
+		return nil, err
+	}
+
 	if isCreate {
 		ret, snapshot, leftOverGas, vmerr = env.Create(runtime.AccountRef(msg.From()), contractAddr, msg.Data(), context.GasLimit, execName, msg.Alias(), msg.Value())
 	} else {
@@ -167,6 +190,14 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		vmerr = fmt.Errorf("%s,detail: %s:", vmerr.Error(), string(ret))
 		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret), "leftOverGas:", leftOverGas, "usedGas:", usedGas)
 		return receipt, vmerr
+	}
+
+	// A snapshot revert that failed leaves the account cache and the receipt describing
+	// different state, which chain33's checkKV can no longer validate. Fail the transaction
+	// (fee-only receipt, state rolled back by the framework) instead of committing it.
+	if rerr := evm.mStateDB.RevertError(); rerr != nil {
+		log.Error("innerExec snapshot revert failed", "error info", rerr)
+		return receipt, rerr
 	}
 
 	// 计算消耗了多少费用（实际消耗的费用）
@@ -416,6 +447,34 @@ func getDataHashKey(addr common.Address) []byte {
 // 从交易信息中获取交易发起人地址
 func getCaller(tx *types.Transaction) common.Address {
 	return *common.StringToAddress(tx.From())
+}
+
+// checkEvmBlockedAccount 在 EVM 执行内部拦截命中黑名单的地址（发送方/接收方/合约地址）。
+// 与 types.CheckTxBlockedAccount 共用同一份按高度分版本的名单，但按地址维度检查（此时地址已解析为字符串）。
+// 不需要额外的 fork 门控：名单版本已按高度选定，分叉高度之前取到的是空名单。
+// 返回 error 后由调用方按 ExecPack 语义处理（保持 revert + 扣费），不升级为 ExecErr。
+//
+// 分层说明（详见 docs/security/evm-account-blacklist.md）：
+// 交易信封上的 from / to / ContractAddr / 20 字节 Para 已由 chain33 在
+// mempool、出块验块、executor.checkTx 三层拦截，真实节点上命中名单的交易进不到本驱动。
+// 因此 innerExec 里对 msg.From / receiver / contractAddr 的检查对真实交易是纵深防御：
+// 唯一的实质覆盖是 isTransferOnly 路径的 receiver —— Para 超过 20 字节时
+// chain33 的 Para 维度看不见，而 BytesToAddress 取后 20 字节仍能解析出黑名单地址。
+// 这些分支已随本分支在主网执行过，撤除需新开 fork 或先审计历史，不可直接删除。
+func checkEvmBlockedAccount(cfg *types.Chain33Config, height int64, addrs ...string) error {
+	if cfg == nil {
+		return nil
+	}
+	for _, addr := range addrs {
+		if addr == "" {
+			continue
+		}
+		if cfg.IsBlockedAccount(addr, height) {
+			log.Error("checkEvmBlockedAccount hit", "height", height, "addr", addr)
+			return fmt.Errorf("%w: %s", types.ErrBlockedAccount, addr)
+		}
+	}
+	return nil
 }
 
 // 从交易信息中获取交易目标地址，在创建合约交易中，此地址为空

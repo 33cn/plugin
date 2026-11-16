@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//EvmCmd 是Evm命令行入口
+// EvmCmd 是Evm命令行入口
 func EvmCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "evm",
@@ -94,16 +94,16 @@ func transferAddress(cmd *cobra.Command, args []string) {
 			fmt.Println(fmt.Errorf("ethereum address is invalid: %v", eth))
 			return
 		}
-		fmt.Println(fmt.Sprintf("Ethereum Address: %v", eth))
-		fmt.Println(fmt.Sprintf("Local Address: %v", evmCommon.BytesToAddress(data).String()))
+		fmt.Printf("Ethereum Address: %v\n", eth)
+		fmt.Printf("Local Address: %v\n", evmCommon.BytesToAddress(data).String())
 		return
 	}
 	if len(local) >= 34 {
 		var addr evmCommon.Address
 		if strings.HasPrefix(local, evmtypes.EvmPrefix) {
 			addr = evmCommon.ExecAddress(local)
-			fmt.Println(fmt.Sprintf("Local Contract Name: %v", local))
-			fmt.Println(fmt.Sprintf("Local Address: %v", addr.String()))
+			fmt.Printf("Local Contract Name: %v\n", local)
+			fmt.Printf("Local Address: %v\n", addr.String())
 		} else {
 			addrP := evmCommon.StringToAddress(local)
 			if addrP == nil {
@@ -111,9 +111,9 @@ func transferAddress(cmd *cobra.Command, args []string) {
 				return
 			}
 			addr = *addrP
-			fmt.Println(fmt.Sprintf("Local Address: %v", local))
+			fmt.Printf("Local Address: %v\n", local)
 		}
-		fmt.Println(fmt.Sprintf("Ethereum Address: %v", checksumAddr(addr.Bytes())))
+		fmt.Printf("Ethereum Address: %v\n", checksumAddr(addr.Bytes()))
 
 		return
 	}
@@ -204,7 +204,7 @@ func parseGetBalanceRes(arg ...interface{}) (interface{}, error) {
 func calcNewContractAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "calc",
-		Short: "calulate new contract address",
+		Short: "calculate new contract address",
 		Run:   calcNewContractAddr,
 	}
 	addCalcNewContractAddrFlags(cmd)

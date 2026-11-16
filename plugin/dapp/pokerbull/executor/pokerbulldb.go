@@ -598,7 +598,7 @@ func (action *Action) GameStart(start *pkt.PBGameStart) (*types.Receipt, error) 
 	// 参数校验
 	if start.PlayerNum <= 0 || start.Value < 0 {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("Invalid parameter"))
+			"err", "Invalid parameter")
 		return nil, types.ErrInvalidParam
 	}
 
@@ -897,7 +897,7 @@ func (action *Action) GamePlay(pbplay *pkt.PBGamePlay) (*types.Receipt, error) {
 	// 参数校验
 	if pbplay.Round <= 0 || pbplay.Value <= 0 {
 		logger.Error("GameStart", "addr", action.fromaddr, "execaddr", action.execaddr,
-			"err", fmt.Sprintf("Invalid parameter"))
+			"err", "Invalid parameter")
 		return nil, types.ErrInvalidParam
 	}
 

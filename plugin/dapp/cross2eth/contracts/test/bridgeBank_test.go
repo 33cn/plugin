@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//"BridgeToken creation (Chain33 assets)"
+// "BridgeToken creation (Chain33 assets)"
 func TestBrigeTokenCreat(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
@@ -48,7 +48,7 @@ func TestBrigeTokenCreat(t *testing.T) {
 	require.Nil(t, err)
 
 	opts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    para.Operator,
 		Context: ctx,
 	}
@@ -109,11 +109,11 @@ func TestBrigeTokenCreat(t *testing.T) {
 	}
 }
 
-//测试在chain33上锁定资产,然后在以太坊上铸币
-//发行token="BTY"
-//铸币NewOracleClaim
-//铸币成功
-//Bridge token minting (for locked chain33 assets)
+// 测试在chain33上锁定资产,然后在以太坊上铸币
+// 发行token="BTY"
+// 铸币NewOracleClaim
+// 铸币成功
+// Bridge token minting (for locked chain33 assets)
 func TestBrigeTokenMint(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
@@ -135,7 +135,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	require.Nil(t, err)
 
 	opts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    para.Operator,
 		Context: ctx,
 	}
@@ -205,7 +205,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, sim)
 	require.Nil(t, err)
 	opts = &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		Context: ctx,
 	}
 
@@ -232,8 +232,8 @@ func TestBrigeTokenMint(t *testing.T) {
 	t.Logf("The minted amount is:%d", balance.Int64())
 }
 
-//测试在以太坊上lock数字资产,包括Eth和Erc20
-//Bridge deposit locking (deposit erc20/eth assets)
+// 测试在以太坊上lock数字资产,包括Eth和Erc20
+// Bridge deposit locking (deposit erc20/eth assets)
 func TestBridgeDepositLock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Bridge deposit locking (Erc20/Eth assets)")
@@ -259,7 +259,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	//创建实例 为userOne铸币 userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -338,10 +338,10 @@ func TestBridgeDepositLock(t *testing.T) {
 	t.Logf("eth bridgeBankBalance changes to:%d", bridgeBankBalance.Int64())
 }
 
-//测试在以太坊上unlock数字资产,包括Eth和Erc20,
-//即从chain33取回在eth上发行的的ETH或ERC20数字资产，之前通过lock操作发送到了chain33
-//现在则通过NewProphecyClaim 的burn操作将数字资产取回
-//Ethereum/ERC20 token unlocking (for burned chain33 assets)
+// 测试在以太坊上unlock数字资产,包括Eth和Erc20,
+// 即从chain33取回在eth上发行的的ETH或ERC20数字资产，之前通过lock操作发送到了chain33
+// 现在则通过NewProphecyClaim 的burn操作将数字资产取回
+// Ethereum/ERC20 token unlocking (for burned chain33 assets)
 func TestBridgeBankUnlock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Ethereum/ERC20 token unlocking (for burned chain33 assets)")
@@ -376,7 +376,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	//userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -482,14 +482,16 @@ func TestBridgeBankUnlock(t *testing.T) {
 		signature)
 	require.Nil(t, err)
 
+	// oracle claim 交易需确认后才生效，Commit 后再查询
+	sim.Commit()
 	userUSDTbalance, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
 	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance.Int64())
 	require.Equal(t, userUSDTbalance.Int64(), newProphecyAmount)
 }
 
-//测试在以太坊上多次unlock数字资产Eth
-//Ethereum/ERC20 token second unlocking (for burned chain33 assets)
+// 测试在以太坊上多次unlock数字资产Eth
+// Ethereum/ERC20 token second unlocking (for burned chain33 assets)
 func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:to be unlocked incrementally by successive burn prophecies (for burned chain33 assets)")
@@ -525,7 +527,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	//userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -636,8 +638,8 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	require.Equal(t, userEthbalance.Int64()+newProphecyAmountSecond, userEthbalanceAfter.Int64())
 }
 
-//测试在以太坊上多次unlock数字资产Erc20
-//Ethereum/ERC20 token unlocking (for burned chain33 assets)
+// 测试在以太坊上多次unlock数字资产Erc20
+// Ethereum/ERC20 token unlocking (for burned chain33 assets)
 func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:ERC20 to be unlocked incrementally by successive burn prophecies (for burned chain33 assets))")
@@ -669,7 +671,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	//创建实例 为userOne铸币 userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		From:    userOne,
 		Context: ctx,
 	}
@@ -743,6 +745,8 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		signature)
 	require.Nil(t, err)
 
+	// oracle claim 交易需确认后才生效，Commit 后再查询（模拟真实链上确认时序）
+	sim.Commit()
 	userUSDTbalance1, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
 	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance1.Int64())
@@ -768,6 +772,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		signature)
 	require.Nil(t, err)
 
+	sim.Commit()
 	userUSDTbalance2, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
 	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance2.Int64())

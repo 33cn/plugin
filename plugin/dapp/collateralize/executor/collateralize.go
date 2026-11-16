@@ -14,7 +14,7 @@ import (
 var clog = log.New("module", "execs.collateralize")
 var driverName = pty.CollateralizeX
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Collateralize{}))

@@ -7,7 +7,7 @@ import (
 	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
 )
 
-//stateDB wrapper
+// stateDB wrapper
 func setStateDB(key, value []byte) {
 	wasmCB.stateKVC.Add(key, value)
 }
@@ -24,7 +24,7 @@ func getStateDB(key []byte) ([]byte, error) {
 	return wasmCB.stateKVC.Get(key)
 }
 
-//localDB wrapper
+// localDB wrapper
 func setLocalDB(key, value []byte) {
 	wasmCB.localCache = append(wasmCB.localCache, &types2.LocalDataLog{
 		Key:   append(calcLocalPrefix(wasmCB.contractName), key...),
@@ -51,7 +51,7 @@ func getLocalDB(key []byte) ([]byte, error) {
 	return wasmCB.GetLocalDB().Get(newKey)
 }
 
-//account wrapper
+// account wrapper
 func getBalance(addr, execer string) (balance, frozen int64, err error) {
 	accounts, err := wasmCB.GetCoinsAccount().GetBalance(wasmCB.GetAPI(), &types.ReqBalance{
 		Addresses: []string{addr},

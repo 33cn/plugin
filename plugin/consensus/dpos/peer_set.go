@@ -202,7 +202,7 @@ func (ps *PeerSet) Remove(peer Peer) {
 	delete(ps.lookup, peer.ID())
 }
 
-//-------------------------peer connection--------------------------------
+// -------------------------peer connection--------------------------------
 func (pc *peerConn) ID() ID {
 	if len(pc.id) != 0 {
 		return pc.id

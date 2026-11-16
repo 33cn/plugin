@@ -21,9 +21,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-//以太坊账户信息
-// 	 privkey : 账户地址对应的私钥
-//	 addr :账户地址
+// 以太坊账户信息
+//
+//	privkey : 账户地址对应的私钥
+//	addr :账户地址
 type Account4Relayer struct {
 	Privkey              []byte   `protobuf:"bytes,1,opt,name=privkey,proto3" json:"privkey,omitempty"`
 	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`

@@ -16,7 +16,7 @@ import (
 	"github.com/phoreproject/bls/g1pubs"
 )
 
-//setting
+// setting
 const (
 	BLSPrivateKeyLength = 32
 	BLSPublicKeyLength  = 48
@@ -90,7 +90,7 @@ func (d Driver) Validate(msg, pub, sig []byte) error {
 	return crypto.BasicValidation(d, msg, pub, sig)
 }
 
-//Aggregate aggregates signatures together into a new signature.
+// Aggregate aggregates signatures together into a new signature.
 func (d Driver) Aggregate(sigs []crypto.Signature) (crypto.Signature, error) {
 	if len(sigs) == 0 {
 		return nil, errors.New("no signatures to aggregate")
@@ -107,7 +107,7 @@ func (d Driver) Aggregate(sigs []crypto.Signature) (crypto.Signature, error) {
 	return SignatureBLS(agsig.Serialize()), nil
 }
 
-//AggregatePublic aggregates public keys together into a new PublicKey.
+// AggregatePublic aggregates public keys together into a new PublicKey.
 func (d Driver) AggregatePublic(pubs []crypto.PubKey) (crypto.PubKey, error) {
 	if len(pubs) == 0 {
 		return nil, errors.New("no public keys to aggregate")
@@ -234,7 +234,7 @@ func (privKey PrivKeyBLS) Equals(other crypto.PrivKey) bool {
 
 // String convert to string
 func (privKey PrivKeyBLS) String() string {
-	return fmt.Sprintf("PrivKeyBLS{*****}")
+	return "PrivKeyBLS{*****}"
 }
 
 // PubKeyBLS PubKey

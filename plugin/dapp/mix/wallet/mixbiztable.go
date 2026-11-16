@@ -31,7 +31,7 @@ var boardOpt = &table.Option{
 		"owner_status"},
 }
 
-//NewStageTable 新建表
+// NewStageTable 新建表
 func NewMixTable(kvdb db.KV) *table.Table {
 	rowmeta := NewMixRow()
 	table, err := table.NewTable(rowmeta, kvdb, boardOpt)
@@ -41,22 +41,22 @@ func NewMixTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//MixRow table meta 结构
+// MixRow table meta 结构
 type MixRow struct {
 	*mix.WalletDbMixInfo
 }
 
-//NewStageRow 新建一个meta 结构
+// NewStageRow 新建一个meta 结构
 func NewMixRow() *MixRow {
 	return &MixRow{WalletDbMixInfo: &mix.WalletDbMixInfo{}}
 }
 
-//CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
+// CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存heightindex)
 func (r *MixRow) CreateRow() *table.Row {
 	return &table.Row{Data: &mix.WalletDbMixInfo{}}
 }
 
-//SetPayload 设置数据
+// SetPayload 设置数据
 func (r *MixRow) SetPayload(data types.Message) error {
 	if d, ok := data.(*mix.WalletDbMixInfo); ok {
 		r.WalletDbMixInfo = d
@@ -65,7 +65,7 @@ func (r *MixRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
-//Get 按照indexName 查询 indexValue
+// Get 按照indexName 查询 indexValue
 func (r *MixRow) Get(key string) ([]byte, error) {
 	switch key {
 	case "heightindex":

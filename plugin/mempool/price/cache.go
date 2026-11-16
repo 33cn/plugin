@@ -49,7 +49,7 @@ func NewQueue(subcfg subConfig) *Queue {
 	}
 }
 
-//GetItem 获取数据通过 key
+// GetItem 获取数据通过 key
 func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 	item, err := cache.Queue.GetItem(hash)
 	if err != nil {
@@ -58,12 +58,12 @@ func (cache *Queue) GetItem(hash string) (*mempool.Item, error) {
 	return item.(*priceScore).Item, nil
 }
 
-//Push 加入数据到队列
+// Push 加入数据到队列
 func (cache *Queue) Push(item *mempool.Item) error {
 	return cache.Queue.Push(&priceScore{Item: item})
 }
 
-//Walk 获取数据通过 key
+// Walk 获取数据通过 key
 func (cache *Queue) Walk(count int, cb func(tx *mempool.Item) bool) {
 	cache.Queue.Walk(count, func(item skiplist.Scorer) bool {
 		return cb(item.(*priceScore).Item)

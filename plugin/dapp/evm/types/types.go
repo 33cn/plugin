@@ -55,6 +55,17 @@ const (
 	//ForkEvmExecNonce 执行器校验nonce
 	ForkEvmExecNonce   = "ForkEvmExecNonce"
 	ForkEvmExecNonceV2 = "ForkEvmExecNonceV2"
+	// ForkEVMFixOverflow 修复 uint64→int64 金额溢出漏洞，在所有资产操作前增加溢出检查
+	ForkEVMFixOverflow = "ForkEVMFixOverflow"
+	// ForkEVMSuicidePayer SELFDESTRUCT pays from the executing account (Address()) instead of
+	// CodeAddr, so that reading the balance, debiting it and suiciding all use the same account
+	ForkEVMSuicidePayer = "ForkEVMSuicidePayer"
+	// ForkEVMTransferRevert makes value transfers revertible: transferChange restores the
+	// pre-transfer account KV, a failed CREATE rolls back its value, and Snapshot.revert
+	// unwinds entries in reverse order. Without it a reverted transfer stays in the account
+	// cache while its receipt KV is dropped, so a later call in the same tx can spend the
+	// phantom balance. Registered in InitFork at MaxHeight, so chains must opt in explicitly.
+	ForkEVMTransferRevert = "ForkEVMTransferRevert"
 )
 
 var (

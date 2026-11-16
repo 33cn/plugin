@@ -47,7 +47,7 @@ const (
 	ActionMultiSigExecTransferFrom = 10005
 )
 
-//多重签名账户执行输出的logid
+// 多重签名账户执行输出的logid
 const (
 	TyLogMultiSigAccCreate = 10000 //只输出多重签名的账户地址
 
@@ -69,7 +69,7 @@ const (
 
 )
 
-//AccAssetsResult 账户资产cli的显示，主要是amount需要转换成浮点型字符串
+// AccAssetsResult 账户资产cli的显示，主要是amount需要转换成浮点型字符串
 type AccAssetsResult struct {
 	Execer   string `json:"execer,omitempty"`
 	Symbol   string `json:"symbol,omitempty"`
@@ -80,7 +80,7 @@ type AccAssetsResult struct {
 	Addr     string `json:"addr,omitempty"`
 }
 
-//DailyLimitResult 每日限额信息的显示cli
+// DailyLimitResult 每日限额信息的显示cli
 type DailyLimitResult struct {
 	Symbol     string `json:"symbol,omitempty"`
 	Execer     string `json:"execer,omitempty"`
@@ -89,7 +89,7 @@ type DailyLimitResult struct {
 	LastDay    string `json:"lastday,omitempty"`
 }
 
-//MultiSigResult 多重签名账户信息的显示cli
+// MultiSigResult 多重签名账户信息的显示cli
 type MultiSigResult struct {
 	CreateAddr     string              `json:"createAddr,omitempty"`
 	MultiSigAddr   string              `json:"multiSigAddr,omitempty"`
@@ -99,14 +99,14 @@ type MultiSigResult struct {
 	RequiredWeight uint64              `json:"requiredWeight,omitempty"`
 }
 
-//UnSpentAssetsResult 每日限额之内未花费额度的显示cli
+// UnSpentAssetsResult 每日限额之内未花费额度的显示cli
 type UnSpentAssetsResult struct {
 	Symbol  string `json:"symbol,omitempty"`
 	Execer  string `json:"execer,omitempty"`
 	UnSpent string `json:"unspent,omitempty"`
 }
 
-//IsAssetsInvalid 资产的合法性检测，Symbol：必须全部大写，例如：BTY,coins.BTY。exec：必须在types.AllowUserExec中存在
+// IsAssetsInvalid 资产的合法性检测，Symbol：必须全部大写，例如：BTY,coins.BTY。exec：必须在types.AllowUserExec中存在
 func IsAssetsInvalid(exec, symbol string) error {
 
 	//exec检测

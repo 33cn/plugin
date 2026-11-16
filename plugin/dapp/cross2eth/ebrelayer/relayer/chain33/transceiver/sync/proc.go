@@ -42,7 +42,7 @@ func pushTxReceipts(evmTxLogsInBlks *types.EVMTxLogsInBlks) error {
 	return err
 }
 
-//EVMTxLogs ...
+// EVMTxLogs ...
 type EVMTxLogs struct {
 	db     dbm.DB
 	seqNum int64 //当前同步的序列号
@@ -50,7 +50,7 @@ type EVMTxLogs struct {
 	quit   chan struct{}
 }
 
-//NewSyncTxReceipts ...
+// NewSyncTxReceipts ...
 func NewSyncTxReceipts(db dbm.DB) *EVMTxLogs {
 	sync := &EVMTxLogs{
 		db: db,
@@ -63,7 +63,7 @@ func NewSyncTxReceipts(db dbm.DB) *EVMTxLogs {
 	return sync
 }
 
-//此处添加一个高度为0的空块，只是为了查找下一个比较方便，并不需要使用其信息
+// 此处添加一个高度为0的空块，只是为了查找下一个比较方便，并不需要使用其信息
 func (syncTx *EVMTxLogs) initSyncReceiptDataBase() {
 	txLogs0, _ := syncTx.GetTxLogs(0)
 	if nil != txLogs0 {
@@ -75,7 +75,7 @@ func (syncTx *EVMTxLogs) initSyncReceiptDataBase() {
 	syncTx.setTxLogsPerBlock(logsPerBlock)
 }
 
-//Stop ...
+// Stop ...
 func (syncTx *EVMTxLogs) Stop() {
 	close(syncTx.quit)
 }
@@ -141,7 +141,7 @@ func (syncTx *EVMTxLogs) loadBlockLastSequence() (int64, error) {
 	return utils.LoadInt64FromDB(lastSequences, syncTx.db)
 }
 
-//LoadLastBlockHeight ...
+// LoadLastBlockHeight ...
 func (syncTx *EVMTxLogs) LoadLastBlockHeight() (int64, error) {
 	return utils.LoadInt64FromDB(syncLastHeight, syncTx.db)
 }
@@ -173,7 +173,7 @@ func (syncTx *EVMTxLogs) setTxLogsPerBlock(txLogs *types.EVMTxLogPerBlk) {
 	}
 }
 
-//GetTxReceipts ...
+// GetTxReceipts ...
 func (syncTx *EVMTxLogs) GetTxLogs(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
 	key := evmTxLogKey4Height(height)
 	value, err := syncTx.db.Get(key)
@@ -188,7 +188,7 @@ func (syncTx *EVMTxLogs) GetTxLogs(height int64) (*types.TxReceipts4SubscribePer
 	return detail, nil
 }
 
-//GetNextValidTxReceipts ...
+// GetNextValidTxReceipts ...
 func (syncTx *EVMTxLogs) GetNextValidEvmTxLogs(height int64) (*types.EVMTxLogPerBlk, error) {
 	key := evmTxLogKey4Height(height)
 	helper := dbm.NewListHelper(syncTx.db)

@@ -22,20 +22,20 @@ type Mix struct {
 	drivers.DriverBase
 }
 
-//Init paracross exec register
+// Init paracross exec register
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newMix, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 	setPrefix()
 }
 
-//InitExecType ...
+// InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Mix{}))
 }
 
-//GetName return paracross name
+// GetName return paracross name
 func GetName() string {
 	return newMix().GetName()
 }

@@ -604,7 +604,7 @@ func (node *Node) reconnectToPeer(addr string) {
 	qbftlog.Error("Failed to reconnect to peer. Giving up", "addr", addr, "elapsed", time.Since(start))
 }
 
-//---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 func randomSleep(interval time.Duration) {
 	r := time.Duration(ttypes.RandInt63n(dialRandomizerIntervalMilliseconds)) * time.Millisecond
 	time.Sleep(r + interval)

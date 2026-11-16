@@ -10,7 +10,7 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-//ExecDelLocal_Commit consensus commit tx del local db process
+// ExecDelLocal_Commit consensus commit tx del local db process
 func (e *Paracross) ExecDelLocal_Commit(payload *pt.ParacrossCommitAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	cfg := e.GetAPI().GetConfig()
@@ -158,7 +158,7 @@ func (e *Paracross) ExecDelLocal_SupervisionNodeConfig(payload *pt.ParaNodeGroup
 	return &set, nil
 }
 
-//ExecDelLocal_AssetTransfer asset transfer del local db process
+// ExecDelLocal_AssetTransfer asset transfer del local db process
 func (e *Paracross) ExecDelLocal_AssetTransfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 
@@ -173,12 +173,12 @@ func (e *Paracross) ExecDelLocal_AssetTransfer(payload *types.AssetsTransfer, tx
 	return &set, nil
 }
 
-//ExecDelLocal_AssetWithdraw asset withdraw local db process
+// ExecDelLocal_AssetWithdraw asset withdraw local db process
 func (e *Paracross) ExecDelLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
-//ExecDelLocal_CrossAssetTransfer asset transfer del local db process
+// ExecDelLocal_CrossAssetTransfer asset transfer del local db process
 func (e *Paracross) ExecDelLocal_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	r, err := e.initLocalAssetTransfer(tx, true, nil)
@@ -190,7 +190,7 @@ func (e *Paracross) ExecDelLocal_CrossAssetTransfer(payload *pt.CrossAssetTransf
 	return &set, nil
 }
 
-//ExecDelLocal_Miner miner tx del local db process
+// ExecDelLocal_Miner miner tx del local db process
 func (e *Paracross) ExecDelLocal_Miner(payload *pt.ParacrossMinerAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if index != 0 {
 		return nil, pt.ErrParaMinerBaseIndex
@@ -202,22 +202,22 @@ func (e *Paracross) ExecDelLocal_Miner(payload *pt.ParacrossMinerAction, tx *typ
 	return &set, nil
 }
 
-//ExecDelLocal_Transfer asset transfer del local process
+// ExecDelLocal_Transfer asset transfer del local process
 func (e *Paracross) ExecDelLocal_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
-//ExecDelLocal_Withdraw asset withdraw del local db process
+// ExecDelLocal_Withdraw asset withdraw del local db process
 func (e *Paracross) ExecDelLocal_Withdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
-//ExecDelLocal_TransferToExec asset transfer to exec del local db process
+// ExecDelLocal_TransferToExec asset transfer to exec del local db process
 func (e *Paracross) ExecDelLocal_TransferToExec(payload *types.AssetsTransferToExec, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
 }
 
-//ExecDelLocal_SelfStageConfig transfer asset to exec local db process
+// ExecDelLocal_SelfStageConfig transfer asset to exec local db process
 func (e *Paracross) ExecDelLocal_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.execAutoDelLocal(tx, receiptData)
 }

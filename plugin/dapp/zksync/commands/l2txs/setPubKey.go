@@ -42,7 +42,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	keys := strings.Split(privateKeys, ",")
 
 	if pubkeyT > 0 && (len(pubkeyX) == 0 || len(pubkeyY) == 0) {
-		_, _ = fmt.Fprintln(os.Stderr, fmt.Sprintf("set proxy pubkey, need set pubkeyX pubkeyY"))
+		_, _ = fmt.Fprintln(os.Stderr, "set proxy pubkey, need set pubkeyX pubkeyY")
 	}
 
 	if len(ids) != len(keys) {

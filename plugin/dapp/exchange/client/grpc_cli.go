@@ -96,7 +96,7 @@ func (c *GRPCCli) sendAndWaitReceipt(tx *types.Transaction, hexKey string) (logs
 	return d.Receipt.Logs, nil
 }
 
-//SendTx ...s
+// SendTx ...s
 func (c *GRPCCli) sendTx(tx *types.Transaction, hexKey string) (reply *types.Reply, err error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")

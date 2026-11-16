@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-//PrepareTestEnv ...
+// PrepareTestEnv ...
 func PrepareTestEnv() (*ethinterface.SimExtend, *ethtxs.DeployPara) {
 	genesiskey, _ := crypto.GenerateKey()
 	alloc := make(core.GenesisAlloc)
@@ -58,7 +58,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *ethtxs.DeployPara) {
 	return sim, para
 }
 
-//PrepareTestEnvironment ...
+// PrepareTestEnvironment ...
 func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []string) (bind.ContractBackend, *ethtxs.DeployPara) {
 	genesiskey, _ := crypto.HexToECDSA(deployerPrivateKey)
 	alloc := make(core.GenesisAlloc)
@@ -101,7 +101,7 @@ func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []st
 	return sim, para
 }
 
-//DeployContracts ...
+// DeployContracts ...
 func DeployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
 	ctx := context.Background()
 	sim, para := PrepareTestEnv()

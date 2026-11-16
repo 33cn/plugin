@@ -348,7 +348,7 @@ func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, 
 func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
 	var err error
 	bSendEmail := false
-	for true {
+	for {
 		ethRelayer.clientSpecs, ethRelayer.clientChainID, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp, ethRelayer.bridgeRegistryAddr)
 		if err != nil {
 			if !bSendEmail {
@@ -371,7 +371,7 @@ func (ethRelayer *Relayer4Ethereum) getClientSpecs() {
 func (ethRelayer *Relayer4Ethereum) getClientWss() {
 	var err error
 	bSendEmail := false
-	for true {
+	for {
 		ethRelayer.clientWss, _, err = ethtxs.SetupEthClient(&ethRelayer.provider)
 		if err != nil {
 			if !bSendEmail {
@@ -480,7 +480,6 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	}
 
 	ethRelayer.handleLogLockBurn(chain33Msg)
-	return
 }
 
 func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {
@@ -517,7 +516,7 @@ func (ethRelayer *Relayer4Ethereum) SendRemind(url, postData string) {
 		return
 	}
 	result := js.Get("result").MustBool()
-	if result == false {
+	if !result {
 		reErr := js.Get("error").MustString()
 		relayerLog.Error("SendToServer", "send error:", reErr)
 		return
@@ -697,7 +696,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	withdrawTx.StatusDescription = ethtxs.WDPending.String()
 	withdrawTx.TxHashOnEthereum = ethTxhash
 
-	return
 }
 
 func (ethRelayer *Relayer4Ethereum) NewTransferSignTx(toAddr common.Address, intputData []byte, value *big.Int, fromChain bool) (*types.Transaction, error) {
@@ -737,7 +735,7 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 		var ok bool
 		balance, ok = big.NewInt(1).SetString(common.Bytes2Hex(result), 16)
 		if !ok {
-			return errors.New(fmt.Sprintf("token balance err:%v", common.Bytes2Hex(result)))
+			return fmt.Errorf("token balance err:%v", common.Bytes2Hex(result))
 		}
 	}
 
@@ -1014,7 +1012,6 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 			break
 		}
 	}
-	return
 }
 
 func (ethRelayer *Relayer4Ethereum) getCurrentHeight() (uint64, error) {
@@ -1482,7 +1479,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	// We will check logs for new events
 	logs := make(chan types.Log, 10)
 
-	for true {
+	for {
 		// Filter by contract and event, write results to logs
 		sub, err := ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
 		if err != nil {
@@ -1828,7 +1825,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 		}
 	}
 
-	if bSuccess == false {
+	if !bSuccess {
 		return err
 	} else {
 		return nil
@@ -1861,7 +1858,7 @@ func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 		relayerLog.Error("regainClient", "SetupEthClient err", err)
 	}
 
-	if len(ethRelayer.clientSpecs) == 0 && *isSendEmail == false {
+	if len(ethRelayer.clientSpecs) == 0 && !*isSendEmail {
 		// 节点都不可用 发送邮件
 		ethRelayer.remindSetupEthClientError()
 		*isSendEmail = true

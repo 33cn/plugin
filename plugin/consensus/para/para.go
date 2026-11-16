@@ -101,7 +101,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	//支持创世精度为0
 	if subcfg.GenesisAmount < 0 {
-		panic(fmt.Sprintf("genesis amount <0"))
+		panic("genesis amount <0")
 	}
 
 	if subcfg.WriteBlockMsec <= 0 {
@@ -172,7 +172,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	return para
 }
 
-//para 不检查任何的交易
+// para 不检查任何的交易
 func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
 	err := checkMinerTx(current)
 	return err
@@ -397,12 +397,12 @@ func checkMinerTx(current *types.BlockDetail) error {
 	return nil
 }
 
-//比较newBlock是不是最优区块
+// 比较newBlock是不是最优区块
 func (client *client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	return false
 }
 
-//["0:50","100:20","500:30"]
+// ["0:50","100:20","500:30"]
 func parseEmptyBlockInterval(cfg []string) ([]*emptyBlockInterval, error) {
 	var emptyInter []*emptyBlockInterval
 	if len(cfg) == 0 {

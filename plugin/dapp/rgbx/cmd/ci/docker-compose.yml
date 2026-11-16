@@ -1,5 +1,6 @@
 services:
   main:
+    platform: linux/amd64
     build:
       context: .
     environment:
@@ -11,6 +12,7 @@ services:
       - ./btcd-data:/btcd:ro
 
   para1:
+    platform: linux/amd64
     build:
       context: .
     environment:
@@ -24,36 +26,43 @@ services:
       - ./btcd-data:/btcd:ro
 
   para2:
+    platform: linux/amd64
     build:
       context: .
     environment:
       ChainConfig: "chain33.para2.toml"
     depends_on:
       - main
+    restart: unless-stopped
     volumes:
       - ./btcd-data:/btcd:ro
 
   para3:
+    platform: linux/amd64
     build:
       context: .
     environment:
       ChainConfig: "chain33.para3.toml"
     depends_on:
       - main
+    restart: unless-stopped
     volumes:
       - ./btcd-data:/btcd:ro
 
   para4:
+    platform: linux/amd64
     build:
       context: .
     environment:
       ChainConfig: "chain33.para4.toml"
     depends_on:
       - main
+    restart: unless-stopped
     volumes:
       - ./btcd-data:/btcd:ro
 
   btcd:
+    platform: linux/amd64
     # RPC TLS cert auto-gen uses os.Hostname(); must match Docker DNS name "btcd"
     # so para/lightclient can dial btcd:18443 without SAN mismatch.
     hostname: btcd

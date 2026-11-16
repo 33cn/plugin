@@ -136,9 +136,7 @@ func (topN *TopNCandidator) copyWithoutSig() *TopNCandidator {
 	}
 
 	cpy.Cands = make([]*Candidator, len(topN.Cands))
-	for i := 0; i < len(topN.Cands); i++ {
-		cpy.Cands[i] = topN.Cands[i]
-	}
+	copy(cpy.Cands, topN.Cands)
 	return cpy
 }
 

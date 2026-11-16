@@ -9,7 +9,6 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/pkg/errors"
 )
 
@@ -54,9 +53,18 @@ func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (
 		return nil, errors.Wrapf(err, "setCircuitPubInput")
 	}
 
-	treeRootHash := input.TreeRootHash.GetWitnessValue(ecc.BN254)
-	nullifierHash := input.NullifierHash.GetWitnessValue(ecc.BN254)
-	authSpendHash := input.AuthorizeSpendHash.GetWitnessValue(ecc.BN254)
+	treeRootHash, err := mixTy.VariableToElement(input.TreeRootHash)
+	if err != nil {
+		return nil, err
+	}
+	nullifierHash, err := mixTy.VariableToElement(input.NullifierHash)
+	if err != nil {
+		return nil, err
+	}
+	authSpendHash, err := mixTy.VariableToElement(input.AuthorizeSpendHash)
+	if err != nil {
+		return nil, err
+	}
 
 	err = spendVerify(a.db, exec, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
@@ -87,9 +95,15 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 		if err != nil {
 			return nil, err
 		}
-		v := input.Amount.GetWitnessValue(ecc.BN254)
+		v, err := mixTy.VariableToElement(input.Amount)
+		if err != nil {
+			return nil, err
+		}
 		sumValue += v.Uint64()
-		nullHash := input.NullifierHash.GetWitnessValue(ecc.BN254)
+		nullHash, err := mixTy.VariableToElement(input.NullifierHash)
+		if err != nil {
+			return nil, err
+		}
 		nulliferSet = append(nulliferSet, nullHash.String())
 	}
 

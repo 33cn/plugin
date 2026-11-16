@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//新增需要保证顺序
+// 新增需要保证顺序
 const (
 	P2pSubCommitTx      = 1
 	P2pSubLeaderSyncMsg = 2

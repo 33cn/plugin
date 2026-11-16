@@ -43,4 +43,8 @@ var (
 	ErrRelayBtcHeadBitsErr = errors.New("ErrRelayBtcHeadBitsErr")
 	// ErrRelayBtcHeadNewBitsErr calc btc header new bits error
 	ErrRelayBtcHeadNewBitsErr = errors.New("ErrRelayBtcHeadNewBitsErr")
+	// ErrRelayBtcTxHashErr btc tx hash not match with the raw tx content
+	ErrRelayBtcTxHashErr = errors.New("ErrRelayBtcTxHashErr")
+	// ErrRelayBtcTxHeightErr btc tx block height not consistent with the SPV proven block
+	ErrRelayBtcTxHeightErr = errors.New("ErrRelayBtcTxHeightErr")
 )

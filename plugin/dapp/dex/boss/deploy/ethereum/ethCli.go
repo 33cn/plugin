@@ -132,7 +132,7 @@ func rewriteDeployErc20(owner, name, symbol, amount string, decimals uint8, nonc
 	return offline.SignTx(key, tx)
 }
 
-//GetBalanceCmd ...
+// GetBalanceCmd ...
 func GetBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance",
@@ -143,14 +143,14 @@ func GetBalanceCmd() *cobra.Command {
 	return cmd
 }
 
-//GetBalanceFlags ...
+// GetBalanceFlags ...
 func GetBalanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("owner", "o", "", "owner address")
 	_ = cmd.MarkFlagRequired("owner")
 	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for Eth")
 }
 
-//GetBalance ...
+// GetBalance ...
 func ShowBalance(cmd *cobra.Command, args []string) {
 	owner, _ := cmd.Flags().GetString("owner")
 	tokenAddr, _ := cmd.Flags().GetString("tokenAddr")

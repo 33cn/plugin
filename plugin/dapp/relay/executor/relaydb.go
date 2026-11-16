@@ -548,7 +548,7 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 	}
 
 	cfg := action.api.GetConfig()
-	err = action.btc.verifyBtcTx(verify, order)
+	err = action.btc.verifyBtcTx(cfg, action.height, verify, order)
 	if err != nil {
 		return nil, err
 	}

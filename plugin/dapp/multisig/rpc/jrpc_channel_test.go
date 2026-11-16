@@ -72,7 +72,7 @@ func TestJRPCChannel(t *testing.T) {
 	}
 }
 
-//创建交易
+// 创建交易
 func testCreateMultiSigAccCreateCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &mty.MultiSigAccCreate{}
 	return jrpc.Call("multisig.MultiSigAccCreateTx", params, nil)
@@ -116,7 +116,7 @@ func testCreateMultiSigAccTransferOutCmd(t *testing.T, jrpc *jsonclient.JSONClie
 	return jrpc.Call("multisig.MultiSigAccTransferOutTx", params, nil)
 }
 
-//get 多重签名账户信息
+// get 多重签名账户信息
 func testGetMultiSigAccCountCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	params := &rpctypes.Query4Jrpc{
 		Execer:   mty.MultiSigX,

@@ -29,7 +29,7 @@ type Action struct {
 	api       client.QueueProtocolAPI
 }
 
-//NewAction ...
+// NewAction ...
 func NewAction(e *exchange, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -46,19 +46,19 @@ func NewAction(e *exchange, tx *types.Transaction, index int) *Action {
 	}
 }
 
-//GetIndex get index
+// GetIndex get index
 func (a *Action) GetIndex() int64 {
 	// Add four zeros to match multiple MatchOrder indexes
 	return (a.height*types.MaxTxsPerBlock + int64(a.index)) * 1e4
 }
 
-//GetKVSet get kv set
+// GetKVSet get kv set
 func (a *Action) GetKVSet(order *et.Order) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
 }
 
-//OpSwap reverse
+// OpSwap reverse
 func (a *Action) OpSwap(op int32) int32 {
 	if op == et.OpBuy {
 		return et.OpSell
@@ -66,7 +66,7 @@ func (a *Action) OpSwap(op int32) int32 {
 	return et.OpBuy
 }
 
-//CalcActualCost Calculate actual cost
+// CalcActualCost Calculate actual cost
 func CalcActualCost(op int32, amount int64, price, coinPrecision int64) int64 {
 	if op == et.OpBuy {
 		return SafeMul(amount, price, coinPrecision)
@@ -74,7 +74,7 @@ func CalcActualCost(op int32, amount int64, price, coinPrecision int64) int64 {
 	return amount
 }
 
-//CheckPrice price  1<=price<=1e16
+// CheckPrice price  1<=price<=1e16
 func CheckPrice(price int64) bool {
 	if price > 1e16 || price < 1 {
 		return false
@@ -82,7 +82,7 @@ func CheckPrice(price int64) bool {
 	return true
 }
 
-//CheckOp ...
+// CheckOp ...
 func CheckOp(op int32) bool {
 	if op == et.OpBuy || op == et.OpSell {
 		return true
@@ -90,7 +90,7 @@ func CheckOp(op int32) bool {
 	return false
 }
 
-//CheckCount ...
+// CheckCount ...
 func CheckCount(count int32) bool {
 	return count <= 20 && count >= 0
 }
@@ -99,7 +99,7 @@ func Check5Count(count int32) bool {
 	return count <= 50 && count >= 0
 }
 
-//CheckAmount 最小交易 1coin
+// CheckAmount 最小交易 1coin
 func CheckAmount(amount, coinPrecision int64) bool {
 	if amount < 1 || amount >= types.MaxCoin*coinPrecision {
 		return false
@@ -107,7 +107,7 @@ func CheckAmount(amount, coinPrecision int64) bool {
 	return true
 }
 
-//CheckDirection ...
+// CheckDirection ...
 func CheckDirection(direction int32) bool {
 	if direction == et.ListASC || direction == et.ListDESC {
 		return true
@@ -115,7 +115,7 @@ func CheckDirection(direction int32) bool {
 	return false
 }
 
-//CheckStatus ...
+// CheckStatus ...
 func CheckStatus(status int32) bool {
 	if status == et.Ordered || status == et.Completed || status == et.Revoked {
 		return true
@@ -123,7 +123,7 @@ func CheckStatus(status int32) bool {
 	return false
 }
 
-//CheckExchangeAsset
+// CheckExchangeAsset
 func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 	if left.Execer == "" || left.Symbol == "" || right.Execer == "" || right.Symbol == "" {
 		return false
@@ -134,12 +134,12 @@ func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 	return true
 }
 
-//CheckDepth 1:价格精度；priceDigits+3：精度为百位
+// CheckDepth 1:价格精度；priceDigits+3：精度为百位
 func CheckDepth(depth, priceDigits int32) bool {
 	return depth <= priceDigits+3 && depth >= 1
 }
 
-//LimitOrder ...
+// LimitOrder ...
 func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.Receipt, error) {
 	leftAsset := payload.GetLeftAsset()
 	rightAsset := payload.GetRightAsset()
@@ -188,7 +188,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.
 	return nil, fmt.Errorf("unknow op")
 }
 
-//RevokeOrder ...
+// RevokeOrder ...
 func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -265,9 +265,9 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 
 // set the transaction logic method
 // rules:
-//1. The purchase price is higher than the market price, and the price is matched from low to high.
-//2. Sell orders are matched at prices lower than market prices.
-//3. Match the same prices on a first-in, first-out basis
+// 1. The purchase price is higher than the market price, and the price is matched from low to high.
+// 2. Sell orders are matched at prices lower than market prices.
+// 3. Match the same prices on a first-in, first-out basis
 func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
 	var (
 		logs     []*types.ReceiptLog
@@ -668,8 +668,8 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 	return &orderList, nil
 }
 
-//Direction
-//Buying depth is in reverse order by price, from high to low
+// Direction
+// Buying depth is in reverse order by price, from high to low
 func Direction(op int32) int32 {
 	if op == et.OpBuy {
 		return et.ListDESC
@@ -677,8 +677,8 @@ func Direction(op int32) int32 {
 	return et.ListASC
 }
 
-//QueryMarketDepth 这里primaryKey当作主键索引来用，
-//The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
+// QueryMarketDepth 这里primaryKey当作主键索引来用，
+// The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
 func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
 	table := NewMarketDepthTable(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), op))
@@ -706,7 +706,7 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 	return &list, nil
 }
 
-//QueryMarketDepth 查询市场深度(买卖一起返回,不做聚合)
+// QueryMarketDepth 查询市场深度(买卖一起返回,不做聚合)
 func QueryAllMarketDepth(localdb dbm.KV, left, right *et.Asset, count int32) (*et.MarketAllDepth, error) {
 	var list et.MarketAllDepth
 
@@ -856,7 +856,7 @@ func QueryAskDepth(localdb dbm.KV, left, right *et.Asset, count int32, depth int
 	}
 }
 
-//QueryHistoryOrderList Only the order information is returned
+// QueryHistoryOrderList Only the order information is returned
 func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
 	table := NewHistoryOrderTable(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s", left.Symbol, right.Symbol))
@@ -901,7 +901,7 @@ HERE:
 	return &orderList, nil
 }
 
-//QueryOrderList Displays the latest by default
+// QueryOrderList Displays the latest by default
 func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
 	var table *tab.Table
 	if status == et.Completed || status == et.Revoked {
@@ -950,14 +950,14 @@ func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, p
 	return row.Data.(*et.MarketDepth), nil
 }
 
-//SafeMul Safe multiplication of large numbers, prevent overflow
+// SafeMul Safe multiplication of large numbers, prevent overflow
 func SafeMul(x, y, coinPrecision int64) int64 {
 	res := big.NewInt(0).Mul(big.NewInt(x), big.NewInt(y))
 	res = big.NewInt(0).Div(res, big.NewInt(coinPrecision))
 	return res.Int64()
 }
 
-//Calculate the average transaction price
+// Calculate the average transaction price
 func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
 	x := big.NewInt(0).Mul(big.NewInt(order.AVGPrice), big.NewInt(order.GetLimitOrder().Amount-order.GetBalance()))
 	y := big.NewInt(0).Mul(big.NewInt(price), big.NewInt(amount))
@@ -967,7 +967,7 @@ func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
 	return avg.Int64()
 }
 
-//计Calculation fee
+// 计Calculation fee
 func calcMtfFee(cost int64, rate int32) int64 {
 	fee := big.NewInt(0).Mul(big.NewInt(cost), big.NewInt(int64(rate)))
 	fee = big.NewInt(0).Div(fee, big.NewInt(types.DefaultCoinPrecision))
@@ -1093,13 +1093,13 @@ func ParseSymbols(cfg *types.Chain33Config, tradeKey string, height int64) (symb
 	return
 }
 func formatInterface(data interface{}) int64 {
-	switch data.(type) {
+	switch d := data.(type) {
 	case int64:
-		return data.(int64)
+		return d
 	case int32:
-		return int64(data.(int32))
+		return int64(d)
 	case int:
-		return int64(data.(int))
+		return int64(d)
 	default:
 		return 0
 	}

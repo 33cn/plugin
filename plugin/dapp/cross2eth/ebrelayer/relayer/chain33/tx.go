@@ -32,9 +32,8 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4chain33/generated"
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	ethSecp256k1 "github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -192,8 +191,7 @@ func deploySingleContract(code []byte, abi, constructorPara, contractName, paraC
 	exector := paraChainName + "evm"
 	to := address.ExecAddress(exector)
 
-	var action evmtypes.EVMContractAction
-	action = evmtypes.EVMContractAction{Amount: 0, Code: code, GasLimit: 0, GasPrice: 0, Note: note, Alias: contractName, ContractAddr: to}
+	action := evmtypes.EVMContractAction{Amount: 0, Code: code, GasLimit: 0, GasPrice: 0, Note: note, Alias: contractName, ContractAddr: to}
 	if constructorPara != "" {
 		packData, err := evmAbi.PackContructorPara(constructorPara, abi)
 		if err != nil {
@@ -419,7 +417,7 @@ func setupMultiSign(ownerPrivateKeyStr, contractAddr, chainName, rpcURL string, 
 	//	address payable paymentReceiver
 	//)
 	parameter := "setup(["
-	parameter += fmt.Sprintf("%s", owners[0])
+	parameter += owners[0]
 	for _, owner := range owners[1:] {
 		parameter += fmt.Sprintf(",%s", owner)
 	}
@@ -523,7 +521,7 @@ func safeTransfer(ownerPrivateKeyStr, mulSign, chainName, rpcURL, receiver, toke
 		temp, _ := btcec_secp256k1.PrivKeyFromBytes(ownerPrivateKey.Bytes())
 		privateKey4Chain33_ecdsa := temp.ToECDSA()
 
-		sig, err := ethSecp256k1.Sign(contentHash, math.PaddedBigBytes(privateKey4Chain33_ecdsa.D, 32))
+		sig, err := crypto.Sign(contentHash, privateKey4Chain33_ecdsa)
 		if nil != err {
 			chain33txLog.Error("safeTransfer", "Failed to do ethSecp256k1.Sign to:", err.Error())
 			return "", err
@@ -550,7 +548,7 @@ func safeTransfer(ownerPrivateKeyStr, mulSign, chainName, rpcURL, receiver, toke
 }
 
 func recoverContractAddrFromRegistry(bridgeRegistry, rpcLaddr string) (oracle, bridgeBank string) {
-	parameter := fmt.Sprint("oracle()")
+	parameter := "oracle()"
 
 	result := query(bridgeRegistry, parameter, bridgeRegistry, rpcLaddr, generated.BridgeRegistryABI)
 	if nil == result {
@@ -558,7 +556,7 @@ func recoverContractAddrFromRegistry(bridgeRegistry, rpcLaddr string) (oracle, b
 	}
 	oracle = result.(string)
 
-	parameter = fmt.Sprint("bridgeBank()")
+	parameter = "bridgeBank()"
 	result = query(bridgeRegistry, parameter, bridgeRegistry, rpcLaddr, generated.BridgeRegistryABI)
 	if nil == result {
 		return "", ""
@@ -588,7 +586,7 @@ func getBridgeToken2address(bridgeBank, symbol, rpcLaddr string) string {
 }
 
 func getMulSignNonce(mulsign, rpcLaddr string) int64 {
-	parameter := fmt.Sprintf("nonce()")
+	parameter := "nonce()"
 
 	result := query(mulsign, parameter, mulsign, rpcLaddr, generated.GnosisSafeABI)
 	if nil == result {

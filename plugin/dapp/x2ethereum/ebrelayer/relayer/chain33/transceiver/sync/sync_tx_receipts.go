@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//Package sync ...
+// Package sync ...
 package sync
 
 import (
@@ -27,7 +27,7 @@ var (
 	syncTxReceipts *TxReceipts
 )
 
-//StartSyncTxReceipt ...
+// StartSyncTxReceipt ...
 func StartSyncTxReceipt(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *TxReceipts {
 	log.Debug("StartSyncTxReceipt, load config", "para:", cfg)
 	log.Debug("TxReceipts started ")
@@ -123,9 +123,9 @@ func checkClient(addr string, expectClient string) bool {
 	return addr == expectClient
 }
 
-//向chain33节点的注册推送交易回执，AddSubscribeTxReceipt具有2种功能：
-//首次注册功能，如果没有进行过注册，则进行首次注册
-//如果已经注册，则继续推送
+// 向chain33节点的注册推送交易回执，AddSubscribeTxReceipt具有2种功能：
+// 首次注册功能，如果没有进行过注册，则进行首次注册
+// 如果已经注册，则继续推送
 func bindOrResumePush(cfg *relayerTypes.SyncTxReceiptConfig) {
 	contract := make(map[string]bool)
 	contract["x2ethereum"] = true

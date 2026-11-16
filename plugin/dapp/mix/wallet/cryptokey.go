@@ -6,6 +6,8 @@ package wallet
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"encoding/hex"
 
 	"github.com/pkg/errors"
@@ -14,19 +16,19 @@ import (
 	"github.com/33cn/chain33/types"
 
 	wcom "github.com/33cn/chain33/wallet/common"
+	"github.com/33cn/plugin/plugin/crypto/legacymimc"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 const CECBLOCKSIZE = 32
 
 /*
- 从secp256k1根私钥创建支票需要的私钥和公钥
- payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
+从secp256k1根私钥创建支票需要的私钥和公钥
+payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
 
- 支票花费key:  payPrivKey
- 支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
- DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
+支票花费key:  payPrivKey
+支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
+DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
 */
 func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	ecdh := X25519()
@@ -54,9 +56,9 @@ func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	return privacy
 }
 
-//CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
-//填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
-//则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
+// CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
+// 填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
+// 则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
 func pKCS5Padding(plainText []byte, blockSize int) []byte {
 	if blockSize < CECBLOCKSIZE {
 		blockSize = CECBLOCKSIZE
@@ -102,9 +104,71 @@ func encryptData(peerPubKey string, data []byte) (*mixTy.DHSecret, error) {
 
 }
 
+func hasPrivKeyMagic(data []byte) bool {
+	if len(data) < len(wcom.MagicPrivKey)+1 {
+		return false
+	}
+	return bytes.Equal(data[:len(wcom.MagicPrivKey)], wcom.MagicPrivKey) &&
+		data[len(wcom.MagicPrivKey)] == wcom.KdfVersion
+}
+
+func unpadCBCPlain(plainData []byte, format string, cipherLen int) ([]byte, error) {
+	if len(plainData) == 0 {
+		bizlog.Error("decryptDataWithPading empty plaintext", "format", format, "cipherLen", cipherLen)
+		return nil, types.ErrInvalidParam
+	}
+	plain, err := pKCS5UnPadding(plainData)
+	if err != nil {
+		bizlog.Error("decryptDataWithPading unpadding", "format", format, "cipherLen", cipherLen,
+			"plainLen", len(plainData), "err", err)
+		return nil, errors.Wrapf(err, "decryptDataWithPading %s unpadding", format)
+	}
+	return plain, nil
+}
+
+func decryptRandomIV(password, data []byte) ([]byte, error) {
+	key := make([]byte, 32)
+	copy(key, password)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		bizlog.Error("decryptDataWithPading aes.NewCipher", "cipherLen", len(data), "err", err)
+		return nil, errors.Wrapf(err, "decryptDataWithPading aes.NewCipher")
+	}
+	iv := data[:block.BlockSize()]
+	ciphertext := data[block.BlockSize():]
+	if len(ciphertext) == 0 || len(ciphertext)%block.BlockSize() != 0 {
+		bizlog.Error("decryptDataWithPading invalid random-IV ciphertext",
+			"cipherLen", len(data), "ctLen", len(ciphertext))
+		return nil, types.ErrInvalidParam
+	}
+	decrypted := make([]byte, len(ciphertext))
+	cipher.NewCBCDecrypter(block, iv).CryptBlocks(decrypted, ciphertext)
+	return unpadCBCPlain(decrypted, "random-IV", len(data))
+}
+
 func decryptDataWithPading(password, data []byte) ([]byte, error) {
-	plainData := wcom.CBCDecrypterPrivkey(password, data)
-	return pKCS5UnPadding(plainData)
+	// 按内容分流，兼容 chain33 三代密文：
+	//  1. v1.71.0+：Magic(C33K)+version+salt+IV+ciphertext，PBKDF2 派生密钥
+	//  2. v0.69.1~v1.70：IV(16)+ciphertext，口令零填充为密钥（mix 明文可为 96/160，
+	//     chain33 CBCDecrypterPrivkey 第 2 代只认 32/64，必须由 mix 自解）
+	//  3. 最初：ciphertext-only，IV=key[:16]
+	if len(data) == 0 {
+		bizlog.Error("decryptDataWithPading empty ciphertext")
+		return nil, types.ErrInvalidParam
+	}
+
+	if hasPrivKeyMagic(data) {
+		return unpadCBCPlain(wcom.CBCDecrypterPrivkey(password, data), "magic-kdf", len(data))
+	}
+	if len(data)%32 == 16 {
+		return decryptRandomIV(password, data)
+	}
+	if len(data)%16 != 0 {
+		bizlog.Error("decryptDataWithPading invalid cipher length",
+			"cipherLen", len(data), "mod16", len(data)%16, "mod32", len(data)%32)
+		return nil, types.ErrInvalidParam
+	}
+	return unpadCBCPlain(wcom.CBCDecrypterPrivkey(password, data), "legacy", len(data))
 }
 
 func decryptData(selfPrivKey string, peerPubKey string, cryptData []byte) ([]byte, error) {
@@ -142,7 +206,7 @@ func mimcHashByte(params [][]byte) []byte {
 }
 
 func mimcHashCalc(sum []byte) []byte {
-	h := mimc.NewMiMC(mixTy.MimcHashSeed)
+	h := legacymimc.NewMiMC(mixTy.MimcHashSeed)
 	h.Write(sum)
 	return h.Sum(nil)
 }

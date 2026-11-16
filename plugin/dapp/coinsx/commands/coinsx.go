@@ -89,7 +89,7 @@ func addManageAccountsFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("op", "o", 0, "modify manager accounts,0:add,1:delete")
 	cmd.MarkFlagRequired("op")
 
-	cmd.Flags().StringP("accounts", "a", "", "accounts to modify, seperate with ',' ")
+	cmd.Flags().StringP("accounts", "a", "", "accounts to modify, separate with ',' ")
 	cmd.MarkFlagRequired("accounts")
 }
 

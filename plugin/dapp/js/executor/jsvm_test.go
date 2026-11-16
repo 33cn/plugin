@@ -148,7 +148,7 @@ func TestCallError(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(err.Error(), ptypes.ErrFuncNotFound.Error()))
 }
 
-//数字非常大的数字的处理
+// 数字非常大的数字的处理
 func TestBigInt(t *testing.T) {
 	dir, ldb, kvdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, ldb)

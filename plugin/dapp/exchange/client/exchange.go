@@ -96,7 +96,7 @@ func (c *ExchangeClient) LimitOrder(msg proto.Message, hexKey string) (*et.Recei
 	return &resp, nil
 }
 
-//TODO marketOrder
+// TODO marketOrder
 func (c *ExchangeClient) MarketOrder(msg proto.Message, hexKey string) (*et.ReceiptExchange, error) {
 	return nil, errors.New("Unopen")
 	//ety := types.LoadExecutorType(et.ExchangeX)

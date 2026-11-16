@@ -28,7 +28,8 @@ const (
 )
 
 // 返回真实花费的Gas
-//  availableGas - base * 63 / 64.
+//
+//	availableGas - base * 63 / 64.
 func callGas(gasTable Table, availableGas, base uint64, callCost *uint256.Int) (uint64, error) {
 	if availableGas == callCost.Uint64() {
 		availableGas = availableGas - base

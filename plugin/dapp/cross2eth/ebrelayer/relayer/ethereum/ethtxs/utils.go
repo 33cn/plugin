@@ -17,7 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-//EthTxStatus ...
+// EthTxStatus ...
 type EthTxStatus int32
 
 type NonceMutex struct {
@@ -31,12 +31,12 @@ var (
 	ErrNodeNetwork        = errors.New("ErrNodeNetwork")
 )
 
-//String ...
+// String ...
 func (ethTxStatus EthTxStatus) String() string {
 	return [...]string{"Fail", "Success", "Pending"}[ethTxStatus]
 }
 
-//const
+// const
 const (
 	PendingDuration4TxExeuction = 300
 	EthTxPending                = EthTxStatus(2)
@@ -44,7 +44,7 @@ const (
 
 // fromChain 是否从链上获取
 func getNonce4MultiEth(sender common.Address, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex, fromChain bool) (*big.Int, error) {
-	if fromChain == false {
+	if !fromChain {
 		if nonceMutex, exist := addr2TxNonce[sender]; exist {
 			nonceMutex.RWLock.Lock()
 			defer nonceMutex.RWLock.Unlock()
@@ -113,7 +113,7 @@ func revokeNonce(sender common.Address) (*big.Int, error) {
 	return nil, errors.New("address doesn't exist tx")
 }
 
-//PrepareAuth ...
+// PrepareAuth ...
 func PrepareAuth(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address) (*bind.TransactOpts, error) {
 	if nil == privateKey || nil == client {
 		txslog.Error("PrepareAuth", "nil input parameter", "client", client, "privateKey", privateKey)
@@ -233,7 +233,8 @@ func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, tx
 
 	txslog.Info(txName, "Wait for tx to be finished executing with hash", txhash.String())
 	timeout := time.NewTimer(PendingDuration4TxExeuction * time.Second)
-	oneSecondtimeout := time.NewTicker(5 * time.Second)
+	// 原来 5s 才查一次回执, 一笔交易最多白等 5s; 出块间隔通常是 1~2s, 改成 500ms 轮询
+	oneSecondtimeout := time.NewTicker(500 * time.Millisecond)
 	count := 0
 
 	for {
@@ -262,7 +263,7 @@ func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, tx
 	}
 }
 
-//GetEthTxStatus ...
+// GetEthTxStatus ...
 func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) string {
 	receipt, err := client.TransactionReceipt(context.Background(), txhash)
 	if nil != err {

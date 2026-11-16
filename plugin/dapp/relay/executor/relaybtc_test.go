@@ -53,7 +53,8 @@ func (s *suiteBtcStore) TestGetBtcHeadByHeight() {
 	header := types.Encode(head)
 	s.kvdb.On("Get", mock.Anything).Return(header, nil).Once()
 	val, _ := s.btc.getBtcHeadByHeight(10)
-	s.Assert().Equal(val, head)
+	// 用 proto.Equal 比较，避免 protobuf v2 的 sizeCache 内部字段差异
+	s.Assert().True(proto.Equal(val, head))
 
 }
 
@@ -65,7 +66,8 @@ func (s *suiteBtcStore) TestGetLastBtcHead() {
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once().On("Get", mock.Anything).Return(header, nil).Once()
 	val, err := s.btc.getLastBtcHead()
 	s.Assert().Nil(err)
-	s.Assert().Equal(val, head)
+	// 用 proto.Equal 比较，避免 protobuf v2 的 sizeCache 内部字段差异
+	s.Assert().True(proto.Equal(val, head))
 }
 
 func (s *suiteBtcStore) TestSaveBlockHead() {
@@ -209,8 +211,9 @@ func (s *suiteBtcStore) TestVerifyBtcTx() {
 	transaction := &ty.BtcTransaction{
 		Vout:        []*ty.Vout{vout},
 		Time:        150,
-		BlockHeight: 1000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		BlockHeight: 100000,
+		Hash:        relayRealBtcTxHash,
+		RawTx:       relayRealBtcRawTx,
 	}
 
 	//the 100000 height block in BTC
@@ -234,22 +237,24 @@ func (s *suiteBtcStore) TestVerifyBtcTx() {
 		TxIndex:     2,
 		BlockHash:   "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
 		Height:      100000,
-		Hash:        "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+		Hash:        relayRealBtcTxHash,
 	}
 	verify := &ty.RelayVerify{
 		Tx:  transaction,
 		Spv: spv,
 	}
 
-	heightBytes := types.Encode(&types.Int64{Data: int64(1006)})
-	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
 	var head = &ty.BtcHeader{
 		Version:    1,
+		Height:     100000,
+		Time:       150,
 		MerkleRoot: "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
 	}
 	headEnc := types.Encode(head)
 	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
-	err := s.btc.verifyBtcTx(verify, order)
+	heightBytes := types.Encode(&types.Int64{Data: int64(100100)})
+	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Once()
+	err := s.btc.verifyBtcTx(chainTestCfg, 10, verify, order)
 	s.Nil(err)
 }
 

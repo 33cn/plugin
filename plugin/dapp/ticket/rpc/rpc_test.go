@@ -275,6 +275,7 @@ ForkTicketFundAddrV1=-1
 ForkRootHash=1
 #地址key格式化, 主要针对eth地址
 ForkFormatAddressKey=0
+ForkTxChainIDStrict=-1
 [fork.sub.coins]
 Enable=0
 
@@ -285,6 +286,8 @@ Enable=0
 Enable=0
 ForkTicketId =0
 ForkTicketVrf =0
+ForkTicketCloseDup =0
+ForkMinerExecerCheck=0
 
 [fork.sub.retrieve]
 Enable=0
@@ -319,6 +322,7 @@ ForkTradeStatusGate = -1
 
 [fork.sub.paracross]
 Enable=0
+ForkParaTitleExecMatch=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0
@@ -340,6 +344,7 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+ForkEVMSuicidePayer=0
 
 [fork.sub.evmxgo]
 Enable=0

@@ -336,13 +336,13 @@ func TestPubkeyAndAddress(t *testing.T) {
 func testOneKey(priv, pub, addr string, t *testing.T) {
 	tmp, _ := hex.DecodeString(priv)
 	bPriv, _ := ConsensusCrypto.PrivKeyFromBytes(tmp)
-	fmt.Println(fmt.Sprintf("%x", bPriv))
+	fmt.Printf("%x\n", bPriv)
 
 	bPub, _ := PubKeyFromString(pub)
 	assert.True(t, bytes.Equal(bPub.Bytes(), bPriv.PubKey().Bytes()))
 
 	bAddr := address.BytesToBtcAddress(address.NormalVer, bPub.Bytes()).Hash160[:]
 	fmt.Println("addr:", addr)
-	fmt.Println(fmt.Sprintf("%x", bAddr))
+	fmt.Printf("%x\n", bAddr)
 	assert.True(t, addr == fmt.Sprintf("%X", bAddr))
 }

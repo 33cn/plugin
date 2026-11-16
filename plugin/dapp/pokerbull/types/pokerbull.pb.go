@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//斗牛游戏内容
+// 斗牛游戏内容
 type PokerBull struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -197,7 +197,7 @@ func (x *PokerBull) GetRound() int32 {
 	return 0
 }
 
-//一把牌
+// 一把牌
 type PBHand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -277,7 +277,7 @@ func (x *PBHand) GetLeverage() int32 {
 	return 0
 }
 
-//玩家
+// 玩家
 type PBPlayer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -349,7 +349,7 @@ func (x *PBPlayer) GetReady() bool {
 	return false
 }
 
-//本局游戏结果
+// 本局游戏结果
 type PBResult struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -429,7 +429,7 @@ func (x *PBResult) GetDealerLeverage() int32 {
 	return 0
 }
 
-//扑克牌
+// 扑克牌
 type PBPoker struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -485,7 +485,7 @@ func (x *PBPoker) GetPointer() int32 {
 	return 0
 }
 
-//游戏状态
+// 游戏状态
 type PBGameAction struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -616,7 +616,7 @@ func (*PBGameAction_Query) isPBGameAction_Value() {}
 
 func (*PBGameAction_Play) isPBGameAction_Value() {}
 
-//游戏启动
+// 游戏启动
 type PBGameStart struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -672,7 +672,7 @@ func (x *PBGameStart) GetPlayerNum() int32 {
 	return 0
 }
 
-//游戏继续
+// 游戏继续
 type PBGameContinue struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -720,7 +720,7 @@ func (x *PBGameContinue) GetGameId() string {
 	return ""
 }
 
-//游戏结束
+// 游戏结束
 type PBGameQuit struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -768,7 +768,7 @@ func (x *PBGameQuit) GetGameId() string {
 	return ""
 }
 
-//查询游戏结果
+// 查询游戏结果
 type PBGameQuery struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -816,7 +816,7 @@ func (x *PBGameQuery) GetGameId() string {
 	return ""
 }
 
-//已匹配玩家直接游戏
+// 已匹配玩家直接游戏
 type PBGamePlay struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -888,7 +888,7 @@ func (x *PBGamePlay) GetAddress() []string {
 	return nil
 }
 
-//根据状态和游戏人数查找
+// 根据状态和游戏人数查找
 type QueryPBGameListByStatusAndPlayerNum struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

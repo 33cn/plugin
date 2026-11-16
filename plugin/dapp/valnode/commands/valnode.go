@@ -190,7 +190,7 @@ func addNode(cmd *cobra.Command, args []string) {
 	fmt.Println(hex.EncodeToString(txHex))
 }
 
-//CreateCmd to create keyfiles
+// CreateCmd to create keyfiles
 func CreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init_keyfile",

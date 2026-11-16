@@ -105,6 +105,8 @@ fullDataCommit=false
 maxCommitInterval=60 #seconds
 # 设置平行链启动时对应的主链高度
 startHeight=0
+# 手动指定跨链交易同步的起始主链高度, 大于0时覆盖链上记录的值(0=不覆盖)
+crossTxSyncedHeight=0
 # 同步主链区块头, 预留高度, 减少回滚概率
 # 默认12, 最低设为1
 reservedMainHeight=12

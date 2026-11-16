@@ -139,13 +139,10 @@ function lock_eth_multisign() {
     if [[ $# -eq 3 ]]; then
         local bridgeBankBalance=$2
         local multisignBalance=$3
-        # eth 等待 2 个区块
-        sleep 10
-        #        eth_block_wait 2
-
-        result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+        # 等待 lock 上账(原来是固定 sleep 10)
+        result=$(wait_cli ".balance" "${bridgeBankBalance}" "${LOCK_SETTLE_TIMEOUT}" "eth bridgeBank lock 上账" ${CLIA} ethereum balance -o "${ethereumBridgeBank}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}")
+        result=$(wait_cli ".balance" "${multisignBalance}" "${LOCK_SETTLE_TIMEOUT}" "eth multisign 到账" ${CLIA} ethereum balance -o "${ethereumMultisignAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
@@ -159,12 +156,10 @@ function lock_ethereum_usdt_multisign() {
         local bridgeBankBalance=$2
         local multisignBalance=$3
 
-        # eth 等待 2 个区块
-        sleep 10
-
-        result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+        # 等待 lock 上账(原来是固定 sleep 10)
+        result=$(wait_cli ".balance" "${bridgeBankBalance}" "${LOCK_SETTLE_TIMEOUT}" "usdt bridgeBank lock 上账" ${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}" -t "${ethereumUSDTERC20TokenAddr}")
+        result=$(wait_cli ".balance" "${multisignBalance}" "${LOCK_SETTLE_TIMEOUT}" "usdt multisign 到账" ${CLIA} ethereum balance -o "${ethereumMultisignAddr}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
@@ -274,18 +269,17 @@ function init_validator_relayer() {
     local pwd=$2
     local chain33ValidatorKey=$3
     local ethValidatorAddrKey=$4
-    result=$(${CLI} set_pwd -p "${pwd}")
+    # 中继器刚启动时 RPC 可能还没就绪, 这里轮询重试而不是固定 sleep 20
+    result=$(wait_cli_ok "${RELAYER_SETTLE_TIMEOUT}" "set_pwd" ${CLI} set_pwd -p "${pwd}")
     cli_ret "${result}" "set_pwd"
 
-    result=$(${CLI} unlock -p "${pwd}")
+    result=$(wait_cli_ok "${RELAYER_SETTLE_TIMEOUT}" "unlock" ${CLI} unlock -p "${pwd}")
     cli_ret "${result}" "unlock"
 
-    sleep 20
-
-    result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
+    result=$(wait_cli_ok "${RELAYER_SETTLE_TIMEOUT}" "chain33 import_privatekey" ${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
     cli_ret "${result}" "chain33 import_privatekey"
 
-    result=$(${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
+    result=$(wait_cli_ok "${RELAYER_SETTLE_TIMEOUT}" "ethereum import_privatekey" ${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
     cli_ret "${result}" "ethereum import_privatekey"
 }
 
@@ -318,7 +312,7 @@ function offline_deploy_erc20_create_tether_usdt_USDT() {
     echo -e "${GRE}======= 在 ethereum 上创建 ERC20 ${name} ======${NOC}"
     ${Boss4xCLI} ethereum offline create_tether_usdt -m 33000000000000000000 -s "${name}" -d "${ethTestAddr1}"
     ${Boss4xCLI} ethereum offline sign -f "deployTetherUSDT.txt" -k "${ethTestAddrKey1}"
-    sleep 10
+    # 原来这里固定 sleep 10; 签名时 nonce 已经确定, 后面的 send 自身会等待回执, 无需再空等
     result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
     hash=$(echo "${result}" | jq -r ".[0].TxHash")
     check_eth_tx "${hash}"
@@ -358,11 +352,10 @@ function offline_transfer_multisign_Eth_test() {
     ${Boss4xCLI} ethereum offline multisign_transfer_prepare -a 3 -r "${ethereumBridgeBank}" -c "${ethereumMultisignAddr}" -d "${ethTestAddr1}"
     ${Boss4xCLI} ethereum offline sign_multisign_tx -k "${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
     ${Boss4xCLI} ethereum offline send_multisign_tx -f sign_multisign_tx.txt -k "${ethTestAddrKey1}"
-    sleep 10
 
-    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+    result=$(wait_cli ".balance" "16" "${LOCK_SETTLE_TIMEOUT}" "multisign transfer 后 bridgeBank" ${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "16"
-    result=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}")
+    result=$(wait_cli ".balance" "20" "${LOCK_SETTLE_TIMEOUT}" "multisign transfer 后 multisign" ${CLIA} ethereum balance -o "${ethereumMultisignAddr}")
     cli_ret "${result}" "balance" ".balance" "20"
 
     # transfer

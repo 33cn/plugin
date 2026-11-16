@@ -540,7 +540,7 @@ func (action *Action) LotteryClose(draw *pty.LotteryClose) (*types.Receipt, erro
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
-//random used for verification in solo
+// random used for verification in solo
 func (action *Action) findLuckyNum(isSolo bool, lott *LotteryDB) (int64, error) {
 	var num int64
 	if isSolo {
