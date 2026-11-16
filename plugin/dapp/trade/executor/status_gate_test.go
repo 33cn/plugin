@@ -222,6 +222,199 @@ func TestTradeSellMarketLiveBuyOrderForkActive(t *testing.T) {
 	assert.Equal(t, int64(5), order.BoughtBoardlot)
 }
 
+func execSellLimit(t *testing.T, env *statusGateEnv, starttime, totalBoardlot int64) string {
+	t.Helper()
+	sell := &pty.Trade{
+		Ty: pty.TradeSellLimit,
+		Value: &pty.Trade_SellLimit{SellLimit: &pty.TradeForSell{
+			TokenSymbol:       Symbol,
+			AmountPerBoardlot: 100,
+			MinBoardlot:       2,
+			PricePerBoardlot:  2,
+			TotalBoardlot:     totalBoardlot,
+			Starttime:         starttime,
+			AssetExec:         AssetExecToken,
+			PriceExec:         AssetExecPara,
+			PriceSymbol:       SymbolA,
+		}},
+	}
+	tx, err := types.CreateFormatTx(chain33TestCfg, chain33TestCfg.ExecName(pty.TradeX), types.Encode(sell))
+	assert.Nil(t, err)
+	tx, err = signTx(tx, PrivKeyA)
+	assert.Nil(t, err)
+	receipt, err := env.driver.Exec(tx, 0)
+	if err != nil {
+		t.Fatalf("sell limit exec failed: %v", err)
+	}
+	var order pty.SellOrder
+	assert.Nil(t, types.Decode(receipt.KV[1].Value, &order))
+	return order.SellID[len(sellIDPrefix):]
+}
+
+func execRevokeSell(t *testing.T, env *statusGateEnv, sellID string) error {
+	t.Helper()
+	tx, err := pty.CreateRawTradeRevokeTx(chain33TestCfg, &pty.TradeRevokeTx{SellID: sellID})
+	assert.Nil(t, err)
+	tx, err = signTx(tx, PrivKeyA)
+	assert.Nil(t, err)
+	_, err = env.driver.Exec(tx, 0)
+	return err
+}
+
+func execBuySellOrder(t *testing.T, env *statusGateEnv, sellID string, cnt int64) (*types.Receipt, error) {
+	t.Helper()
+	tx, err := pty.CreateRawTradeBuyTx(chain33TestCfg, &pty.TradeBuyTx{SellID: sellID, BoardlotCnt: cnt})
+	assert.Nil(t, err)
+	tx, err = signTx(tx, PrivKeyB)
+	assert.Nil(t, err)
+	return env.driver.Exec(tx, 0)
+}
+
+func loadSellOrder(t *testing.T, env *statusGateEnv, sellID string) *pty.SellOrder {
+	t.Helper()
+	order, err := getSellOrderFromID([]byte(sellIDPrefix+sellID), env.stateDB)
+	assert.Nil(t, err)
+	return order
+}
+
+func TestTradeRevokeScheduledSellOrderForkActive(t *testing.T) {
+	setTradeForks(t, 0)
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), loadSellOrder(t, env, sellID).Status)
+
+	assert.Nil(t, execRevokeSell(t, env, sellID))
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusRevoked), order.Status)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 100000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+}
+
+func TestTradeRevokeScheduledSellOrderForkInactive(t *testing.T) {
+	setTradeForks(t, 100) // gate stays off at block height 0
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	assert.Nil(t, execRevokeSell(t, env, sellID))
+
+	// Pre-fork save wrapper still resets a scheduled order to NotStart.
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), order.Status)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 100000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+}
+
+func TestTradeBuyRevokedScheduledSellOrderForkActive(t *testing.T) {
+	setTradeForks(t, 0)
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 0, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	assert.Nil(t, execRevokeSell(t, env, sellID))
+
+	receipt, err := execBuySellOrder(t, env, sellID, 5)
+	assert.Nil(t, receipt)
+	assert.Equal(t, pty.ErrTSellOrderRevoked, err)
+
+	// The rejected fill must not move any funds.
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 100000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+	assert.Equal(t, &types.Account{Addr: string(Nodes[1]), Balance: 100000},
+		normalizeAccount(loadExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), env.stateDB)))
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusRevoked), order.Status)
+	assert.Equal(t, int64(0), order.SoldBoardlot)
+}
+
+// A scheduled order is seeded with extra frozen tokens standing for another
+// live order. A fill larger than the remainder must not reach that shared pool.
+func TestTradeBuyScheduledSellOrderNotEnoughForkActive(t *testing.T) {
+	setTradeForks(t, 0)
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 5000, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	// This order freezes 10 * 100 on top of the 5000 already frozen.
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 6000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+
+	receipt, err := execBuySellOrder(t, env, sellID, 8)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 5200},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+
+	receipt, err = execBuySellOrder(t, env, sellID, 5) // only 2 boardlot remain
+	assert.Nil(t, receipt)
+	assert.Equal(t, pty.ErrTSellOrderNotEnough, err)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 5200},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+
+	receipt, err = execBuySellOrder(t, env, sellID, 1) // below MinBoardlot
+	assert.Nil(t, receipt)
+	assert.Equal(t, pty.ErrTCntLessThanMinBoardlot, err)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 5200},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), order.Status)
+	assert.Equal(t, int64(8), order.SoldBoardlot)
+}
+
+func TestTradeBuyScheduledSellOrderSoldOutForkActive(t *testing.T) {
+	setTradeForks(t, 0)
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 5000, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+
+	receipt, err := execBuySellOrder(t, env, sellID, 10)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusSoldOut), order.Status)
+	assert.Equal(t, int64(10), order.SoldBoardlot)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 5000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+
+	receipt, err = execBuySellOrder(t, env, sellID, 2)
+	assert.Nil(t, receipt)
+	assert.Equal(t, pty.ErrTSellOrderSoldout, err)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 5000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+}
+
+func TestTradeBuyOnSaleSellOrderForkActive(t *testing.T) {
+	setTradeForks(t, 0)
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 0, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, pty.InvalidStartTime, 10)
+	assert.Equal(t, int32(pty.TradeOrderStatusOnSale), loadSellOrder(t, env, sellID).Status)
+
+	receipt, err := execBuySellOrder(t, env, sellID, 4)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusOnSale), order.Status)
+	assert.Equal(t, int64(4), order.SoldBoardlot)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 600},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+	assert.Equal(t, &types.Account{Addr: string(Nodes[1]), Balance: 99992},
+		normalizeAccount(loadExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), env.stateDB)))
+}
+
 func normalizeAccount(acc *types.Account) *types.Account {
 	// LoadExecAccount returns a zero-valued Frozen for accounts that were never
 	// written; drop only the fields the test does not care about.
