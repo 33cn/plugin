@@ -314,21 +314,6 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, pty.ErrTSellOrderNotExist
 	}
 
-	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeStatusGateX) {
-		switch {
-		case sellOrder.Status == pty.TradeOrderStatusSoldOut:
-			return nil, pty.ErrTSellOrderSoldout
-		case sellOrder.Status == pty.TradeOrderStatusRevoked:
-			return nil, pty.ErrTSellOrderRevoked
-		case sellOrder.Status == pty.TradeOrderStatusExpired:
-			return nil, pty.ErrTSellOrderExpired
-		case sellOrder.Status == pty.TradeOrderStatusOnSale:
-		case sellOrder.Status == pty.TradeOrderStatusNotStart && sellOrder.Starttime <= action.blocktime:
-		default:
-			return nil, pty.ErrTSellOrderRevoked
-		}
-	}
-
 	if sellOrder.Status == pty.TradeOrderStatusNotStart && sellOrder.Starttime > action.blocktime {
 		return nil, pty.ErrTSellOrderNotStart
 	} else if sellOrder.Status == pty.TradeOrderStatusSoldOut {
