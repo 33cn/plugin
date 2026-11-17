@@ -316,6 +316,15 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 
 	forkStatusGate := cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeStatusGateX)
 	if forkStatusGate {
+		// A scheduled sell order created before the fork cannot be told apart from
+		// one revoked before it: the old save wrapper reset the status to NotStart
+		// after the revoke refunded the collateral, so both rows look live. Refuse
+		// to fill any of them; the seller can still revoke, which closes the row
+		// and refunds whatever the shared pool still holds for it.
+		if sellOrder.Starttime != pty.InvalidStartTime &&
+			sellOrder.Height < cfg.GetDappFork(pty.TradeX, pty.ForkTradeStatusGateX) {
+			return nil, pty.ErrTSellOrderScheduledBeforeFork
+		}
 		if sellOrder.Status == pty.TradeOrderStatusSoldOut {
 			return nil, pty.ErrTSellOrderSoldout
 		} else if sellOrder.Status == pty.TradeOrderStatusRevoked {
