@@ -1,5 +1,16 @@
 changelog
 
+## [1.76.5](https://github.com/33cn/plugin/compare/v1.76.4...v1.76.5) (2026-11-17)
+
+
+### Bug Fixes
+
+* **hashlock:** reject a lock with an empty hash ([f42456f](https://github.com/33cn/plugin/commit/f42456f62c72408751694b735b8dd8e3e29aee96))
+* **trade:** keep the real status of a scheduled sell order ([194f552](https://github.com/33cn/plugin/commit/194f552619894aa14ffb57c51205fe3bdf1e2501))
+* **trade:** limit the status gate to the buy side ([ea87554](https://github.com/33cn/plugin/commit/ea87554ae65b9c4da9478a84acae0b31d79ea643))
+* **trade:** only a live order can be filled ([cdafc87](https://github.com/33cn/plugin/commit/cdafc87b95a74e73adefbd5e30ad4f586dcff729))
+* **trade:** refuse fills of scheduled sell orders created before the fork ([995f738](https://github.com/33cn/plugin/commit/995f738ae7594856946ad129a1d53efa03c79850))
+
 ## [1.76.4](https://github.com/33cn/plugin/compare/v1.76.3...v1.76.4) (2026-11-04)
 
 
