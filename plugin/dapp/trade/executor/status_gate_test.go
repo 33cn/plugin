@@ -24,23 +24,48 @@ const gateTestBlockTime = int64(1539918074)
 type statusGateEnv struct {
 	driver  drivers.Driver
 	stateDB dbm.KV
+	localDB dbm.KVDB
 }
 
 func newStatusGateEnv(t *testing.T) *statusGateEnv {
+	t.Helper()
+	return newStatusGateEnvAt(t, 0)
+}
+
+func newStatusGateEnvAt(t *testing.T, height int64) *statusGateEnv {
 	t.Helper()
 	stateDB, err := dbm.NewGoMemDB("status-gate", "status-gate", 100)
 	assert.Nil(t, err)
 	_, ldb, kvdb := util.CreateTestDB()
 	t.Cleanup(func() { ldb.Close() })
+	return &statusGateEnv{
+		driver:  newStatusGateDriver(t, stateDB, kvdb, height),
+		stateDB: stateDB,
+		localDB: kvdb,
+	}
+}
 
+// atHeight returns an env at another block height on the same state, so a test
+// can create an order before a fork and fill it after the fork activates.
+func (env *statusGateEnv) atHeight(t *testing.T, height int64) *statusGateEnv {
+	t.Helper()
+	return &statusGateEnv{
+		driver:  newStatusGateDriver(t, env.stateDB, env.localDB, height),
+		stateDB: env.stateDB,
+		localDB: env.localDB,
+	}
+}
+
+func newStatusGateDriver(t *testing.T, stateDB dbm.KV, localDB dbm.KVDB, height int64) drivers.Driver {
+	t.Helper()
 	api := new(apimock.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
 	driver := newTrade()
 	driver.SetAPI(api)
-	driver.SetEnv(0, gateTestBlockTime, 2)
+	driver.SetEnv(height, gateTestBlockTime, 2)
 	driver.SetStateDB(stateDB)
-	driver.SetLocalDB(kvdb)
-	return &statusGateEnv{driver: driver, stateDB: stateDB}
+	driver.SetLocalDB(localDB)
+	return driver
 }
 
 // setTradeForks pins the trade forks a status gate test depends on. A gate
@@ -413,6 +438,87 @@ func TestTradeBuyOnSaleSellOrderForkActive(t *testing.T) {
 		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
 	assert.Equal(t, &types.Account{Addr: string(Nodes[1]), Balance: 99992},
 		normalizeAccount(loadExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), env.stateDB)))
+}
+
+// A scheduled order revoked before the fork was saved as NotStart and its
+// collateral refunded, so it is indistinguishable from a live one. After the
+// fork no fill may reach it: the seller keeps the collateral of the other
+// orders sharing the frozen pool.
+func TestTradeBuyScheduledSellOrderRevokedBeforeForkForkActive(t *testing.T) {
+	setTradeForks(t, 10)
+	env := newStatusGateEnvAt(t, 0)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 5000, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	assert.Nil(t, execRevokeSell(t, env, sellID))
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), order.Status)
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 100000, Frozen: 5000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+
+	atFork := env.atHeight(t, 10)
+	receipt, err := execBuySellOrder(t, atFork, sellID, 4)
+	assert.Nil(t, receipt)
+	assert.Equal(t, pty.ErrTSellOrderScheduledBeforeFork, err)
+
+	// The rejected fill must not move any funds.
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 100000, Frozen: 5000},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+	assert.Equal(t, &types.Account{Addr: string(Nodes[1]), Balance: 100000},
+		normalizeAccount(loadExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), env.stateDB)))
+
+	order = loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), order.Status)
+	assert.Equal(t, int64(0), order.SoldBoardlot)
+}
+
+// Pre-fork behaviour stays byte-for-byte the same: the stale row is still
+// fillable and pays out of the seller's shared frozen pool.
+func TestTradeBuyScheduledSellOrderRevokedBeforeForkForkInactive(t *testing.T) {
+	setTradeForks(t, 100) // gate stays off at block height 0
+	env := newStatusGateEnv(t)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 5000, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	assert.Nil(t, execRevokeSell(t, env, sellID))
+
+	receipt, err := execBuySellOrder(t, env, sellID, 4)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 100000, Frozen: 4600},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+	assert.Equal(t, &types.Account{Addr: string(Nodes[1]), Balance: 99992},
+		normalizeAccount(loadExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), env.stateDB)))
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), order.Status)
+	assert.Equal(t, int64(4), order.SoldBoardlot)
+}
+
+func TestTradeBuyScheduledSellOrderCreatedAfterForkForkActive(t *testing.T) {
+	setTradeForks(t, 10)
+	env := newStatusGateEnvAt(t, 10)
+	seedExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), 100000, 0, env.stateDB)
+	seedExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), 100000, 0, env.stateDB)
+
+	sellID := execSellLimit(t, env, 1, 10)
+	assert.Equal(t, int64(10), loadSellOrder(t, env, sellID).Height)
+
+	receipt, err := execBuySellOrder(t, env, sellID, 4)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+
+	assert.Equal(t, &types.Account{Addr: string(Nodes[0]), Balance: 99000, Frozen: 600},
+		normalizeAccount(loadExecAccount(t, AssetExecToken, Symbol, string(Nodes[0]), env.stateDB)))
+	assert.Equal(t, &types.Account{Addr: string(Nodes[1]), Balance: 99992},
+		normalizeAccount(loadExecAccount(t, AssetExecPara, SymbolA, string(Nodes[1]), env.stateDB)))
+
+	order := loadSellOrder(t, env, sellID)
+	assert.Equal(t, int32(pty.TradeOrderStatusNotStart), order.Status)
+	assert.Equal(t, int64(4), order.SoldBoardlot)
 }
 
 func normalizeAccount(acc *types.Account) *types.Account {

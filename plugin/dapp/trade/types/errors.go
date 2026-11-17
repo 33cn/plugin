@@ -23,6 +23,8 @@ var (
 	ErrTSellOrderExpired = errors.New("ErrTradeSellOrderExpired")
 	//ErrTSellOrderRevoke :
 	ErrTSellOrderRevoke = errors.New("ErrTradeSellOrderRevokeNotAllowed")
+	//ErrTSellOrderScheduledBeforeFork :
+	ErrTSellOrderScheduledBeforeFork = errors.New("ErrTradeSellOrderScheduledBeforeFork")
 	//ErrTSellNoSuchOrder :
 	ErrTSellNoSuchOrder = errors.New("ErrTradeSellNoSuchOrder")
 	//ErrTBuyOrderNotExist :
