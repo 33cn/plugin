@@ -19,14 +19,20 @@ BUILD_FLAGS := -ldflags '-X "github.com/33cn/plugin/version.GitCommit=$(GitCommi
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 proj := "build"
-.PHONY: default dep all build release cli linter race test fmt vet bench msan coverage coverhtml docker docker-compose protobuf clean help autotest
+.PHONY: default dep all build build_only release cli linter race test fmt vet bench msan coverage coverhtml docker docker-compose protobuf clean help autotest
 
 default: depends build
 
-build: depends
+build: depends build_only
+
+# 只编 chain33/chain33-cli/fork-config, 不跑 depends(不生成 build/ci 下各 dapp 的集成测试产物)。
+# 用于只需要编译产物、不做 docker 集成测试的场景, 例如 GOARCH 386 的构建检查:
+# depends 会串行编译几十个 dapp 的 cmd 产物, 对这类 job 是纯开销。
+build_only: ## Build chain33 binaries without dapp cmd artifacts (no depends)
 	go build $(BUILD_FLAGS) -v -o $(APP)
 	go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI)
 	go build $(BUILD_FLAGS) -v -o build/fork-config github.com/33cn/plugin/cli/fork_config/
+	@mkdir -p build/ci/paracross
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
@@ -44,6 +50,25 @@ build_ci: depends ## Build the binary file for CI (Linux/amd64|arm64 when not on
 	fi
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
+
+# evm2 的 CI 产物由 plugin/dapp/evm/cmd 生成(build.sh 同时输出 evm 和 evm2)
+DAPP_CMD := $(if $(filter evm2,$(dapp)),evm,$(dapp))
+
+# 只为指定 dapp 准备 build/ci: 编 chain33/chain33-cli + 该 dapp 的 cmd 产物,
+# 跳过 depends 里其他几十个 dapp 的 cmd 编译(CI 每个 job 只跑一个 dapp)
+build_ci_dapp: ## Build chain33 binaries and only $(dapp)'s CI artifacts (usage: make build_ci_dapp dapp=<name>)
+	@if [ -z "$(dapp)" ]; then echo "usage: make build_ci_dapp dapp=<name>"; exit 1; fi
+	@if [ "$$(uname)" = "Linux" ]; then \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=1 go build $(BUILD_FLAGS) -v -o $(APP); \
+	else \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(CLI) $(SRC_CLI) && \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$$(go env GOARCH) go build $(BUILD_FLAGS) -v -o $(APP); \
+	fi
+	@mkdir -p build/ci/paracross
+	@cp chain33.toml build/
+	@cp chain33.para.toml build/ci/paracross/
+	@make -C plugin/dapp/$(DAPP_CMD)/cmd OUT="$(MKDIR)build/ci" FLAG=
 
 
 PLATFORM_LIST = \
@@ -217,7 +242,9 @@ protobuf: ## Generate protbuf file of types package
 	@find ./plugin/dapp -maxdepth 2 -type d  -name proto -exec make -C {} \;
 
 depends: ## Generate depends file of types package
-	@find ./plugin/dapp -maxdepth 2 -print -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
+	@# 各 dapp 的 cmd/build.sh 只写自己的 build/ci/<dapp> 和 build/ci/dapptest/<dapp>, 互不重叠,
+	@# 可以并行; 原来 -exec ... \; 是串行, 几十个 dapp 合起来要 50~70s。
+	@find ./plugin/dapp -maxdepth 2 -type d -name cmd | xargs -P "$${DEPENDS_JOBS:-4}" -I{} make -C {} OUT="$(MKDIR)build/ci" FLAG=
 
 
 help: ## Display this help screen

@@ -314,7 +314,35 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 		return nil, pty.ErrTSellOrderNotExist
 	}
 
-	if sellOrder.Status == pty.TradeOrderStatusNotStart && sellOrder.Starttime > action.blocktime {
+	forkStatusGate := cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeStatusGateX)
+	if forkStatusGate {
+		// A scheduled sell order created before the fork cannot be told apart from
+		// one revoked before it: the old save wrapper reset the status to NotStart
+		// after the revoke refunded the collateral, so both rows look live. Refuse
+		// to fill any of them; the seller can still revoke, which closes the row
+		// and refunds whatever the shared pool still holds for it.
+		if sellOrder.Starttime != pty.InvalidStartTime &&
+			sellOrder.Height < cfg.GetDappFork(pty.TradeX, pty.ForkTradeStatusGateX) {
+			return nil, pty.ErrTSellOrderScheduledBeforeFork
+		}
+		if sellOrder.Status == pty.TradeOrderStatusSoldOut {
+			return nil, pty.ErrTSellOrderSoldout
+		} else if sellOrder.Status == pty.TradeOrderStatusRevoked {
+			return nil, pty.ErrTSellOrderRevoked
+		} else if sellOrder.Status == pty.TradeOrderStatusExpired {
+			return nil, pty.ErrTSellOrderExpired
+		} else if sellOrder.Status == pty.TradeOrderStatusNotStart && sellOrder.Starttime > action.blocktime {
+			return nil, pty.ErrTSellOrderNotStart
+		} else if sellOrder.Status != pty.TradeOrderStatusOnSale && sellOrder.Status != pty.TradeOrderStatusNotStart {
+			return nil, pty.ErrTSellOrderNotExist
+		}
+		if sellOrder.TotalBoardlot-sellOrder.SoldBoardlot < buyOrder.BoardlotCnt {
+			return nil, pty.ErrTSellOrderNotEnough
+		}
+		if buyOrder.BoardlotCnt < sellOrder.MinBoardlot {
+			return nil, pty.ErrTCntLessThanMinBoardlot
+		}
+	} else if sellOrder.Status == pty.TradeOrderStatusNotStart && sellOrder.Starttime > action.blocktime {
 		return nil, pty.ErrTSellOrderNotStart
 	} else if sellOrder.Status == pty.TradeOrderStatusSoldOut {
 		return nil, pty.ErrTSellOrderSoldout
@@ -364,10 +392,19 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 	tradelog.Debug("tradeBuy", "Soldboardlot before this buy", sellOrder.SoldBoardlot)
 	sellOrder.SoldBoardlot += buyOrder.BoardlotCnt
 	tradelog.Debug("tradeBuy", "Soldboardlot after this buy", sellOrder.SoldBoardlot)
-	if sellOrder.SoldBoardlot == sellOrder.TotalBoardlot {
+	if forkStatusGate {
+		if sellOrder.SoldBoardlot >= sellOrder.TotalBoardlot {
+			sellOrder.Status = pty.TradeOrderStatusSoldOut
+		}
+	} else if sellOrder.SoldBoardlot == sellOrder.TotalBoardlot {
 		sellOrder.Status = pty.TradeOrderStatusSoldOut
 	}
 	sellTokendb := newSellDB(*sellOrder)
+	if forkStatusGate {
+		// newSellDB resets a scheduled order to NotStart; restore the status
+		// this fill produced.
+		sellTokendb.Status = sellOrder.Status
+	}
 	sellOrderKV := sellTokendb.save(action.db)
 
 	logs = append(logs, receiptFromAcc.Logs...)
@@ -382,6 +419,7 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 
 func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*types.Receipt, error) {
 	cfg := action.api.GetConfig()
+	forkStatusGate := cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeStatusGateX)
 	if cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeIDX) {
 		revoke.SellID = calcTokenSellID(revoke.SellID)
 	}
@@ -421,6 +459,10 @@ func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*typ
 	var kv []*types.KeyValue
 	sellOrder.Status = pty.TradeOrderStatusRevoked
 	tokendb := newSellDB(*sellOrder)
+	if forkStatusGate {
+		// newSellDB resets a scheduled order to NotStart; keep it revoked.
+		tokendb.Status = pty.TradeOrderStatusRevoked
+	}
 	sellOrderKV := tokendb.save(action.db)
 
 	logs = append(logs, receiptFromExecAcc.Logs...)
@@ -526,6 +568,15 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 	if err != nil {
 		tradelog.Error("getBuyOrderFromID failed", "err", err)
 		return nil, pty.ErrTBuyOrderNotExist
+	}
+
+	forkStatusGate := cfg.IsDappFork(action.height, pty.TradeX, pty.ForkTradeStatusGateX)
+	if forkStatusGate {
+		if buyOrder.Status == pty.TradeOrderStatusBoughtOut {
+			return nil, pty.ErrTBuyOrderSoldout
+		} else if buyOrder.Status != pty.TradeOrderStatusOnBuy {
+			return nil, pty.ErrTBuyOrderRevoked
+		}
 	}
 
 	if buyOrder.Status == pty.TradeOrderStatusBoughtOut {

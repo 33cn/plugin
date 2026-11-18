@@ -31,7 +31,6 @@ function start_docker_ebrelayerProxy() {
     sleep 1
 
     init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
-    sleep 20
 }
 
 function setWithdraw_ethereum() {
@@ -77,22 +76,15 @@ function TestETH2Chain33Assets_proxy() {
     result=$(${CLIP} ethereum lock -m "${lockAmount1}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 10
-
     echo -e "${IYellow} ethereumBridgeBank lock 后金额 ${NOC}"
-    result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}")
-
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
+    result=$(wait_cli ".balance" "${ethBridgeBankBalanceEnd}" "${LOCK_SETTLE_TIMEOUT}" "proxy eth lock 上账" ${CLIP} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    sleep "${maturityDegree}"
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
+    result=$(wait_output "${chain33RBalancelock}" "${RELAYER_SETTLE_TIMEOUT}" "proxy chain33 lock 入账" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "${chain33RBalancelock}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 lock 后金额 ${NOC}"
@@ -109,15 +101,13 @@ function TestETH2Chain33Assets_proxy() {
     result=$(${CLIP} chain33 withdraw -m "${lockAmount1}" -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
-    sleep "${maturityDegree}"
+    # 等待 withdraw 在 chain33 端回退(原来是固定 sleep maturityDegree)
+    result=$(wait_output "${chain33RBalancebf}" "${RELAYER_SETTLE_TIMEOUT}" "proxy withdraw 后 chain33 余额回退" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    is_equal "${result}" "${chain33RBalancebf}"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 withdraw 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    is_equal "${result}" "${chain33RBalancebf}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
@@ -125,8 +115,8 @@ function TestETH2Chain33Assets_proxy() {
     is_equal "${result}" "${chain33VspBalancewithdraw}"
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址 withdraw 后金额 ${NOC}"
-    result=$(${CLIP} ethereum balance -o "${ethTestAddr2}" | jq -r ".balance")
     ethT2BalanceEnd=$(echo "${ethT2Balancebf}+${lockAmount1}-1" | bc)
+    result=$(wait_cli ".balance" "${ethT2BalanceEnd}" "${RELAYER_SETTLE_TIMEOUT}" "proxy withdraw eth 到账" ${CLIP} ethereum balance -o "${ethTestAddr2}" | jq -r ".balance")
     is_equal "${result}" "${ethT2BalanceEnd}"
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址 withdraw 后金额 ${NOC}"
@@ -161,20 +151,15 @@ function TestETH2Chain33Assets_proxy_excess() {
     result=$(${CLIP} ethereum lock -m "${lockAmount1}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 10
-
     echo -e "${IYellow} ethereumBridgeBank lock 后金额 ${NOC}"
-    result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}")
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
+    result=$(wait_cli ".balance" "${ethBridgeBankBalanceEnd}" "${LOCK_SETTLE_TIMEOUT}" "proxy excess eth lock 上账" ${CLIP} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    sleep "${maturityDegree}"
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
+    result=$(wait_output "${chain33RBalancelock}" "${RELAYER_SETTLE_TIMEOUT}" "proxy excess chain33 lock 入账" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "${chain33RBalancelock}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 lock 后金额 ${NOC}"
@@ -191,7 +176,9 @@ function TestETH2Chain33Assets_proxy_excess() {
     result=$(${CLIP} chain33 withdraw -m "${lockAmount1}" -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
-    sleep "${maturityDegree}"
+    # 等待 withdraw 在 chain33 端回退(原来是固定 sleep maturityDegree)
+    result=$(wait_output "${chain33RBalancebf}" "${RELAYER_SETTLE_TIMEOUT}" "proxy excess withdraw 后 chain33 余额回退" ${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    is_equal "${result}" "${chain33RBalancebf}"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}")
@@ -237,22 +224,15 @@ function TestETH2Chain33USDT_proxy() {
     result=$(${CLIP} ethereum lock -m "${lockAmount1}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 10
-
     echo -e "${IYellow} 查询 ETH 这端 ethereumBridgeBank lock 后金额 ${NOC}"
-    result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
+    result=$(wait_cli ".balance" "${ethBridgeBankBalanceEnd}" "${LOCK_SETTLE_TIMEOUT}" "proxy usdt eth lock 上账" ${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    sleep "${maturityDegree}"
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
+    result=$(wait_output "${chain33RBalancelock}" "${RELAYER_SETTLE_TIMEOUT}" "proxy usdt chain33 lock 入账" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "${chain33RBalancelock}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 lock 后金额 ${NOC}"
@@ -269,15 +249,13 @@ function TestETH2Chain33USDT_proxy() {
     result=$(${CLIP} chain33 withdraw -m "${lockAmount1}" -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33USDTBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
-    sleep "${maturityDegree}"
+    # 等待 withdraw 在 chain33 端回退(原来是固定 sleep maturityDegree)
+    result=$(wait_output "${chain33RBalancebf}" "${RELAYER_SETTLE_TIMEOUT}" "proxy usdt withdraw 后 chain33 余额回退" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
+    is_equal "${result}" "${chain33RBalancebf}"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 withdraw 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-    is_equal "${result}" "${chain33RBalancebf}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33Validatorsp})")
@@ -286,8 +264,8 @@ function TestETH2Chain33USDT_proxy() {
     is_equal "${result}" "${chain33VspBalancewithdraw}"
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址 withdraw 后金额 ${NOC}"
-    result=$(${CLIP} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
     ethT2BalanceEnd=$(echo "${ethT2Balancebf}+${lockAmount1}-1" | bc)
+    result=$(wait_cli ".balance" "${ethT2BalanceEnd}" "${RELAYER_SETTLE_TIMEOUT}" "proxy usdt withdraw eth 到账" ${CLIP} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
     is_equal "${result}" "${ethT2BalanceEnd}"
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址 withdraw 后金额 ${NOC}"
@@ -319,22 +297,15 @@ function TestETH2Chain33USDT_proxy_excess() {
     result=$(${CLIP} ethereum lock -m "${lockAmount1}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
-    # eth 等待 2 个区块
-    sleep 10
-
     echo -e "${IYellow} 查询 ETH 这端 ethereumBridgeBank lock 后金额 ${NOC}"
-    result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
+    result=$(wait_cli ".balance" "${ethBridgeBankBalanceEnd}" "${LOCK_SETTLE_TIMEOUT}" "proxy usdt excess eth lock 上账" ${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    sleep "${maturityDegree}"
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
+    result=$(wait_output "${chain33RBalancelock}" "${RELAYER_SETTLE_TIMEOUT}" "proxy usdt excess chain33 lock 入账" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "${chain33RBalancelock}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 lock 后金额 ${NOC}"
@@ -351,15 +322,13 @@ function TestETH2Chain33USDT_proxy_excess() {
     result=$(${CLIP} chain33 withdraw -m "${lockAmount1}" -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33USDTBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
-    sleep "${maturityDegree}"
+    # 等待 withdraw 在 chain33 端回退(原来是固定 sleep maturityDegree)
+    result=$(wait_output "${chain33RBalancebf}" "${RELAYER_SETTLE_TIMEOUT}" "proxy usdt excess withdraw 后 chain33 余额回退" ${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
+    is_equal "${result}" "${chain33RBalancebf}"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
-
-    echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 withdraw 后金额 ${NOC}"
-    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-    is_equal "${result}" "${chain33RBalancebf}"
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33Validatorsp})")

@@ -5,9 +5,12 @@
 package state
 
 import (
+	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/33cn/chain33/common/log/log15"
+	cexecutor "github.com/33cn/chain33/executor"
 
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -20,7 +23,7 @@ import (
 // 如果合约执行出错，会按生成顺序的倒序，依次调用变更对象的回滚接口进行数据回滚，并同步删除变更对象缓存
 // 如果合约执行成功，会按生成顺序的正序，依次调用变更对象的数据和日志变更记录，回传给区块链
 type DataChange interface {
-	revert(mdb *MemoryStateDB)
+	revert(mdb *MemoryStateDB) error
 	getData(mdb *MemoryStateDB) []*types.KeyValue
 	getLog(mdb *MemoryStateDB) []*types.ReceiptLog
 }
@@ -38,14 +41,27 @@ func (ver *Snapshot) GetID() int {
 }
 
 // 回滚当前版本
-func (ver *Snapshot) revert() bool {
+func (ver *Snapshot) revert() error {
 	if ver.entries == nil {
-		return true
+		return nil
+	}
+	// The interface contract requires undoing changes in reverse creation order. Applying two
+	// writes to the same slot forward would restore the intermediate value instead of the
+	// pre-frame one. Legacy behaviour is kept before ForkEVMTransferRevert.
+	if ver.statedb != nil && ver.statedb.isForkActive(evmtypes.ForkEVMTransferRevert) {
+		for i := len(ver.entries) - 1; i >= 0; i-- {
+			if err := ver.entries[i].revert(ver.statedb); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	for _, entry := range ver.entries {
-		entry.revert(ver.statedb)
+		if err := entry.revert(ver.statedb); err != nil {
+			return err
+		}
 	}
-	return true
+	return nil
 }
 
 // 添加变更数据
@@ -144,6 +160,17 @@ type (
 		amount int64
 		data   []*types.KeyValue
 		logs   []*types.ReceiptLog
+		// preState carries the raw account KV read before the transfer. It is only populated
+		// when ForkEVMTransferRevert is active; empty keeps the legacy no-op revert.
+		preState []kvPreState
+	}
+
+	// kvPreState is the raw value of one account key before a transfer wrote to it.
+	// existed=false means the key was absent and revert must remove it again.
+	kvPreState struct {
+		key     []byte
+		value   []byte
+		existed bool
 	}
 
 	// 合约生成日志事件
@@ -161,7 +188,8 @@ type (
 )
 
 // 在baseChang中定义三个基本操作，子对象中只需要实现必要的操作
-func (ch baseChange) revert(s *MemoryStateDB) {
+func (ch baseChange) revert(s *MemoryStateDB) error {
+	return nil
 }
 
 func (ch baseChange) getData(s *MemoryStateDB) (kvset []*types.KeyValue) {
@@ -173,8 +201,9 @@ func (ch baseChange) getLog(s *MemoryStateDB) (logs []*types.ReceiptLog) {
 }
 
 // 创建账户对象的回滚，需要删除缓存中的账户和变更标记
-func (ch createAccountChange) revert(s *MemoryStateDB) {
+func (ch createAccountChange) revert(s *MemoryStateDB) error {
 	delete(s.accounts, ch.account)
+	return nil
 }
 
 // 创建账户对象的数据集
@@ -188,15 +217,16 @@ func (ch createAccountChange) getData(s *MemoryStateDB) (kvset []*types.KeyValue
 	return nil
 }
 
-func (ch suicideChange) revert(mdb *MemoryStateDB) {
+func (ch suicideChange) revert(mdb *MemoryStateDB) error {
 	// 如果已经自杀过了，不处理
 	if ch.prev {
-		return
+		return nil
 	}
 	acc := mdb.accounts[ch.account]
 	if acc != nil {
 		acc.State.Suicided = ch.prev
 	}
+	return nil
 }
 
 func (ch suicideChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
@@ -211,11 +241,12 @@ func (ch suicideChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 	return nil
 }
 
-func (ch nonceChange) revert(mdb *MemoryStateDB) {
+func (ch nonceChange) revert(mdb *MemoryStateDB) error {
 	acc := mdb.accounts[ch.account]
 	if acc != nil {
 		acc.State.Nonce = ch.prev
 	}
+	return nil
 }
 
 func (ch nonceChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
@@ -227,12 +258,13 @@ func (ch nonceChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 	return nil
 }
 
-func (ch codeChange) revert(mdb *MemoryStateDB) {
+func (ch codeChange) revert(mdb *MemoryStateDB) error {
 	acc := mdb.accounts[ch.account]
 	if acc != nil {
 		acc.Data.Code = ch.prevcode
 		acc.Data.CodeHash = ch.prevhash
 	}
+	return nil
 }
 
 func (ch codeChange) getData(mdb *MemoryStateDB) (kvset []*types.KeyValue) {
@@ -245,11 +277,12 @@ func (ch codeChange) getData(mdb *MemoryStateDB) (kvset []*types.KeyValue) {
 	return nil
 }
 
-func (ch abiChange) revert(mdb *MemoryStateDB) {
+func (ch abiChange) revert(mdb *MemoryStateDB) error {
 	acc := mdb.accounts[ch.account]
 	if acc != nil {
 		acc.Data.Abi = ch.prevabi
 	}
+	return nil
 }
 
 func (ch abiChange) getData(mdb *MemoryStateDB) (kvset []*types.KeyValue) {
@@ -261,11 +294,12 @@ func (ch abiChange) getData(mdb *MemoryStateDB) (kvset []*types.KeyValue) {
 	return nil
 }
 
-func (ch storageChange) revert(mdb *MemoryStateDB) {
+func (ch storageChange) revert(mdb *MemoryStateDB) error {
 	acc := mdb.accounts[ch.account]
 	if acc != nil {
 		acc.SetState(ch.key, ch.prevalue)
 	}
+	return nil
 }
 
 func (ch storageChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
@@ -289,11 +323,12 @@ func (ch storageChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
 	return nil
 }
 
-func (ch refundChange) revert(mdb *MemoryStateDB) {
+func (ch refundChange) revert(mdb *MemoryStateDB) error {
 	mdb.refund = ch.prev
+	return nil
 }
 
-func (ch addLogChange) revert(mdb *MemoryStateDB) {
+func (ch addLogChange) revert(mdb *MemoryStateDB) error {
 	logs := mdb.logs[ch.txhash]
 	if len(logs) == 1 {
 		delete(mdb.logs, ch.txhash)
@@ -303,6 +338,7 @@ func (ch addLogChange) revert(mdb *MemoryStateDB) {
 
 	mdb.logSize--
 	log15.Info("addLogChange::revert", "mdb.logSize", mdb.logSize)
+	return nil
 }
 
 func (ch addLogChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
@@ -314,8 +350,9 @@ func (ch addLogChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
 	return ch.logs
 }
 
-func (ch addPreimageChange) revert(mdb *MemoryStateDB) {
+func (ch addPreimageChange) revert(mdb *MemoryStateDB) error {
 	delete(mdb.preimages, ch.hash)
+	return nil
 }
 
 func (ch transferChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
@@ -323,4 +360,52 @@ func (ch transferChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 }
 func (ch transferChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
 	return ch.logs
+}
+
+// revert restores the account KV captured before the transfer. Before ForkEVMTransferRevert
+// preState is empty, so a reverted transfer keeps its old behaviour and leaves the cache as is.
+//
+// executor.StateDB, the KV used in production, must undo the write through RevertSet rather
+// than Set. Under ForkExecRollback Set records the key in GetSetKeys, and every recorded key
+// has to show up in the receipt (chain33's checkKV); a restored write that the surviving
+// receipt no longer carries would reject the whole transaction. RevertSet removes the key from
+// that list as well. A StateDB without RevertSet (the goleveldb used in some tests) still gets
+// the direct writes.
+func (ch transferChange) revert(mdb *MemoryStateDB) error {
+	for _, pre := range ch.preState {
+		var original []byte
+		if pre.existed {
+			original = pre.value
+		}
+		if err := mdb.revertAccountKey(pre.key, original); err != nil {
+			log15.Error("transferChange revert failed", "key", string(pre.key), "err", err)
+			return err
+		}
+	}
+	return nil
+}
+
+// revertAccountKey undoes one write made by the transfer. original=nil means the key did not
+// exist before the transfer and must read as absent afterwards.
+func (mdb *MemoryStateDB) revertAccountKey(key, original []byte) error {
+	if reverter, ok := mdb.StateDB.(interface {
+		RevertSet(key []byte, originalValue []byte) error
+	}); ok {
+		err := reverter.RevertSet(key, original)
+		if err == nil {
+			return nil
+		}
+		if !errors.Is(err, cexecutor.ErrStateDBRevertWithoutTx) {
+			return fmt.Errorf("revert state key %x: %w", key, err)
+		}
+		// No transaction is open, so there is no key list to repair: write through as the
+		// legacy path does (the fork that records Set keys is also off).
+	}
+	if original == nil {
+		if deleter, ok := mdb.StateDB.(interface{ Delete([]byte) error }); ok {
+			return deleter.Delete(key)
+		}
+		return mdb.StateDB.Set(key, nil)
+	}
+	return mdb.StateDB.Set(key, original)
 }
