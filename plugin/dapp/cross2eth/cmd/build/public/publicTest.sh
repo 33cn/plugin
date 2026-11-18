@@ -12,6 +12,108 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
+# 轮询间隔(秒), 只在等待期间生效
+POLL_INTERVAL="${POLL_INTERVAL:-0.3}"
+
+# 判断两个值是否相等, 数值类型兼容 "16" 与 "16.0000" 的写法
+function is_expect_value() {
+    local got="${1}"
+    local expect="${2}"
+    if [ "${got}" == "${expect}" ]; then
+        return 0
+    fi
+    if [[ "${got}" =~ ^-?[0-9]+(\.[0-9]+)?$ ]] && [[ "${expect}" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+        if [ "$(echo "${got} == ${expect}" | bc)" -eq 1 ]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# 有界轮询: 命令输出(最后一行)等于期望值时立即返回, 不再固定 sleep。
+# 跨链/出块正常情况下 1~3s 内完成, 固定等待只会白白拖慢 CI;
+# 超时后仍返回最后一次结果, 由调用方的 cli_ret/is_equal 报错并收集日志。
+# $1 期望值 $2 超时秒 $3 描述 $4... 命令
+function wait_output() {
+    local expect="${1}"
+    local timeout="${2}"
+    local desc="${3}"
+    shift 3
+    # 轮询期间关掉 xtrace, 否则每次重试都会刷日志(所有调用点都在 $(...) 子 shell 里)
+    set +x
+    local deadline=$((SECONDS + timeout))
+    local got=""
+    while true; do
+        got=$("$@" 2>/dev/null | tail -n 1 | tr -d '\r' || true)
+        if is_expect_value "${got}" "${expect}"; then
+            printf '%s' "${got}"
+            return 0
+        fi
+        if [ "${SECONDS}" -ge "${deadline}" ]; then
+            echo -e "${RED}wait_output timeout(${timeout}s) ${desc}: expect=${expect}, last=${got}${NOC}" >&2
+            printf '%s' "${got}"
+            return 0
+        fi
+        sleep "${POLL_INTERVAL}"
+    done
+}
+
+# 有界轮询: 命令返回的 jq 字段等于期望值时立即返回, 输出最后一次完整结果供 cli_ret 复用。
+# $1 jq 表达式 $2 期望值 $3 超时秒 $4 描述 $5... 命令
+function wait_cli() {
+    local expr="${1}"
+    local expect="${2}"
+    local timeout="${3}"
+    local desc="${4}"
+    shift 4
+    # 轮询期间关掉 xtrace, 否则每次重试都会刷日志(所有调用点都在 $(...) 子 shell 里)
+    set +x
+    local deadline=$((SECONDS + timeout))
+    local out=""
+    local got=""
+    while true; do
+        out=$("$@" 2>/dev/null | tr -d '\r' || true)
+        got=$(echo "${out}" | jq -r "${expr}" 2>/dev/null | tail -n 1 || true)
+        if is_expect_value "${got}" "${expect}"; then
+            printf '%s' "${out}"
+            return 0
+        fi
+        if [ "${SECONDS}" -ge "${deadline}" ]; then
+            echo -e "${RED}wait_cli timeout(${timeout}s) ${desc}: expect ${expr}=${expect}, last=${got}${NOC}" >&2
+            printf '%s' "${out}"
+            return 0
+        fi
+        sleep "${POLL_INTERVAL}"
+    done
+}
+
+# 有界轮询: 命令返回 isOK=true 时立即返回(用于中继器 RPC 尚未就绪的场景)。
+# $1 超时秒 $2 描述 $3... 命令
+function wait_cli_ok() {
+    local timeout="${1}"
+    local desc="${2}"
+    shift 2
+    # 轮询期间关掉 xtrace, 否则每次重试都会刷日志(所有调用点都在 $(...) 子 shell 里)
+    set +x
+    local deadline=$((SECONDS + timeout))
+    local out=""
+    local ok=""
+    while true; do
+        out=$("$@" 2>/dev/null | tr -d '\r' || true)
+        ok=$(echo "${out}" | jq -r '.isOK' 2>/dev/null || true)
+        if [ "${ok}" == "true" ]; then
+            printf '%s' "${out}"
+            return 0
+        fi
+        if [ "${SECONDS}" -ge "${deadline}" ]; then
+            echo -e "${RED}wait_cli_ok timeout(${timeout}s) ${desc}, last=${ok}${NOC}" >&2
+            printf '%s' "${out}"
+            return 0
+        fi
+        sleep "${POLL_INTERVAL}"
+    done
+}
+
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
     set -x
@@ -96,23 +198,30 @@ function start_docker_ebrelayer() {
 
     # 后台启动程序
     docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
-    sleep 10
 
-    # shellcheck disable=SC2009
-    pid=$(docker exec "$1" ps -ef | grep "$2" | grep -v 'grep' | awk '{print $2}' | xargs)
-    local count=0
-    while [ "${pid}" == "" ]; do
-        docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
-        sleep 10
+    # 进程通常 1s 内就能起来, 原来固定 sleep 10s 再查进程会白等;
+    # 这里 0.5s 轮询一次, 连续查不到(约 5s)才重拉, 最多等 60s 后报错。
+    local pid="" count=0
+    while true; do
+        sleep 0.5
+        # shellcheck disable=SC2009
+        pid=$(docker exec "$1" ps -ef | grep "$2" | grep -v 'grep' | awk '{print $2}' | xargs || true)
+        if [ "${pid}" != "" ]; then
+            # 进程已起, 短暂等待其完成 RPC/配置初始化
+            sleep 1
+            return 0
+        fi
 
         count=$((count + 1))
-        if [[ ${count} -ge 20 ]]; then
+        if [[ ${count} -ge 120 ]]; then
             echo -e "${RED}start ${1} ${2} failed${NOC}"
             exit_cp_file
         fi
 
-        # shellcheck disable=SC2009
-        pid=$(docker exec "$1" ps -ef | grep "$2" | grep -v 'grep' | awk '{print $2}' | xargs)
+        # 进程可能启动即退出(端口/配置问题), 每 5s 重拉一次, 与原来的重试语义一致
+        if [ $((count % 10)) -eq 0 ]; then
+            docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
+        fi
     done
 }
 
@@ -155,7 +264,7 @@ function block_wait() {
         fi
 
         count=$((count + 1))
-        sleep 1
+        sleep 0.2
     done
 
     count=$((count + 1))
@@ -186,9 +295,10 @@ function check_tx() {
         fi
 
         count=$((count + 1))
-        sleep 1
+        # 交易写入索引通常几百毫秒, 原来 1s 轮询平均白等约 0.5s; 0.2s 轮询, 次数放大保持同样的超时预算
+        sleep 0.2
 
-        if [[ ${count} -ge 100 ]]; then
+        if [[ ${count} -ge 500 ]]; then
             echo "chain33 query tx for too long"
             break
         fi
@@ -293,6 +403,8 @@ function eth_block_wait() {
 
     local expect=$((cur_height + ${1} + 1))
     local count=0
+    # 原来无上限轮询, eth url 不通时会一直卡到 job 超时; 这里加一个上限(默认 300 轮)
+    local maxCount="${3:-300}"
     while true; do
         if [ "${url}" == "" ]; then
             new_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
@@ -305,6 +417,10 @@ function eth_block_wait() {
         fi
 
         count=$((count + 1))
+        if [ "${count}" -ge "${maxCount}" ]; then
+            echo -e "${RED}eth_block_wait timeout, expect height ${expect}, last ${new_height}${NOC}"
+            break
+        fi
         sleep 1
     done
 

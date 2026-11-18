@@ -45,9 +45,12 @@ var (
 	paraSupervisionNodes            string
 	paraSupervisionNodeIDPrefix     string
 	localSupervisionNodeStatusTitle string
+	//rollupCrossDone 已结算的 rollup 轮次, 见 types.ForkSecurityHardening
+	rollupCrossDone string
 )
 
 func setPrefix() {
+	rollupCrossDone = "mavl-paracross-rollupcrossdone-"
 	title = "mavl-paracross-title-"
 	titleHeight = "mavl-paracross-titleHeight-"
 	managerConfigNodes = "paracross-nodes-"
@@ -81,6 +84,11 @@ func setPrefix() {
 
 func calcTitleKey(t string) []byte {
 	return []byte(fmt.Sprintf(title+"%s", t))
+}
+
+// calcRollupCrossDoneKey 某 title 已结算的最大 rollup 轮次, 见 types.ForkSecurityHardening
+func calcRollupCrossDoneKey(title string) []byte {
+	return []byte(fmt.Sprintf(rollupCrossDone+"%s", title))
 }
 
 func calcTitleHeightKey(title string, height int64) []byte {

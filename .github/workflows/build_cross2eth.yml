@@ -21,6 +21,6 @@ jobs:
           export GOPATH=$HOME/go
           export PATH=${PATH}:`go env GOPATH`/bin
           echo $GOPATH
-          make
+          make build_ci_dapp dapp=cross2eth
           make docker-compose dapp=cross2eth
           make docker-compose-down dapp=cross2eth

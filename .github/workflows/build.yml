@@ -35,9 +35,29 @@ jobs:
           make linter
           make
 
+  # 全量 go test -race 单 job 约 13 分钟，拆成 4 个并行分片执行；
+  # 聚合 job 仍命名为 unit-test，保持分支保护里 Required check 的名称不变。
   unit-test:
     name: unit-test
+    needs: unit-test-shard
+    if: always()
     runs-on: ubuntu-22.04
+    steps:
+      - name: check shards
+        run: |
+          echo "shards result: ${{ needs.unit-test-shard.result }}"
+          if [ "${{ needs.unit-test-shard.result }}" != "success" ]; then
+            echo "::error::unit-test 分片未全部通过"
+            exit 1
+          fi
+
+  unit-test-shard:
+    name: unit-test shard
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -49,7 +69,11 @@ jobs:
       - name: set go env
         run: export PATH=${PATH}:`go env GOPATH`/bin
       - name: unit-test
-        run: make test
+        run: |
+          # 按包序号取模分片，不维护硬编码包列表，新增包会自动落到某个分片
+          PKGS=$(go list ./... | grep -v pbft | awk -v s=${{ matrix.shard }} 'NR % 4 == s % 4')
+          echo "shard ${{ matrix.shard }}: $(echo "$PKGS" | wc -l) packages"
+          go test -parallel=8 -race $PKGS
 
   coverage:
     name: coverage
@@ -124,7 +148,8 @@ jobs:
             sudo apt-get install --fix-missing gcc-multilib
 
       - name: Build
-        run: make build
+        # 只需要验证 386 下能编译: build_only 跳过 depends 里几十个 dapp cmd 产物的编译(约省 70s)
+        run: make build_only
 
       - name: Run unit tests
         run: go test ./... -covermode=atomic

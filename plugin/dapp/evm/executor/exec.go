@@ -58,6 +58,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType int32, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
 
 	cfg := evm.GetAPI().GetConfig()
+	evm.mStateDB.ResetRevertError()
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	execAddr := evm.getEvmExecAddress()
@@ -189,6 +190,14 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 		vmerr = fmt.Errorf("%s,detail: %s:", vmerr.Error(), string(ret))
 		log.Error("innerExec evm contract exec error", "error info", vmerr, "string ret", string(ret), "hex ret:", common.Bytes2Hex(ret), "leftOverGas:", leftOverGas, "usedGas:", usedGas)
 		return receipt, vmerr
+	}
+
+	// A snapshot revert that failed leaves the account cache and the receipt describing
+	// different state, which chain33's checkKV can no longer validate. Fail the transaction
+	// (fee-only receipt, state rolled back by the framework) instead of committing it.
+	if rerr := evm.mStateDB.RevertError(); rerr != nil {
+		log.Error("innerExec snapshot revert failed", "error info", rerr)
+		return receipt, rerr
 	}
 
 	// 计算消耗了多少费用（实际消耗的费用）

@@ -31,8 +31,11 @@ import (
 // caller 维度则是纵深防御：顶层 caller 即 tx.From 已被框架拦截，
 // 内部 caller 若是黑名单合约，它必须先通过某次 Call 的 target 检查才能执行到这里。
 // CallCode / DelegateCall / StaticCall 不做检查：它们借目标代码在调用者上下文执行，
-// 动的是调用者的存储和余额，不构成从黑名单打出的路径；
-// 唯一例外（DELEGATECALL 到黑名单代码执行 SELFDESTRUCT）由 statedb.Transfer 兜底。
+// 动的是调用者的存储和余额，不构成从黑名单打出的路径。
+// 唯一例外是 DELEGATECALL 到黑名单代码执行 SELFDESTRUCT：在 ForkEVMSuicidePayer 之前
+// opSuicide 的付款方取 contract.CodeAddr，即黑名单合约本身，只有 statedb.Transfer 的
+// sender 检查能拦，历史重放仍依赖它；该分叉之后付款方改为 contract.Address()，
+// 代码合约不再是付款方，这条路径对新区块不再成立。
 func checkBlockedAccount(evm *EVM, addrs ...common.Address) error {
 	cfg := evm.cfg
 	if cfg == nil || evm.BlockNumber == nil {
@@ -536,8 +539,17 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 
 	// 向合约地址转账
 	cfg := evm.StateDB.GetConfig()
+	// From ForkEVMTransferRevert on, the snapshot is taken before the transfer so that a
+	// failed create also reverts the attached value (see transferChange.revert).
+	snapshotBeforeTransfer := cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMTransferRevert)
+	if snapshotBeforeTransfer {
+		snapshot = evm.StateDB.Snapshot()
+	}
 	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
 		if value > 0 && !evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value) {
+			if snapshotBeforeTransfer {
+				evm.StateDB.RevertToSnapshot(snapshot)
+			}
 			log.Error("evm create transfer failed", "caller", caller.Address().String(), "contractAddr", contractAddr.String(), "value", value)
 			return nil, -1, gas, model.ErrInsufficientBalance
 		}
@@ -560,7 +572,9 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	contract.SetCallCode(&contractAddr, common.ToHash(code), code)
 
 	// 创建一个新的账户对象（合约账户）
-	snapshot = evm.StateDB.Snapshot()
+	if !snapshotBeforeTransfer {
+		snapshot = evm.StateDB.Snapshot()
+	}
 	evm.StateDB.CreateAccount(contractAddr.String(), contract.CallerAddress.String(), execName, alias)
 
 	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {

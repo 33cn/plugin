@@ -1,5 +1,93 @@
 changelog
 
+## [1.76.5](https://github.com/33cn/plugin/compare/v1.76.4...v1.76.5) (2026-11-17)
+
+
+### Bug Fixes
+
+* **hashlock:** reject a lock with an empty hash ([f42456f](https://github.com/33cn/plugin/commit/f42456f62c72408751694b735b8dd8e3e29aee96))
+* **trade:** keep the real status of a scheduled sell order ([194f552](https://github.com/33cn/plugin/commit/194f552619894aa14ffb57c51205fe3bdf1e2501))
+* **trade:** limit the status gate to the buy side ([ea87554](https://github.com/33cn/plugin/commit/ea87554ae65b9c4da9478a84acae0b31d79ea643))
+* **trade:** only a live order can be filled ([cdafc87](https://github.com/33cn/plugin/commit/cdafc87b95a74e73adefbd5e30ad4f586dcff729))
+* **trade:** refuse fills of scheduled sell orders created before the fork ([995f738](https://github.com/33cn/plugin/commit/995f738ae7594856946ad129a1d53efa03c79850))
+
+## [1.76.4](https://github.com/33cn/plugin/compare/v1.76.3...v1.76.4) (2026-11-04)
+
+
+### Bug Fixes
+
+* **config:** register ForkEthSignEnvelope in the shipped fork configs ([125ab23](https://github.com/33cn/plugin/commit/125ab2379f6121b77a58d226f1a652e24487713d))
+* **evm:** make reverted value transfers revertible ([8379439](https://github.com/33cn/plugin/commit/83794393d0faec7cbd845ba299e2c8bab100f18d))
+* **evm:** undo reverted value transfers through StateDB.RevertSet ([545f258](https://github.com/33cn/plugin/commit/545f258e43188c879c5c762dda2af3b802a6e31b)), closes [33cn/chain33#1412](https://github.com/33cn/chain33/issues/1412)
+
+## [1.76.3](https://github.com/33cn/plugin/compare/v1.76.2...v1.76.3) (2026-10-19)
+
+
+### Bug Fixes
+
+* **ticket:** reject duplicated ticket ids in one tclose ([#1335](https://github.com/33cn/plugin/issues/1335)) ([1458fe2](https://github.com/33cn/plugin/commit/1458fe27c970d42e371f257d87e97642dc92e03a))
+
+## [1.76.2](https://github.com/33cn/plugin/compare/v1.76.1...v1.76.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* **ticket:** only allow Exec_Genesis at height 0 ([ef5d860](https://github.com/33cn/plugin/commit/ef5d860bc33b887e59d6eeeb905efe5c745efff3))
+
+## [1.76.1](https://github.com/33cn/plugin/compare/v1.76.0...v1.76.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **evm:** charge SELFDESTRUCT to the executing account behind ForkEVMSuicidePayer ([02efa9f](https://github.com/33cn/plugin/commit/02efa9fb53892708fee6e1f84e27a231f41b66e9))
+* **ticket:** bind the mining tx to the ticket execer in CheckBlock ([da30bbb](https://github.com/33cn/plugin/commit/da30bbbca5bb27cce0ab13903805380e355a051e))
+
+# [1.76.0](https://github.com/33cn/plugin/compare/v1.75.2...v1.76.0) (2026-10-15)
+
+
+### Bug Fixes
+
+* **paracross:** settle each rollup round only once ([e379832](https://github.com/33cn/plugin/commit/e379832abd882163d01c403c332946b1e6c37a88))
+* **rollup:** count distinct validator pubkeys toward the 2/3 threshold ([666927b](https://github.com/33cn/plugin/commit/666927b12e1f9ac9b1558a8184d72c651390b59c))
+* **rollup:** harden the commit checks behind ForkSecurityHardening ([b23be4f](https://github.com/33cn/plugin/commit/b23be4f919b72cb1595cc31a1ea668381103115f))
+
+
+### Features
+
+* **rollup:** allow overriding the cross tx sync start height ([e313490](https://github.com/33cn/plugin/commit/e3134907cef12f97dfd2f859cc147b6525f2a4e3))
+
+## [1.75.2](https://github.com/33cn/plugin/compare/v1.75.1...v1.75.2) (2026-10-15)
+
+
+### Performance Improvements
+
+* **ci:** bring every PR job under 10 minutes ([92b6876](https://github.com/33cn/plugin/commit/92b68766ec5da3f62322d26b205d40fb356dd568)), closes [#1330](https://github.com/33cn/plugin/issues/1330) [#1328](https://github.com/33cn/plugin/issues/1328)
+
+## [1.75.1](https://github.com/33cn/plugin/compare/v1.75.0...v1.75.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **testnode:** set ForkParaFee before the para node starts ([97f20f4](https://github.com/33cn/plugin/commit/97f20f4e613b1b5b16fadad64227500ee344478d))
+
+
+### Performance Improvements
+
+* **ci:** cut cross2eth/bridgevmxgo integration runtime with bounded polling ([a0fd866](https://github.com/33cn/plugin/commit/a0fd8663f5e80f89d33c046b9a9982cc5176ff7f))
+
+# [1.75.0](https://github.com/33cn/plugin/compare/v1.74.0...v1.75.0) (2026-10-14)
+
+
+### Bug Fixes
+
+* **paracross:** bind node group title to its exact para execer ([e399683](https://github.com/33cn/plugin/commit/e39968311684701f6e194d95fb686802fe303d84))
+* **paracross:** guard empty CrossTxHashs in isHaveCrossTxs ([e2f672a](https://github.com/33cn/plugin/commit/e2f672acd3136ec777cfa08fb2ea505f132a45c5)), closes [#1326](https://github.com/33cn/plugin/issues/1326)
+
+
+### Features
+
+* **paracross:** filter invalid titles in node group list queries ([bd102c4](https://github.com/33cn/plugin/commit/bd102c4114ee775b1a6e1d47640a65d7aef22ed9)), closes [#1326](https://github.com/33cn/plugin/issues/1326)
+
 # [1.74.0](https://github.com/33cn/plugin/compare/v1.73.0...v1.74.0) (2026-09-18)
 
 
