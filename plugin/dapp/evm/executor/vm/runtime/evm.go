@@ -539,8 +539,17 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 
 	// 向合约地址转账
 	cfg := evm.StateDB.GetConfig()
+	// From ForkEVMTransferRevert on, the snapshot is taken before the transfer so that a
+	// failed create also reverts the attached value (see transferChange.revert).
+	snapshotBeforeTransfer := cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMTransferRevert)
+	if snapshotBeforeTransfer {
+		snapshot = evm.StateDB.Snapshot()
+	}
 	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
 		if value > 0 && !evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value) {
+			if snapshotBeforeTransfer {
+				evm.StateDB.RevertToSnapshot(snapshot)
+			}
 			log.Error("evm create transfer failed", "caller", caller.Address().String(), "contractAddr", contractAddr.String(), "value", value)
 			return nil, -1, gas, model.ErrInsufficientBalance
 		}
@@ -563,7 +572,9 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	contract.SetCallCode(&contractAddr, common.ToHash(code), code)
 
 	// 创建一个新的账户对象（合约账户）
-	snapshot = evm.StateDB.Snapshot()
+	if !snapshotBeforeTransfer {
+		snapshot = evm.StateDB.Snapshot()
+	}
 	evm.StateDB.CreateAccount(contractAddr.String(), contract.CallerAddress.String(), execName, alias)
 
 	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {

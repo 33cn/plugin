@@ -94,4 +94,6 @@ const (
 	ForkTradeFixAssetDBX = "ForkTradeFixAssetDB"
 	// ForkTradePriceX all asset can be price
 	ForkTradePriceX = "ForkTradePrice"
+	// ForkTradeStatusGateX only orders in live status can be filled
+	ForkTradeStatusGateX = "ForkTradeStatusGate"
 )
