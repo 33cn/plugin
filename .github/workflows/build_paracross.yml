@@ -20,6 +20,10 @@ jobs:
         run: export PATH=${PATH}:`go env GOPATH`/bin
 
       - name: deploy
+        # 注意: 不能换成 build_ci_dapp。paracross 的 docker-compose.sh 会走 rpc_test ->
+        # dapp_test_rpc, 后者固定执行 ./ticket/test-rpc.sh 以及 build/ci/dapptest 下所有
+        # dapp 的 test-rpc.sh(package 脚本由各 dapp 的 cmd/build.sh 生成), 因此仍然需要
+        # depends 的完整 build/ci 产物; 只编 paracross 会导致 ticket/test-rpc.sh 缺失而失败。
         run: |
           make docker-compose dapp=paracross
           make docker-compose-down dapp=paracross

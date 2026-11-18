@@ -72,6 +72,11 @@ type MemoryStateDB struct {
 	stateDirty map[string]interface{}
 	dataDirty  map[string]interface{}
 	api        client.QueueProtocolAPI
+
+	// revertErr records the first error a snapshot revert hit in the current transaction.
+	// RevertToSnapshot cannot return it to the EVM (its callers are already unwinding an
+	// error), so innerExec checks RevertError before accepting a successful execution.
+	revertErr error
 }
 
 // NewMemoryStateDB 基于执行器框架的三个DB构建内存状态机对象
@@ -105,9 +110,11 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 // （docs/security/evm-account-blacklist.md 场景 B2 / B3，blacklist_gap_test.go 有对应用例）：
 //   - TransferToToken 的 from：token 预编译的 from 取自 calldata，与 caller 无绑定，
 //     第三方合约可指定 from=黑名单；calldata 长度 100 字节，chain33 的 Para 维度看不见。
-//   - Transfer 的 sender：SELFDESTRUCT 经 AddBalance 以合约为付款方转账，
-//     且 opSuicide 的付款方取 contract.CodeAddr，DELEGATECALL 到黑名单代码时
-//     runtime 层没有任何检查，只有这里能拦。
+//   - Transfer 的 sender：SELFDESTRUCT 经 AddBalance 以合约为付款方转账。
+//     在 ForkEVMSuicidePayer 之前 opSuicide 的付款方取 contract.CodeAddr，
+//     DELEGATECALL 到黑名单代码时 runtime 层没有任何检查，只有这里能拦；
+//     该分叉之后付款方改为 contract.Address()（= 代理自己），sender 检查照旧执行，
+//     但主体换成了代理，把代码合约拉黑对它不再有保护作用。
 //
 // recipient 维度拦的是"打入"（等同冻结），保留以符合 chain33"禁止收发"的原始设计。
 func (mdb *MemoryStateDB) isBlockedAccount(addrs ...string) bool {
@@ -398,7 +405,10 @@ func (mdb *MemoryStateDB) RevertToSnapshot(version int) {
 
 	// 从最近版本开始回滚
 	for index := len(mdb.snapshots) - 1; index >= version; index-- {
-		mdb.snapshots[index].revert()
+		if err := mdb.snapshots[index].revert(); err != nil && mdb.revertErr == nil {
+			log15.Error("RevertToSnapshot failed", "snapshot", index, "err", err)
+			mdb.revertErr = err
+		}
 	}
 
 	// 只保留回滚版本之前的版本数据
@@ -410,6 +420,18 @@ func (mdb *MemoryStateDB) RevertToSnapshot(version int) {
 		mdb.currentVer = mdb.snapshots[version-1]
 	}
 
+}
+
+// RevertError returns the first error a snapshot revert recorded in the current transaction,
+// or nil when every revert succeeded. innerExec turns a non-nil value into a failed
+// transaction: the account cache and the receipt no longer describe the same state.
+func (mdb *MemoryStateDB) RevertError() error {
+	return mdb.revertErr
+}
+
+// ResetRevertError clears the recorded revert error at the start of an execution.
+func (mdb *MemoryStateDB) ResetRevertError() {
+	mdb.revertErr = nil
 }
 
 // Snapshot 对当前的数据状态打快照，并生成快照版本号，方便后面回滚数据
@@ -522,6 +544,63 @@ const (
 	Error
 )
 
+// isForkActive reports whether fork is active at the current block height.
+func (mdb *MemoryStateDB) isForkActive(fork string) bool {
+	if mdb.api == nil {
+		return false
+	}
+	cfg := mdb.api.GetConfig()
+	if cfg == nil {
+		return false
+	}
+	return cfg.IsDappFork(mdb.blockHeight, evmtypes.ExecutorName, fork)
+}
+
+// transferPreState captures the raw account KV touched by Transfer, keyed the same way the
+// coins account DB stores them.
+func (mdb *MemoryStateDB) transferPreState(sender, recipient string) ([]kvPreState, error) {
+	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
+		return mdb.capturePreState([][]byte{
+			mdb.CoinsAccount.AccountKey(sender),
+			mdb.CoinsAccount.AccountKey(recipient),
+		})
+	}
+	// paracross: balances live in the exec account of the mapped executor
+	return mdb.capturePreState([][]byte{
+		mdb.execAccountKey(sender),
+		mdb.execAccountKey(recipient),
+	})
+}
+
+func (mdb *MemoryStateDB) execAccountKey(addr string) []byte {
+	return mdb.CoinsAccount.GetExecKVSet(mdb.evmPlatformAddr, &types.Account{Addr: addr})[0].Key
+}
+
+// capturePreState reads the raw values behind keys before a transfer overwrites them. Only
+// ErrNotFound means the key did not exist: any other error leaves us without a value to
+// restore, so the transfer must fail instead of recording a state that was never read.
+func (mdb *MemoryStateDB) capturePreState(keys [][]byte) ([]kvPreState, error) {
+	states := make([]kvPreState, 0, len(keys))
+	for _, key := range keys {
+		pre := kvPreState{key: append([]byte(nil), key...)}
+		value, err := mdb.StateDB.Get(key)
+		switch {
+		case err == nil:
+			pre.value = append([]byte(nil), value...)
+			pre.existed = true
+		case errors.Is(err, types.ErrNotFound):
+			// The key did not exist yet; revert must make it absent again.
+		default:
+			log15.Error("capturePreState failed", "key", string(key), "err", err)
+			return nil, fmt.Errorf("read state key %x before transfer: %w", key, err)
+		}
+		states = append(states, pre)
+	}
+	return states, nil
+}
+
 // Transfer 借助coins执行器进行转账相关操作
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)
@@ -548,6 +627,15 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 
 	conf := types.ConfSub(mdb.api.GetConfig(), evmtypes.ExecutorName)
 	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	var preState []kvPreState
+	if mdb.isForkActive(evmtypes.ForkEVMTransferRevert) {
+		preState, err = mdb.transferPreState(sender, recipient)
+		if err != nil {
+			log15.Error("transfer capture pre-state failed", "sender", sender, "recipient", recipient,
+				"amount", amount, "err", err)
+			return false
+		}
+	}
 	if bytes.Equal(types.GetRealExecName([]byte(ethMapFromExecutor)), []byte("coins")) {
 		ret, err = mdb.CoinsAccount.Transfer(sender, recipient, value)
 	} else { //paracross
@@ -565,6 +653,7 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 			amount:     value,
 			data:       ret.KV,
 			logs:       ret.Logs,
+			preState:   preState,
 		})
 	}
 
@@ -602,6 +691,19 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 	if recipient == execaddress {
 		return false, errors.New("not allow")
 	}
+	// Token accounts use the same non-exec account keys as tokendb.Transfer.
+	var preState []kvPreState
+	if mdb.isForkActive(evmtypes.ForkEVMTransferRevert) {
+		preState, err = mdb.capturePreState([][]byte{
+			tokendb.AccountKey(from),
+			tokendb.AccountKey(recipient),
+		})
+		if err != nil {
+			log15.Error("TransferToToken capture pre-state failed", "from", from, "recipient", recipient,
+				"symbol", symbol, "amount", amount, "err", err)
+			return false, err
+		}
+	}
 	receipt, err := tokendb.Transfer(from, recipient, amount)
 	if err != nil {
 		return false, err
@@ -612,6 +714,7 @@ func (mdb *MemoryStateDB) TransferToToken(from, recipient, symbol string, amount
 		amount:     amount,
 		data:       receipt.GetKV(),
 		logs:       receipt.GetLogs(),
+		preState:   preState,
 	})
 	return true, nil
 

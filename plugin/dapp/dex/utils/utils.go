@@ -175,7 +175,13 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 			return
 		}
 		if deployInfo.Interval != 0 {
-			time.Sleep(deployInfo.Interval)
+			// Interval 只是给链上执行留缓冲, 下面还会轮询到 ExecOk 才继续;
+			// 调用方普遍写 5s, 批量发 10 笔就是 50s, CI 里代价很大, 这里统一压到 500ms
+			interval := deployInfo.Interval
+			if interval > 500*time.Millisecond {
+				interval = 500 * time.Millisecond
+			}
+			time.Sleep(interval)
 		}
 
 		countTime := 0
@@ -183,11 +189,11 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 			result := ebrelayerChain33.GetTxStatusByHashesRpc(txhash, rpcUrl)
 			//等待交易执行
 			if ebTypes.Invalid_Chain33Tx_Status == result {
-				time.Sleep(time.Second)
+				time.Sleep(200 * time.Millisecond)
 
 				countTime++
-				// 超过2分钟 超时退出
-				if countTime > 120 {
+				// 超过2分钟 超时退出 (轮询间隔 200ms, 所以 600 次)
+				if countTime > 600 {
 					fmt.Println("time out txhash: ", txhash)
 					return
 				}

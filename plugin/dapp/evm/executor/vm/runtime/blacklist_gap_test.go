@@ -41,13 +41,11 @@ type gapEnv struct {
 // 需要关闭 fork 做对照时由调用方显式 SetFork。
 // 追加 ethMapFromExecutor="coins" 使 statedb 直接读写 coins 主账户，
 // 否则余额走 evm 子账户（LoadExecAccount），fund/balance 会与实际转账路径不一致。
-func newGapEnv(t *testing.T, blocked []string) *gapEnv {
+// newGapEnvWithCfg assembles the state/coins/EVM plumbing shared by every case that drives the
+// VM against real coins accounts. cfg is the part that differs between callers, and seed only
+// keeps their state roots apart. Cases that need a blocked list set it on env.cfg afterwards.
+func newGapEnvWithCfg(t *testing.T, cfg *ctypes.Chain33Config, seed string) *gapEnv {
 	t.Helper()
-	cfgStr := ctypes.GetDefaultCfgstring()
-	if !strings.Contains(cfgStr, "[exec.sub.evm]") {
-		cfgStr += "\n[exec.sub.evm]\nethMapFromExecutor=\"coins\"\nethMapFromSymbol=\"bty\"\n"
-	}
-	cfg := ctypes.NewChain33Config(cfgStr)
 	api := new(apimock.QueueProtocolAPI)
 	api.On("GetConfig").Return(cfg)
 
@@ -58,10 +56,7 @@ func newGapEnv(t *testing.T, blocked []string) *gapEnv {
 	require.NoError(t, err)
 
 	mdb := state.NewMemoryStateDB(stateDB, localDB, coins, gapTestHeight, api)
-	mdb.Prepare(vmcommon.BytesToHash([]byte("blacklist-gap")), 0)
-
-	restore := cfg.SetBlockedAccountsForTest(0, blocked)
-	t.Cleanup(restore)
+	mdb.Prepare(vmcommon.BytesToHash([]byte(seed)), 0)
 
 	env := &gapEnv{t: t, cfg: cfg, mdb: mdb, coins: coins}
 	env.evm = NewEVM(Context{
@@ -72,6 +67,19 @@ func newGapEnv(t *testing.T, blocked []string) *gapEnv {
 		GetHash:     func(uint64) vmcommon.Hash { return vmcommon.Hash{} },
 		BlockNumber: big.NewInt(gapTestHeight),
 	}, mdb, Config{}, cfg)
+	return env
+}
+
+func newGapEnv(t *testing.T, blocked []string) *gapEnv {
+	t.Helper()
+	cfgStr := ctypes.GetDefaultCfgstring()
+	if !strings.Contains(cfgStr, "[exec.sub.evm]") {
+		cfgStr += "\n[exec.sub.evm]\nethMapFromExecutor=\"coins\"\nethMapFromSymbol=\"bty\"\n"
+	}
+	env := newGapEnvWithCfg(t, ctypes.NewChain33Config(cfgStr), "blacklist-gap")
+
+	restore := env.cfg.SetBlockedAccountsForTest(0, blocked)
+	t.Cleanup(restore)
 	return env
 }
 
@@ -260,12 +268,20 @@ func TestGapB3_SelfdestructBeneficiary(t *testing.T) {
 //	干净用户 U → 干净合约 P → DELEGATECALL → 黑名单合约 A 的代码执行 SELFDESTRUCT
 //
 // evm.DelegateCall 没有黑名单检查（DELEGATECALL 借代码在调用者上下文执行，
-// 通常不构成打出）。但 opSuicide 的付款方取 contract.CodeAddr（= A），
-// 金额取 contract.Address()（= P）的余额：攻击者给 P 充值 X，即可让 A 向受益人付出 X。
+// 通常不构成打出）。但分叉 ForkEVMSuicidePayer 之前，opSuicide 的付款方取
+// contract.CodeAddr（= A），金额取 contract.Address()（= P）的余额：
+// 攻击者给 P 充值 X，即可让 A 向受益人付出 X。
 // 这使 statedb.Transfer 的 sender 检查成为真正的最后一道闸，而非冗余。
+//
+// 本用例固定的是"分叉前"这条历史路径：旧区块重放时它仍然成立，黑名单也仍是
+// 这条路径上唯一的拦截点，所以这里显式把分叉关掉。
+// 分叉后付款方改为 P 自身、A 不再是付款方，黑名单不再参与这条路径，
+// 见 suicide_payer_test.go。
 func TestGapB3b_DelegatecallSelfdestructDrainsCodeAddr(t *testing.T) {
 	user, proxy, proxy2, blockedC := addr(0x14), addr(0xb4), addr(0xb5), addr(0xa4)
-	env := newGapEnv(t, []string{blockedC.String()})
+	env := newSuicideEnv(t, ctypes.MaxHeight)
+	restore := env.cfg.SetBlockedAccountsForTest(0, []string{blockedC.String()})
+	t.Cleanup(restore)
 	env.assertEnvelopeClean(user, proxy, proxy2)
 
 	const stash = int64(300_000)

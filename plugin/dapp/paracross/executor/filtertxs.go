@@ -170,7 +170,7 @@ func FilterParaCrossAssetTxHashes(txs []*types.Transaction) ([][]byte, error) {
 // 6, 平行链	    user.p.xx.paracross + user.p.xx.other   混合平行链组合
 // 7, 平行链     all user.p.xx.other  					混合平行链组合
 // 这里只取跨链兑换和任何有user.p.xx.paracross的资产转移交易，资产兑换可能主链会需要查看平行链执行结果再对主链的paracross合约做后续处理
-func crossTxGroupProc(title string, txs []*types.Transaction, index int) ([]*types.Transaction, int32) {
+func crossTxGroupProc(title string, txs []*types.Transaction, index int, exactTitle bool) ([]*types.Transaction, int32) {
 	var headIdx, endIdx int32
 
 	for i := index; i >= 0; i-- {
@@ -191,7 +191,7 @@ func crossTxGroupProc(title string, txs []*types.Transaction, index int) ([]*typ
 	//cross asset transfer in tx group
 	var transfers []*types.Transaction
 	for i := headIdx; i < endIdx; i++ {
-		if types.IsSpecificParaExecName(title, string(txs[i].Execer)) && bytes.HasSuffix(txs[i].Execer, []byte(pt.ParaX)) {
+		if isSpecificParaTxOfTitle(exactTitle, title, string(txs[i].Execer)) && bytes.HasSuffix(txs[i].Execer, []byte(pt.ParaX)) {
 			transfers = append(transfers, txs[i])
 
 		}
@@ -200,14 +200,47 @@ func crossTxGroupProc(title string, txs []*types.Transaction, index int) ([]*typ
 
 }
 
+// isSpecificParaTxOfTitle exactTitle为true时按title精确匹配平行链交易，否则保持历史的前缀匹配行为
+func isSpecificParaTxOfTitle(exactTitle bool, title, exec string) bool {
+	if exactTitle {
+		return pt.IsExactParaTitleExec(title, exec)
+	}
+	return types.IsSpecificParaExecName(title, exec)
+}
+
+// filterCrossTxsByExactTitle 分叉后仅保留execer精确对应title的跨链交易。
+// 历史实现按前缀(IsSpecificParaExecName)筛选，前缀title(如user.p.super)会匹配到真实平行链
+// (user.p.superx.paracross)的跨链交易，导致伪造title的节点组commit可以执行真实平行链的提现。
+func filterCrossTxsByExactTitle(cfg *types.Chain33Config, mainHeight int64, title string, txs []*types.Transaction) []*types.Transaction {
+	if !cfg.IsDappFork(mainHeight, pt.ParaX, pt.ForkParaTitleExecMatch) {
+		return txs
+	}
+	var retTxs []*types.Transaction
+	for _, tx := range txs {
+		if tx != nil && pt.IsExactParaTitleExec(title, string(tx.Execer)) {
+			retTxs = append(retTxs, tx)
+		}
+	}
+	return retTxs
+}
+
 // FilterParaMainCrossTxHashes ForkParacrossCommitTx之前允许txgroup里面有main chain tx的跨链
 func FilterParaMainCrossTxHashes(title string, txs []*types.Transaction) [][]byte {
+	return filterParaMainCrossTxHashes(title, txs, false)
+}
+
+// FilterParaMainCrossTxHashesFork 分叉后跨链交易按title精确匹配，避免前缀title匹配到其他平行链交易
+func FilterParaMainCrossTxHashesFork(title string, txs []*types.Transaction) [][]byte {
+	return filterParaMainCrossTxHashes(title, txs, true)
+}
+
+func filterParaMainCrossTxHashes(title string, txs []*types.Transaction, exactTitle bool) [][]byte {
 	var crossTxHashs [][]byte
 	//跨链tx 必须是paracross合约且user.p.打头， user.p.xx.的非paracross合约不是跨链
 	for i := 0; i < len(txs); i++ {
 		tx := txs[i]
 		if tx.GroupCount > 1 {
-			groupTxs, end := crossTxGroupProc(title, txs, i)
+			groupTxs, end := crossTxGroupProc(title, txs, i, exactTitle)
 			for _, tx := range groupTxs {
 				crossTxHashs = append(crossTxHashs, tx.Hash())
 
@@ -215,7 +248,7 @@ func FilterParaMainCrossTxHashes(title string, txs []*types.Transaction) [][]byt
 			i = int(end) - 1
 			continue
 		}
-		if types.IsSpecificParaExecName(title, string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+		if isSpecificParaTxOfTitle(exactTitle, title, string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
 			crossTxHashs = append(crossTxHashs, tx.Hash())
 		}
 	}

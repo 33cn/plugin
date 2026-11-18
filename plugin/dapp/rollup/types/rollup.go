@@ -41,6 +41,13 @@ const (
 var (
 	//RollupX 执行器名称定义
 	RollupX = "rollup"
+	//ForkSecurityHardening 分叉后 rollup 提交的 2/3 门槛按【去重后的验证人公钥数】计算。
+	//分叉前的判定是"提交列表的条目数 >= len(成员公钥列表)*2/3+1"，而提交列表由提交者自填、从不去重；
+	//校验用的 VerifyAggregatedOne 又是"公钥求和后验一个签名"，重复的公钥同样参与求和
+	//（t 份同一公钥的聚合 = t*pk，对 t 份同一签名 = t*sig 依然验证通过），
+	//因此把【自己那一把】已注册公钥重复 t 遍，即可用单把验证人密钥伪造 2/3。
+	//分叉后基准改为"去重后的成员公钥数"，并只计"去重后的提交公钥数"，重复提交不再计入。
+	ForkSecurityHardening = "ForkSecurityHardening"
 	//定义actionMap
 	actionMap = map[string]int32{
 		NameCommitAction: TyCommitAction,
@@ -64,6 +71,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RollupX, "Enable", 0)
+	cfg.RegisterDappFork(RollupX, ForkSecurityHardening, 0)
 }
 
 // InitExecutor defines register executor
