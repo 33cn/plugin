@@ -9,6 +9,17 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
+// maxUnfreezeTimes bounds the decay loop. unfreezeTimes is derived from the
+// user-supplied StartTime and Period and is otherwise unbounded, so a tx with a
+// very old StartTime could spin ~1e15 times inside Exec and halt the node.
+//
+// The bound does not change any result: the decay factor per step is at most
+// (10000-1)/10000, so after maxUnfreezeTimes steps the remaining value is at
+// most MaxInt64 * 0.9999^1e6 < 4e-25, which truncates to 0 for every int64
+// TotalCount. Iterating further would also produce 0, so capping the loop is
+// consensus-identical.
+const maxUnfreezeTimes = int64(1_000_000)
+
 // Means 解冻算法接口
 type Means interface {
 	setOpt(unfreeze *pty.Unfreeze, from *pty.UnfreezeCreate) (*pty.Unfreeze, error)
@@ -81,6 +92,9 @@ func (opt *leftProportion) calcFrozen(unfreeze *pty.Unfreeze, now int64) (int64,
 		return 0, types.ErrInvalidParam
 	}
 	unfreezeTimes := (now + means.Period - unfreeze.StartTime) / means.Period
+	if unfreezeTimes > maxUnfreezeTimes {
+		unfreezeTimes = maxUnfreezeTimes
+	}
 	frozen := float64(unfreeze.TotalCount)
 	for i := int64(0); i < unfreezeTimes; i++ {
 		frozen = frozen * float64(10000-means.TenThousandth) / 10000
@@ -152,6 +166,9 @@ func (opt *leftProportionV2) calcFrozen(unfreeze *pty.Unfreeze, now int64) (int6
 		return 0, nil
 	}
 	unfreezeTimes := (now + means.Period - unfreeze.StartTime) / means.Period
+	if unfreezeTimes > maxUnfreezeTimes {
+		unfreezeTimes = maxUnfreezeTimes
+	}
 	frozen := float64(unfreeze.TotalCount)
 	for i := int64(0); i < unfreezeTimes; i++ {
 		frozen = frozen * float64(10000-means.TenThousandth) / 10000
