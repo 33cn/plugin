@@ -1,5 +1,13 @@
 changelog
 
+## [1.76.6](https://github.com/33cn/plugin/compare/v1.76.5...v1.76.6) (2026-11-19)
+
+
+### Bug Fixes
+
+* **collateralize,issuance:** keep repay record index with record owner ([d9eda59](https://github.com/33cn/plugin/commit/d9eda593a420e0c367d1ee21c321092b08f19162))
+* **collateralize,issuance:** return repaid collateral to borrow record owner ([98b41c8](https://github.com/33cn/plugin/commit/98b41c8e0db168d7436b4fc094ca0adc0c5a1256))
+
 ## [1.76.5](https://github.com/33cn/plugin/compare/v1.76.4...v1.76.5) (2026-11-17)
 
 
