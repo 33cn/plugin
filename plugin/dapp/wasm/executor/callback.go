@@ -4,6 +4,7 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
+	dappcommon "github.com/33cn/plugin/plugin/dapp/common"
 	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
 )
 
@@ -112,6 +113,13 @@ func execActive(addr string, amount int64) error {
 }
 
 func execTransfer(from, to string, amount int64) error {
+	cfg := wasmCB.GetAPI().GetConfig()
+	// 分叉后对 from/to 做 eth 地址归一化(与存储 key 格式一致), 防止大小写变体
+	// 绕过 account 层 from==to 自我转账检查造成造币
+	if cfg.IsDappFork(wasmCB.GetHeight(), types2.WasmX, types2.ForkWasmFixAddrNormalize) {
+		from = dappcommon.FmtEthAddressWithFork(from, cfg, wasmCB.GetHeight())
+		to = dappcommon.FmtEthAddressWithFork(to, cfg, wasmCB.GetHeight())
+	}
 	receipt, err := wasmCB.GetCoinsAccount().ExecTransfer(from, to, wasmCB.execAddr, amount)
 	if err != nil {
 		return err
@@ -122,6 +130,12 @@ func execTransfer(from, to string, amount int64) error {
 }
 
 func execTransferFrozen(from, to string, amount int64) error {
+	cfg := wasmCB.GetAPI().GetConfig()
+	// 同 execTransfer, 分叉后对 from/to 做 eth 地址归一化
+	if cfg.IsDappFork(wasmCB.GetHeight(), types2.WasmX, types2.ForkWasmFixAddrNormalize) {
+		from = dappcommon.FmtEthAddressWithFork(from, cfg, wasmCB.GetHeight())
+		to = dappcommon.FmtEthAddressWithFork(to, cfg, wasmCB.GetHeight())
+	}
 	receipt, err := wasmCB.GetCoinsAccount().ExecTransferFrozen(from, to, wasmCB.execAddr, amount)
 	if err != nil {
 		return err

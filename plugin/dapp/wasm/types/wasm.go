@@ -14,6 +14,11 @@ const (
 	NameRegExp = "^[a-z0-9]+$"
 	//TODO: max size to define
 	MaxCodeSize = 1 << 20
+
+	// ForkWasmFixAddrNormalize 修复 execTransfer/execTransferFrozen 宿主函数缺少地址归一化的问题:
+	// eth 地址大小写变体可绕过 account 层 from==to 自我转账检查(存储 key 已归一化为小写),
+	// 分叉后在调用 account 层前先将 from/to 归一化
+	ForkWasmFixAddrNormalize = "ForkWasmFixAddrNormalize"
 )
 
 // action for executor
@@ -42,6 +47,7 @@ func init() {
 
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(WasmX, "Enable", 0)
+	cfg.RegisterDappFork(WasmX, ForkWasmFixAddrNormalize, 0)
 }
 
 func InitExecutor(cfg *types.Chain33Config) {
