@@ -6,6 +6,7 @@ package executor
 // returned to the borrow record owner (record.AccountAddr) instead of the caller.
 
 import (
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -131,6 +132,34 @@ func repayOwnerCoinBalance(env *execEnv, addr string) int64 {
 	return acc.LoadExecAccount(addr, env.execAddr).GetBalance()
 }
 
+// repayOwnerRepayLog decodes the repay receipt log, whose AccountAddr is used
+// as the local record table address index.
+func repayOwnerRepayLog(t *testing.T, receipt *types.Receipt) *pkt.ReceiptCollateralize {
+	t.Helper()
+	for _, item := range receipt.Logs {
+		if item.Ty != pkt.TyLogCollateralizeRepay {
+			continue
+		}
+		var repayLog pkt.ReceiptCollateralize
+		assert.Nil(t, types.Decode(item.Log, &repayLog))
+		return &repayLog
+	}
+	t.Fatal("repay receipt log not found")
+	return nil
+}
+
+// repayOwnerRecordsByAddr queries the local record table by address, which is
+// exactly what Query_CollateralizeRecordByAddr does.
+func repayOwnerRecordsByAddr(t *testing.T, env *execEnv, addr string) []*pkt.BorrowRecord {
+	t.Helper()
+	records, err := queryCollateralizeRecordByAddr(env.db, env.kvdb, addr, 0, "", "")
+	if errors.Is(err, types.ErrNotFound) {
+		return nil
+	}
+	assert.Nil(t, err)
+	return records
+}
+
 // repayOwnerPreparePool: manage(A) + create(A, 1000 CCNY) + feed(B, price=1)
 func repayOwnerPreparePool(t *testing.T, env *execEnv, exec *Collateralize) string {
 	p := &pkt.CollateralizeManageTx{}
@@ -215,7 +244,7 @@ func TestRepayOwnerForkRepayByNonBorrower(t *testing.T) {
 	tx, err = signTx(tx, PrivKeyC)
 	assert.Nil(t, err)
 	exec.SetEnv(env.blockHeight+2, env.blockTime+2, env.difficulty)
-	_, err = repayOwnerExecTx(t, env, exec, tx, 1)
+	receipt, err := repayOwnerExecTx(t, env, exec, tx, 1)
 	assert.Nil(t, err)
 
 	coinBAfter := repayOwnerCoinBalance(env, string(Nodes[1]))
@@ -229,6 +258,13 @@ func TestRepayOwnerForkRepayByNonBorrower(t *testing.T) {
 	tokenCost := tokenCBefore - tokenCAfter
 	assert.True(t, tokenCost >= record.DebtValue, "repayer cost must cover the debt")
 	assert.True(t, tokenCost < record.CollateralValue, "repayer must not profit from the collateral")
+
+	// the repay log must attribute the record to its owner, so the local address
+	// index keeps the record under the borrower instead of the repayer
+	repayLog := repayOwnerRepayLog(t, receipt)
+	assert.Equal(t, string(Nodes[1]), repayLog.AccountAddr, "repay log must record the borrow record owner")
+	assert.Len(t, repayOwnerRecordsByAddr(t, env, string(Nodes[1])), 1, "borrower must still see the repaid record")
+	assert.Empty(t, repayOwnerRecordsByAddr(t, env, string(Nodes[2])), "repayer must not own the record index")
 }
 
 // After ForkCollateralizeRepayOwner: the borrower repaying his own record keeps
@@ -253,13 +289,17 @@ func TestRepayOwnerForkRepayByBorrower(t *testing.T) {
 	tx, err = signTx(tx, PrivKeyB)
 	assert.Nil(t, err)
 	exec.SetEnv(env.blockHeight+2, env.blockTime+2, env.difficulty)
-	_, err = repayOwnerExecTx(t, env, exec, tx, 1)
+	receipt, err := repayOwnerExecTx(t, env, exec, tx, 1)
 	assert.Nil(t, err)
 
 	assert.Equal(t, record.CollateralValue, repayOwnerCoinBalance(env, string(Nodes[1]))-coinBBefore,
 		"borrower must get the collateral back")
 	assert.True(t, tokenBBefore-repayOwnerTokenBalance(env, string(Nodes[1])) >= record.DebtValue,
 		"borrower cost must cover the debt")
+
+	repayLog := repayOwnerRepayLog(t, receipt)
+	assert.Equal(t, string(Nodes[1]), repayLog.AccountAddr, "repay log must record the borrow record owner")
+	assert.Len(t, repayOwnerRecordsByAddr(t, env, string(Nodes[1])), 1, "borrower must still see the repaid record")
 }
 
 // Before ForkCollateralizeRepayOwner the old behavior is preserved: the repayer
@@ -287,7 +327,7 @@ func TestRepayOwnerPreForkRepayByNonBorrower(t *testing.T) {
 	tx, err = signTx(tx, PrivKeyC)
 	assert.Nil(t, err)
 	exec.SetEnv(env.blockHeight+2, env.blockTime+2, env.difficulty)
-	_, err = repayOwnerExecTx(t, env, exec, tx, 1)
+	receipt, err := repayOwnerExecTx(t, env, exec, tx, 1)
 	assert.Nil(t, err)
 
 	// pre-fork behavior unchanged: collateral goes to the caller (repayer C)
@@ -295,4 +335,10 @@ func TestRepayOwnerPreForkRepayByNonBorrower(t *testing.T) {
 		"pre-fork: collateral goes to the repayer")
 	assert.Equal(t, coinBBefore, repayOwnerCoinBalance(env, string(Nodes[1])),
 		"pre-fork: borrower gets nothing back")
+
+	// pre-fork logs keep the caller as well, so the local index is unchanged
+	repayLog := repayOwnerRepayLog(t, receipt)
+	assert.Equal(t, string(Nodes[2]), repayLog.AccountAddr, "pre-fork: repay log keeps the caller")
+	assert.Len(t, repayOwnerRecordsByAddr(t, env, string(Nodes[2])), 1, "pre-fork: repayer owns the record index")
+	assert.Empty(t, repayOwnerRecordsByAddr(t, env, string(Nodes[1])), "pre-fork: borrower has no record index")
 }

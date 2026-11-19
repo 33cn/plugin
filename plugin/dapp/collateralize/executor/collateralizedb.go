@@ -156,6 +156,11 @@ func (action *Action) GetRepayReceiptLog(collateralize *pty.Collateralize, recor
 	c := &pty.ReceiptCollateralize{}
 	c.CollateralizeId = collateralize.CollateralizeId
 	c.AccountAddr = action.fromaddr
+	// ForkCollateralizeRepayOwner 分叉后抵押物退还给借据所有者，日志归属也应与
+	// 资金去向一致，否则本地地址索引会把已还记录挂到代还者名下
+	if action.Collateralize.GetAPI().GetConfig().IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizeRepayOwner) {
+		c.AccountAddr = record.AccountAddr
+	}
 	c.RecordId = record.RecordId
 	c.Status = record.Status
 
