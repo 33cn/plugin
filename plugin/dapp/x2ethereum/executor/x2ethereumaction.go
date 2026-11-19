@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/account"
@@ -29,9 +28,10 @@ type action struct {
 func newAction(a *x2ethereum, tx *types.Transaction, index int32) *action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
+	isFixFork := a.GetAPI().GetConfig().IsDappFork(a.GetHeight(), x2eTy.X2ethereumX, x2eTy.ForkX2EthFixReplayCollisionNormalize)
 
 	return &action{a.GetAPI(), a.GetCoinsAccount(), a.GetStateDB(), hash, fromaddr,
-		a.GetBlockTime(), a.GetHeight(), index, address.ExecAddress(string(tx.Execer)), NewOracle(a.GetStateDB(), x2eTy.DefaultConsensusNeeded)}
+		a.GetBlockTime(), a.GetHeight(), index, address.ExecAddress(string(tx.Execer)), NewOracle(a.GetStateDB(), x2eTy.DefaultConsensusNeeded, isFixFork)}
 }
 
 // ethereum ---> chain33
@@ -49,7 +49,7 @@ func (a *action) procEth2Chain33_lock(ethBridgeClaim *x2eTy.Eth2Chain33) (*types
 		return nil, err
 	}
 
-	ID := strconv.Itoa(int(ethBridgeClaim.EthereumChainID)) + strconv.Itoa(int(ethBridgeClaim.Nonce)) + ethBridgeClaim.EthereumSender + ethBridgeClaim.TokenContractAddress + "lock"
+	ID := calcProphecyID(ethBridgeClaim, a.oracle.isFixFork)
 
 	//记录ethProphecy
 	bz, err := a.db.Get(x2eTy.CalProphecyPrefix(ID))
@@ -209,7 +209,7 @@ func (a *action) procEth2Chain33_burn(withdrawEth *x2eTy.Eth2Chain33) (*types.Re
 		return nil, err
 	}
 
-	ID := strconv.Itoa(int(withdrawEth.EthereumChainID)) + strconv.Itoa(int(withdrawEth.Nonce)) + withdrawEth.EthereumSender + withdrawEth.TokenContractAddress + "burn"
+	ID := calcProphecyID(withdrawEth, a.oracle.isFixFork)
 
 	//记录ethProphecy
 	bz, err := a.db.Get(x2eTy.CalProphecyPrefix(ID))
