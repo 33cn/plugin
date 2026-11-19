@@ -225,6 +225,11 @@ func (action *Action) GetRepayReceiptLog(issuance *pty.Issuance, debtRecord *pty
 	c := &pty.ReceiptIssuance{}
 	c.IssuanceId = issuance.IssuanceId
 	c.AccountAddr = action.fromaddr
+	// ForkIssuanceRepayOwner 分叉后抵押物退还给借据所有者，日志归属也应与
+	// 资金去向一致，否则本地地址索引会把已还记录挂到代还者名下
+	if action.Issuance.GetAPI().GetConfig().IsDappFork(action.Issuance.GetHeight(), pty.IssuanceX, pty.ForkIssuanceRepayOwner) {
+		c.AccountAddr = debtRecord.AccountAddr
+	}
 	c.DebtId = debtRecord.DebtId
 	c.Status = debtRecord.Status
 
