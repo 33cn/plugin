@@ -156,6 +156,11 @@ func (action *Action) GetRepayReceiptLog(collateralize *pty.Collateralize, recor
 	c := &pty.ReceiptCollateralize{}
 	c.CollateralizeId = collateralize.CollateralizeId
 	c.AccountAddr = action.fromaddr
+	// ForkCollateralizeRepayOwner 分叉后抵押物退还给借据所有者，日志归属也应与
+	// 资金去向一致，否则本地地址索引会把已还记录挂到代还者名下
+	if action.Collateralize.GetAPI().GetConfig().IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizeRepayOwner) {
+		c.AccountAddr = record.AccountAddr
+	}
 	c.RecordId = record.RecordId
 	c.Status = record.Status
 
@@ -739,9 +744,15 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	kv = append(kv, receipt.KV...)
 
 	// 抵押物归还
-	receipt, err = action.coinsAccount.ExecTransferFrozen(coll.CreateAddr, action.fromaddr, action.execaddr, borrowRecord.CollateralValue)
+	// ForkCollateralizeRepayOwner 分叉后抵押物退还给借款记录所有者，
+	// 避免第三方代还时窃取借款人抵押物（分叉前保持旧行为，退还调用者）
+	toAddr := action.fromaddr
+	if cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizeRepayOwner) {
+		toAddr = borrowRecord.AccountAddr
+	}
+	receipt, err = action.coinsAccount.ExecTransferFrozen(coll.CreateAddr, toAddr, action.execaddr, borrowRecord.CollateralValue)
 	if err != nil {
-		clog.Error("CollateralizeRepay.ExecTransferFrozen", "addr", coll.CreateAddr, "execaddr", action.execaddr, "amount", borrowRecord.CollateralValue)
+		clog.Error("CollateralizeRepay.ExecTransferFrozen", "addr", coll.CreateAddr, "toAddr", toAddr, "execaddr", action.execaddr, "amount", borrowRecord.CollateralValue)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
