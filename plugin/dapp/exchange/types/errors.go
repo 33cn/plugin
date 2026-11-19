@@ -18,6 +18,8 @@ var (
 	ErrStatus       = fmt.Errorf("%s", "The status only in  0 , 1, 2!")
 	ErrOrderID      = fmt.Errorf("%s", "Wrong OrderID!")
 
+	ErrOverflow = fmt.Errorf("%s", "The amount calculation overflow int64!")
+
 	ErrCfgFmt     = fmt.Errorf("%s", "ErrCfgFmt")
 	ErrBindAddr   = fmt.Errorf("%s", "The address is not bound")
 	ErrAddrIsBank = fmt.Errorf("%s", "The address cannot be banks")
