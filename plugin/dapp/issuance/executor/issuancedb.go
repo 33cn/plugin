@@ -225,6 +225,11 @@ func (action *Action) GetRepayReceiptLog(issuance *pty.Issuance, debtRecord *pty
 	c := &pty.ReceiptIssuance{}
 	c.IssuanceId = issuance.IssuanceId
 	c.AccountAddr = action.fromaddr
+	// ForkIssuanceRepayOwner 分叉后抵押物退还给借据所有者，日志归属也应与
+	// 资金去向一致，否则本地地址索引会把已还记录挂到代还者名下
+	if action.Issuance.GetAPI().GetConfig().IsDappFork(action.Issuance.GetHeight(), pty.IssuanceX, pty.ForkIssuanceRepayOwner) {
+		c.AccountAddr = debtRecord.AccountAddr
+	}
 	c.DebtId = debtRecord.DebtId
 	c.Status = debtRecord.Status
 
@@ -688,9 +693,16 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	kv = append(kv, receipt.KV...)
 
 	// 抵押物归还
-	receipt, err = action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debtRecord.CollateralValue)
+	// ForkIssuanceRepayOwner 分叉后抵押物退还给借款记录所有者，
+	// 避免第三方代还时窃取借款人抵押物（分叉前保持旧行为，退还调用者）
+	toAddr := action.fromaddr
+	cfg := action.Issuance.GetAPI().GetConfig()
+	if cfg.IsDappFork(action.Issuance.GetHeight(), pty.IssuanceX, pty.ForkIssuanceRepayOwner) {
+		toAddr = debtRecord.AccountAddr
+	}
+	receipt, err = action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, toAddr, action.execaddr, debtRecord.CollateralValue)
 	if err != nil {
-		clog.Error("IssuanceRepay.ExecTransferFrozen", "addr", issu.IssuerAddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue)
+		clog.Error("IssuanceRepay.ExecTransferFrozen", "addr", issu.IssuerAddr, "toAddr", toAddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)
