@@ -3,6 +3,7 @@ package ethtxs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -238,6 +239,23 @@ func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethin
 	return signedTx.Hash().String(), nil
 }
 
+// LockBroadcastError 表示 lock 交易已广播到以太坊网络，但未能确认执行结果。
+// 携带已广播交易的 hash，供调用方记录并在重试时复用该交易，避免重复锁定导致重复铸币。
+type LockBroadcastError struct {
+	TxHash common.Hash
+	Err    error
+}
+
+// Error ...
+func (e *LockBroadcastError) Error() string {
+	return fmt.Sprintf("lock tx %s broadcast but unconfirmed: %s", e.TxHash.Hex(), e.Err.Error())
+}
+
+// Unwrap ...
+func (e *LockBroadcastError) Unwrap() error {
+	return e.Err
+}
+
 // LockEthErc20Asset ...
 func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank, bridgeBankAddr common.Address, addr2TxNonce map[common.Address]*NonceMutex, providerHttp string) (string, error) {
 	var prepareDone bool
@@ -306,12 +324,17 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 	tx, err := bridgeBank.Lock(auth, recvAddr.Hash160[:], tokenAddr, amount)
 	if nil != err {
 		txslog.Error("LockEthErc20Asset", "lock err", err.Error())
+		// 交易可能已广播（SendTransaction 报错但交易已进入节点 mempool），
+		// 携带 tx hash 返回，供上层在重试时复用该交易，防止重复锁定
+		if nil != tx {
+			return "", &LockBroadcastError{TxHash: tx.Hash(), Err: err}
+		}
 		return "", err
 	}
 	err = waitEthTxFinished(client, tx.Hash(), "LockEthErc20Asset", providerHttp)
 	if nil != err {
 		txslog.Error("LockEthErc20Asset", "waitEthTxFinished err", err.Error())
-		return "", err
+		return "", &LockBroadcastError{TxHash: tx.Hash(), Err: err}
 	}
 
 	return tx.Hash().String(), nil

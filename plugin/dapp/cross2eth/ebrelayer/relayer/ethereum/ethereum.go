@@ -339,6 +339,11 @@ func (ethRelayer *Relayer4Ethereum) LockEthErc20AssetAsync(ownerPrivateKey, toke
 	return ethtxs.LockEthErc20AssetAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.Addr2TxNonce)
 }
 
+// WaitLockTx 等待已广播的 lock 交易确认成功，用于调用方重试时复用交易，防止重复锁定
+func (ethRelayer *Relayer4Ethereum) WaitLockTx(txhash string) (string, error) {
+	return ethtxs.WaitLockTxConfirmed(ethRelayer.clientSpec, common.HexToHash(txhash), ethRelayer.providerHttp[0])
+}
+
 // ShowTxReceipt ...
 func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, error) {
 	txhash := common.HexToHash(hash)
