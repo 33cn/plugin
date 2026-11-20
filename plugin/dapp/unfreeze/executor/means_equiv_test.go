@@ -14,7 +14,7 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/unfreeze/types"
 )
 
-// 定理：对 1 <= T0 < 2^63、0 < a < 10000、p > 0、s <= t，有
+// 定理：对 1 <= T0 < 2^63、0 < a < 10000、p > 0，任意 s（含 s > t 的零轮情况），有
 //
 //	calcLeftProportionBounded(T0, a, p, s, t) = R_old(t)
 //
@@ -85,7 +85,7 @@ func TestBoundedMatchesLegacySmallSteps(t *testing.T) {
 
 	for ten := int64(1); ten < 10000; ten++ {
 		for _, total := range totals {
-			for times := int64(1); times <= 6; times++ {
+			for times := int64(0); times <= 6; times++ {
 				start := startForTimes(now, period, times)
 				got := calcLeftProportionBounded(total, ten, period, start, now)
 				want := legacyFrozen(total, ten, period, start, now)
@@ -165,6 +165,20 @@ func TestBoundedDependsOnlyOnStepCount(t *testing.T) {
 			} else {
 				require.Equal(t, first, got, "times=%d period=%d", times, period)
 			}
+		}
+	}
+}
+
+// n = 0（StartTime 在未来）也必须与旧实现逐位一致：旧循环此时返回
+// int64(float64(TotalCount))，对 TotalCount > 2^53 会丢掉浮点往返的尾差。
+func TestBoundedMatchesLegacyBeforeStart(t *testing.T) {
+	const now, period = int64(1_700_000_000), int64(10)
+	for _, total := range []int64{1, 1 << 53, 1<<53 + 1, 9_000_000_000_000_000_001, math.MaxInt64} {
+		for _, ten := range []int64{1, 2, 5000, 9999} {
+			start := now + 1 // 未来才开始
+			got := calcLeftProportionBounded(total, ten, period, start, now)
+			want := legacyFrozen(total, ten, period, start, now)
+			require.Equal(t, want, got, "total=%d ten=%d", total, ten)
 		}
 	}
 }

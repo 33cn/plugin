@@ -58,13 +58,15 @@ func decaySteps(total, tenThousandth int64) int64 {
 
 // calcLeftProportionBounded 是 ForkUnfreezeDecayBound 之后使用的有界实现。
 // 迭代次数只由金额和衰减率决定（< decaySteps），与用户提供的 StartTime 无关；
-// 对 0 < TenThousandth < 10000 且旧实现不发生整数溢出的输入，结果与旧循环逐位一致。
+// 对 0 < TenThousandth < 10000 且旧实现不发生整数溢出的输入，结果与旧循环逐位一致，
+// 包括轮数为 0（StartTime 在未来）时旧循环的 int64(float64(total)) 浮点往返。
 func calcLeftProportionBounded(total, tenThousandth, period, start, now int64) int64 {
 	if total <= 0 {
 		return 0
 	}
 	if tenThousandth <= 0 {
-		return total
+		// 无衰减：与旧循环相同，结果经 float64 往返截断
+		return int64(float64(total))
 	}
 	if tenThousandth >= 10000 {
 		// 每期衰减 >= 100%，只可能来自 v1 时代的历史仓位。旧实现会按轮数奇偶在
@@ -72,7 +74,8 @@ func calcLeftProportionBounded(total, tenThousandth, period, start, now int64) i
 		return 0
 	}
 	if start > now {
-		return total
+		// 轮数为 0：与旧循环一致，返回 int64(float64(total))（>2^53 时有浮点往返尾差）
+		return int64(float64(total))
 	}
 	// now-start 溢出说明已经过了 1e19 个周期，剩余必然为 0。
 	if start < 0 && now > math.MaxInt64+start {
