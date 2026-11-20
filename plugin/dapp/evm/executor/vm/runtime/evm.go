@@ -199,9 +199,29 @@ func (evm *EVM) CheckIsEthTx() bool {
 }
 
 // IsEVMCompat 以太坊 EVM 兼容性（指令/计价/CREATE）是否开启（fork 门控）
+// 高度取状态机的区块高度，与 state 层和 NewInterpreter 的 fork 判定使用同一来源。
 func (evm *EVM) IsEVMCompat() bool {
-	return evm.cfg != nil && evm.BlockNumber != nil &&
-		evm.cfg.IsDappFork(evm.BlockNumber.Int64(), evmtypes.ExecutorName, evmtypes.ForkEVMCompat)
+	if evm.cfg == nil || evm.StateDB == nil {
+		return false
+	}
+	return evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), evmtypes.ExecutorName, evmtypes.ForkEVMCompat)
+}
+
+// accountNonce 返回派生 CREATE 地址与递增时使用的账户 nonce。
+// fork 开启后，已有代码但没有 nonce 记录的账户（fork 前部署的合约）按 nonce 1 处理，
+// 使其第一次内部 CREATE 与以太坊一致；fork 关闭时直接返回已存 nonce。
+func (evm *EVM) accountNonce(addr common.Address) uint64 {
+	nonce := evm.StateDB.GetNonce(addr.String())
+	if nonce == 0 && evm.IsEVMCompat() && evm.StateDB.GetCodeSize(addr.String()) > 0 {
+		return 1
+	}
+	return nonce
+}
+
+// ContractAddressCollision 判断目标地址是否已被占用。
+// 顶层与内部 CREATE 共用同一条规则：nonce 非零或代码非空即冲突；仅有余额不算冲突。
+func (evm *EVM) ContractAddressCollision(addr common.Address) bool {
+	return evm.StateDB.GetNonce(addr.String()) != 0 || evm.StateDB.GetCodeSize(addr.String()) > 0
 }
 
 // 封装合约的各种调用逻辑中通用的预检查逻辑
@@ -276,7 +296,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	to := AccountRef(addr)
 	// 向合约地址转账
 	cfg := evm.StateDB.GetConfig()
-	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
+	if cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMFixOverflow) {
 		if value > 0 && !evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value) {
 			log.Error("evm call transfer failed", "caller", caller.Address().String(), "to", to.Address().String(), "value", value)
 			evm.StateDB.RevertToSnapshot(snapshot)
@@ -288,7 +308,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	log.Info("evm call", "caller address", caller.Address().String(), "contract address", to.Address().String(), "value", value)
 	// 从ForkV20EVMState开始，状态数据存储发生变更，需要做数据迁移
 	cfg = evm.StateDB.GetConfig()
-	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMState) {
+	if cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMState) {
 		evm.StateDB.TransferStateData(addr.String())
 	}
 
@@ -547,10 +567,9 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	// nonce 递增必须在快照之前，这样创建失败时 nonce 仍然生效。
 	if evm.IsEVMCompat() {
 		callerAddr := caller.Address()
-		nonce := evm.StateDB.GetNonce(callerAddr.String())
-		evm.StateDB.SetNonce(callerAddr.String(), nonce+1)
+		evm.StateDB.SetNonce(callerAddr.String(), evm.accountNonce(callerAddr)+1)
 
-		if evm.StateDB.GetNonce(contractAddr.String()) != 0 || evm.StateDB.GetCodeSize(contractAddr.String()) > 0 {
+		if evm.ContractAddressCollision(contractAddr) {
 			log.Error("evm contract address collision", "caller", callerAddr.String(), "contractAddr", contractAddr.String())
 			return nil, -1, 0, model.ErrContractAddressCollision
 		}
@@ -560,11 +579,11 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	cfg := evm.StateDB.GetConfig()
 	// From ForkEVMTransferRevert on, the snapshot is taken before the transfer so that a
 	// failed create also reverts the attached value (see transferChange.revert).
-	snapshotBeforeTransfer := cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMTransferRevert)
+	snapshotBeforeTransfer := cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMTransferRevert)
 	if snapshotBeforeTransfer {
 		snapshot = evm.StateDB.Snapshot()
 	}
-	if cfg.IsDappFork(evm.BlockNumber.Int64(), "evm", evmtypes.ForkEVMFixOverflow) {
+	if cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMFixOverflow) {
 		if value > 0 && !evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value) {
 			if snapshotBeforeTransfer {
 				evm.StateDB.RevertToSnapshot(snapshot)

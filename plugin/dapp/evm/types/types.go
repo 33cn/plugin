@@ -70,9 +70,8 @@ const (
 	//   - internal CREATE/CREATE2: address from the executing account and its nonce, nonce
 	//     increment persisted, address collision check, EIP-150 63/64 gas;
 	//   - opcodes PUSH0 and BASEFEE.
-	// Contracts created before the fork have no nonce record (treated as 0), so their first
-	// post-fork internal CREATE does not match Ethereum exactly; contracts created after the
-	// fork match exactly.
+	// An account that already holds code but has no stored nonce (a contract deployed before
+	// the fork) is treated as nonce 1, so its first post-fork internal CREATE matches Ethereum.
 	// Enable it at the same height as ForkEVMTransferRevert: the latter rolls back the value
 	// attached to a failed CREATE, which this fork alone does not do.
 	ForkEVMCompat = "ForkEVMCompat"

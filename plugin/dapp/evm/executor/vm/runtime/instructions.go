@@ -666,8 +666,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	if evm.IsEVMCompat() {
 		// 以太坊语义：地址由调用者地址与调用者 nonce 派生
 		creator := callContext.contract.Address()
-		nonce := evm.StateDB.GetNonce(creator.String())
-		addr = common.NewEvmContractAddressRaw(creator, nonce)
+		addr = common.NewEvmContractAddressRaw(creator, evm.accountNonce(creator))
 	}
 
 	if !value.IsZero() && evm.CheckIsEthTx() {
