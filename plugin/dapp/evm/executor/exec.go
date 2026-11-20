@@ -131,12 +131,22 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, sigType in
 	} else if isCreate {
 		if types.IsEthSignID(sigType) {
 			// 通过ethsign 签名的兼容交易 采用from+nonce 创建合约地址
-			contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
+			if env.IsEVMCompat() {
+				// raw 取以太坊地址的 20 字节，不经过地址驱动往返（btc 驱动会把 0x 地址转成全零）
+				contractAddr = common.NewEvmContractAddressRaw(msg.From(), uint64(msg.Nonce()))
+			} else {
+				contractAddr = evm.createEvmContractAddress(msg.From(), uint64(msg.Nonce()))
+			}
 		} else {
 			contractAddr = evm.createContractAddress(msg.From(), txHash)
 		}
 		contractAddrStr = contractAddr.String()
-		if !env.StateDB.Empty(contractAddrStr) {
+		if env.IsEVMCompat() {
+			// 与内部 CREATE 同一条规则：nonce 非零或代码非空才算冲突，仅有余额可以部署
+			if env.ContractAddressCollision(contractAddr) {
+				return receipt, model.ErrContractAddressCollision
+			}
+		} else if !env.StateDB.Empty(contractAddrStr) {
 			return receipt, model.ErrContractAddressCollision
 		}
 		// 只有新创建的合约才能生成合约名称
