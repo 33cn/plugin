@@ -756,6 +756,7 @@ ForkTradeStatusGate=-1
 Enable=0
 ForkTerminatePart=1298600
 ForkUnfreezeIDX=1450000
+ForkUnfreezeDecayBound=49000000
 
 [fork.sub.valnode]
 Enable=0
