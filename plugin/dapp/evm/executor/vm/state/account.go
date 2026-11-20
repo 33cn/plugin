@@ -292,7 +292,10 @@ func (ca *ContractAccount) HasSuicided() bool {
 
 // Empty 是否为空对象
 func (ca *ContractAccount) Empty() bool {
-	return ca.Data.GetCodeHash() == nil || len(ca.Data.GetCodeHash()) == 0
+	if ca.Data.GetCodeHash() != nil && len(ca.Data.GetCodeHash()) != 0 {
+		return false
+	}
+	return true
 }
 
 // SetNonce 设置nonce值
