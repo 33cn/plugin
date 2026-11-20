@@ -45,4 +45,8 @@ var (
 
 	ForkTerminatePartX = "ForkTerminatePart"
 	ForkUnfreezeIDX    = "ForkUnfreezeIDX"
+	// ForkUnfreezeDecayBoundX 解冻衰减计算有界化分叉。启用后 calcFrozen 不再按用户提供的
+	// StartTime 迭代，而是先做 O(1) 收敛判定，最多 maxDecaySteps 次；同时把 v1 历史仓位里
+	// TenThousandth >= 10000 的退化参数统一按"已完全解锁"处理。
+	ForkUnfreezeDecayBoundX = "ForkUnfreezeDecayBound"
 )
