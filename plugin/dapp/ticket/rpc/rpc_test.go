@@ -442,6 +442,7 @@ Enable=0
 Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
+ForkUnfreezeDecayBound=0
 
 [fork.sub.autonomy]
 Enable=0

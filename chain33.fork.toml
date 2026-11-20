@@ -252,6 +252,11 @@ ForkTradeFixOverflow=0
 Enable=0
 ForkTerminatePart=1298600
 ForkUnfreezeIDX=1450000
+# 解冻衰减计算有界化：启用后 calcFrozen 不再按用户 StartTime 迭代，v1 历史仓位里
+# TenThousandth >= 10000 的退化参数统一按"已完全解锁"处理。
+# 高度 = 公告日主链高度 + 241920（2 周，按 5s 出块）；2026-11-20 锚定约 4847 万，
+# 取整 49000000，上线推迟需按当日高度重算。
+ForkUnfreezeDecayBound=49000000
 
 [fork.sub.valnode]
 Enable=0

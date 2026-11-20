@@ -16,7 +16,7 @@ import (
 // Query_GetUnfreezeWithdraw 查询合约可提币量
 func (u *Unfreeze) Query_GetUnfreezeWithdraw(in *types.ReqString) (types.Message, error) {
 	cfg := u.GetAPI().GetConfig()
-	return QueryWithdraw(cfg, u.GetStateDB(), in.GetData())
+	return QueryWithdraw(cfg, u.GetStateDB(), in.GetData(), u.GetHeight())
 }
 
 // Query_GetUnfreeze 查询合约状态
@@ -35,7 +35,7 @@ func (u *Unfreeze) Query_ListUnfreezeByBeneficiary(in *pty.ReqUnfreezes) (types.
 }
 
 // QueryWithdraw 查询可提币状态
-func QueryWithdraw(cfg *types.Chain33Config, stateDB dbm.KV, id string) (types.Message, error) {
+func QueryWithdraw(cfg *types.Chain33Config, stateDB dbm.KV, id string, height int64) (types.Message, error) {
 	id = unfreezeIDFromHex(id)
 	unfreeze, err := loadUnfreeze(id, stateDB)
 	if err != nil {
@@ -44,7 +44,7 @@ func QueryWithdraw(cfg *types.Chain33Config, stateDB dbm.KV, id string) (types.M
 	}
 	currentTime := time.Now().Unix()
 	reply := &pty.ReplyQueryUnfreezeWithdraw{UnfreezeID: id}
-	available, err := getWithdrawAvailable(cfg, unfreeze, currentTime)
+	available, err := getWithdrawAvailable(cfg, unfreeze, currentTime, height)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +53,8 @@ func QueryWithdraw(cfg *types.Chain33Config, stateDB dbm.KV, id string) (types.M
 	return reply, nil
 }
 
-func getWithdrawAvailable(cfg *types.Chain33Config, unfreeze *pty.Unfreeze, calcTime int64) (int64, error) {
-	means, err := newMeans(cfg, unfreeze.Means, 1500000)
+func getWithdrawAvailable(cfg *types.Chain33Config, unfreeze *pty.Unfreeze, calcTime, height int64) (int64, error) {
+	means, err := newMeans(cfg, unfreeze.Means, height)
 	if err != nil {
 		return 0, err
 	}
