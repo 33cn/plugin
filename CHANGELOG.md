@@ -1,5 +1,14 @@
 changelog
 
+## [1.76.7](https://github.com/33cn/plugin/compare/v1.76.6...v1.76.7) (2026-11-20)
+
+
+### Bug Fixes
+
+* **unfreeze:** bound the decay loop so a crafted StartTime cannot halt the chain ([5b204e1](https://github.com/33cn/plugin/commit/5b204e1de8cab386112d2a02296baff0a6c66017))
+* **unfreeze:** match the legacy float round-trip when no period elapsed ([2e31c21](https://github.com/33cn/plugin/commit/2e31c21e8a5a9c3bf43b493e1ae24f788ea060ad))
+* **unfreeze:** replace the loop cap with ForkUnfreezeDecayBound ([d7a0534](https://github.com/33cn/plugin/commit/d7a0534a49cfd52366f07648f59ab746ea8f450b))
+
 ## [1.76.6](https://github.com/33cn/plugin/compare/v1.76.5...v1.76.6) (2026-11-19)
 
 
