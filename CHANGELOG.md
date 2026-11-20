@@ -1,5 +1,33 @@
 changelog
 
+## [1.76.7](https://github.com/33cn/plugin/compare/v1.76.6...v1.76.7) (2026-11-20)
+
+
+### Bug Fixes
+
+* **unfreeze:** bound the decay loop so a crafted StartTime cannot halt the chain ([5b204e1](https://github.com/33cn/plugin/commit/5b204e1de8cab386112d2a02296baff0a6c66017))
+* **unfreeze:** match the legacy float round-trip when no period elapsed ([2e31c21](https://github.com/33cn/plugin/commit/2e31c21e8a5a9c3bf43b493e1ae24f788ea060ad))
+* **unfreeze:** replace the loop cap with ForkUnfreezeDecayBound ([d7a0534](https://github.com/33cn/plugin/commit/d7a0534a49cfd52366f07648f59ab746ea8f450b))
+
+## [1.76.6](https://github.com/33cn/plugin/compare/v1.76.5...v1.76.6) (2026-11-19)
+
+
+### Bug Fixes
+
+* **collateralize,issuance:** keep repay record index with record owner ([d9eda59](https://github.com/33cn/plugin/commit/d9eda593a420e0c367d1ee21c321092b08f19162))
+* **collateralize,issuance:** return repaid collateral to borrow record owner ([98b41c8](https://github.com/33cn/plugin/commit/98b41c8e0db168d7436b4fc094ca0adc0c5a1256))
+
+## [1.76.5](https://github.com/33cn/plugin/compare/v1.76.4...v1.76.5) (2026-11-17)
+
+
+### Bug Fixes
+
+* **hashlock:** reject a lock with an empty hash ([f42456f](https://github.com/33cn/plugin/commit/f42456f62c72408751694b735b8dd8e3e29aee96))
+* **trade:** keep the real status of a scheduled sell order ([194f552](https://github.com/33cn/plugin/commit/194f552619894aa14ffb57c51205fe3bdf1e2501))
+* **trade:** limit the status gate to the buy side ([ea87554](https://github.com/33cn/plugin/commit/ea87554ae65b9c4da9478a84acae0b31d79ea643))
+* **trade:** only a live order can be filled ([cdafc87](https://github.com/33cn/plugin/commit/cdafc87b95a74e73adefbd5e30ad4f586dcff729))
+* **trade:** refuse fills of scheduled sell orders created before the fork ([995f738](https://github.com/33cn/plugin/commit/995f738ae7594856946ad129a1d53efa03c79850))
+
 ## [1.76.4](https://github.com/33cn/plugin/compare/v1.76.3...v1.76.4) (2026-11-04)
 
 

@@ -318,6 +318,7 @@ ForkTradeAsset= 0
 ForkTradeID = 0
 ForkTradeFixAssetDB = 0
 ForkTradePrice = 0
+ForkTradeStatusGate = -1
 
 [fork.sub.paracross]
 Enable=0
@@ -442,6 +443,7 @@ Enable=0
 Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
+ForkUnfreezeDecayBound=0
 
 [fork.sub.autonomy]
 Enable=0

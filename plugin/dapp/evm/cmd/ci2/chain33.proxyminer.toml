@@ -663,11 +663,13 @@ ForkBadRepeatSecret=2715575
 Enable=0
 ForkIssuanceTableUpdate=0
 ForkIssuancePrecision=0
+ForkIssuanceRepayOwner=0
 
 [fork.sub.collateralize]
 Enable=0
 ForkCollateralizeTableUpdate=0
 ForkCollateralizePrecision=0
+ForkCollateralizeRepayOwner=0
 
 [fork.sub.jsvm]
 Enable=0
@@ -750,11 +752,13 @@ ForkTradeAsset=1010000
 ForkTradeID=1450000
 ForkTradeFixAssetDB=2500000
 ForkTradePrice=3150000
+ForkTradeStatusGate=-1
 
 [fork.sub.unfreeze]
 Enable=0
 ForkTerminatePart=1298600
 ForkUnfreezeIDX=1450000
+ForkUnfreezeDecayBound=49000000
 
 [fork.sub.valnode]
 Enable=0

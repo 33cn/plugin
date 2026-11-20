@@ -157,11 +157,13 @@ ForkBadRepeatSecret=2715575
 Enable=0
 ForkIssuanceTableUpdate=0
 ForkIssuancePrecision=0
+ForkIssuanceRepayOwner=0
 
 [fork.sub.collateralize]
 Enable=0
 ForkCollateralizeTableUpdate=0
 ForkCollateralizePrecision=0
+ForkCollateralizeRepayOwner=0
 
 [fork.sub.jsvm]
 Enable=0
@@ -247,11 +249,17 @@ ForkTradeAsset=1010000
 ForkTradeID=1450000
 ForkTradeFixAssetDB=2500000
 ForkTradePrice=3150000
+ForkTradeStatusGate=-1
 
 [fork.sub.unfreeze]
 Enable=0
 ForkTerminatePart=1298600
 ForkUnfreezeIDX=1450000
+# 解冻衰减计算有界化：启用后 calcFrozen 不再按用户 StartTime 迭代，v1 历史仓位里
+# TenThousandth >= 10000 的退化参数统一按"已完全解锁"处理。
+# 高度 = 公告日主链高度 + 241920（2 周，按 5s 出块）；2026-11-20 锚定约 4847 万，
+# 取整 49000000，上线推迟需按当日高度重算。
+ForkUnfreezeDecayBound=49000000
 
 [fork.sub.valnode]
 Enable=0
