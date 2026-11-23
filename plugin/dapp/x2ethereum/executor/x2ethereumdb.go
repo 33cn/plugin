@@ -15,16 +15,18 @@ import (
 type Oracle struct {
 	db                 dbm.KV
 	consensusThreshold int64
+	isFixFork          bool
 }
 
 // NewOracle ...
-func NewOracle(db dbm.KV, consensusThreshold int64) *Oracle {
+func NewOracle(db dbm.KV, consensusThreshold int64, isFixFork bool) *Oracle {
 	if consensusThreshold <= 0 || consensusThreshold > 100 {
 		return nil
 	}
 	return &Oracle{
 		consensusThreshold: consensusThreshold,
 		db:                 db,
+		isFixFork:          isFixFork,
 	}
 }
 
@@ -292,7 +294,7 @@ func (o *Oracle) checkProphecy(prophecy *x2eTy.ReceiptEthProphecy) error {
 
 // ProcessClaim 处理接收到的ethchain33请求
 func (o *Oracle) ProcessClaim(claim x2eTy.Eth2Chain33) (*x2eTy.ProphecyStatus, error) {
-	oracleClaim, err := CreateOracleClaimFromEthClaim(claim)
+	oracleClaim, err := CreateOracleClaimFromEthClaim(claim, o.isFixFork)
 	if err != nil {
 		elog.Error("CreateEthClaimFromOracleString", "CreateOracleClaimFromOracleString error", err)
 		return nil, err
@@ -317,6 +319,11 @@ func (o *Oracle) ProcessClaim(claim x2eTy.Eth2Chain33) (*x2eTy.ProphecyStatus, e
 		}
 		prophecy = NewProphecy(oracleClaim.ID)
 	} else {
+		//分叉后prophecy进入Success/Failed即为终态，后续投票直接拒绝，避免重复铸币/解锁
+		if o.isFixFork && (prophecy.Status.Text == x2eTy.EthBridgeStatus_SuccessStatusText ||
+			prophecy.Status.Text == x2eTy.EthBridgeStatus_FailedStatusText) {
+			return nil, x2eTy.ErrProphecyFinalized
+		}
 		var exist bool
 		for _, vc := range prophecy.ValidatorClaims {
 			if vc.Claim == oracleClaim.Content {
