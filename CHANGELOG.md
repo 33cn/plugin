@@ -1,5 +1,12 @@
 changelog
 
+## [1.77.1](https://github.com/33cn/plugin/compare/v1.77.0...v1.77.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **token:** check global symbol uniqueness in finishCreate to prevent duplicate mint ([7bb9a58](https://github.com/33cn/plugin/commit/7bb9a58f7d5117867c67d40a229b5cc78c85516f))
+
 # [1.77.0](https://github.com/33cn/plugin/compare/v1.76.7...v1.77.0) (2026-11-23)
 
 
