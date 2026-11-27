@@ -1,5 +1,12 @@
 changelog
 
+## [1.77.2](https://github.com/33cn/plugin/compare/v1.77.1...v1.77.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **retrieve:** clear retrieve relation after perform to prevent replay in ForkRetriveAsset branch ([4201663](https://github.com/33cn/plugin/commit/4201663fdcb31dafd1db398c246ef5231ed7010d))
+
 ## [1.77.1](https://github.com/33cn/plugin/compare/v1.77.0...v1.77.1) (2026-11-27)
 
 
