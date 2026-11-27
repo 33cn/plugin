@@ -188,7 +188,11 @@ func initEvmExeccutor(t *testing.T, api *apimock.QueueProtocolAPI) *EVMExecutor 
 	driver, err := address.LoadDriver(2, -1)
 	assert.Equal(t, nil, err)
 
+	// The EVM address driver is package-global: restore it so the switch does
+	// not leak into other tests (test order is not guaranteed).
+	prevDriver := vcomm.GetEvmAddressDriver()
 	vcomm.InitEvmAddressDriver(driver)
+	t.Cleanup(func() { vcomm.InitEvmAddressDriver(prevDriver) })
 	var exec = NewEVMExecutor()
 	exec.SetAPI(api)
 	statDB, err := dbm.NewGoMemDB("state", "state", 1024)

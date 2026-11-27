@@ -441,6 +441,8 @@ ForkEVMFixOverflow=0
 ForkEVMSuicidePayer=0
 # Revertible value transfers; -1 keeps the fix off (resolved to MaxHeight)
 ForkEVMTransferRevert=-1
+# Ethereum EVM compatibility set (opcodes/gas/CREATE); -1 keeps it off
+ForkEVMCompat=-1
 
 [fork.sub.blackwhite]
 Enable=0
@@ -515,6 +517,7 @@ Enable=0
 Enable=0
 ForkTerminatePart=0
 ForkUnfreezeIDX= 0
+ForkUnfreezeDecayBound=0
 
 [fork.sub.autonomy]
 Enable=0

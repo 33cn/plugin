@@ -1,5 +1,38 @@
 changelog
 
+# [1.77.0](https://github.com/33cn/plugin/compare/v1.76.7...v1.77.0) (2026-11-23)
+
+
+### Bug Fixes
+
+* **ci:** assert the coins delta after the evm2 ticket withdraw ([c09b871](https://github.com/33cn/plugin/commit/c09b871f91b81b8b7b67eebe1516f23f29696394))
+* **ci:** widen the evm2 withdraw balance check boundary ([1cb3010](https://github.com/33cn/plugin/commit/1cb3010833f4c64e37acda5cdd1e6abf85180f76))
+* **dpos:** return instead of dereferencing a missing genesis document ([963de63](https://github.com/33cn/plugin/commit/963de63ffa87abc5dbc8d0197358c3bd842cb030))
+* **evm:** align pre-fork contract nonces and the top-level create path ([18ecfb0](https://github.com/33cn/plugin/commit/18ecfb0b7ad0e308c4634348c06d59a771a31c5c))
+* **evm:** derive internal CREATE addresses from caller nonce behind a fork ([f9e3ed5](https://github.com/33cn/plugin/commit/f9e3ed58909a1079acbe9c9ddd7eff14c05e6a89))
+
+
+### Features
+
+* **evm:** add PUSH0 and BASEFEE behind ForkEVMCompat ([c8f829d](https://github.com/33cn/plugin/commit/c8f829d8e6fe88c15d1c2d6ecf676e88c855ea5d))
+
+## [1.76.7](https://github.com/33cn/plugin/compare/v1.76.6...v1.76.7) (2026-11-20)
+
+
+### Bug Fixes
+
+* **unfreeze:** bound the decay loop so a crafted StartTime cannot halt the chain ([5b204e1](https://github.com/33cn/plugin/commit/5b204e1de8cab386112d2a02296baff0a6c66017))
+* **unfreeze:** match the legacy float round-trip when no period elapsed ([2e31c21](https://github.com/33cn/plugin/commit/2e31c21e8a5a9c3bf43b493e1ae24f788ea060ad))
+* **unfreeze:** replace the loop cap with ForkUnfreezeDecayBound ([d7a0534](https://github.com/33cn/plugin/commit/d7a0534a49cfd52366f07648f59ab746ea8f450b))
+
+## [1.76.6](https://github.com/33cn/plugin/compare/v1.76.5...v1.76.6) (2026-11-19)
+
+
+### Bug Fixes
+
+* **collateralize,issuance:** keep repay record index with record owner ([d9eda59](https://github.com/33cn/plugin/commit/d9eda593a420e0c367d1ee21c321092b08f19162))
+* **collateralize,issuance:** return repaid collateral to borrow record owner ([98b41c8](https://github.com/33cn/plugin/commit/98b41c8e0db168d7436b4fc094ca0adc0c5a1256))
+
 ## [1.76.5](https://github.com/33cn/plugin/compare/v1.76.4...v1.76.5) (2026-11-17)
 
 

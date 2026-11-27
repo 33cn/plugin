@@ -92,6 +92,7 @@ func initMap() {
 		GASLIMIT:    "GASLIMIT",
 		CHAINID:     "CHAINID",
 		SELFBALANCE: "SELFBALANCE",
+		BASEFEE:     "BASEFEE",
 
 		// 0x50 range - 'storage' and execution
 		POP: "POP",
@@ -114,6 +115,7 @@ func initMap() {
 		RETURNSUB: "RETURNSUB",
 
 		// 0x60 range - push
+		PUSH0:  "PUSH0",
 		PUSH1:  "PUSH1",
 		PUSH2:  "PUSH2",
 		PUSH3:  "PUSH3",
@@ -326,6 +328,8 @@ const (
 	CHAINID OpCode = 0x46
 	// SELFBALANCE op
 	SELFBALANCE OpCode = 0x47
+	// BASEFEE op
+	BASEFEE OpCode = 0x48
 )
 
 const (
@@ -359,6 +363,11 @@ const (
 	RETURNSUB
 	// JUMPSUB op
 	JUMPSUB
+)
+
+const (
+	// PUSH0 op，将零压入栈（EIP-3855）
+	PUSH0 OpCode = 0x5f
 )
 
 const (

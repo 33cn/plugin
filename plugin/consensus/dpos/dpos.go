@@ -301,6 +301,12 @@ OuterLoop:
 		return
 	}
 
+	// genesisDoc 由 NewClient 传入，缺省时无法构造验证人集合，直接返回而不是空指针崩溃
+	if client.genesisDoc == nil {
+		dposlog.Error("StartConsensus", "msg", "genesis doc is nil, skip consensus")
+		return
+	}
+
 	var valMgr ValidatorMgr
 	valMgrTmp, err := MakeGenesisValidatorMgr(client.genesisDoc)
 	if err != nil {
