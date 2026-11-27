@@ -157,6 +157,14 @@ function run_test() {
     sleep 61
     retrieve_Perform
     retrieve_QueryResult 3
+
+    # ForkRetrivePerformRelay 之后，perform 成功即清除找回关系，
+    # token 找回需重新 backup/prepare 并等待延迟期
+    retrieve_Backup
+    retrieve_QueryResult 1
+    retrieve_Prepare
+    retrieve_QueryResult 2
+    sleep 61
     retrieve_Perform_Token
     retrieve_QueryAssetResult 3
 }
